@@ -169,7 +169,7 @@
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: 20px minmax(0,1fr) 16px;
+  grid-template-columns: 20px minmax(0,1fr);
   align-items: center;
   gap: 8px;
   overflow: hidden;
@@ -201,16 +201,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.screen-order-v2-chevron {
-  width: 16px;
-  height: 16px;
-  display: grid;
-  place-items: center;
-  color: #98a2b3;
-  transition: transform .14s ease;
-}
-.screen-order-v2-chevron.is-open { transform: rotate(90deg); }
 
 .screen-order-v2-visibility,
 .screen-order-v2-actions {
@@ -338,17 +328,17 @@
     min-width: 0 !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 14px !important;
-    border: 1px solid #d9e4f2 !important;
-    border-radius: 7px !important;
-    background: #fff !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     box-shadow: none !important;
     overflow: visible !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .edit-layout .screen-order-v2-title {
     min-height: 24px !important;
-    margin: 0 0 10px !important;
+    margin: 0 0 8px !important;
     padding: 0 !important;
     display: flex !important;
     align-items: flex-start !important;
@@ -359,15 +349,15 @@
   html body #root .builder-shell.edit-mode-shell .edit-layout .screen-order-v2-title h2 {
     margin: 0 !important;
     color: #0f172a !important;
-    font-size: 16px !important;
+    font-size: 14px !important;
     line-height: 1.2 !important;
-    font-weight: 950 !important;
+    font-weight: 650 !important;
     letter-spacing: -.035em !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-list {
     display: grid !important;
-    gap: 6px !important;
+    gap: 0 !important;
     border: 0 !important;
     background: transparent !important;
     overflow: visible !important;
@@ -381,36 +371,41 @@
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item {
     margin: 0 !important;
     overflow: visible !important;
-    border: 1px solid #d9e4f2 !important;
-    border-radius: 8px !important;
-    background: #fff !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--product-line) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     box-shadow: none !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item:hover {
-    border-color: #c4d2e2 !important;
-    background: #fff !important;
+    background: var(--product-soft) !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item.is-open,
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] {
-    border-color: #b8cae0 !important;
-    background: #f5f9ff !important;
+    background: var(--product-accent-soft) !important;
     box-shadow: none !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item.is-open::before,
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true']::before {
-    display: none !important;
+    display: block !important;
+    top: 8px;
+    bottom: 8px;
+    left: 0;
+    width: 3px;
+    border-radius: 0;
+    background: var(--product-accent);
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-head {
-    min-height: 48px !important;
+    min-height: 44px !important;
     grid-template-columns: 34px minmax(0, 1fr) 36px 36px !important;
     gap: 6px !important;
     padding: 0 8px !important;
     border: 0 !important;
-    border-radius: 9px !important;
+    border-radius: 0 !important;
     background: transparent !important;
   }
 
@@ -419,11 +414,11 @@
     min-width: 32px !important;
     height: 34px !important;
     min-height: 34px !important;
-    border-radius: 12px !important;
+    border-radius: 8px !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-title-wrap {
-    grid-template-columns: 26px minmax(0, 1fr) 20px !important;
+    grid-template-columns: 26px minmax(0, 1fr) !important;
     gap: 6px !important;
   }
 
@@ -435,9 +430,9 @@
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-title-wrap strong {
     color: #0f172a !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
     line-height: 1.25 !important;
-    font-weight: 950 !important;
+    font-weight: 600 !important;
   }
 
   html body #root .builder-shell.edit-mode-shell :is(.screen-order-v2-visibility, .screen-order-v2-actions) {
@@ -865,57 +860,8 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
 }
 
 
-/* PC product-density final contract. Mobile touch geometry above remains unchanged. */
+/* Inline inspector density. Desktop row geometry is owned by the surface block above. */
 @media (min-width: 900px) {
-  html body #root .builder-shell.edit-mode-shell .edit-layout .screen-order-v2-card {
-    padding: 14px !important;
-    border-radius: 12px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-title h2 {
-    font-size: 16px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-list {
-    gap: 6px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-item {
-    border-radius: 10px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-head {
-    min-height: 48px !important;
-    grid-template-columns: 34px minmax(0, 1fr) 36px 36px !important;
-    padding: 0 8px !important;
-    border-radius: 9px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-drag {
-    width: 32px !important;
-    min-width: 32px !important;
-    height: 34px !important;
-    min-height: 34px !important;
-    border-radius: 8px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-title-wrap strong {
-    font-size: 14px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell :is(.screen-order-v2-visibility, .screen-order-v2-actions) {
-    width: 36px !important;
-    min-width: 36px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell :is(.screen-order-v2-visibility-button, .screen-order-v2-action) {
-    width: 34px !important;
-    min-width: 34px !important;
-    height: 34px !important;
-    min-height: 34px !important;
-    border-radius: 8px !important;
-  }
-
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-inline-editor {
     margin: 10px 8px 14px !important;
     padding: 0 !important;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { T } from './editorLabels.js';
 import { stop } from './editorEvents.js';
 
@@ -9,6 +9,9 @@ export function ScreenOrderRowIdentity({ block, identity, meta, open, onDragStar
   const customLabel = identity?.customLabel ? ` · ${identity.customLabel}` : '';
   const displayLabel = `${meta.label}${ordinal}${customLabel}`;
   const detail = identity?.detail || '';
+  const primaryLabel = identity?.customLabel || detail || `${meta.label}${ordinal}`;
+  const typeLabel = `${meta.label}${ordinal}`;
+  const secondaryLabel = [primaryLabel !== typeLabel ? typeLabel : '', !block.visible ? '숨김' : ''].filter(Boolean).join(' · ');
   const thumbnail = identity?.thumbnail || '';
   const selectTitle = (event) => {
     stop(event);
@@ -53,11 +56,8 @@ export function ScreenOrderRowIdentity({ block, identity, meta, open, onDragStar
           )}
         </span>
         <span className="screen-order-v2-identity-copy">
-          <strong title={displayLabel}>{displayLabel}</strong>
-          {detail && <small className="screen-order-v2-identity-detail" title={detail}>{detail}</small>}
-        </span>
-        <span className="screen-order-v2-chevron" aria-hidden="true">
-          <ChevronRight size={15} />
+          <strong title={primaryLabel}>{primaryLabel}</strong>
+          {secondaryLabel && <small className="screen-order-v2-identity-detail">{secondaryLabel}</small>}
         </span>
       </div>
     </>
