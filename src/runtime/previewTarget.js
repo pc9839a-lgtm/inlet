@@ -44,8 +44,8 @@ export function createPreviewPage({ page, stylePreviewTheme = null, stylePreview
   return draft;
 }
 
-// Editor preview executes neither custom HTML nor third-party video embeds.
-// A same-origin file download may load media metadata, but cannot execute JS.
+// Only library videos may use the direct media renderer in editor preview.
+// Custom HTML uses a separate opaque-origin, network-restricted iframe.
 export function isEditorPreviewSafeMediaBlock(block, currentOrigin = '') {
   if (block?.type !== 'code' || block.s?.widgetMode !== 'youtube') return false;
   const source = getVideoSource(block.s.videoUrl || block.s.youtubeUrl || '');
