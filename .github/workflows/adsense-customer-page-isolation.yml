@@ -1,0 +1,26 @@
+name: AdSense customer page isolation
+on:
+  push:
+    branches: [main, fix/adsense-isolate-customer-pages-20261022]
+    paths:
+      - functions/lib/publicPageMeta.js
+      - scripts/adsense-customer-page-isolation-quality-check.mjs
+      - .github/workflows/adsense-customer-page-isolation.yml
+  pull_request:
+    paths:
+      - functions/lib/publicPageMeta.js
+      - scripts/adsense-customer-page-isolation-quality-check.mjs
+      - .github/workflows/adsense-customer-page-isolation.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert shared shell never leaks publisher AdSense code to customer pages
+        run: node scripts/adsense-customer-page-isolation-quality-check.mjs
