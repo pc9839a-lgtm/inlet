@@ -1,4 +1,3 @@
-import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -11,7 +10,6 @@ const DETAILS = [];
 const warn = (code, detail) => { PROBLEMS.push({ code, detail: String(detail) }); };
 const got = (code, detail) => { DETAILS.push({ code, detail: String(detail) }); };
 const plain = (value) => String(value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-const escapes = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 async function get(url) {
   let error;
@@ -55,9 +53,9 @@ if (!root.html.includes('c63-assets/index-pagero-main-fix-20260615.js')) warn('r
 if (!root.html.includes('name="google-adsense-account"')) warn('root_adsense_verification', 'Publisher verification missing');
 if (!root.html.includes('<link rel="canonical" href="https://pagero.kr/"')) warn('root_canonical', 'Main canonical is missing');
 if (!root.html.includes('href="/life/"')) warn('root_life_discovery', 'LIFE publisher hub not discoverable in initial HTML');
-if (/X-Robots-Tag:\s*noindex/i.test(String(root.headers))) warn('root_noindex', 'Root response blocks indexing');
+if (/noindex/i.test(root.headers.get('x-robots-tag') || '')) warn('root_noindex', 'Root response blocks indexing');
 if (robots.status !== 200 || !robots.html.includes('Sitemap: https://pagero.kr/life/sitemap.xml')) warn('robots_life_sitemap', 'Root robots missing LIFE sitemap');
-if (lifeRobots.status !== 200) warn('life_robots_status', lifeRobots.status);
+if (lifeRobots.status !== 200 || !lifeRobots.html.includes('Sitemap: https://pagero.kr/life/sitemap.xml')) warn('life_robots_status', 'Expected LIFE sitemap declaration; HTTP '+lifeRobots.status);
 if (rootSitemap.status !== 200 || !rootSitemap.html.includes('<urlset')) warn('root_sitemap', 'Invalid root sitemap response');
 if (lifeSitemap.status !== 200 || !lifeSitemap.html.includes('<urlset')) warn('life_sitemap', 'Invalid LIFE sitemap response');
 if (!index.html.includes('LIFE EDITORIAL ARCHIVE')) warn('life_home_archive', '45-article editorial index missing');
