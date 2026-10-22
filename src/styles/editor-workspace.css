@@ -3,6 +3,7 @@
    when browser zoom reduces the CSS viewport below the mobile width breakpoint. */
 
 body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace {
+    grid-template-columns: minmax(0, 1fr);
     border-right: 1px solid var(--product-line);
   }
 

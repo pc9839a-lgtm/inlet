@@ -1424,10 +1424,45 @@ async function run() {
         accessibleName: row.getAttribute('aria-label'),
       } : null;
     })()`);
-    assert(heroRowIdentity?.name === '히어로'
-      && heroRowIdentity.detail === updatedHeroTitle
+    assert(heroRowIdentity?.name === updatedHeroTitle
+      && heroRowIdentity.detail === '히어로'
       && heroRowIdentity.accessibleName.includes(updatedHeroTitle),
       `D03 hero row should identify its live title: ${JSON.stringify(heroRowIdentity)}`);
+
+    const stageOneList = await evaluate(client, `(() => {
+      const card = getComputedStyle(document.querySelector('.screen-order-v2-card'));
+      const list = getComputedStyle(document.querySelector('.screen-order-v2-list'));
+      const selected = document.querySelector('#editor-block-editor-hero');
+      const row = getComputedStyle(selected);
+      const head = selected.querySelector('.screen-order-v2-head').getBoundingClientRect();
+      const marker = getComputedStyle(selected, '::before');
+      const other = document.querySelector('.screen-order-v2-item[data-selected="false"]');
+      return {
+        outerBorder: card.borderTopWidth, outerPadding: card.paddingTop,
+        gap: list.rowGap, rowBorder: row.borderTopWidth, rowRadius: row.borderRadius,
+        height: head.height, selectedColor: row.backgroundColor,
+        otherColor: getComputedStyle(other).backgroundColor,
+        markerWidth: marker.width, markerDisplay: marker.display,
+        chevrons: document.querySelectorAll('.screen-order-v2-chevron').length,
+        visibility: !!selected.querySelector('.screen-order-v2-visibility-button'),
+        actions: !!selected.querySelector('.screen-order-v2-action'),
+        paneWidth: document.querySelector('.left-workspace').getBoundingClientRect().width,
+        panelWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
+        layoutWidth: document.querySelector('.edit-layout').getBoundingClientRect().width,
+        rowWidth: selected.getBoundingClientRect().width,
+      };
+    })()`);
+    assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
+      && stageOneList.gap === '0px' && stageOneList.rowBorder === '0px'
+      && stageOneList.rowRadius === '0px' && stageOneList.height >= 44 && stageOneList.height <= 46,
+      'stage 1 block list must render flat rows with readable click targets: ' + JSON.stringify(stageOneList));
+    assert(stageOneList.selectedColor !== stageOneList.otherColor && stageOneList.markerWidth === '3px'
+      && stageOneList.markerDisplay === 'block' && stageOneList.chevrons === 0
+      && stageOneList.visibility && stageOneList.actions,
+      'stage 1 must clearly identify selection and retain visibility/action controls: ' + JSON.stringify(stageOneList));
+    assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
+      && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
+      'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
 
     // Duplicate a real text block through the UI and verify the two rows get
     // different ordinal identities, then undo to avoid affecting later QA.
@@ -1446,14 +1481,15 @@ async function run() {
       accessibleName: row.querySelector('.screen-order-v2-title-wrap')?.getAttribute('aria-label'),
     })))()`);
     assert(repeatedText.length === 2 && repeatedText[0].id !== repeatedText[1].id
-      && repeatedText[0].label === '텍스트 1' && repeatedText[1].label === '텍스트 2'
-      && repeatedText.every((row) => row.detail === '편집기 회귀 방지'
-        && row.accessibleName?.includes(row.label)),
+      && repeatedText[0].detail === '텍스트 1' && repeatedText[1].detail === '텍스트 2'
+      && repeatedText.every((row) => row.label === '편집기 회귀 방지'
+        && row.accessibleName?.includes(row.label) && row.accessibleName?.includes(row.detail)),
       `D03 repeated block identity must remain distinct and accessible: ${JSON.stringify(repeatedText)}`);
     await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
     await waitForBrowser(client, `(() => {
       const rows = document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item[data-block-type="text"]');
-      return rows.length === 1 && rows[0].querySelector('.screen-order-v2-identity-copy strong')?.textContent === '텍스트';
+      return rows.length === 1 && rows[0].querySelector('.screen-order-v2-identity-copy strong')?.textContent === '편집기 회귀 방지'
+        && rows[0].querySelector('.screen-order-v2-identity-detail')?.textContent === '텍스트';
     })()`, 'D03 undo duplicate restores singleton label');
     assert(apiState.saveCount === 0, 'D03 row identities must not trigger server saves');
 
@@ -1478,6 +1514,7 @@ async function run() {
     // E2E-04: visibility toggle must update the preview without publishing.
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-visibility-button');
     await waitForBrowser(client, `document.querySelector('#editor-block-editor-text .screen-order-v2-visibility-button')?.getAttribute('aria-checked') === 'false'`, 'text visibility off');
+    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-text .screen-order-v2-identity-detail')?.textContent || '').includes('숨김')`, 'hidden row carries a readable state label');
     await waitForBrowser(client, `!(document.querySelector('.phone-frame')?.innerText || '').includes('편집기 회귀 방지')`, 'hidden text removed from preview');
 
     // E2E-03: move the form above the text row through the real overflow menu.
@@ -1856,11 +1893,10 @@ async function run() {
         addBackground: addStyle?.backgroundColor || '',
       };
     })()`);
-    assert(screenOrderShellStyle?.padding === pageOptionsShellStyle.padding, `screen order shell padding must match page options: ${JSON.stringify(screenOrderShellStyle)} vs ${JSON.stringify(pageOptionsShellStyle)}`);
-    assert(screenOrderShellStyle?.borderWidth === pageOptionsShellStyle.borderWidth, `screen order shell border must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.borderRadius === pageOptionsShellStyle.borderRadius, `screen order shell radius must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.background === pageOptionsShellStyle.background, `screen order shell background must match page options: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '10px' && screenOrderShellStyle?.rowBorder === '1px', `screen order rows must use compact bordered cards: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
+      && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '0px' && screenOrderShellStyle?.rowBorder === '0px', `screen order rows must remain a simple list: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(17, 24, 39)', `block add trigger must keep the original dark style: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 1180) {
@@ -2229,6 +2265,7 @@ async function run() {
     console.log(JSON.stringify({
       ok: true,
       scope: 'authenticated-editor-browser-regression',
+      stageOneBlockList: stageOneList,
       customCodePreview: ['html-css-visible', 'javascript-click', 'dynamic-height', 'parent-session-isolated', 'api-write-blocked'],
       loginCount: apiState.loginCount,
       sessionCount: apiState.sessionCount,
