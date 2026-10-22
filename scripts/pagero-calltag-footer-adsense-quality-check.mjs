@@ -8,7 +8,7 @@ const server=fs.readFileSync('functions/index.js','utf8');
 const publicPages=fs.readFileSync('functions/lib/publicPageMeta.js','utf8');
 const domain='https://calltag.pagero.kr/';
 
-assert(app.includes("import PublicHomeRoute from './screens/PublicHomeRoute.jsx'"));
+assert(app.includes("const PublicHomeRoute = lazy(() => import('./screens/PublicHomeRoute.jsx'))"));
 assert(app.includes('<PublicHomeRoute') && app.includes("window.location.assign('/login')"));
 assert(app.includes("window.location.assign('/signup')"));
 assert(!app.includes('key="root-login"'),'Public root must not hydrate to a login-only page');
