@@ -1,0 +1,63 @@
+name: Audit every PageRo canonical public sitemap URL
+on:
+  push:
+    branches: [audit/adsense-domain-inventory-20261022]
+    paths: ['.github/workflows/adsense-all-sitemap-audit.yml']
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Crawl every currently published root and LIFE sitemap URL
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request, urllib.error, xml.etree.ElementTree as ET, concurrent.futures, json, re
+          roots=['https://pagero.kr/sitemap.xml','https://pagero.kr/life/sitemap.xml']
+          urls=set()
+          for sitemap in roots:
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(sitemap,headers={'User-Agent':'Mozilla/5.0 (PageRoAudit/1.0)'}),timeout=16) as r: xml=r.read(800000)
+                  root=ET.fromstring(xml)
+                  found=[(x.text or '').strip() for x in root.iter() if x.tag.endswith('loc')]
+                  print('SITEMAP',sitemap,'ENTRIES',len(found),flush=True)
+                  urls.update(u for u in found if u.startswith('https://pagero.kr/'))
+              except Exception as e:print('SITEMAP_ERROR',sitemap,type(e).__name__,str(e)[:160],flush=True)
+          print('TOTAL_UNIQUE_URLS',len(urls),flush=True)
+          def check(url):
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (PageRoAudit/1.0)','Cache-Control':'no-cache'})
+                  with urllib.request.urlopen(req,timeout=18) as r:
+                      body=r.read(1500000).decode('utf-8','replace')
+                      ctype=r.headers.get('Content-Type','')
+                      robots=r.headers.get('X-Robots-Tag','')
+                      final=r.url
+                      code=r.status
+                  title=re.search(r'<title[^>]*>(.*?)</title>',body,re.I|re.S)
+                  title=re.sub(r'\\s+',' ',title.group(1)).strip() if title else ''
+                  canonical=re.search(r'<link[^>]*rel="canonical"[^>]*href="([^"]+)"',body,re.I)
+                  canonical=canonical.group(1) if canonical else '(missing)'
+                  meta=re.search(r'<meta[^>]*name="robots"[^>]*content="([^"]+)"',body,re.I)
+                  meta=meta.group(1) if meta else '(missing)'
+                  stripped=re.sub(r'<(script|style)\\b[^>]*>.*?</\\1>',' ',body,flags=re.I|re.S)
+                  text=re.sub(r'<[^>]+>',' ',stripped)
+                  text=re.sub(r'\\s+',' ',text).strip()
+                  issues=[]
+                  if code!=200 or 'text/html' not in ctype:issues.append('not_html_200')
+                  if final!=url:issues.append('redirect_or_final_mismatch')
+                  if 'noindex' in robots.lower() or 'noindex' in meta.lower():issues.append('noindex')
+                  if canonical!=url:issues.append('canonical_mismatch')
+                  if len(text)<200:issues.append('very_low_visible_text')
+                  if not title:issues.append('missing_title')
+                  return {'url':url,'issues':issues,'chars':len(text),'title':title[:70],'publisher':'ca-pub-1906196934401001' in body}
+              except Exception as e:return {'url':url,'issues':['request_error'], 'error':type(e).__name__+': '+str(e)[:110]}
+          with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+              data=list(executor.map(check,sorted(urls)))
+          counts={}
+          for row in data:
+              for issue in row['issues']:counts[issue]=counts.get(issue,0)+1
+              if row['issues']:print('FAIL_URL',json.dumps(row,ensure_ascii=False),flush=True)
+          print('AUDIT_SUMMARY',json.dumps({'total':len(data),'good':sum(not r['issues'] for r in data),'issues':counts,'adsense_meta_present':sum(r.get('publisher',False) for r in data)},ensure_ascii=False),flush=True)
+          PY
