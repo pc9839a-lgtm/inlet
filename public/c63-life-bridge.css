@@ -148,3 +148,55 @@
     justify-self: start;
   }
 }
+
+
+/* CallTag: the real C63 home inserts this after PAGERO LIFE, ahead of the footer. */
+.pagero-exact-home .c63-calltag-bridge {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(15, 23, 42, .09);
+  padding: 72px 24px 82px;
+}
+.pagero-exact-home .c63-calltag-bridge .c63-life-eyebrow { color: #374151; }
+.pagero-exact-home .c63-calltag-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.pagero-exact-home .c63-calltag-feature {
+  min-width: 0;
+  min-height: 148px;
+  border: 1px solid #e1e8f0;
+  border-radius: 19px;
+  padding: 24px;
+  background: #f8fafc;
+}
+.pagero-exact-home .c63-calltag-feature h3 {
+  margin: 0 0 12px;
+  color: #111827;
+  font-weight: 900;
+  font-size: 19px;
+  line-height: 1.35;
+  letter-spacing: -.04em;
+}
+.pagero-exact-home .c63-calltag-feature p {
+  margin: 0;
+  color: #596579;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+@media (max-width: 760px) {
+  .pagero-exact-home .c63-calltag-bridge {
+    padding: 54px 20px 70px;
+  }
+  .pagero-exact-home .c63-calltag-features {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .pagero-exact-home .c63-calltag-feature {
+    min-height: 0;
+    padding: 19px 20px;
+  }
+  .pagero-exact-home .c63-calltag-feature h3 { font-size: 17px; }
+}

@@ -1,0 +1,32 @@
+name: Check CallTag on ACTUAL C63 public homepage
+on:
+  pull_request:
+    paths:
+      - functions/index.js
+      - public/c63-life-bridge.js
+      - public/c63-life-bridge.css
+      - scripts/pagero-c63-visible-calltag-quality-check.mjs
+      - .github/workflows/pagero-c63-visible-calltag.yml
+  push:
+    branches: [main, fix/c63-live-calltag-section-20261022]
+    paths:
+      - functions/index.js
+      - public/c63-life-bridge.js
+      - public/c63-life-bridge.css
+      - scripts/pagero-c63-visible-calltag-quality-check.mjs
+      - .github/workflows/pagero-c63-visible-calltag.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax of the frozen C63 bridge
+        run: node --check public/c63-life-bridge.js
+      - name: Verify actual homepage server response and visible-footer insertion
+        run: node scripts/pagero-c63-visible-calltag-quality-check.mjs

@@ -1,0 +1,65 @@
+name: Verify ACTUAL visible CallTag on published C63 homepage
+on:
+  workflow_run:
+    workflows: ["Deploy Cloudflare Pages"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - name: Verify real C63 bundle and cache-busted bridge served to browsers
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time,urllib.request
+          for trial in range(1,16):
+              req=urllib.request.Request('https://pagero.kr/',headers={'User-Agent':'Mozilla/5.0','Cache-Control':'no-cache'})
+              with urllib.request.urlopen(req,timeout=15) as r:html=r.read(250000).decode('utf-8','replace')
+              if 'c63-life-bridge.js?v=calltag-20261022' in html and 'c63-life-bridge.css?v=calltag-20261022' in html:
+                  print('PASS: root HTML serves new versioned bridge assets, trial',trial)
+                  break
+              if trial==15:raise SystemExit('FAIL: production has old C63 bridge')
+              time.sleep(10)
+          req=urllib.request.Request('https://pagero.kr/c63-life-bridge.js?v=calltag-20261022',headers={'User-Agent':'Mozilla/5.0'})
+          with urllib.request.urlopen(req,timeout=15) as r:js=r.read(30000).decode('utf-8','replace')
+          assert "section.className = 'c63-calltag-bridge'" in js
+          assert "ensureLink(footerLinks, 'https://calltag.pagero.kr/', '콜태그')" in js
+          print('PASS: live JS contains actual C63 CallTag footer and section insertion')
+          PY
+      - name: Run real Chrome browser - desktop and mobile rendered DOM
+        shell: bash
+        env:
+          INLET_BROWSER_QA_URL: https://pagero.kr/
+          INLET_BROWSER_QA_REQUIRE: '1'
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='https://calltag.pagero.kr/']"
+          INLET_BROWSER_QA_EXPECT_TEXT: "문의가 오면,그다음 관리까지,신규 고객 알림,안내 문자 자동화"
+          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-calltag-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|visibility|visible"
+        run: |
+          export INLET_BROWSER_QA_CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          if [ -z "$INLET_BROWSER_QA_CHROME_PATH" ]; then echo 'Chrome not found'; exit 1; fi
+          for viewport in desktop mobile; do
+            export INLET_BROWSER_QA_VIEWPORTS="$viewport"
+            export INLET_BROWSER_QA_SCREENSHOT_DIR=".tmp-c63-calltag-$viewport"
+            node scripts/browser-visual-quality-check.mjs
+          done
+      - name: Preserve real browser screenshots and QA logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pagero-c63-calltag-live-browser
+          path: .tmp-c63-calltag-*/
+          if-no-files-found: ignore
+          retention-days: 7
