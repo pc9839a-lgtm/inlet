@@ -1,5 +1,6 @@
 import { createPreviewPage, getEditorDraftPreviewPage, isEditorPreviewSafeMediaBlock, simulateEditorPreviewLead, visiblePreviewBlocks, previewUrlForPage } from '../src/runtime/previewTarget.js';
 import { usePreviewWindow } from '../src/runtime/usePreviewWindow.js';
+import { EDITOR_CODE_SANDBOX, isolateEditorCodeDocument } from '../src/runtime/customCodePreview.js';
 import { readFile } from 'node:fs/promises';
 
 function assert(condition, message) {
@@ -71,15 +72,15 @@ assert(fixedUiCss.includes('scroll-padding-bottom: calc(max(88px, var(--page-fix
 assert(!parityCss.includes('@media (max-width: 420px)'), 'Runtime parity must use container width instead of the browser viewport width');
 
 
-// Execute the media allowlist against stored video blocks. Ordinary code and
-// third-party embeds are not permitted to run inside editor previews.
+// Execute the direct-media allowlist. Custom HTML uses an isolated iframe;
+// third-party video embeds still cannot run in the editor document.
 const localVideo = { type: 'code', s: { widgetMode: 'youtube', videoUrl: 'http://localhost:4174/api/files/download?key=project%2Fvideos%2Fdemo.mp4' } };
 const testOrigin = 'http://localhost:4174';
 assert(isEditorPreviewSafeMediaBlock(localVideo, testOrigin), 'editor preview must retain same-origin library video playback/metadata');
 assert(!isEditorPreviewSafeMediaBlock(localVideo, 'http://other.example'), 'cross-origin preview must not load this file');
 assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'youtube', videoUrl: 'https://external.example/video.mp4' } }, testOrigin), 'external video must stay isolated');
 assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'youtube', videoUrl: 'https://youtu.be/xYz12345678' } }, testOrigin), 'third-party iframe must stay blocked in editor');
-assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'custom', html: '<script>alert(1)</script>' } }, testOrigin), 'custom code must not execute in editor');
+assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'custom', html: '<script>alert(1)</script>' } }, testOrigin), 'custom code must use isolation rather than the direct-media allowlist');
 assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'youtube', videoUrl: 'http://localhost:4174/random.mp4' } }, testOrigin), 'untrusted same-origin paths must not bypass the allowlist');
 
 // Editor draft preview and public landing share the renderer but must NOT
@@ -129,7 +130,15 @@ assert(previewRenderer.includes('editorPreview ? undefined : track'), 'Editor mo
 assert(previewRenderer.includes('templatePreview || editorPreview') && previewRenderer.includes('installConversionTracking(page)'), 'Editor mode must not install conversion pixels');
 assert(previewRenderer.includes('if (!editorPreview && !templatePreview) track?.'), 'Editor mode must not track page views');
 assert(previewRenderer.includes('if (editorPreview && (target === \'url\' || target === \'phone\')) return;'), 'External actions must be inert in draft previews');
-assert(previewRenderer.includes("if(block.type==='code')return editorPreview"), 'Arbitrary JS/widget code must be disabled in draft preview');
+assert(previewRenderer.includes('<UtilityRenderCode block={renderBlock} editorPreview={editorPreview}/>'), 'Custom code must receive the isolated editor preview policy');
+assert(!previewRenderer.includes('코드 블록 실행은 편집 미리보기에서 중지됩니다.'), 'Code content must render instead of the blanket disabled placeholder');
+for (const html of ['<div>코드 내용</div>', '<!doctype html><html lang="ko"><head><title>위젯</title></head><body><button>열기</button></body></html>']) {
+  const isolated = isolateEditorCodeDocument(html);
+  assert(isolated.startsWith('<!doctype html><meta http-equiv="Content-Security-Policy"'), 'Preview policy must precede user HTML, including full documents');
+  assert(isolated.endsWith(html.replace(/^\s*<!doctype[^>]*>/i, '')), 'Isolation must retain user HTML content');
+  assert(isolated.includes("connect-src 'none'") && isolated.includes("form-action 'none'") && isolated.includes("frame-src 'none'"), 'Preview must prohibit API writes, form delivery and nested frames');
+}
+assert(EDITOR_CODE_SANDBOX === 'allow-scripts', 'Preview must allow local widget interaction without inheriting editor origin or navigation permissions');
 assert(previewModal.includes('현재 초안 미리보기') && previewModal.includes('발행본 보기'), 'Draft and published views must be distinguishable');
 assert(previewModal.includes('rel="noopener noreferrer"') && previewModal.includes('target="_blank"'), 'Published links must retain noopener security');
 assert(previewModal.includes("navigator.clipboard.writeText(url)") && previewModal.includes('onClick={copyPreviewUrl}'), 'Retry copy must perform clipboard write rather than open a window');

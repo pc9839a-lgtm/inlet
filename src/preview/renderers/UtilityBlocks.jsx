@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { getVideoSource, getYouTubeEmbedUrl } from '../../lib/youtubeEmbed.js';
+import { EDITOR_CODE_SANDBOX, isolateEditorCodeDocument } from '../../runtime/customCodePreview.js';
 import { pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
 
 const CUSTOM_CODE_MESSAGE = 'pagero-custom-code';
@@ -333,7 +334,7 @@ function RenderBgmCode({ block, forcedSrc = '' }) {
   );
 }
 
-function RenderCustomCode({ block }) {
+function RenderCustomCode({ block, editorPreview = false }) {
   const s = block.s || {};
   const rootRef = useRef(null);
   const iframeRef = useRef(null);
@@ -345,8 +346,11 @@ function RenderCustomCode({ block }) {
   const hasCode = !!(String(s.html || '').trim() || String(s.css || '').trim() || (s.runJs && String(s.js || '').trim()));
   const isDyjhWeddingCover = /\bdyjh-wedding-cover\b/.test(String(s.html || ''));
   const srcDoc = useMemo(
-    () => buildCustomCodeDocument(s, tokenRef.current),
-    [block.id, s.html, s.css, s.js, s.runJs],
+    () => {
+      const documentHtml = buildCustomCodeDocument(s, tokenRef.current);
+      return editorPreview ? isolateEditorCodeDocument(documentHtml) : documentHtml;
+    },
+    [block.id, s.html, s.css, s.js, s.runJs, editorPreview],
   );
   const sectionStyle = {
     ...widgetBoxVars({ ...s, marginY: 0, paddingY: 0 }),
@@ -441,8 +445,9 @@ function RenderCustomCode({ block }) {
           srcDoc={srcDoc}
           title="사용자 코드"
           data-custom-code-runtime="sandbox-v5"
-          sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-top-navigation-to-custom-protocols allow-downloads allow-modals"
-          allow="autoplay; clipboard-write"
+          sandbox={editorPreview ? EDITOR_CODE_SANDBOX : 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation allow-top-navigation-to-custom-protocols allow-downloads allow-modals'}
+          allow={editorPreview ? undefined : 'autoplay; clipboard-write'}
+          referrerPolicy={editorPreview ? 'no-referrer' : undefined}
           scrolling="no"
           style={{ width: '100%', height: `${frameHeight}px`, border: 0, display: 'block', overflow: 'hidden', background: 'transparent' }}
         />
@@ -500,8 +505,11 @@ function RenderYouTube({ block }) {
   );
 }
 
-export function RenderCode({ block }) {
+export function RenderCode({ block, editorPreview = false }) {
   const s = block.s || {};
+  if (editorPreview && s.widgetMode !== 'youtube' && s.widgetMode !== 'bgm') {
+    return <RenderCustomCode block={block} editorPreview />;
+  }
   const embeddedBgmSrc = extractBgmSrcFromHtml(s.html);
   if (s.widgetMode === 'bgm' || embeddedBgmSrc) {
     return <RenderBgmCode block={block} forcedSrc={embeddedBgmSrc} />;

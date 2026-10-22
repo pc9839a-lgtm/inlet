@@ -433,9 +433,9 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
   if(block.type==='activity')return <SignalRenderActivity block={renderBlock} leads={leads}/>;
   if(block.type==='spacer')return <LayoutRenderSpacer block={renderBlock}/>;
   if(block.type==='divider')return <LayoutRenderDivider block={renderBlock}/>;
-  if(block.type==='code')return editorPreview && !isEditorPreviewSafeMediaBlock(renderBlock, typeof window !== 'undefined' ? window.location.origin : '')
-    ? <section id={`block-${block.id}`} className="landing-section code-widget-empty" role="note">코드 블록 실행은 편집 미리보기에서 중지됩니다.</section>
-    : <UtilityRenderCode block={renderBlock}/>;
+  if(block.type==='code')return editorPreview && renderBlock.s?.widgetMode === 'youtube' && !isEditorPreviewSafeMediaBlock(renderBlock, typeof window !== 'undefined' ? window.location.origin : '')
+    ? <section id={`block-${block.id}`} className="landing-section code-widget-empty" role="note">외부 동영상은 발행본에서 재생할 수 있습니다.</section>
+    : <UtilityRenderCode block={renderBlock} editorPreview={editorPreview}/>;
   if(block.type==='search')return <UtilityRenderPageSearch block={renderBlock}/>;
   if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
   if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;

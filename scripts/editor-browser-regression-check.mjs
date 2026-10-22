@@ -129,7 +129,7 @@ function createCdp(webSocketUrl) {
   });
 
   return {
-    async send(method, params = {}) {
+    async send(method, params = {}, sessionId) {
       await opened;
       const id = nextId++;
       const response = new Promise((resolve, reject) => {
@@ -140,7 +140,7 @@ function createCdp(webSocketUrl) {
         pending.set(id, { resolve, reject, timer, method });
       });
       try {
-        socket.send(JSON.stringify({ id, method, params }));
+        socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
       } catch (error) {
         const request = pending.get(id);
         if (request) {
@@ -291,9 +291,10 @@ function createQaPage() {
           anchorId: 'editor-code',
           editorLabel: '',
           widgetMode: 'custom',
-          html: '<div>QA code block</div>',
-          css: '',
-          js: '',
+          html: '<div id="code-preview-qa">QA code block<button id="code-toggle">더보기</button><div id="code-details" hidden>추가 내용</div></div>',
+          css: '#code-preview-qa{background:rgb(219,234,254);padding:16px}#code-details{height:240px}',
+          js: "document.getElementById('code-toggle').onclick = () => { const details = document.getElementById('code-details'); details.hidden = !details.hidden; };",
+          runJs: true,
         },
       },
       {
@@ -1006,6 +1007,49 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+    // Custom HTML/CSS/JS must be visible and interactive in the actual editor,
+    // while the iframe cannot inherit editor credentials or submit live leads.
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-code iframe.custom-code-frame')`, 'custom code iframe in editor preview');
+    await evaluate(client, `document.querySelector('.phone-frame #block-editor-code').scrollIntoView({block:'center'})`);
+    await waitForBrowser(client, `parseInt(document.querySelector('.phone-frame #block-editor-code iframe').style.height, 10) > 48`, 'custom code content loaded and measured');
+    // Chrome may put the opaque-origin sandbox in a separate renderer process.
+    const codeTargets = await client.send('Target.getTargets');
+    const codeTarget = codeTargets.targetInfos.find((target) => target.type === 'iframe' && target.url === 'about:srcdoc');
+    let codeSessionId, codeContextId;
+    if (codeTarget) {
+      ({ sessionId: codeSessionId } = await client.send('Target.attachToTarget', { targetId: codeTarget.targetId, flatten: true }));
+    } else {
+      const codeFrameTree = await client.send('Page.getFrameTree');
+      const findCodeFrame = (tree) => tree.frame.url === 'about:srcdoc'
+        ? tree.frame : (tree.childFrames || []).map(findCodeFrame).find(Boolean);
+      const codeFrame = findCodeFrame(codeFrameTree.frameTree);
+      assert(codeFrame, 'custom code must create a real srcdoc frame');
+      ({ executionContextId: codeContextId } = await client.send('Page.createIsolatedWorld', { frameId: codeFrame.id, worldName: 'code-preview-qa' }));
+    }
+    const evaluateCode = async (expression) => {
+      const result = await client.send('Runtime.evaluate', { expression, ...(codeContextId ? { contextId: codeContextId } : {}), returnByValue: true, awaitPromise: true }, codeSessionId);
+      assert(!result.exceptionDetails, 'custom code frame evaluation failed: ' + JSON.stringify(result.exceptionDetails));
+      return result.result.value;
+    };
+    const codeContent = await evaluateCode(`(() => ({ text: document.body.innerText, color: getComputedStyle(document.querySelector('#code-preview-qa')).backgroundColor }))()`);
+    assert(codeContent.text.includes('QA code block') && codeContent.color === 'rgb(219, 234, 254)', 'editor must render stored HTML and CSS: ' + JSON.stringify(codeContent));
+    await evaluateCode(`document.querySelector('#code-toggle').click()`);
+    assert(await evaluateCode(`!document.querySelector('#code-details').hidden`), 'stored widget JavaScript must respond to clicks');
+    await waitForBrowser(client, `parseInt(document.querySelector('.phone-frame #block-editor-code iframe').style.height, 10) >= 280`, 'custom code iframe expands after interaction');
+    await capture(client, 'desktop-code-preview');
+    const codeApiBefore = apiState.unexpectedApis.length;
+    const codeIsolation = await evaluateCode(`(async () => {
+      let parentBlocked = false, storageBlocked = false, fetchBlocked = false;
+      try { void parent.document.body; } catch { parentBlocked = true; }
+      try { localStorage.setItem('code-preview-qa', 'unsafe'); } catch { storageBlocked = true; }
+      try { await fetch(${JSON.stringify(origin + '/api/leads')}, { method: 'POST', body: '{}' }); } catch { fetchBlocked = true; }
+      return { parentBlocked, storageBlocked, fetchBlocked };
+    })()`);
+    assert(codeIsolation.parentBlocked && codeIsolation.storageBlocked && codeIsolation.fetchBlocked, 'custom preview must isolate editor session and reject live API writes: ' + JSON.stringify(codeIsolation));
+    assert(apiState.unexpectedApis.length === codeApiBefore, 'custom preview must block requests before they reach a live API');
+    const codeSandbox = await evaluate(client, `document.querySelector('.phone-frame #block-editor-code iframe').getAttribute('sandbox')`);
+    assert(codeSandbox === 'allow-scripts', 'custom preview must not permit forms, popups, downloads or top navigation');
+    await evaluateCode(`document.querySelector('#code-toggle').click()`);
     // F04: execute a real editor form with valid tracking IDs in the page.
     // Only fake same-origin APIs are accessible; outbound origins are blocked.
     const f04Before = await evaluate(client, `(() => {
@@ -2185,6 +2229,7 @@ async function run() {
     console.log(JSON.stringify({
       ok: true,
       scope: 'authenticated-editor-browser-regression',
+      customCodePreview: ['html-css-visible', 'javascript-click', 'dynamic-height', 'parent-session-isolated', 'api-write-blocked'],
       loginCount: apiState.loginCount,
       sessionCount: apiState.sessionCount,
       projectListCount: apiState.projectListCount,
