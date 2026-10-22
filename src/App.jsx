@@ -49,6 +49,7 @@ import { useWorkspaceAutoOpen } from './runtime/useWorkspaceAutoOpen.js';
 import { useWorkspaceTabFallback } from './runtime/useWorkspaceTabFallback.js';
 import { useWorkspaceEditorEffects } from './runtime/useWorkspaceEditorEffects.js';
 import { useMobileWorkspaceMode } from './runtime/useMobileWorkspaceMode.js';
+import PublicHomeRoute from './screens/PublicHomeRoute.jsx';
 import WorkspaceEditorScreen from './screens/WorkspaceEditorScreen.jsx';
 import PreviewRenderer from './preview/LandingRenderer.jsx';
 import { BRAND_KO, BRAND_NAME } from './config/brand.js';
@@ -1247,14 +1248,13 @@ function App() {
       );
     }
 
-    return withWayziFooter(
-      <Suspense fallback={<LazyPanelFallback />}>
-        <AuthScreen
-          key="root-login"
-          initialMode="login"
-          onAuth={acceptAuth}
-        />
-      </Suspense>
+    // The public homepage is the publisher's content hub; sign-in remains on /login.
+    // Do not replace indexable LIFE/CallTag editorial navigation with the login form after hydration.
+    return (
+      <PublicHomeRoute
+        onLogin={() => window.location.assign('/login')}
+        onSignup={() => window.location.assign('/signup')}
+      />
     );
   }
 
