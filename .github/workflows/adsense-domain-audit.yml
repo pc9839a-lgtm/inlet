@@ -1,0 +1,94 @@
+name: Audit PageRo AdSense site/domain inventory (read only)
+on:
+  push:
+    branches: [audit/adsense-domain-inventory-20261022]
+    paths: ['.github/workflows/adsense-domain-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Enumerate active Cloudflare projects, custom domains and AdSense public routes (read only)
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, json, urllib.request, urllib.error, re, concurrent.futures
+          account=os.environ.get('CF_ACCOUNT_ID','')
+          token=os.environ.get('CF_API_TOKEN','')
+          def api(path, body=None):
+              url='https://api.cloudflare.com/client/v4/accounts/'+account+'/'+path
+              data=json.dumps(body).encode('utf-8') if body is not None else None
+              request=urllib.request.Request(url,data=data,headers={'Authorization':'Bearer '+token,'Content-Type':'application/json','User-Agent':'PageRoDomainAudit/1.0'})
+              with urllib.request.urlopen(request,timeout=20) as response:return json.load(response)
+          print('=== ROOT SITE AND PUBLIC AD SCOPE ===',flush=True)
+          mandatory=['https://pagero.kr/','https://pagero.kr/ads.txt','https://pagero.kr/robots.txt',
+             'https://pagero.kr/sitemap.xml','https://pagero.kr/life/','https://pagero.kr/life/sitemap.xml',
+             'https://pagero.kr/life/car/car-inspection-period/','https://pagero.kr/guide/lead-funnel-metrics/',
+             'https://pagero.kr/guide/form-submission-debug/','https://pagero.kr/tools/lead-calculator/',
+             'https://pagero.kr/about','https://pagero.kr/contact','https://pagero.kr/privacy',
+             'https://awards.pagero.kr/','https://calltag.pagero.kr/','https://call.pagero.kr/',
+             'https://life.pagero.kr/','https://peopleent.pagero.kr/','https://925film.pagero.kr/']
+          def check(url):
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (compatible; PageRoAdsenseAudit/1.0)','Cache-Control':'no-cache'})
+                  with urllib.request.urlopen(req,timeout=13) as response:
+                      body=response.read(90000).decode('utf-8','replace')
+                      code=response.status
+                      end=response.url
+                      headers=response.headers
+                  robots=headers.get('X-Robots-Tag','')
+                  canonical=re.search(r'<link\\s+rel=["\\']canonical["\\']\\s+href=["\\']([^"\\']+)',body,re.I)
+                  canonical=canonical.group(1) if canonical else '(none)'
+                  meta=re.search(r'<meta\\s+name=["\\']robots["\\']\\s+content=["\\']([^"\\']+)',body,re.I)
+                  meta=meta.group(1) if meta else '(none)'
+                  ads='pub-1906196934401001' in body
+                  return {'url':url,'status':code,'final':end,'robots_header':robots,'meta_robots':meta,'canonical':canonical,'pub_present':ads}
+              except urllib.error.HTTPError as e: return {'url':url,'status':e.code,'location':e.headers.get('Location','')}
+              except Exception as e:return {'url':url,'status':'ERROR','reason':type(e).__name__+': '+str(e)[:80]}
+          with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+              for result in pool.map(check,mandatory):print('PUBLIC',json.dumps(result,ensure_ascii=False),flush=True)
+          if not account or not token:
+              print('CLOUDFLARE INVENTORY: credentials unavailable (no secrets printed)',flush=True)
+          else:
+              print('=== CLOUDFLARE PAGES PRODUCTION DOMAINS ===',flush=True)
+              try:
+                  response=api('pages/projects?per_page=100')
+                  if not response.get('success'):raise RuntimeError(str(response.get('errors',[]))[:180])
+                  projects=response.get('result') or []
+                  print('PAGES_PROJECT_COUNT',len(projects),flush=True)
+                  for project in projects:
+                      print('PAGES_PROJECT',json.dumps({'name':project.get('name'),'domains':project.get('domains',[])},ensure_ascii=False),flush=True)
+              except Exception as e:print('PAGES_PROJECT_LOOKUP_UNAVAILABLE',type(e).__name__,str(e)[:160],flush=True)
+              print('=== ACTIVE CUSTOMER CUSTOM DOMAINS IN D1 (PUBLIC HOSTNAMES ONLY) ===',flush=True)
+              try:
+                  databases=api('d1/database?per_page=100')
+                  if not databases.get('success'):raise RuntimeError(str(databases.get('errors',[]))[:180])
+                  found=False
+                  for db in databases.get('result') or []:
+                      name=db.get('name','')
+                      dbid=db.get('uuid','')
+                      if not dbid:continue
+                      try:
+                          probe=api('d1/database/'+dbid+'/query',{'sql':"SELECT name FROM sqlite_master WHERE type='table' AND name='page_domains'"})
+                          result=probe.get('result') or []
+                          rows=result[0].get('results',[]) if result else []
+                          if not rows:continue
+                          found=True
+                          query=api('d1/database/'+dbid+'/query',{'sql':"SELECT DISTINCT hostname_key AS hostname, status FROM page_domains WHERE status='active' ORDER BY hostname_key LIMIT 500"})
+                          groups=query.get('result') or []
+                          domains=groups[0].get('results',[]) if groups else []
+                          print('D1_DATABASE',name,'ACTIVE_DOMAIN_COUNT',len(domains),'LIMIT_500',flush=True)
+                          for item in domains:
+                              host=str(item.get('hostname','')).strip()
+                              if re.fullmatch(r'[A-Za-z0-9.-]{2,253}',host):
+                                  print('ACTIVE_CUSTOM_DOMAIN',host,flush=True)
+                      except Exception as e:print('D1_PROBE_UNAVAILABLE',name,type(e).__name__,str(e)[:100],flush=True)
+                  if not found:print('D1_PAGE_DOMAINS_NOT_ENUMERATED',flush=True)
+              except Exception as e:print('D1_LIST_UNAVAILABLE',type(e).__name__,str(e)[:160],flush=True)
+          PY
