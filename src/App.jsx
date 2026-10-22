@@ -96,7 +96,6 @@ function publicLandingSlugFromLocation(path = '') {
   return /^[a-zA-Z0-9-_]+$/.test(slug) ? slug : '';
 }
 
-const PublicHomeRoute = lazy(() => import('./screens/PublicHomeRoute.jsx'));
 const InboxPanel = lazy(() => import('./panels/InboxPanel.jsx'));
 const StatsPanel = lazy(() => import('./panels/StatsPanel.jsx'));
 const StylePanel = lazy(() => import('./panels/StylePanel.jsx'));
@@ -387,6 +386,8 @@ const WAYZI_STATIC_PAGES = {
 };
 
 const WAYZI_FOOTER_MENU = [
+  ['생활비서', '/life/'],
+  ['콜태그(CallTag)', 'https://calltag.pagero.kr/'],
   ['사이트소개', '/about'],
   ['문의안내', '/contact'],
   ['개인정보처리방침', '/privacy'],
@@ -1248,13 +1249,12 @@ function App() {
       );
     }
 
-    // The public homepage is the publisher's content hub; sign-in remains on /login.
-    // Do not replace indexable LIFE/CallTag editorial navigation with the login form after hydration.
-    return (
+    return withWayziFooter(
       <Suspense fallback={<LazyPanelFallback />}>
-        <PublicHomeRoute
-          onLogin={() => window.location.assign('/login')}
-          onSignup={() => window.location.assign('/signup')}
+        <AuthScreen
+          key="root-login"
+          initialMode="login"
+          onAuth={acceptAuth}
         />
       </Suspense>
     );
