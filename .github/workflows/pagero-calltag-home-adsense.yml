@@ -1,0 +1,34 @@
+name: PageRo CallTag footer and AdSense home integrity
+on:
+  push:
+    branches: [main, fix/pagero-calltag-footer-adsense-home-20261022]
+    paths:
+      - src/App.jsx
+      - src/screens/PageroCanonicalHome.jsx
+      - functions/index.js
+      - scripts/pagero-calltag-footer-adsense-quality-check.mjs
+      - .github/workflows/pagero-calltag-home-adsense.yml
+  pull_request:
+    paths:
+      - src/App.jsx
+      - src/screens/PageroCanonicalHome.jsx
+      - functions/index.js
+      - scripts/pagero-calltag-footer-adsense-quality-check.mjs
+      - .github/workflows/pagero-calltag-home-adsense.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check public publisher navigation and customer ad-code separation
+        run: node scripts/pagero-calltag-footer-adsense-quality-check.mjs
+      - name: Validate production root SEO
+        run: node scripts/validate-pagero-root-seo.mjs
+      - name: Build actual PageRo SPA
+        run: npm ci && npm run build
