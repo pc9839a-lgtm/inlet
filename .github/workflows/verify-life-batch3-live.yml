@@ -1,0 +1,47 @@
+name: Verify PageRo LIFE Oct 2026 editorial batch 3 live
+on:
+  push:
+    branches: [audit/adsense-domain-inventory-20261022]
+    paths: [.github/workflows/verify-life-batch3-live.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 11
+    steps:
+      - name: Ensure publisher indexable official comparisons and current tax deadline are deployed
+        shell: bash
+        run: |
+          python - <<'PY'
+          import time, urllib.request, re
+          cases={
+            'https://pagero.kr/life/support/heating-energy-support-2026/':['실제 이용 방식으로 비교하는 2026 에너지바우처','2027년 5월 31일'],
+            'https://pagero.kr/life/support/2026-september-parental-leave-changes/':['9월 18일 시행 제도를 상황별로 비교하기','배우자 지원 3종 세트'],
+            'https://pagero.kr/life/support/low-income-diaper-formula-support-2026/':['기저귀 지원과 조제분유 지원은 자격이 다릅니다','가상 사례 비교'],
+            'https://pagero.kr/life/car/car-tax-annual-payment-2026/':['2026년 10월 기준으로 지금 해야 하는 일','2027년 1월'],
+          }
+          pending=dict(cases)
+          for attempt in range(1,18):
+            for url,markers in list(pending.items()):
+              try:
+                request=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 PageRoPublisherBatch3QA','Cache-Control':'no-cache'})
+                with urllib.request.urlopen(request,timeout=16) as response:
+                  status=response.status
+                  headers=response.headers
+                  body=response.read(500000).decode('utf-8','replace')
+                normal=(status==200 and 'text/html' in headers.get('Content-Type','')
+                    and '<table' in body and all(m in body for m in markers)
+                    and 'noindex' not in headers.get('X-Robots-Tag','').lower()
+                    and 'rel="canonical" href="'+url+'"' in body)
+                if '/car-tax-annual-payment-2026/' in url:
+                  normal=normal and '올해 남은 정기 신청 기회는 9월 연납입니다.' not in body
+                print('TRY',attempt,url,'HTTP',status,'PASS',normal,flush=True)
+                if normal:pending.pop(url)
+              except Exception as exc:print('RETRY',attempt,url,type(exc).__name__,str(exc)[:130],flush=True)
+            if not pending:break
+            if attempt<17:time.sleep(14)
+          if pending:raise SystemExit('FAIL: official 2026 guide updates not yet visible: '+','.join(pending))
+          print('PASS: 4 updated factual guides have indexable canonical public HTML and substantive comparison tables',flush=True)
+          PY
