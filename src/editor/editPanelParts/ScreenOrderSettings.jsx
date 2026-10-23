@@ -25,8 +25,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor }) {
         className="screen-order-v2-settings"
         data-block-settings-id={block.id}
         data-scroll-region="block-settings"
-        role="region"
-        tabIndex={0}
+        role="group"
         aria-label={`${meta.label} 상세 설정`}
       >
         {renderBlockEditor(block)}

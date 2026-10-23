@@ -1477,8 +1477,9 @@ async function run() {
     // D01: exercise the actual selected inspector DOM and CSS scroll contract.
     // A taller editor must scroll internally, without changing block order.
     const inspectorScroll = await evaluate(client, `(() => {
-      const panel = document.querySelector('#editor-block-settings-editor-hero[data-scroll-region="block-settings"]');
-      const content = panel?.querySelector('.block-editor-v2');
+      const settings = document.querySelector('#editor-block-settings-editor-hero');
+      const panel = settings?.closest('.editor-inspector-panel');
+      const content = settings?.querySelector('.block-editor-v2');
       if (!panel || !content) return null;
       const original = content.style.minHeight;
       let result;
@@ -1495,6 +1496,8 @@ async function run() {
           height: panel.clientHeight,
           contentHeight: panel.scrollHeight,
           scrollTop: panel.scrollTop,
+          innerOverflowY: getComputedStyle(settings).overflowY,
+          outerOverflowY: getComputedStyle(document.querySelector('.work-panel')).overflowY,
         };
       } finally {
         content.style.minHeight = original;
@@ -1503,10 +1506,11 @@ async function run() {
       return result;
     })()`);
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
-      && inspectorScroll.label?.includes('상세 설정'), `D01 keyboard-scroll region must be accessible: ${JSON.stringify(inspectorScroll)}`);
+      && inspectorScroll.label?.includes('선택 항목 편집'), `D01 keyboard-scroll region must be accessible: ${JSON.stringify(inspectorScroll)}`);
     assert(inspectorScroll.overflowY === 'auto' && inspectorScroll.maxHeight > 0
-      && inspectorScroll.contentHeight > inspectorScroll.height && inspectorScroll.scrollTop > 0,
-      `D01 long block inspector must scroll independently on desktop: ${JSON.stringify(inspectorScroll)}`);
+      && inspectorScroll.contentHeight > inspectorScroll.height && inspectorScroll.scrollTop > 0
+      && inspectorScroll.innerOverflowY === 'visible' && inspectorScroll.outerOverflowY === 'hidden',
+      `D01 long settings must use exactly one accessible inspector scroll area: ${JSON.stringify(inspectorScroll)}`);
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.

@@ -60,7 +60,7 @@ export function EditPanelLayout({
         </section>
         <AddBlockDock {...addBlockDockProps} />
       </aside>
-      <section className="editor-inspector-panel" aria-label="선택 항목 편집">
+      <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>
       <nav
         className="edit-section-tabs"
         data-pagero-ui="edit-section-tabs-v2"
