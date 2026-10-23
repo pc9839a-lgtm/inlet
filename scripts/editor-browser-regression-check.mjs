@@ -240,7 +240,7 @@ function createQaPage() {
           anchorId: 'editor-hero',
           title: '저장 전 히어로 제목',
           body: '로그인부터 저장 후 재접속까지 실제 브라우저에서 검사합니다.',
-          image: '',
+          image: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="320"><rect width="600" height="320" fill="#0f766e"/><circle cx="460" cy="90" r="110" fill="#5eead4"/><path d="M0 320L220 90L440 320" fill="#115e59"/></svg>'),
           imageMode: 'top',
           imageFit: 'contain',
           imageHeightPx: 260,
@@ -1427,6 +1427,57 @@ async function run() {
     })()`);
     assert(stageFourRange.padding === '0px' && stageFourRange.border === '0px' && stageFourRange.width > 100,
       'stage4 range must retain its native slider geometry: ' + JSON.stringify(stageFourRange));
+    qaStep('stage6 hero image controls');
+    const stageSixHero = '#editor-block-settings-editor-hero';
+    const heroHeightNumber = `${stageSixHero} input[aria-label="이미지 높이 (px)"]`;
+    const heroFilterNumber = `${stageSixHero} input[aria-label="필터 진하기 (%)"]`;
+    const heroPlacement = `${stageSixHero} .editor-segmented-v2[aria-label="이미지 배치"]`;
+    await setInputValue(client, heroHeightNumber, '360');
+    await waitForBrowser(client, `document.querySelector('.phone-frame #block-editor-hero')?.style.getPropertyValue('--hero-image-height') === '360px'`, 'stage6 height numeric preview');
+    await focusSelector(client, heroHeightNumber);
+    await setInputValue(client, heroHeightNumber, '');
+    await focusSelector(client, `${heroPlacement} button:first-child`);
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '360'`, 'stage6 empty height restores its value');
+    await focusSelector(client, heroHeightNumber);
+    await setInputValue(client, heroHeightNumber, '999');
+    await focusSelector(client, `${heroPlacement} button:first-child`);
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '720'`, 'stage6 height upper bound');
+    await setInputValue(client, heroHeightNumber, '360');
+    // A separate slider gesture must start outside the existing 350ms history group.
+    await wait(400);
+    await setInputValue(client, `${stageSixHero} .hero-image-range input[type="range"]`, '420');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '420'`, 'stage6 slider updates the number');
+    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '360'`, 'stage6 number follows undo');
+    await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '420'`, 'stage6 number follows redo');
+    await setInputValue(client, heroHeightNumber, '360');
+    await clickSelector(client, `${heroPlacement} button:nth-child(3)`);
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-hero.hero-full .hero-full-content')`, 'stage6 full image with text');
+    const heroTextSwitch = `${stageSixHero} [role="switch"][aria-label="글자 표시"]`;
+    await clickSelector(client, heroTextSwitch);
+    await waitForBrowser(client, `!document.querySelector('.phone-frame #block-editor-hero .hero-full-content') && !document.querySelector(${JSON.stringify(heroFilterNumber)})`, 'stage6 text off hides text and its filter controls');
+    await clickButtonByText(client, `${stageSixHero} .editor-tabs-v2-list`, '내용');
+    assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'stage6 hiding text must preserve its content');
+    await clickButtonByText(client, `${stageSixHero} .editor-tabs-v2-list`, '이미지');
+    await clickSelector(client, heroTextSwitch);
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-hero .hero-full-content') && !!document.querySelector(${JSON.stringify(heroFilterNumber)})`, 'stage6 text on restores content');
+    await setInputValue(client, heroFilterNumber, '25');
+    const heroFilterSwitch = `${stageSixHero} [role="switch"][aria-label="사진 필터"]`;
+    await clickSelector(client, heroFilterSwitch);
+    await waitForBrowser(client, `!document.querySelector('.phone-frame #block-editor-hero .hero-full-media > i') && !document.querySelector(${JSON.stringify(heroFilterNumber)})`, 'stage6 filter off');
+    await clickSelector(client, heroFilterSwitch);
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroFilterNumber)})?.value === '25' && !!document.querySelector('.phone-frame #block-editor-hero .hero-full-media > i')`, 'stage6 filter strength survives off and on');
+    await capture(client, 'desktop-hero-full-stage6');
+    await clickSelector(client, `${heroPlacement} button:nth-child(2)`);
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-hero.hero-background') && !document.querySelector(${JSON.stringify(heroHeightNumber)})`, 'stage6 background mode shows relevant controls');
+    await showBlockList(client);
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'stage6 hero after reselection');
+    await clickButtonByText(client, `${stageSixHero} .editor-tabs-v2-list`, '이미지');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroPlacement + ' button:nth-child(2)')})?.getAttribute('aria-pressed') === 'true' && document.querySelector(${JSON.stringify(heroFilterNumber)})?.value === '25'`, 'stage6 stored background mode must not appear as top');
+    assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
+    await capture(client, 'desktop-hero-background-stage6');
     await clickButtonByText(client, '#editor-block-settings-editor-hero .editor-tabs-v2-list', '내용');
     // D01: exercise the actual selected inspector DOM and CSS scroll contract.
     // A taller editor must scroll internally, without changing block order.
@@ -1950,6 +2001,10 @@ async function run() {
     await waitForState(() => apiState.publicVerifyCount >= 1, 'first publish public verification');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(continuedHeroTitle)}`, 'newer local draft after delayed publish response');
     assert(apiState.saveSnapshots[0]?.blocks?.find((block) => block.id === 'editor-hero')?.s?.title === updatedHeroTitle, 'first server snapshot should contain the pre-race title');
+    const savedHeroStageSix = apiState.saveSnapshots[0]?.blocks?.find((block) => block.id === 'editor-hero')?.s;
+    assert(savedHeroStageSix?.imageMode === 'background' && savedHeroStageSix.imageHeightPx === 360
+      && savedHeroStageSix.overlayOpacity === 25 && savedHeroStageSix.overlay !== false && savedHeroStageSix.fullText === true,
+      'stage6 hero values must persist through explicit publish: ' + JSON.stringify(savedHeroStageSix));
     const f05FirstPublishedOrder = (apiState.saveSnapshots[0]?.blocks || [])
       .filter((block) => !['topnav', 'bottombar', 'footer'].includes(block.type) && block.visible !== false)
       .map((block) => block.id);
