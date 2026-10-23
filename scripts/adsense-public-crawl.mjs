@@ -69,7 +69,7 @@ if (standards.status !== 200 || !standards.html.includes('광고와 편집의 �
 }
 const continuationUrl = LIFE + '/car/car-inspection-period/2/';
 if (continuation.status !== 200 ||
-    !/<meta\\s+name="robots"\\s+content="noindex,follow/i.test(continuation.html) ||
+    !/<meta\s+name="robots"\s+content="noindex,follow/i.test(continuation.html) ||
     !continuation.html.includes(`<link rel="canonical" href="${continuationUrl}">`)) {
   warn('life_continuation_indexing', 'Continued guide must be noindex with self-canonical');
 }
