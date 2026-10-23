@@ -1,3 +1,4 @@
+# 2026-10-23 practical benefit and car procedure comparisons with stable review dates.
 # 2026-10-23 editorial reader-value refresh: deploy 4 task-first guides from life-pagero main, verify immutable homepage and record the new origin.
 # 2026-10-23 phase 3: publish consent disclosure in a verified immutable snapshot and record its deployment URL.
 # 2026-10-23 AdSense phase 2: publish verified 18-guide source precision and five first-page comparisons; preserve customer-page ad exclusion.
@@ -147,10 +148,15 @@ jobs:
           import os,sys,time,urllib.request
           origin=os.environ.get('IMMUTABLE_URL','').rstrip('/')
           pages={
+            '/car/used-car-transfer-documents/':['class="reader-decision"','공식자료 확인'],
+            '/support/child-allowance-2026/':['class="reader-decision"','공식자료 확인'],
+            '/support/parental-benefit-2026/':['class="reader-decision"','공식자료 확인'],
+            '/support/livelihood-benefit-2026/':['class="reader-decision"','공식자료 확인'],
+            '/support/housing-benefit-2026/':['class="reader-decision"','공식자료 확인'],
             '/':['id="life-pathways-title"','data-path="inspection"','data-path="transfer"','data-path="parenting"','data-path="livelihood"'],
             '/privacy-policy/':['Google AdSense','https://adssettings.google.com/','https://policies.google.com/technologies/partner-sites'],
-            '/car/car-inspection-period/':['생활비서','rel="canonical"','https://pagero.kr/life/car/car-inspection-period/'],
-            '/editorial-standards/':['광고와 편집의 분리'],
+            '/car/car-inspection-period/':['class="reader-decision"','생활비서','rel="canonical"','https://pagero.kr/life/car/car-inspection-period/'],
+            '/editorial-standards/':['작성·검수 기준 확인일: 2026-10-23','광고와 편집의 분리'],
           }
           for path,needles in pages.items():
             verified=False
