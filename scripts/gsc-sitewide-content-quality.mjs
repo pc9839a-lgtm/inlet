@@ -19,7 +19,7 @@ function metas(html,name){
   return (html.match(/<meta\b[^>]*>/gi)||[]).filter(t=>{let n=t.match(/\b(?:name|property)\s*=\s*["']([^"']+)["']/i)?.[1];return n?.toLowerCase()===name;}).map(t=>t.match(/\bcontent\s*=\s*["']([^"']*)["']/i)?.[1]||'');
 }
 const canonical=html=>(html.match(/<link\b[^>]*\brel\s*=\s*["']canonical["'][^>]*>/gi)||[]).map(s=>s.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1]||'').filter(Boolean);
-function grams(text){const s=text.normalize('NFC').toLowerCase().replace(/[^가-힣a-z0-9]/g,'');const out=new Set();for(let i=0;i<s.length-6;i+=4)out.add(s.slice(i,i+7));return out;}
+function grams(text){const s=text.normalize('NFC').toLowerCase().replace(/[^가-힣a-z0-9]/g,'');const out=new Set();for(let i=0;i<s.length-6;i++)out.add(s.slice(i,i+7));return out;}
 function overlap(a,b){if(!a.size||!b.size)return 0;let count=0;for(const x of a.size<b.size?a:b)if((a.size<b.size?b:a).has(x))count++;return count/(a.size+b.size-count);}
 const errors=[],sitemaps=[],allUrls=new Map(),rows=[];
 await Promise.all(maps.map(async map=>{
@@ -55,7 +55,18 @@ async function inspect(url,map) {
   if(!item.title)item.problems.push('no_title');
   if(!item.h1)item.problems.push('no_h1');
   if(item.description.length<40)item.problems.push('short_description');
-  if(/\/(guide|insight|brand-daesang|life)\//.test(new URL(url).pathname)&&text.length<550)item.problems.push('short_main_html');
+  // Only substantive article pages receive a length advisory. Category hubs,
+  // policy pages and trust/contact pages are intentionally shorter.
+  const pathname=new URL(url).pathname;
+  const bits=pathname.split('/').filter(Boolean);
+  const host=new URL(url).hostname;
+  const article=(host==='pagero.kr'&&bits[0]==='life'&&bits.length===3)
+    ||(host==='pagero.kr'&&bits[0]==='guide'&&bits.length===2)
+    ||(host==='awards.pagero.kr'&&bits[0]==='brand-daesang'&&bits.length===3)
+    ||(host==='calltag.pagero.kr'&&bits[0]==='guide'&&bits.length===2)
+    ||(host==='peopleent.pagero.kr'&&bits[0]==='insight'&&bits.length===2)
+    ||(host==='vowday.pagero.kr'&&bits[0]==='guide'&&bits.length===2);
+  if(article&&text.length<550)item.problems.push('short_article_html');
  }catch(e){item.problems.push('network_error');item.error=String(e);}
  return item;
 }
@@ -72,7 +83,7 @@ for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){
  const a=rows[i],b=rows[j];
  if(new URL(a.url).hostname!==new URL(b.url).hostname||a.mainLength<550||b.mainLength<550)continue;
  const score=overlap(a._grams||new Set(),b._grams||new Set());
- if(score>=0.73)nearDuplicate.push({similarity:+score.toFixed(3),urls:[a.url,b.url],lengths:[a.mainLength,b.mainLength]});
+ if(score>=0.65)nearDuplicate.push({similarity:+score.toFixed(3),urls:[a.url,b.url],lengths:[a.mainLength,b.mainLength]});
 }
 nearDuplicate.sort((a,b)=>b.similarity-a.similarity);
 const summary={scope:'Published sitemap URLs only. Google did NOT disclose its 18 crawled-not-indexed URL examples in the provided CSV.',checkedAt:new Date().toISOString(),sitemaps,total:rows.length,http200:rows.filter(r=>r.status===200).length,canonicalCorrect:rows.filter(r=>r.canonical===r.url).length,noindex:rows.filter(r=>r.problems.includes('noindex_in_sitemap')).length,issueRows:issues.length,duplicateTitleGroups:duplicateTitles.length,nearDuplicatePairs:nearDuplicate.length};
