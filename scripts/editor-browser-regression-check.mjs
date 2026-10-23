@@ -1704,7 +1704,10 @@ async function run() {
     await setInputValue(client, innerSpacing, '0');
     await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '16');
-    await waitForBrowser(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return style.paddingTop === '0px' && style.marginTop === '16px'; })()`, 'exact zero padding and numeric outer spacing render without publishing');
+    await waitForBrowser(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return style.paddingTop === '0px' && style.marginTop === '16px'; })()`, 'exact zero padding and numeric outer spacing render without publishing').catch(async (error) => {
+      const actual = await evaluate(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return { padding: style.paddingTop, margin: style.marginTop, paddingValue: style.getPropertyValue('--widget-padding'), marginValue: style.getPropertyValue('--widget-margin') }; })()`);
+      throw new Error(error.message + ': ' + JSON.stringify(actual));
+    });
     await setInputValue(client, outerSpacing, '999');
     await focusSelector(client, innerSpacing);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(outerSpacing)})?.value === '48'`, 'out-of-range spacing clamps on blur');
