@@ -132,6 +132,21 @@ if (missingIndex.length) warn('home_to_articles', missingIndex.slice(0,12).join(
 if (missingSitemap.length) warn('sitemap_to_articles', missingSitemap.slice(0,12).join(', ') + ' total=' + missingSitemap.length);
 got('discovery', 'LIFE listed article URLs=' + listed.size + ', publisher source articles=' + articles.length);
 
+const decisionArticles = new Set([
+  '/life/car/car-inspection-period/',
+  '/life/car/car-inspection-reservation/',
+  '/life/car/used-car-transfer-documents/',
+  '/life/car/used-car-transfer-cost/',
+  '/life/support/child-allowance-2026/',
+  '/life/support/parental-benefit-2026/',
+  '/life/support/livelihood-benefit-2026/',
+  '/life/support/housing-benefit-2026/',
+]);
+if (!standards.html.includes('작성·검수 기준 확인일: 2026-10-23')) {
+  warn('life_editorial_date', 'Editorial policy review date was replaced by build date or is missing');
+}
+got('reader_decisions', 'Eight canonical LIFE guides must contain a situation-based comparison section');
+
 const batches = [];
 for (let i = 0; i < articles.length; i += 8) batches.push(articles.slice(i,i+8));
 let goodArticles = 0;
@@ -159,6 +174,7 @@ for (const batch of batches) {
       if (!html.includes('href="/life/"') && !html.includes('href="/life/car/"')) problems.push('missing_life_navigation');
       if (!html.includes('href="https://') && !html.includes('href="http://')) problems.push('no_external_citations');
       if (html.includes('생활비서 연결 오류')) problems.push('proxy_fallback');
+      if (decisionArticles.has(post.pathname) && !html.includes('<section class="reader-decision"')) problems.push('missing_practical_comparison');
     }
     if (problems.length) failing.push({ page: post.pathname, problems });
     else goodArticles++;
