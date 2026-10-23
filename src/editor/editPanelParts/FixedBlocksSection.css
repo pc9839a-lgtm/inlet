@@ -293,3 +293,16 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
     transform: translateX(18px) !important;
   }
 }
+/* Fixed entries in the persistent composition list remain readable at narrow widths. */
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-card {
+  padding: 0 !important; border: 0 !important; border-radius: 0 !important;
+  background: transparent !important; box-shadow: none !important;
+}
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-head {
+  display: grid !important; grid-template-columns: minmax(0, 1fr) 46px 26px !important;
+  gap: 4px !important; padding: 6px 0 !important; min-height: 44px !important;
+}
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-copy { min-width: 0 !important; }
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-copy em { display: none !important; }
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-copy strong { font-size: 12px !important; white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.35; }
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-open-button { width: 26px !important; min-width: 26px !important; height: 32px !important; min-height: 32px !important; }

@@ -1,25 +1,25 @@
-/* Edit shell owner: page canvas and selected-item inspector. */
+/* Edit shell owner: left editing workspace and right page preview. */
 html body #root .builder-shell.canvas-editor-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px !important;
+  grid-template-columns: clamp(500px, 50vw, 660px) minmax(0, 1fr) !important;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
 }
 html body #root .canvas-editor-shell > .left-workspace { display: contents !important; }
 html body #root .canvas-editor-shell .work-panel {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 2;
   max-width: none !important;
   min-height: 0;
   height: 100% !important;
   margin: 0 !important;
-  padding: 16px 16px 64px !important;
+  padding: 0 !important;
   overflow: hidden auto !important;
-  border-left: 1px solid var(--product-line);
+  border-right: 1px solid var(--product-line);
   background: #fff;
 }
 /* Desktop zoom keeps both surfaces reachable; phones retain operations mode. */
-@media (max-width: 759px) {
+@media (max-width: 899px) {
   body:has(.canvas-editor-shell), #root:has(.canvas-editor-shell) { height: auto !important; overflow: auto !important; }
   html body #root .builder-shell.canvas-editor-shell {
     grid-template-columns: minmax(0, 1fr) !important;
@@ -29,5 +29,5 @@ html body #root .canvas-editor-shell .work-panel {
     max-height: none !important;
     overflow: visible !important;
   }
-  html body #root .canvas-editor-shell .work-panel { grid-column: 1; grid-row: 3; height: auto !important; border-left: 0; }
+  html body #root .canvas-editor-shell .work-panel { grid-column: 1; grid-row: 2; height: auto !important; border-left: 0; }
 }

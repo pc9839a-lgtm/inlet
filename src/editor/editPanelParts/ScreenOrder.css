@@ -920,3 +920,13 @@ html body #root .builder-shell.edit-mode-shell
 .screen-order-v2-type-icon .screen-order-v2-thumbnail[hidden] {
   display: none;
 }
+
+/* Persistent left list keeps names readable alongside the settings. */
+html body #root .builder-shell .editor-composition-panel .screen-order-v2-head {
+  grid-template-columns: 14px minmax(0, 1fr) 26px 26px !important;
+  gap: 2px !important;
+  padding-inline: 0 !important;
+}
+html body #root .builder-shell .editor-composition-panel .screen-order-v2-drag { width: 14px !important; min-width: 14px !important; }
+html body #root .builder-shell .editor-composition-panel :is(.screen-order-v2-visibility-button, .screen-order-v2-action) { width: 26px !important; min-width: 26px !important; }
+html body #root .builder-shell .editor-composition-panel .screen-order-v2-title-wrap { grid-template-columns: 20px minmax(0, 1fr) !important; gap: 4px !important; }

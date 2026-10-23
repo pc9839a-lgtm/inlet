@@ -123,7 +123,7 @@ assert(browserSource.includes('focused settings navigation must keep the back co
   && browserSource.includes('beforeD05'),
   'focused settings navigation must keep its back control reachable on narrow desktop');
 assert(browserSource.includes('stageTwoSettings')
-  && browserSource.includes('back returns keyboard focus to the original row')
+  && browserSource.includes('list and selected settings must stay visible together')
   && browserSource.includes('unapplied code draft survives list navigation')
   && browserSource.includes('preview reselects the previous block after page options'),
   'stage 2 browser QA must preserve settings navigation, keyboard focus, staged code and preview selection');

@@ -27,15 +27,15 @@ assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 
 assert(active.includes('stylePanelProps={stylePanelProps}'), 'edit workspace must receive theme controls');
 assert(editPanel.includes('stylePanelProps={stylePanelProps}'), 'EditPanel must forward theme controls');
 
-assert(layout.includes('CompositionDrawer') && layout.includes('구성') && layout.includes('페이지 설정') && layout.includes('inspectorOnly'), 'editor must expose the on-demand composition and selected-item inspector');
+assert(!layout.includes('CompositionDrawer') && layout.includes('editor-composition-panel') && layout.includes('페이지 설정') && layout.includes('inspectorOnly'), 'editor must show composition beside the selected-item inspector');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor') && !screenOrderItem.includes('data-inline-block-editor'), 'block list rows must no longer expand the selected settings inline');
-assert(layout.includes('listOnly selectBlock={chooseBlock}') && layout.includes('closeComposition();'), 'composition selection must close the drawer');
+assert(layout.includes('listOnly selectBlock={chooseBlock}') && !layout.includes('compositionOpen'), 'composition selection must not hide the persistent list');
 assert(layout.includes('<AddBlockDock {...addBlockDockProps} />'), 'section add dock must remain in the left editor');
 assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page theme controls must remain available from page options');
-assert(!layout.includes('editor-structure-pane') && !layout.includes('editor-inspector-pane'), 'three-pane editor DOM must not return');
+assert(!layout.includes('editor-structure-pane') && !layout.includes('className="editor-inspector-pane"'), 'three-pane editor DOM must not return');
 
-assert(css.includes('.canvas-editor-shell') && css.includes('@media (max-width: 759px)'), 'canvas shell must keep desktop and zoom geometry');
+assert(css.includes('.canvas-editor-shell') && css.includes('@media (max-width: 899px)'), 'canvas shell must keep desktop and zoom geometry');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
 assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
@@ -45,12 +45,12 @@ assert(editPanelLayoutCss.includes('editor-page-options-stack'), 'page options a
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card)') && fixedBlocksCss.includes('border-radius: 10px !important') && fixedBlocksCss.includes('min-height: 52px !important') && !css.includes('.screen-order-fixed-blocks'), 'fixed-area cards must stay compact under FixedBlocksSection.css ownership');
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('grid-template-columns: minmax(0, 1fr) 360px !important;') && css.includes('grid-column: 2;'), 'page canvas must be left of the compact inspector');
+assert(css.includes('grid-template-columns: clamp(500px, 50vw, 660px) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'editing must remain left of the page preview');
 assert(addDockCss.includes('/* Active editor dock geometry.') && addDockCss.includes('position: sticky !important;') && addDockCss.includes('max-height: min(62dvh, 620px) !important;') && !css.includes('.fixed-add-dock'), 'active editor add dock must be owned by editor-widget-add-dock.css');
 assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;') && css.includes('overflow: auto !important;'), 'zoomed desktop must preserve reachable page and inspector');
 assert(
-  editPanelLayoutCss.includes("html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2']")
-    && editPanelLayoutCss.includes("html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab")
+  editPanelLayoutCss.includes("html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2']")
+    && editPanelLayoutCss.includes("html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab")
     && editPanelLayoutCss.includes(">.edit-section-tab[data-selected='true']") === false
     && editPanelLayoutCss.includes(".edit-section-tab[data-selected='true']")
     && editPanelLayoutCss.includes('height: 38px !important;')
@@ -68,7 +68,7 @@ console.log(JSON.stringify({
   ok: true,
   checks: 23,
   scope: 'pagero-editor-canvas-and-inspector',
-  shell: ['page-canvas', 'selected-item-inspector'],
+  shell: ['left-composition-and-settings', 'right-page-preview'],
   separateStyleTab: false,
   legacyStyleRouteNormalized: true,
 }, null, 2));

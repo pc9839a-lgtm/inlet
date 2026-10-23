@@ -1,6 +1,5 @@
 import './CodeEditor.css';
 import { EditorTabs } from '../ui/index.js';
-import { CodeContentFields } from './CodeContentFields.jsx';
 import { CodeStylePanel } from './WidgetStylePanels.jsx';
 import CodeEditorBox from './CodeEditorBox.jsx';
 import CodeEditorModal from './CodeEditorModal.jsx';
@@ -28,9 +27,6 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
 
   return (
     <>
-      <CodeContentFields html={s.html || ''} disabled={codePending} onChange={(html) => { set({ html }); clearCodeDraft?.(blockId); }} />
-      <details className="code-advanced-editor">
-        <summary>고급 편집</summary>
       <div className="anchor-control block-editor-anchor-control code-editor-name-control">
         <span className="block-editor-anchor-label">구분 이름</span>
         <div className="block-editor-anchor-value code-editor-name-value">
@@ -59,7 +55,6 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
           },
         ]}
       />
-      </details>
       {modalOpen && <CodeEditorModal draft={draft} onDraftChange={setDraft} onClose={() => setModalOpen(false)} onApply={apply} codePending={codePending} codeDraftHint={codeDraftHint} />}
     </>
   );

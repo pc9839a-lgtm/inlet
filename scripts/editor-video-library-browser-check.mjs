@@ -242,10 +242,7 @@ async function setInputValue(client, selector, value) {
   assert(result, `Unable to set input value for ${selector}`);
 }
 async function clickSelector(client, selector) {
-  if (selector === videoRowHeadSelector) {
-    await evaluate(client, `document.querySelector('.edit-section-tab[aria-haspopup="dialog"]')?.click()`);
-    await waitForBrowser(client, `document.querySelector('.editor-composition-dialog')?.open`, 'composition drawer');
-  }
+
   const started = Date.now();
   while (Date.now() - started < 5000) {
     try {
