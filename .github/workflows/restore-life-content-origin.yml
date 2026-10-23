@@ -1,3 +1,4 @@
+# 2026-10-23 editorial reader-value refresh: deploy 4 task-first guides from life-pagero main, verify immutable homepage and record the new origin.
 # 2026-10-23 phase 3: publish consent disclosure in a verified immutable snapshot and record its deployment URL.
 # 2026-10-23 AdSense phase 2: publish verified 18-guide source precision and five first-page comparisons; preserve customer-page ad exclusion.
 # 2026-10-22 publisher batch 3: source-depth review, 2026 practical benefit comparisons, expired car tax date corrections.
@@ -146,6 +147,7 @@ jobs:
           import os,sys,time,urllib.request
           origin=os.environ.get('IMMUTABLE_URL','').rstrip('/')
           pages={
+            '/':['id="life-pathways-title"','data-path="inspection"','data-path="transfer"','data-path="parenting"','data-path="livelihood"'],
             '/privacy-policy/':['Google AdSense','https://adssettings.google.com/','https://policies.google.com/technologies/partner-sites'],
             '/car/car-inspection-period/':['생활비서','rel="canonical"','https://pagero.kr/life/car/car-inspection-period/'],
             '/editorial-standards/':['광고와 편집의 분리'],
