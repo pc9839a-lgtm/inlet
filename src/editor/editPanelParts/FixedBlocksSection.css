@@ -16,7 +16,7 @@
   color: var(--product-text);
   font-size: 14px;
   line-height: 1.35;
-  font-weight: 850;
+  font-weight: 500;
   letter-spacing: -.025em;
 }
 
@@ -99,7 +99,7 @@ body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy st
   overflow: hidden !important;
   color: var(--pg-ink) !important;
   font-size: 16px !important;
-  font-weight: 950 !important;
+  font-weight: 600 !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
@@ -114,7 +114,7 @@ body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy em
   color: #64748b !important;
   font-size: 11px !important;
   font-style: normal !important;
-  font-weight: 850 !important;
+  font-weight: 500 !important;
   white-space: nowrap !important;
 }
 
@@ -178,7 +178,7 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
     color: #0f172a !important;
     font-size: 15px !important;
     line-height: 1.3 !important;
-    font-weight: 950 !important;
+    font-weight: 600 !important;
     letter-spacing: -.025em !important;
   }
 

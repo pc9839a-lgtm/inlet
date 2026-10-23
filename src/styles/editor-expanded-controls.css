@@ -7,7 +7,7 @@ body .builder-shell .edit-layout .block-editor-v2 {
   --control-muted: #667085;
   --control-soft: #f2f4f7;
   --control-focus: #2563eb;
-  --control-radius: 8px;
+  --control-radius: 6px;
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2, .field, .range, .range-field, .color, .color-field, .choice, .weekday, .editor-segmented-v2) {
@@ -100,9 +100,9 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-optio
   min-width: 0;
   gap: 4px !important;
   padding: 3px !important;
-  border: 0 !important;
-  border-radius: var(--control-radius) !important;
-  background: var(--control-soft) !important;
+  border: 1px solid #e4e7ec !important;
+  border-radius: 4px !important;
+  background: #fff !important;
   overflow: visible;
 }
 
@@ -128,8 +128,8 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-optio
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-options, .choice > div, .weekday > div, .image-mode-toolbar) button:is(.active, [aria-pressed='true']) {
-  border-color: var(--control-line) !important;
-  background: #fff !important;
+  border-color: transparent !important;
+  background: #f3f4f6 !important;
   color: var(--control-text) !important;
   font-weight: 600 !important;
 }
@@ -196,7 +196,7 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .to
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .toggle) > button[role="switch"][aria-checked='true']::before {
-  background: #16a34a;
+  background: #344054;
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .toggle) > button[role="switch"][aria-checked='true'] > :is(span, i) {
@@ -327,3 +327,11 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2 input, .e
   margin: 0;
 }
 
+
+@container editor-inspector (min-width: 340px) {
+  html body #root .builder-shell .block-editor-v2 :is(.editor-segmented-v2, .choice) {
+    grid-template-columns: 88px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+}

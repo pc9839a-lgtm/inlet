@@ -1256,31 +1256,20 @@ async function run() {
       `editor preview must not render the removed management toolbar: ${JSON.stringify(previewManagementUi)}`,
     );
 
-    // D04: changing the editor-only viewport must resize actual rendered
-    // landing content (excluding the phone border), preserve the draft, and
-    // never publish a page or change the public renderer.
-    const d04WidthSamples = [];
-    for (const width of [360, 390, 430]) {
-      await clickSelector(client, `.preview-width-option[data-content-width="${width}"]`);
-      await waitForBrowser(client, `document.querySelector('.preview-width-option[data-content-width="${width}"]')?.getAttribute('aria-pressed') === 'true'`, `D04 selected ${width}px`);
-      await waitForBrowser(client, `(() => {
-        const content = document.querySelector('.preview-workspace .phone-frame > .landing-page');
-        const actual = Number(document.querySelector('.preview-width-measured')?.dataset.measuredWidth);
-        return !!content && Math.abs(content.getBoundingClientRect().width - ${width}) <= 2
-          && actual === ${width}
-          && document.querySelectorAll('.preview-width-option[aria-pressed="true"]').length === 1
-          && document.querySelector('.preview-width-option[data-content-width="${width}"]')?.getAttribute('aria-pressed') === 'true';
-      })()`, `D04 actual content width ${width}px`);
-      d04WidthSamples.push(await evaluate(client, `(() => ({
-        selected: document.querySelector('.preview-width-option[aria-pressed="true"]')?.dataset.contentWidth,
-        actual: Math.round(document.querySelector('.preview-workspace .landing-page')?.getBoundingClientRect().width || 0),
-        frame: Math.round(document.querySelector('.preview-workspace .phone-frame')?.getBoundingClientRect().width || 0),
-      }))()`));
-    }
-    await clickSelector(client, '.preview-width-option[data-content-width="390"]');
-    assert(d04WidthSamples.every((item) => Number(item.selected) === item.actual && item.frame >= item.actual + 2),
-      `D04 selected and measured content widths must agree without counting phone borders: ${JSON.stringify(d04WidthSamples)}`);
-    assert(apiState.saveCount === 0, 'D04 width selection must not publish');
+    // D04: one fixed 390px preview, with no width picker or duplicate output.
+    await waitForBrowser(client, `Math.round(document.querySelector('.preview-workspace .phone-frame > .landing-page')?.getBoundingClientRect().width || 0) === 390`, 'D04 actual content width 390');
+    const d04FixedWidth = await evaluate(client, `(() => ({
+      labels: document.querySelectorAll('.preview-width-value').length,
+      label: document.querySelector('.preview-width-value')?.textContent,
+      width: document.querySelector('.preview-width-toolbar')?.dataset.previewWidth,
+      options: document.querySelectorAll('.preview-width-option, .preview-width-measured').length,
+      actual: Math.round(document.querySelector('.preview-workspace .phone-frame > .landing-page').getBoundingClientRect().width),
+      frame: Math.round(document.querySelector('.preview-workspace .phone-frame').getBoundingClientRect().width),
+    }))()`);
+    assert(d04FixedWidth.labels === 1 && d04FixedWidth.label === '390px' && d04FixedWidth.width === '390'
+      && d04FixedWidth.options === 0 && d04FixedWidth.actual === 390 && d04FixedWidth.frame >= 392,
+      'D04 editor must expose one fixed width without counting frame borders: ' + JSON.stringify(d04FixedWidth));
+    assert(apiState.saveCount === 0, 'D04 preview setup must never publish a page');
 
     const editSectionTabStyle = await evaluate(client, `(() => {
       const tabs = document.querySelector('.edit-section-tabs[data-pagero-ui="edit-section-tabs-v2"]');
@@ -1307,7 +1296,7 @@ async function run() {
     assert(editSectionTabStyle.activeClassName === 'edit-section-tab', `active edit section tab must not reuse the global active class: ${editSectionTabStyle.activeClassName}`);
     assert(editSectionTabStyle.inactiveClassName === 'edit-section-tab', `inactive edit section tab class drifted: ${editSectionTabStyle.inactiveClassName}`);
     assert(editSectionTabStyle.activeDataSelected === 'true', 'active edit section tab must expose data-selected=true');
-    assert(editSectionTabStyle.tabsBackground === 'rgb(255, 255, 255)', `edit section tabs must use light gray segmented background, got ${editSectionTabStyle.tabsBackground}`);
+    assert(editSectionTabStyle.tabsBackground === 'rgb(255, 255, 255)', `edit section tabs must use a plain white background, got ${editSectionTabStyle.tabsBackground}`);
     assert(editSectionTabStyle.tabsBorderTopWidth === '0px', `edit section tabs outer border must be removed, got ${editSectionTabStyle.tabsBorderTopWidth}`);
     assert(editSectionTabStyle.tabsHeight === 38, `edit section tabs container must be exactly 38px tall: ${editSectionTabStyle.tabsHeight}px`);
     assert(editSectionTabStyle.activeBackground === 'rgb(255, 255, 255)', `active edit section tab must be white, got ${editSectionTabStyle.activeBackground}`);
@@ -1353,6 +1342,17 @@ async function run() {
     await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroTitleSelector)})?.getAttribute('aria-pressed') === 'true'`, 'hero row Enter activation');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-hero[data-block-settings-id="editor-hero"]')`, 'focused hero settings from Enter');
+    await waitForBrowser(client, `!!document.querySelector('#block-editor-hero.preview-selected-block')`, 'selected hero canvas outline');
+    const canvasSelectionStyle = await evaluate(client, `(() => {
+      const block = document.querySelector('#block-editor-hero.preview-selected-block');
+      const style = getComputedStyle(block);
+      return { outline: style.outlineWidth, shadow: style.boxShadow,
+        badge: getComputedStyle(block, '::after').display };
+    })()`);
+    assert(canvasSelectionStyle.outline === '1px' && canvasSelectionStyle.shadow === 'none'
+      && canvasSelectionStyle.badge === 'none',
+      'canvas selection must use a thin outline without a covering badge: ' + JSON.stringify(canvasSelectionStyle));
+
 
     await focusSelector(client, heroVisibilitySelector);
     await pressKeyboardKey(client, 'Space');
@@ -1392,7 +1392,7 @@ async function run() {
       const style = getComputedStyle(field);
       return { radius: style.borderRadius, size: style.fontSize, minHeight: style.minHeight };
     })()`);
-    assert(stageFourField.radius === '8px' && stageFourField.size === '14px',
+    assert(stageFourField.radius === '6px' && stageFourField.size === '14px',
       'stage4 common text fields must use the shared readable input style: ' + JSON.stringify(stageFourField));
     await clickButtonByText(client, '#editor-block-settings-editor-hero .editor-tabs-v2-list', '스타일');
     const stageFourChoice = '#editor-block-settings-editor-hero .editor-segmented-v2[aria-label="정렬"]';
@@ -1408,7 +1408,7 @@ async function run() {
         outline: style.outlineStyle, outlineWidth: style.outlineWidth,
         overflow: button.scrollWidth > button.clientWidth + 2 };
     })()`);
-    assert(stageFourChoiceStyle.border === '0px' && stageFourChoiceStyle.background === 'rgb(255, 255, 255)'
+    assert(stageFourChoiceStyle.border === '1px' && stageFourChoiceStyle.background === 'rgb(243, 244, 246)'
       && stageFourChoiceStyle.outline === 'solid' && stageFourChoiceStyle.outlineWidth === '2px'
       && !stageFourChoiceStyle.overflow,
       'stage4 choices must have one rail, visible selection and keyboard focus: ' + JSON.stringify(stageFourChoiceStyle));

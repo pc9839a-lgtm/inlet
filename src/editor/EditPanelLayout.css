@@ -21,14 +21,16 @@ html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-s
   min-height: 38px !important;
   max-height: 38px !important;
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 2px !important;
+  grid-template-columns: repeat(2, max-content) !important;
+  justify-content: start;
+  gap: 16px !important;
   margin: 0 !important;
-  padding: 3px !important;
+  padding: 0 !important;
   overflow: hidden !important;
   border: 0 !important;
-  border-radius: 8px !important;
-  background: #eef1f5 !important;
+  border-bottom: 1px solid #e4e7ec !important;
+  border-radius: 0 !important;
+  background: #fff !important;
   box-shadow: none !important;
 }
 
@@ -40,14 +42,15 @@ html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-s
   max-height: 32px !important;
   margin: 0 !important;
   padding: 0 10px !important;
-  border: 1px solid transparent !important;
-  border-radius: 6px !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
   background: transparent !important;
   color: var(--product-muted) !important;
   box-shadow: none !important;
   font-size: 12px !important;
   line-height: 1 !important;
-  font-weight: 850 !important;
+  font-weight: 500 !important;
   cursor: pointer !important;
   appearance: none !important;
 }
@@ -59,11 +62,11 @@ html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-s
 
 html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[data-selected='true'],
 html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[aria-pressed='true'] {
-  border-color: #d9dde4 !important;
+  border-bottom-color: #344054 !important;
   background: #fff !important;
   color: var(--product-text) !important;
   box-shadow: none !important;
-  font-weight: 950 !important;
+  font-weight: 600 !important;
 }
 
 body .builder-shell .edit-section-panel {
@@ -91,9 +94,11 @@ html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .editor-inspe
   overflow: visible !important;
 }
 html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .editor-inspector-panel > .edit-section-tabs > .edit-section-tab {
-  border: 1px solid #d9dde4 !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
   font-weight: 500 !important;
 }
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .editor-inspector-panel > .edit-section-tabs > .edit-section-tab[aria-pressed='true'] { border-bottom-color: #344054 !important; font-weight: 600 !important; }
 html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings[data-scroll-region='block-settings'] {
   max-height: none !important;
   overflow: visible !important;

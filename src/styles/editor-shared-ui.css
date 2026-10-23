@@ -8,7 +8,7 @@
   --editor-line: #d9e4f2;
   --editor-soft: #f7fafd;
   --editor-blue: #2563eb;
-  --editor-green: #22c55e;
+  --editor-green: #344054;
 }
 
 .builder-shell .edit-layout :is(button, input, textarea, select) {
@@ -49,14 +49,14 @@
 /* Shared editor controls migrated from editor-final-clean.
    Component cards remain owned by their component stylesheets. */
 body .builder-shell .edit-layout {
-  --pg-line: #dbe5f2;
-  --pg-line-strong: #c6d6ea;
+  --pg-line: #e4e7ec;
+  --pg-line-strong: #d0d5dd;
   --pg-ink: #0f172a;
   --pg-muted: #64748b;
   --pg-soft: #f8fafc;
-  --pg-selected: #f4f8ff;
+  --pg-selected: #f4f5f7;
   --pg-blue: #2563eb;
-  --pg-green: #22c55e;
+  --pg-green: #344054;
 }
 
 body .builder-shell .edit-layout .screen-icon-action,

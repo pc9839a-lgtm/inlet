@@ -31,7 +31,7 @@
   border: 0;
   border-bottom: 1px solid var(--product-line);
   border-radius: 0;
-  background: var(--product-bg, #f5f7fa);
+  background: #fff;
 }
 
 .builder-shell .style-panel-v17 .style-apply-bar > div:first-child {
@@ -83,7 +83,7 @@
   cursor: pointer;
 }
 
-.builder-shell .style-panel-v17 :is(.style-apply-btn,.style-subnav button.active,.style-segment button.active,.style-overlay-title button.active) {
+.builder-shell .style-panel-v17 .style-apply-btn {
   border-color: var(--product-text);
   background: var(--product-text);
   color: #fff;
@@ -103,14 +103,30 @@
   z-index: 11;
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: 5px;
-  padding: 5px;
-  border-radius: 8px;
-  background: var(--product-soft);
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--product-line);
+  border-radius: 0;
+  background: transparent;
 }
 
 .builder-shell .style-panel-v17 .style-subnav button {
   border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+}
+
+.builder-shell .style-panel-v17 .style-subnav button.active {
+  border-bottom-color: #344054;
+  color: #101828;
+  font-weight: 600;
+}
+
+.builder-shell .style-panel-v17 :is(.style-segment button.active,.style-overlay-title button.active) {
+  background: #f3f4f6;
+  color: #101828;
 }
 
 .builder-shell .style-panel-v17 .style-card {
@@ -167,7 +183,7 @@
   gap: 5px;
   padding: 4px;
   border: 1px solid var(--product-line);
-  border-radius: 10px;
+  border-radius: 6px;
   background: var(--product-panel);
 }
 
@@ -179,7 +195,7 @@
   min-height: 36px;
   padding: 0 8px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 4px;
 }
 
 .builder-shell .style-panel-v17 .style-preset-row-v16 {
@@ -202,7 +218,7 @@
 
 .builder-shell .style-panel-v17 .style-photo-upload {
   padding: 9px;
-  border-radius: 10px;
+  border-radius: 6px;
   background: var(--product-panel);
   overflow: visible;
 }
@@ -245,7 +261,7 @@
   place-items: center;
   overflow: hidden;
   border: 1px solid var(--product-line);
-  border-radius: 10px;
+  border-radius: 6px;
   background-color: var(--product-soft);
   background-repeat: no-repeat;
   background-position: center;
@@ -273,7 +289,7 @@
   min-height: 30px;
   padding: 0 9px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 4px;
   background: rgba(16,18,23,.92);
   color: #fff;
   font-size: 10px;
@@ -284,7 +300,7 @@
   display: grid;
   gap: 8px;
   padding: 10px;
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 .builder-shell .style-panel-v17 .style-overlay-title {
