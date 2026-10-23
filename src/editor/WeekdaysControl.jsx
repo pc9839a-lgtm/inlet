@@ -12,11 +12,11 @@ export function Weekdays({ value = [], onToggle }) {
   const selected = Array.isArray(value) ? value : [];
 
   return (
-    <div className="weekday weekday-fixed">
+    <div className="weekday weekday-fixed" role="group" aria-label="상담 가능 요일">
       <span>상담 가능 요일</span>
       <div>
         {WEEKDAY_OPTIONS.map(([key, label]) => (
-          <button key={key} type="button" className={selected.includes(key) ? 'active' : ''} onClick={() => onToggle(key)}>
+          <button key={key} type="button" className={selected.includes(key) ? 'active' : ''} aria-pressed={selected.includes(key)} onClick={() => onToggle(key)}>
             {label}
           </button>
         ))}
