@@ -1404,7 +1404,7 @@ async function run() {
       const group = document.querySelector(${JSON.stringify(stageFourChoice)});
       const button = group.querySelector('[aria-pressed="true"]');
       const style = getComputedStyle(button);
-      return { border: getComputedStyle(group).borderTopWidth, background: style.backgroundColor,
+      return { border: getComputedStyle(group.querySelector('.editor-segmented-v2-options')).borderTopWidth, background: style.backgroundColor,
         outline: style.outlineStyle, outlineWidth: style.outlineWidth,
         overflow: button.scrollWidth > button.clientWidth + 2 };
     })()`);
