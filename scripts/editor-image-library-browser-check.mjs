@@ -311,8 +311,11 @@ async function run() {
     const savedImageBlock = apiState.currentPage.blocks.find((block) => block.id === 'editor-image');
     assert(savedImageBlock?.s?.image === selectedImageValue, `published image block mismatch: ${savedImageBlock?.s?.image || ''}`);
 
+    const pageReadsBeforeReload = apiState.pageLoadCount;
+    await evaluate(client, "window.__qaImageReloadMarker = 'departing-document'; true");
     await client.send('Page.reload', { ignoreCache: true });
-    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(imageRowHeadSelector)})`, 'reloaded editor image row');
+    await waitForBrowser(client, `window.__qaImageReloadMarker !== 'departing-document' && !!document.querySelector(${JSON.stringify(imageRowHeadSelector)})`, 'reloaded editor image row');
+    await waitForState(() => apiState.pageLoadCount > pageReadsBeforeReload, 'fresh server image page read after reload');
     await clickSelector(client, imageRowHeadSelector);
     await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image after reload');
     await capture(client, 'desktop-image-library-reloaded');
