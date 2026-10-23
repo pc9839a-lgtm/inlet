@@ -14,7 +14,7 @@ html body #root .canvas-editor-shell .work-panel {
   height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-  overflow: hidden auto !important;
+  overflow: hidden !important;
   border-right: 1px solid var(--product-line);
   background: #fff;
 }
@@ -29,5 +29,5 @@ html body #root .canvas-editor-shell .work-panel {
     max-height: none !important;
     overflow: visible !important;
   }
-  html body #root .canvas-editor-shell .work-panel { grid-column: 1; grid-row: 2; height: auto !important; border-left: 0; }
+  html body #root .canvas-editor-shell .work-panel { grid-column: 1; grid-row: 2; height: auto !important; border-left: 0; overflow: visible !important; }
 }

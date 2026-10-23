@@ -2,6 +2,7 @@ import { EditorTabs, ToggleRow } from '../ui/index.js';
 import { TimerContentSection, TimerDesignSection, safeTimerEffect, safeTimerVariant } from './TimerBasicSection.jsx';
 import './TimerEditor.css';
 import './TimerVariantOptions.css';
+import { WidgetSpacingControls } from './WidgetSpacingControls.jsx';
 
 function TimerBottomSection({ s, page, updateBlock }) {
   const bottomBlock = page?.blocks?.find((block) => block?.type === 'bottombar');
@@ -70,7 +71,7 @@ export default function TimerEditor({ s, set, page, updateBlock }) {
         {
           id: 'design',
           label: '스타일',
-          content: <TimerDesignSection s={s} set={set} />,
+          content: <><TimerDesignSection s={s} set={set} /><WidgetSpacingControls s={s} set={set} /></>,
         },
         {
           id: 'bottom',

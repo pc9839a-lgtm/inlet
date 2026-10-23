@@ -1691,6 +1691,23 @@ async function run() {
 
     // Duplicate a real text block through the UI and verify the two rows get
     // different ordinal identities, then undo to avoid affecting later QA.
+    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
+    await clickButtonByText(client, '#editor-block-settings-editor-text .editor-tabs-v2-list', '스타일');
+    const innerSpacing = '#editor-block-settings-editor-text input[aria-label="안쪽 상하 (px)"]';
+    const outerSpacing = '#editor-block-settings-editor-text input[aria-label="바깥 상하 (px)"]';
+    await setInputValue(client, innerSpacing, '0');
+    await setInputValue(client, outerSpacing, '16');
+    await waitForBrowser(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return style.paddingTop === '0px' && style.marginTop === '16px'; })()`, 'exact zero padding and numeric outer spacing render without publishing');
+    await setInputValue(client, outerSpacing, '999');
+    await focusSelector(client, innerSpacing);
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(outerSpacing)})?.value === '48'`, 'out-of-range spacing clamps on blur');
+    await setInputValue(client, outerSpacing, '');
+    await focusSelector(client, innerSpacing);
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(outerSpacing)})?.value === '48'`, 'empty number input keeps the previous spacing');
+    await capture(client, 'desktop-common-settings-spacing');
+    await setInputValue(client, innerSpacing, '22');
+    await setInputValue(client, outerSpacing, '24');
+    assert(apiState.saveCount === 0, 'number and spacing changes must not publish');
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-action');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'D03 text duplicate menu');
     await clickButtonByText(client, '.screen-order-v2-menu', '복제');
@@ -1888,6 +1905,15 @@ async function run() {
     // applying or discarding its pending color.
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
     await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-on') && document.querySelector('.edit-animation-settings')?.getClientRects().length > 0`, 'animation enabled and expanded without losing pending design');
+    const accentHex = '.style-panel input[aria-label="버튼색 HEX"]';
+    await setInputValue(client, accentHex, '#abc');
+    await focusSelector(client, '.style-subnav button:first-child');
+    await waitForBrowser(client, `document.querySelector('.style-panel input[type="color"]')?.value === '#aabbcc'`, 'shared HEX input accepts short colors');
+    await setInputValue(client, accentHex, '#oops');
+    await focusSelector(client, '.style-subnav button:first-child');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(accentHex)})?.value.toLowerCase() === '#aabbcc'`, 'invalid HEX does not replace the last valid color');
+    await setInputValue(client, accentHex, updatedAccent);
+    await focusSelector(client, '.style-subnav button:first-child');
     await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
     await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`, 'animation changes retain the unapplied design color');

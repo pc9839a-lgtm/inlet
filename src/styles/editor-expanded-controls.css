@@ -29,7 +29,7 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2-label str
   margin: 0 !important;
   color: var(--control-text) !important;
   font-size: 13px !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   line-height: 1.5 !important;
   overflow-wrap: anywhere;
 }
@@ -234,22 +234,6 @@ body .builder-shell .edit-layout .block-editor-v2 .range b {
   font-variant-numeric: tabular-nums;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 :is(.color-main, .color-field > div) {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-body .builder-shell .edit-layout .block-editor-v2 :is(.color-main, .color-field > div) input[type='color'] {
-  width: 42px !important;
-  min-width: 42px !important;
-  height: 42px !important;
-  padding: 3px !important;
-  border: 1px solid var(--control-line) !important;
-  border-radius: var(--control-radius) !important;
-  background: #fff !important;
-}
-
 body .builder-shell .edit-layout .block-editor-v2 :is(.add-line-clean, .danger-btn-clean, .eyedropper) {
   min-height: 38px !important;
   padding: 8px 12px !important;
@@ -326,8 +310,11 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2 input, .e
 
 .editor-v2-control-list {
   display: grid;
-  gap: 10px;
+  gap: 16px;
 }
+
+.widget-spacing-controls { display: grid; gap: 16px; min-width: 0; margin-top: 8px; padding-top: 20px; border-top: 1px solid #eaecf0; }
+.widget-spacing-controls h3 { margin: 0; color: #344054; font-size: 13px; font-weight: 600; }
 
 .editor-tabs-v2-panel > :is(.editor-field-v2, .field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) {
   margin: 0;

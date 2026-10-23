@@ -522,7 +522,7 @@
 .edit-layout .screen-order-v2-settings .block-editor-v2 .step {
   margin: 0 !important;
   border: 1px solid var(--editor-line) !important;
-  border-radius: 17px !important;
+  border-radius: 6px !important;
   background: #fff !important;
   box-shadow: none !important;
   overflow: hidden !important;
@@ -557,7 +557,7 @@
   background: #eff6ff !important;
   color: var(--editor-ink) !important;
   font-size: 12px !important;
-  font-weight: 950 !important;
+  font-weight: 600 !important;
 }
 
 .edit-layout .screen-order-v2-settings .block-editor-v2 .step-title strong {
@@ -567,7 +567,7 @@
   white-space: nowrap !important;
   color: var(--editor-ink) !important;
   font-size: 14px !important;
-  font-weight: 950 !important;
+  font-weight: 600 !important;
 }
 
 .edit-layout .screen-order-v2-settings .block-editor-v2 .step-title i {
@@ -585,7 +585,7 @@
   color: var(--editor-muted) !important;
   font-size: 14px !important;
   font-style: normal !important;
-  font-weight: 950 !important;
+  font-weight: 600 !important;
   line-height: 1 !important;
 }
 
@@ -609,7 +609,7 @@
 
 .edit-layout .screen-order-v2-settings .block-editor-v2 :is(.mini-detail, .form-question-card) {
   border: 1px solid var(--editor-line) !important;
-  border-radius: 16px !important;
+  border-radius: 6px !important;
   background: #fff !important;
   box-shadow: none !important;
   overflow: hidden !important;
@@ -674,13 +674,13 @@
   min-width: 0 !important;
   padding: 0 12px !important;
   border: 1px solid var(--editor-line) !important;
-  border-radius: 12px !important;
+  border-radius: 6px !important;
   background: #fff !important;
   color: var(--editor-ink) !important;
   box-shadow: none !important;
   outline: 0 !important;
   font-size: 13px !important;
-  font-weight: 900 !important;
+  font-weight: 600 !important;
   line-height: 1 !important;
 }
 
@@ -725,7 +725,7 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
 
   /* Widget code: one readable horizontal row on desktop. */
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .block-editor-anchor-control {
-    grid-template-columns: 82px minmax(0, 1fr) !important;
+    grid-template-columns: 72px minmax(0, 1fr) !important;
     align-items: center !important;
     gap: 12px !important;
     margin: 0 !important;
@@ -737,7 +737,7 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
     color: #344054 !important;
     font-size: 13px !important;
     line-height: 1.35 !important;
-    font-weight: 850 !important;
+    font-weight: 600 !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .block-editor-anchor-value {
@@ -749,7 +749,7 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .block-editor-anchor-value > b {
     font-size: 13px !important;
-    font-weight: 800 !important;
+    font-weight: 600 !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .block-editor-anchor-value > input {
@@ -757,7 +757,7 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
     padding: 0 11px !important;
     color: #101828 !important;
     font-size: 13px !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .block-editor-anchor-value > button {
@@ -765,7 +765,7 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
     padding: 0 12px !important;
     color: #344054 !important;
     font-size: 12px !important;
-    font-weight: 800 !important;
+    font-weight: 600 !important;
   }
 
   /* Content/style tabs: larger type and a more deliberate gap before fields. */
@@ -787,7 +787,7 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
     border-radius: 8px !important;
     color: #475467 !important;
     font-size: 13px !important;
-    font-weight: 800 !important;
+    font-weight: 600 !important;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .editor-tabs-v2-list > button[aria-selected='true'] {
@@ -796,87 +796,20 @@ body .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] 
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .editor-tabs-v2-panel {
-    gap: 12px !important;
-    padding: 12px 0 4px !important;
+    gap: 16px !important;
+    padding: 16px 0 8px !important;
   }
 
 
 }
 
 
-/* Settings density. Desktop row geometry is owned by the surface block above. */
-@media (min-width: 900px) {
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2.block-editor {
-    gap: 8px !important;
-    padding: 10px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .step {
-    border-radius: 10px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 button.step-title {
-    min-height: 46px !important;
-    grid-template-columns: 28px minmax(0, 1fr) 30px !important;
-    gap: 8px !important;
-    padding: 0 10px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .step-body {
-    gap: 8px !important;
-    padding: 10px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .block-editor-anchor-control {
-    grid-template-columns: 72px minmax(0, 1fr) !important;
-    gap: 10px !important;
-    padding: 0 0 12px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .editor-tabs-v2 {
-    padding-top: 10px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .editor-tabs-v2-list {
-    gap: 2px !important;
-    padding: 2px !important;
-    border-radius: 8px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .block-editor-v2 .editor-tabs-v2-list > button {
-    min-width: 64px !important;
-    min-height: 32px !important;
-    padding: 0 10px !important;
-    border-radius: 7px !important;
-    font-size: 12px !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-v2-settings .editor-tabs-v2-panel {
-    gap: 12px !important;
-    padding: 12px 0 4px !important;
-  }
-
-
-}
-
-/* D01: the long selected-block inspector scrolls on its own on full desktop.
-   Keep the narrow/zoomed stacked workspace in one page scroll (D05 is separate). */
-@media (min-width: 1181px) {
-  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell)
-  .screen-order-v2-settings[data-scroll-region='block-settings'] {
-    max-height: min(68dvh, 720px) !important;
-    min-height: 0 !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    overscroll-behavior-y: contain;
-    scrollbar-gutter: stable;
-    scroll-padding-top: 12px;
-  }
+/* The inspector panel owns scrolling; settings must not create a second scroll area. */
+html body #root .builder-shell.edit-mode-shell
+.screen-order-v2-settings[data-scroll-region='block-settings'] {
+  max-height: none !important;
+  min-height: 0 !important;
+  overflow: visible !important;
 }
 
 html body #root .builder-shell.edit-mode-shell

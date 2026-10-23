@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Pipette } from 'lucide-react';
-import { ImageInput } from '../editor/controls.jsx';
+import { ImageInput, Color } from '../editor/controls.jsx';
+import { NumberControl } from '../editor/ui/NumberControl.jsx';
 import { notify } from '../lib/uiFeedback.js';
 import './StylePanel.css';
 
@@ -83,42 +83,11 @@ function StyleSegment({ label, value, onChange, options = [] }) {
 }
 
 function StyleColorLine({ label, value, onChange, fallback = '#111827' }) {
-  const color = safeColor(value, fallback);
-
-  const pick = async () => {
-    if (!window.EyeDropper) {
-      notify(T.noEyedropper, 'error');
-      return;
-    }
-
-    try {
-      const result = await new window.EyeDropper().open();
-      if (result?.sRGBHex) onChange(result.sRGBHex);
-    } catch {}
-  };
-
-  return (
-    <div className="style-line style-color-line">
-      <span>{label}</span>
-      <div className="style-color-control">
-        <input type="color" aria-label={label} value={color} onChange={(event) => onChange(event.target.value)} />
-        <b>{color}</b>
-        <button type="button" onClick={pick} title={T.pickColor} aria-label={`${label} ${T.pickColor}`}><Pipette size={16} /></button>
-      </div>
-    </div>
-  );
+  return <div className="style-color-line"><Color label={label} value={safeColor(value, fallback)} onChange={onChange} /></div>;
 }
 
 function StyleRangeLine({ label, value, min = 0, max = 100, onChange, suffix = '' }) {
-  return (
-    <div className="style-line style-range-line">
-      <span>{label}</span>
-      <div className="style-range-control">
-        <input type="range" aria-label={label} min={min} max={max} value={value ?? 0} onChange={(event) => onChange(Number(event.target.value))} />
-        <b>{value ?? 0}{suffix}</b>
-      </div>
-    </div>
-  );
+  return <NumberControl label={label} value={value ?? 0} min={min} max={max} unit={suffix} onChange={onChange} />;
 }
 
 function hexToRgb(hex) {

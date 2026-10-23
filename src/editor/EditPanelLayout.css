@@ -135,7 +135,7 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout {
   min-height: 100%;
 }
 .editor-composition-panel { min-width: 0; padding: 12px; }
-.editor-inspector-panel { min-width: 0; padding: 12px 16px 48px; border-left: 1px solid #e4e7ec; }
+.editor-inspector-panel { min-width: 0; padding: 16px 16px 32px; border-left: 1px solid #e4e7ec; container: editor-inspector / inline-size; }
 .editor-composition-panel .screen-order-fixed-blocks { margin-top: 24px; }
 .editor-composition-panel .screen-order-fixed-blocks h3 { font-size: 12px; font-weight: 500; }
 html body #root .builder-shell .editor-composition-panel .fixed-add-dock .widget-group-grid,
@@ -150,7 +150,7 @@ html body #root .editor-composition-panel .fixed-add-dock.open .add-panel {
 @media (min-width: 900px) {
   html body #root .canvas-editor-shell .editor-composition-panel,
   html body #root .canvas-editor-shell .editor-inspector-panel {
-    position: sticky; top: 0; max-height: calc(100dvh - 108px); overflow-x: hidden; overflow-y: auto;
+    position: sticky; top: 0; max-height: calc(100dvh - 108px); overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain;
   }
 }
 @media (max-width: 1050px) { .canvas-editor-shell { --editor-composition-width: 180px; } }

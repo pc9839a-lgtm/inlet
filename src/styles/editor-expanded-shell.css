@@ -139,8 +139,7 @@ body .builder-shell .edit-layout .block-editor-v2 .block-editor-anchor-value > b
 }
 
 .editor-tabs-v2-list {
-  position: sticky;
-  top: 0;
+  position: static;
   z-index: 4;
   display: flex;
   gap: 2px;
@@ -173,9 +172,9 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-tabs-v2-list > button[
 
 .editor-tabs-v2-panel {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
-  padding: 14px 0 8px;
+  padding: 16px 0 8px;
 }
 
 .editor-section-v2 {
@@ -202,8 +201,8 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-section-v2-trigger {
 
 .editor-section-v2-body {
   display: grid;
-  gap: 12px;
-  padding: 12px 0 14px;
+  gap: 16px;
+  padding: 16px 0 24px;
   border-top: 1px solid var(--editor-v2-line);
 }
 
@@ -248,7 +247,7 @@ body .builder-shell .edit-layout .block-editor-v2-heading strong,
 body .builder-shell .edit-layout :is(.editor-section-v2-copy strong, .editor-control-v2-copy strong) {
   color: var(--product-text);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 body .builder-shell .edit-layout .block-editor-v2-heading strong {
@@ -268,7 +267,7 @@ body .builder-shell .edit-layout .editor-section-v2-trigger {
 body .builder-shell .edit-layout .editor-section-v2-body {
   min-width: 0;
   display: grid;
-  gap: 11px;
-  padding: 12px 4px 16px;
+  gap: 16px;
+  padding: 16px 0 24px;
 }
 

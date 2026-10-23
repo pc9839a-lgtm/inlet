@@ -58,6 +58,9 @@
   max-height: 280px;
 }
 
+.editor-inspector-panel .image-preview-control.is-default .image-preview-frame { height: 112px; min-height: 112px; max-height: 112px; }
+.editor-inspector-panel .image-preview-control.is-default .image-preview-frame img { max-height: 112px; }
+
 .image-preview-empty {
   width: 44px;
   height: 44px;

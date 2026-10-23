@@ -8,7 +8,7 @@
   width: 100%;
   min-width: 0;
   display: grid;
-  gap: 12px;
+  gap: 16px;
   color: var(--product-text);
 }
 
@@ -77,7 +77,7 @@
   color: var(--product-muted);
   box-shadow: none;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 500;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
@@ -99,8 +99,7 @@
 }
 
 .builder-shell .style-panel-v17 .style-subnav {
-  position: sticky;
-  top: 68px;
+  position: static;
   z-index: 11;
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
@@ -116,7 +115,7 @@
 
 .builder-shell .style-panel-v17 .style-card {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -133,22 +132,24 @@
 .builder-shell .style-panel-v17 :is(.style-panel-box,.style-photo-box) {
   min-width: 0;
   display: grid;
-  gap: 8px;
-  padding: 10px;
-  border-radius: 10px;
-  background: var(--product-soft);
+  gap: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   overflow: visible;
 }
 
 .builder-shell .style-panel-v17 .style-line {
   min-width: 0;
-  min-height: 48px;
+  min-height: 40px;
   display: grid;
   grid-template-columns: 82px minmax(0,1fr);
   align-items: center;
   gap: 10px;
-  padding: 6px 8px;
-  border-radius: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 .builder-shell .style-panel-v17 :is(.style-line > span,.style-overlay-title strong) {
@@ -156,7 +157,7 @@
   color: #4f5661;
   font-size: 12px;
   line-height: 1.2;
-  font-weight: 900;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -179,65 +180,6 @@
   padding: 0 8px;
   border: 0;
   border-radius: 7px;
-}
-
-.builder-shell .style-panel-v17 .style-color-control {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 42px minmax(0,1fr) 36px;
-  align-items: center;
-  gap: 7px;
-}
-
-.builder-shell .style-panel-v17 .style-color-control input[type="color"] {
-  width: 42px;
-  height: 36px;
-  padding: 0;
-  border: 1px solid var(--product-line);
-  border-radius: 8px;
-  background: var(--product-panel);
-}
-
-.builder-shell .style-panel-v17 :is(.style-color-control b,.style-range-control b) {
-  min-width: 0;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  overflow: hidden;
-  border: 1px solid var(--product-line);
-  border-radius: 8px;
-  background: var(--product-panel);
-  color: var(--product-muted);
-  font-size: 11px;
-  font-weight: 900;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.builder-shell .style-panel-v17 .style-color-control button {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--product-text);
-  border-radius: 8px;
-  background: var(--product-text);
-  color: #fff;
-  cursor: pointer;
-}
-
-.builder-shell .style-panel-v17 .style-range-control {
-  display: grid;
-  grid-template-columns: minmax(0,1fr) 54px;
-  align-items: center;
-  gap: 8px;
-}
-
-.builder-shell .style-panel-v17 .style-range-control input[type="range"] {
-  width: 100%;
-  accent-color: var(--product-accent);
 }
 
 .builder-shell .style-panel-v17 .style-preset-row-v16 {
@@ -279,7 +221,7 @@
   padding-top: 8px;
   color: #4f5661;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -288,7 +230,7 @@
   margin: 0;
   color: var(--product-muted);
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .builder-shell .style-panel-v17 .style-photo-upload .image-box.single-plus,
@@ -335,7 +277,7 @@
   background: rgba(16,18,23,.92);
   color: #fff;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 500;
 }
 
 .builder-shell .style-panel-v17 .style-overlay-card-v16 {
