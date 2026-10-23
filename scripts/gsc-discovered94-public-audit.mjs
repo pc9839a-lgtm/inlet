@@ -208,7 +208,7 @@ async function checkHost(host,paths){
 for(const [host,paths] of Object.entries(groups)){
   const items=await checkHost(host,paths);
   findings.push(...items);
-  console.log('DISCOVERED94_HOST',JSON.stringify({host,count:items.length,http200:items.filter(x=>x.status===200).length,noindex:items.filter(x=>x.noindex).length,canonicalMismatch:items.filter(x=>x.issues.includes('canonical')).length,hubLinked:items.filter(x=>x.hasSourceLink).length,sitemapListed:items.filter(x=>x.inSitemap).length}),flush=true);
+  console.log('DISCOVERED94_HOST',JSON.stringify({host,count:items.length,http200:items.filter(x=>x.status===200).length,noindex:items.filter(x=>x.noindex).length,canonicalMismatch:items.filter(x=>x.issues.includes('canonical')).length,hubLinked:items.filter(x=>x.hasSourceLink).length,sitemapListed:items.filter(x=>x.inSitemap).length}));
 }
 // Distinct from the 94 discovered URLs: historical 'Excluded by noindex' first article.
 const businessVoucherUrl='https://pagero.kr/life/support/small-business-management-voucher-2026/';
