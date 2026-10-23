@@ -184,7 +184,7 @@ function createQaPage() {
     projectId: 'editor-project',
     ownerId: 'editor-owner',
     ownerEmail: 'editor.qa@example.com',
-    title: '편집 E2E 페이지',
+    title: '편집 E2E 페이지 · 긴 페이지 이름과 저장 상태 표시 확인',
     slug: 'editor-e2e',
     status: 'published',
     revision: 3,
@@ -646,7 +646,11 @@ async function pressKeyboardKey(client, keyName, { shift = false } = {}) {
     nativeVirtualKeyCode: config.virtualKeyCode,
     modifiers,
   };
-  await client.send('Input.dispatchKeyEvent', { type: 'keyDown', ...base });
+  await client.send('Input.dispatchKeyEvent', {
+    type: 'keyDown', ...base,
+    // Native summary activation listens for Enter's character event in Chrome.
+    ...(keyName === 'Enter' ? { text: '\r', unmodifiedText: '\r' } : {}),
+  });
   await client.send('Input.dispatchKeyEvent', { type: 'keyUp', ...base });
   await wait(120);
 }
@@ -741,6 +745,45 @@ async function capture(client, name) {
   const target = path.join(screenshotDir, `${name}.png`);
   await writeFile(target, Buffer.from(image.data, 'base64'));
   return target;
+}
+
+async function assertEditorHeader(client, label) {
+  const metrics = await evaluate(client, `(() => {
+    const header = document.querySelector('.editor-panel-header');
+    const heading = header?.querySelector('.panel-editor-heading');
+    const title = heading?.querySelector('h1');
+    const status = header?.querySelector('.panel-save-status');
+    if (!header || !title || !status) return null;
+    const box = header.getBoundingClientRect();
+    const titleBox = title.getBoundingClientRect();
+    const statusBox = status.getBoundingClientRect();
+    const actionsBox = header.querySelector('.panel-actions').getBoundingClientRect();
+    const controls = [...header.querySelectorAll('button, summary')].filter((item) => item.getClientRects().length);
+    return { title: title.textContent, titleAttribute: title.title, titleWidth: titleBox.width,
+      status: status.textContent, statusFits: statusBox.right <= heading.getBoundingClientRect().right + 2,
+      fullTitle: titleBox.right <= box.right + 2 && (titleBox.right <= actionsBox.left - 4 || titleBox.bottom <= actionsBox.top),
+      controlsFit: controls.every((item) => { const rect = item.getBoundingClientRect(); return rect.left >= box.left && rect.right <= box.right + 2; }),
+      duplicateHeading: !!header.querySelector('.operations-panel-title-row'),
+      preview: controls.some((item) => item.textContent.trim() === '미리보기'),
+      publish: !!header.querySelector('.panel-actions .primary-btn'),
+      back: !!header.querySelector('[aria-label="페이지 목록으로"]') };
+  })()`);
+  assert(metrics && metrics.title === createQaPage().title && metrics.titleAttribute === metrics.title
+    && metrics.titleWidth >= 130 && metrics.fullTitle && metrics.status && metrics.statusFits
+    && metrics.controlsFit && !metrics.duplicateHeading && metrics.preview && metrics.publish && metrics.back,
+    label + ' must retain readable page identity, save state and primary actions: ' + JSON.stringify(metrics));
+  await clickPointer(client, '.panel-backup-action summary');
+  const menuFits = await evaluate(client, `(() => {
+    const button = document.querySelector('.panel-backup-dropdown button');
+    const rect = button.getBoundingClientRect();
+    return rect.width > 0 && rect.left >= 0 && rect.right <= innerWidth && rect.bottom <= innerHeight
+      && button.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+  })()`);
+  assert(menuFits, label + ' menu must remain visible and pointer-reachable');
+  await pressKeyboardKey(client, 'Escape');
+  assert(await evaluate(client, `!document.querySelector('.panel-backup-action').open
+    && document.querySelector('.panel-backup-dropdown').getClientRects().length === 0`),
+    label + ' closed menu must leave the layout and keyboard order');
 }
 
 async function collectDesktopMetrics(client) {
@@ -1118,8 +1161,26 @@ async function run() {
     // wrong-page upload, then import the real downloaded file through Chrome's
     // file-input protocol. No publish is allowed until the user chooses it.
     await waitForBrowser(client, `!!document.querySelector('.panel-backup-action summary') && !!document.querySelector('.panel-backup-action ~ input[type="file"][accept*="json"]')`, 'backup and restore menu in authenticated editor');
-    await clickSelector(client, '.panel-backup-action summary');
-    await clickButtonByText(client, '.panel-backup-dropdown', '파일 저장');
+    await assertEditorHeader(client, 'stage5 desktop header');
+    await capture(client, 'desktop-panel-header-stage5');
+    await focusSelector(client, '.panel-backup-action summary');
+    await pressKeyboardKey(client, 'Enter');
+    await waitForBrowser(client, `document.querySelector('.panel-backup-action')?.open === true`, 'stage5 menu keyboard open');
+    await pressKeyboardKey(client, 'Escape');
+    assert(await evaluate(client, `!document.querySelector('.panel-backup-action').open && document.activeElement === document.querySelector('.panel-backup-action summary')`), 'stage5 Escape must close the menu and return focus');
+    await clickPointer(client, '.panel-backup-action summary');
+    const stageFiveMenuReachable = await evaluate(client, `(() => {
+      const button = document.querySelector('.panel-backup-dropdown button');
+      const rect = button.getBoundingClientRect();
+      return rect.width > 0 && rect.bottom <= innerHeight && rect.left >= 0 && rect.right <= innerWidth
+        && button.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+    })()`);
+    assert(stageFiveMenuReachable, 'stage5 menu must be pointer-reachable below the header without clipping');
+    await capture(client, 'desktop-panel-menu-stage5');
+    await clickPointer(client, '.panel-editor-heading h1');
+    assert(await evaluate(client, `!document.querySelector('.panel-backup-action').open`), 'stage5 outside pointer must close the menu');
+    await clickPointer(client, '.panel-backup-action summary');
+    await clickPointer(client, '.panel-backup-dropdown button:first-child');
     let downloadedBackupName = '';
     for (let attempt = 0; attempt < 75; attempt += 1) {
       downloadedBackupName = (await readdir(backupDownloadDir)).find((file) => /^pagero-editor-e2e-backup-[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$/.test(file)) || '';
@@ -1172,6 +1233,16 @@ async function run() {
       return event.defaultPrevented;
     })()`);
     assert(restoredUnsavedGuard, 'manual backup restore must mark the page as unpublished');
+    const stageFiveBackGuard = await evaluate(client, `(() => {
+      const originalConfirm = window.confirm;
+      let message = '';
+      window.confirm = (text) => { message = String(text); return false; };
+      try { document.querySelector('.panel-dashboard-button').click(); }
+      finally { window.confirm = originalConfirm; }
+      return { message, stays: !!document.querySelector('.editor-panel-header') };
+    })()`);
+    assert(stageFiveBackGuard.message.includes('변경사항') && stageFiveBackGuard.message.includes('대시보드') && stageFiveBackGuard.stays
+      && apiState.saveCount === 0, 'stage5 back action must preserve the unpublished-work guard: ' + JSON.stringify(stageFiveBackGuard));
     await capture(client, 'editor-backup-restore-success');
 
 
@@ -2176,6 +2247,7 @@ async function run() {
         const matrixMetrics = await collectDesktopMetrics(client);
         assertDesktop(matrixMetrics);
       }
+      await assertEditorHeader(client, `stage5 header ${desktopViewport.width}px`);
       await capture(client, `desktop-matrix-${desktopViewport.width}`);
     }
 
@@ -2218,6 +2290,7 @@ async function run() {
       assert(zoomChrome.dockPosition !== 'fixed', `${zoomViewport.name} add dock must not become a viewport-fixed overlap: ${zoomChrome.dockPosition}`);
       assert(['auto', 'hidden'].includes(zoomChrome.bodyOverflowX), `${zoomViewport.name} body horizontal overflow mode is unexpected: ${zoomChrome.bodyOverflowX}`);
       assert(['auto', 'visible'].includes(zoomChrome.bodyOverflowY), `${zoomViewport.name} body must stay vertically reachable: ${zoomChrome.bodyOverflowY}`);
+      await assertEditorHeader(client, `stage5 header ${zoomViewport.name}`);
       await capture(client, zoomViewport.name);
     }
 
