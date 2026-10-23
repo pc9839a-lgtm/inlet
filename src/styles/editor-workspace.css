@@ -1,63 +1,33 @@
-/* PageRo editor workspace — outer edit-shell geometry only.
-   True mobile uses mobile-operations-shell; fine-pointer desktop stays editable even
-   when browser zoom reduces the CSS viewport below the mobile width breakpoint. */
-
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace {
-    grid-template-columns: minmax(0, 1fr);
-    border-right: 1px solid var(--product-line);
-  }
-
-body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel {
-  min-width: 0;
-  max-width: none;
-  margin-inline: 0;
-  overflow-x: hidden;
+/* Edit shell owner: page canvas and selected-item inspector. */
+html body #root .builder-shell.canvas-editor-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px !important;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
 }
-
-/* Tablet / narrow desktop / desktop browser zoom: stack editor and preview vertically. */
-@media (max-width: 1180px) {
-  html:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)),
-  body:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)),
-  #root:has(.builder-shell.edit-mode-shell:not(.mobile-operations-shell)) {
-    overflow: auto !important;
-  }
-  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
-    width: 100% !important;
+html body #root .canvas-editor-shell > .left-workspace { display: contents !important; }
+html body #root .canvas-editor-shell .work-panel {
+  grid-column: 2;
+  grid-row: 2;
+  max-width: none !important;
+  min-height: 0;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 16px 16px 64px !important;
+  overflow: hidden auto !important;
+  border-left: 1px solid var(--product-line);
+  background: #fff;
+}
+/* Desktop zoom keeps both surfaces reachable; phones retain operations mode. */
+@media (max-width: 759px) {
+  body:has(.canvas-editor-shell), #root:has(.canvas-editor-shell) { height: auto !important; overflow: auto !important; }
+  html body #root .builder-shell.canvas-editor-shell {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto !important;
     height: auto !important;
     min-height: 100dvh !important;
     max-height: none !important;
-    grid-template-columns: minmax(0, 1fr) !important;
     overflow: visible !important;
   }
-
-  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) > .left-workspace {
-    width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-  }
-
-  body .builder-shell.edit-mode-shell:not(.mobile-operations-shell) .work-panel {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: none !important;
-    margin-inline: 0 !important;
-    padding-inline: 10px !important;
-  }
-}
-
-/* Desktop: two-column editor / preview shell. */
-@media (min-width: 1181px) {
-  html body #root .builder-shell.edit-mode-shell:not(.mobile-operations-shell) {
-    grid-template-columns: clamp(580px, 44vw, 680px) minmax(500px, 1fr) !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell > .left-workspace {
-    max-width: none !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .work-panel {
-    padding: 12px 10px 96px !important;
-  }
+  html body #root .canvas-editor-shell .work-panel { grid-column: 1; grid-row: 3; height: auto !important; border-left: 0; }
 }

@@ -1,5 +1,8 @@
 /* WorkspacePreviewPane — owns editor preview presentation and viewport parity. */
 
+/* Editor clicks select the containing code block; embedded links stay inert. */
+.canvas-editor-shell .editor-preview .custom-code-frame { pointer-events: none; }
+
 /* Preview */
 html body #root .builder-shell .preview-workspace {
   min-width: 0;
@@ -299,4 +302,53 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .
   .editor-draft-preview-header { align-items: flex-start; padding: 12px; }
   .editor-draft-preview-dialog { height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); }
   .editor-draft-preview-stage { padding: 6px; }
+}
+
+/* Canvas editor */
+html body #root .canvas-editor-shell > .preview-workspace {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex !important;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 20px 16px !important;
+  overflow: auto !important;
+  background: #edf0f3 !important;
+}
+html body #root .canvas-editor-shell .preview-workspace .preview-sticky {
+  position: relative !important;
+  top: auto !important;
+  height: auto !important;
+  max-height: none !important;
+  align-items: center;
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+html body #root .canvas-editor-shell .preview-workspace .phone-frame {
+  min-width: 0 !important;
+  flex-shrink: 0;
+  border: 1px solid #d6dbe2 !important;
+  border-radius: 4px !important;
+  width: min(calc(var(--editor-preview-content-width, 390px) + 2px), 100%) !important;
+  height: calc(100dvh - 156px) !important;
+  max-height: none !important;
+  box-shadow: 0 4px 20px rgba(16,24,40,.06);
+}
+
+@media (max-width: 759px) {
+  html body #root .canvas-editor-shell > .preview-workspace { grid-column: 1; grid-row: 2; height: auto !important; }
+}
+
+@media (max-width: 759px) {
+  html body #root .canvas-editor-shell .preview-workspace .phone-frame { height: 420px !important; }
+}
+@media (max-width: 1050px) {
+  html body #root .canvas-editor-shell .preview-workspace .phone-frame { height: calc(100dvh - 192px) !important; }
+}
+@media (max-width: 759px) {
+  html body #root .canvas-editor-shell .preview-workspace .phone-frame { height: 420px !important; }
 }
