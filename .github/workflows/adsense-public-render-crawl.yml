@@ -79,3 +79,33 @@ jobs:
           INLET_BROWSER_QA_EXPECT_TEXT: "분야별 생활정보 전체보기,LIFE EDITORIAL ARCHIVE"
           INLET_BROWSER_QA_EXPECT_COMPUTED: ".life-archive-grid|display|grid"
         run: node scripts/browser-visual-quality-check.mjs
+  publish-result:
+    needs: [indexability-and-discovery, visible-browser]
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Publish read-only release verification summary
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          CRAWL_RESULT: ${{ needs.indexability-and-discovery.result }}
+          BROWSER_RESULT: ${{ needs.visible-browser.result }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## AdSense 3차 배포 후 공개 검증"
+            echo ""
+            echo "| 검증 항목 | 결과 |"
+            echo "|---|---|"
+            echo "| 운영 배포 SHA | \`$TARGET_SHA\` |"
+            echo "| 생활비서 45개 글·사이트맵·정책·ads.txt·301·noindex | \`$CRAWL_RESULT\` |"
+            echo "| 실제 PC·모바일 브라우저 표시 | \`$BROWSER_RESULT\` |"
+            echo ""
+            echo "이 결과는 운영 사이트의 기술·콘텐츠 검사이며 Google AdSense 승인 판정이 아닙니다."
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$CRAWL_RESULT" != "success" || "$BROWSER_RESULT" != "success" ]]; then
+            echo "::error::AdSense phase 3 public gate failed. Review the crawl-report artifact and browser logs."
+            exit 1
+          fi
+          echo "PASS: 45-guide public crawl and browser visibility passed for $TARGET_SHA"
