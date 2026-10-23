@@ -8,9 +8,9 @@ const T = {
   left: '\uC67C\uCABD',
   center: '\uAC00\uC6B4\uB370',
   right: '\uC624\uB978\uCABD',
-  commonStyle: '\uACF5\uD1B5 \uC2A4\uD0C0\uC77C',
-  dirty: '스타일 미적용 · 미리보기로 확인 중입니다. 적용 후 편집본에 반영됩니다.',
-  clean: '스타일 적용됨 · 공개 페이지는 발행 후 변경됩니다.',
+  commonStyle: '전체 디자인',
+  dirty: '스타일 미적용',
+  clean: '스타일 적용됨',
   reset: '\uB418\uB3CC\uB9AC\uAE30',
   apply: '\uC801\uC6A9',
   bg: '\uBC30\uACBD',
@@ -189,7 +189,6 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
 
       {section === 'background' && (
         <section className="card style-card style-bg-card">
-          <div className="section-title"><h2>{T.bg}</h2></div>
           <StyleSegment label={T.type} value={bgMode} onChange={(next) => updateDraft({ bgMode: next, bgOverlay: next === 'image' ? (draftTheme.bgOverlay ?? true) : draftTheme.bgOverlay })} options={[[ 'solid', T.solid ], [ 'gradient', T.gradient ], [ 'image', T.image ]]} />
           <StyleSegment label={T.effect} value={draftTheme.bgEffect || 'none'} onChange={(next) => updateDraft({ bgEffect: next })} options={[[ 'none', T.none ], [ 'snow', T.snow ], [ 'petals', T.petals ], [ 'sparkle', T.sparkle ]]} />
           {(draftTheme.bgEffect || 'none') !== 'none' && <StyleRangeLine label={T.opacity} value={draftTheme.bgEffectOpacity ?? 45} min={10} max={90} suffix="%" onChange={(next) => updateDraft({ bgEffectOpacity: next })} />}
@@ -221,11 +220,10 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
         </section>
       )}
 
-      {section === 'color' && <section className="card style-card"><div className="section-title"><h2>{T.color}</h2></div><div className="style-panel-box"><StyleColorLine label={T.buttonColor} value={draftTheme.accent} fallback="#2563EB" onChange={(next) => updateDraft({ accent: next })} /></div></section>}
+      {section === 'color' && <section className="card style-card"><div className="style-panel-box"><StyleColorLine label={T.buttonColor} value={draftTheme.accent} fallback="#2563EB" onChange={(next) => updateDraft({ accent: next })} /></div></section>}
 
       {section === 'text' && (
         <section className="card style-card">
-          <div className="section-title"><h2>{T.text}</h2></div>
           <div className="style-panel-box">
             <StyleColorLine label={T.textColor} value={draftTheme.text} fallback="#111827" onChange={(next) => updateDraft({ text: next })} />
             <StyleSegment label={T.align} value={draftTheme.globalAlign || 'left'} onChange={(next) => updateDraft({ globalAlign: next })} options={ALIGN_OPTIONS} />

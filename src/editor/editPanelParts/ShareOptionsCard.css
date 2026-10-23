@@ -1,7 +1,7 @@
 body .builder-shell .share-options-card .share-position-control {
-  padding: 0 12px 12px;
-  border-top: 1px solid var(--workspace-line, #d9e2ec);
-  background: #f8fafc;
+  padding: 0 0 14px;
+  border-top: 0;
+  background: transparent;
 }
 
 body .builder-shell .share-options-card .share-position-control .editor-segmented-v2 {

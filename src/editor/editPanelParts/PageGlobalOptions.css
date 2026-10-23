@@ -1,4 +1,4 @@
-/* Page options — compact, overflow-safe editor surface. */
+/* Page-wide behavior rows. Widget settings retain their own component owners. */
 body .builder-shell .page-global-options-card,
 body .builder-shell .page-global-options-card * {
   box-sizing: border-box;
@@ -10,225 +10,101 @@ body .builder-shell .page-global-options-card {
   max-width: 100%;
   margin: 0;
   padding: 0;
-  overflow: visible;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
 }
 
-body .builder-shell .page-global-options-title {
-  margin: 0 0 6px;
-  padding: 0 2px;
-}
-
-body .builder-shell .page-global-options-title h2 {
-  margin: 0;
-  color: var(--product-text);
-  font-size: 14px;
-  line-height: 1.35;
-  font-weight: 850;
-  letter-spacing: -.025em;
-}
-
 body .builder-shell .page-global-options-list {
   width: 100%;
   min-width: 0;
-  max-width: 100%;
   display: grid;
-  gap: 6px;
+  gap: 0;
+  border-top: 1px solid var(--product-line);
 }
 
-body .builder-shell .page-global-options-list > * {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
-body .builder-shell .page-global-options-card :is(.edit-animation-card, .fixed-block-card) {
+body .builder-shell .page-global-options-list > .edit-animation-card {
   width: 100%;
   min-width: 0;
   max-width: 100%;
   margin: 0;
-  overflow: hidden;
-  border: 1px solid #eaecf0;
-  border-radius: 9px;
-  background: #fff;
-  box-shadow: none;
+  padding: 0;
+  /* Legacy preview widget rules also match editor rows with !important. */
+  border: 0 !important;
+  border-bottom: 1px solid var(--product-line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-body .builder-shell .page-global-options-card :is(.fixed-block-head, .edit-animation-head) {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
+body .builder-shell .page-global-options-card .page-option-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px 36px;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
   margin: 0;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
-body .builder-shell .page-global-options-card .fixed-block-copy {
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
+body .builder-shell .page-global-options-card .page-option-head :is(b, strong) {
+  color: var(--product-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
 }
 
-body .builder-shell .page-global-options-card .fixed-block-copy strong,
-body .builder-shell .page-global-options-card .fixed-block-copy em {
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+body .builder-shell .page-global-options-card .page-option-expand {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--product-muted);
+  cursor: pointer;
 }
 
-body .builder-shell .page-global-options-card :is(.fixed-block-editor, .edit-animation-settings, .share-position-control) {
-  width: 100%;
+body .builder-shell .page-global-options-card .page-option-expand:hover:not(:disabled) {
+  background: var(--product-soft);
+  color: var(--product-text);
+}
+
+body .builder-shell .page-global-options-card .page-option-expand[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+body .builder-shell .page-global-options-card .page-option-expand:focus-visible {
+  outline: 2px solid var(--product-accent);
+  outline-offset: 2px;
+}
+
+body .builder-shell .page-global-options-card .page-option-expand:disabled {
+  opacity: .3;
+  cursor: default;
+}
+
+body .builder-shell .page-global-options-card :is(.edit-animation-settings, .share-position-control) {
   min-width: 0;
   max-width: 100%;
   overflow-x: hidden;
 }
 
-
-/* Page options runtime owner.
-   Keep page-option geometry and typography here instead of global editor override layers. */
-html body #root .builder-shell .edit-layout .page-global-options-card.card {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 14px !important;
-  overflow: visible !important;
-  border: 1px solid var(--editor-line, #d9e4f2) !important;
-  border-radius: 12px !important;
-  background: #fff !important;
-  box-shadow: none !important;
-}
-
-html body #root .builder-shell .edit-layout .page-global-options-title {
-  min-height: 24px !important;
-  display: flex !important;
-  align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  margin: 0 0 10px !important;
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-}
-
-html body #root .builder-shell .edit-layout .page-global-options-title h2 {
-  margin: 0 !important;
-  color: var(--editor-ink, #0f172a) !important;
-  font-size: 18px !important;
-  line-height: 1.2 !important;
-  font-weight: 950 !important;
-  letter-spacing: -.02em !important;
-}
-
-html body #root .builder-shell .edit-layout .page-global-options-list {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  display: grid !important;
-  gap: 7px !important;
-}
-
-html body #root .builder-shell .edit-layout .page-global-options-card :is(.edit-animation-card, .fixed-block-card) {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: visible !important;
-  border: 1px solid var(--editor-line, #d9e4f2) !important;
-  border-radius: 10px !important;
-  background: #fff !important;
-  box-shadow: none !important;
-}
-
-html body #root .builder-shell .edit-layout .page-global-options-card :is(.fixed-block-head.block-head, .edit-animation-head.block-head) {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  min-height: 48px !important;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 48px 34px !important;
-  align-items: center !important;
-  gap: 10px !important;
-  margin: 0 !important;
-  padding: 8px 10px !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-html body #root .builder-shell .edit-layout .page-global-options-card .edit-animation-head.block-head {
-  grid-template-columns: minmax(0, 1fr) 48px !important;
-}
-
-html body #root .builder-shell .edit-layout .page-global-options-card .fixed-block-copy {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-}
-
-html body #root .builder-shell .edit-layout .page-global-options-card :is(.edit-animation-head b, .fixed-block-copy strong) {
-  min-width: 0 !important;
-  color: var(--editor-ink, #0f172a) !important;
-  font-size: 13px !important;
-  line-height: 1.25 !important;
-  font-weight: 950 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-}
-
-html body #root .builder-shell .edit-layout .page-global-options-card .fixed-block-copy em {
-  min-width: 0 !important;
-  max-width: 190px !important;
-  padding: 4px 8px !important;
-  border-radius: 6px !important;
-  background: #eef4ff !important;
-  color: var(--editor-muted, #64748b) !important;
-  font-size: 11px !important;
-  line-height: 1.2 !important;
-  font-style: normal !important;
-  font-weight: 850 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-}
-
-@media (min-width: 900px) {
-  html body #root .builder-shell.edit-mode-shell .edit-layout .page-global-options-title h2 {
-    font-size: 16px !important;
-    letter-spacing: -.035em !important;
-  }
+html body #root .builder-shell .page-global-options-card [hidden] {
+  display: none !important;
 }
 
 @media (max-width: 760px) {
-  body .builder-shell .page-global-options-card {
-    padding: 10px;
-    border: 1px solid var(--product-line);
-    border-radius: 10px;
-    background: #fff;
+  body .builder-shell .page-global-options-card .page-option-head {
+    grid-template-columns: minmax(0, 1fr) 48px 44px;
   }
-
-  body .builder-shell .page-global-options-list {
-    gap: 6px;
-  }
-
-  body .builder-shell .page-global-options-card :is(.fixed-block-head, .edit-animation-head) {
-    gap: 4px;
-    padding: 7px 6px;
-  }
-
-  body .builder-shell .page-global-options-card .fixed-block-copy em {
-    display: none;
-  }
-
-  body .builder-shell .page-global-options-card :is(.fixed-block-editor, .edit-animation-settings) {
-    padding: 10px;
+  body .builder-shell .page-global-options-card .page-option-expand {
+    width: 44px;
+    min-height: 44px;
   }
 }

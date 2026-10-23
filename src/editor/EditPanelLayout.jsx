@@ -27,6 +27,15 @@ export function EditPanelLayout({
     setSection('options');
   };
 
+  const pageTheme = stylePanelProps?.stagedTheme || pageGlobalOptionsProps.page.theme;
+  const updatePageTheme = (patch) => {
+    if (stylePanelProps?.onPreviewThemeChange) {
+      stylePanelProps.onPreviewThemeChange({ ...pageTheme, ...patch });
+    } else {
+      pageGlobalOptionsProps.updateTheme(patch);
+    }
+  };
+
   // D05: row selection must not auto-scroll the outer editor. An explicit
   // preview-to-editor click is handled by useWorkspaceShellActions.
 
@@ -39,15 +48,6 @@ export function EditPanelLayout({
       >
         <button
           className="edit-section-tab"
-          data-selected={section === 'options' ? 'true' : 'false'}
-          type="button"
-          aria-pressed={section === 'options'}
-          onClick={openPageOptions}
-        >
-          페이지 옵션{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
-        </button>
-        <button
-          className="edit-section-tab"
           data-selected={section === 'order' ? 'true' : 'false'}
           type="button"
           aria-pressed={section === 'order'}
@@ -55,17 +55,26 @@ export function EditPanelLayout({
         >
           블록
         </button>
+        <button
+          className="edit-section-tab"
+          data-selected={section === 'options' ? 'true' : 'false'}
+          type="button"
+          aria-pressed={section === 'options'}
+          onClick={openPageOptions}
+        >
+          페이지 설정{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
+        </button>
       </nav>
 
       <div className="edit-section-panel" data-editor-section={section}>
         {section === 'options' ? (
           <div className="editor-page-options-stack">
-            <PageGlobalOptions {...pageGlobalOptionsProps} />
             {stylePanelProps && (
               <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
                 <PageThemeStylePanel {...stylePanelProps} />
               </React.Suspense>
             )}
+            <PageGlobalOptions {...pageGlobalOptionsProps} page={{ ...pageGlobalOptionsProps.page, theme: pageTheme }} updateTheme={updatePageTheme} />
           </div>
         ) : (
           <>

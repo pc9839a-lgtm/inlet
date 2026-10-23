@@ -1508,7 +1508,7 @@ async function run() {
     assert(!await evaluate(client, `!!document.querySelector('.add-panel')`), 'preview selection must close the previous add picker');
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'content survives returning to list and reopening settings');
-    await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+    await clickButtonByText(client, '.edit-section-tabs', '페이지 설정');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page options after block selection');
     await clickPointer(client, '.phone-frame #block-editor-hero');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview reselects the previous block after page options');
@@ -1632,12 +1632,36 @@ async function run() {
     assert(apiState.saveCount === 0, 'D06 switching editor tabs must not auto-publish');
 
     // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
-    await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+    await clickButtonByText(client, '.edit-section-tabs', '페이지 설정');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`, 'page theme editor');
     assert(!await evaluate(client, `!!document.querySelector('.edit-workflow-hint')`),
       'focused editor must omit redundant global helper copy');
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 적용됨')`),
       'D06 initially applied style status must be explicit');
+    const stageThreePageSettings = await evaluate(client, `(() => {
+      const stack = document.querySelector('.editor-page-options-stack');
+      const cards = [...document.querySelectorAll('.page-global-options-list > .edit-animation-card')];
+      return {
+        tabs: [...document.querySelectorAll('.edit-section-tab')].map((node) => node.textContent.trim()),
+        designFirst: stack.firstElementChild?.classList.contains('style-panel'),
+        designTitle: stack.querySelector('.style-apply-bar strong')?.textContent,
+        status: stack.querySelector('.style-apply-bar span')?.textContent,
+        globalHeadingRemoved: !stack.querySelector('.page-global-options-title'),
+        rows: cards.map((node) => ({ border: getComputedStyle(node).borderTopWidth, radius: getComputedStyle(node).borderRadius })),
+        collapsed: cards.every((node) => node.querySelector('.page-option-expand')?.getAttribute('aria-expanded') === 'false'),
+        shareControlsHidden: !document.querySelector('.share-position-control')?.getClientRects().length,
+        rowWidth: document.querySelector('.page-global-options-card').getBoundingClientRect().width,
+        paneWidth: document.querySelector('.left-workspace').getBoundingClientRect().width,
+      };
+    })()`);
+    assert(JSON.stringify(stageThreePageSettings.tabs) === JSON.stringify(['블록', '페이지 설정'])
+      && stageThreePageSettings.designFirst && stageThreePageSettings.designTitle === '전체 디자인'
+      && stageThreePageSettings.status === '스타일 적용됨' && stageThreePageSettings.globalHeadingRemoved
+      && stageThreePageSettings.rows.length === 2 && stageThreePageSettings.rows.every((row) => row.border === '0px' && row.radius === '0px')
+      && stageThreePageSettings.collapsed && stageThreePageSettings.shareControlsHidden
+      && stageThreePageSettings.rowWidth <= stageThreePageSettings.paneWidth,
+      'stage 3 page settings must show design first with flat collapsed behavior rows: ' + JSON.stringify(stageThreePageSettings));
+    await capture(client, 'desktop-page-settings-stage3');
     await clickButtonByText(client, '.style-subnav', '색상');
     await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`, 'style accent input');
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
@@ -1645,6 +1669,40 @@ async function run() {
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 미적용')`),
       'D06 pending style must say it is preview-only until applied');
     assert(apiState.saveCount === 0, 'style preview must not publish automatically');
+
+    // Page behavior updates must merge into an existing style draft without
+    // applying or discarding its pending color.
+    await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-on') && document.querySelector('.edit-animation-settings')?.getClientRects().length > 0`, 'animation enabled and expanded without losing pending design');
+    await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
+    await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`, 'animation changes retain the unapplied design color');
+    await clickSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
+    assert(await evaluate(client, `document.querySelector('.edit-animation-settings')?.getClientRects().length === 0`), 'collapsed animation controls must leave the keyboard order');
+    await focusSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector('.edit-animation-settings')?.getClientRects().length > 0 && document.querySelector('.edit-animation-options button[aria-pressed="true"]')?.textContent?.trim() === '확대'`, 'keyboard expansion retains the animation choice');
+
+    await clickSelector(client, '.share-options-card .page-option-expand');
+    await clickButtonByText(client, '.share-position-control', '좌측 하단');
+    await clickSelector(client, '.share-options-card [role="switch"]');
+    await waitForBrowser(client, `!document.querySelector('.share-position-control')`, 'share disabled without publishing');
+    await clickSelector(client, '.share-options-card [role="switch"]');
+    await waitForBrowser(client, `document.querySelector('.share-position-control button[aria-pressed="true"]')?.textContent === '좌측 하단'`, 'reenabling share retains its position');
+    await capture(client, 'desktop-page-settings-expanded-stage3');
+    await clickSelector(client, '.share-options-card .page-option-expand');
+    await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
+    await waitForBrowser(client, `!document.querySelector('.phone-frame .landing-page.anim-on') && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)} && !document.querySelector('.style-apply-btn')?.disabled`, 'page behavior edits preserve the unapplied design state');
+    await clickSelector(client, '.style-reset-btn');
+    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true && document.querySelector('.style-panel input[type="color"]')?.value !== ${JSON.stringify(updatedAccent)}`, 'one reset discards pending design and animation changes');
+    await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
+    await waitForBrowser(client, `document.querySelector('.edit-animation-options button[aria-pressed="true"]')?.textContent?.trim() === '페이드'`, 'reset restores the original animation choice');
+    await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
+    await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
+    await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
+    await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
+    assert(apiState.saveCount === 0, 'page settings toggles and disclosures must never auto-publish');
+
 
     // F02: an unapplied style survives leaving the edit tab and remounting
     // StylePanel. The top-level publish action must offer confirmation even
@@ -1669,10 +1727,10 @@ async function run() {
       `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`,
       'F02 back to edit tab');
     await waitForBrowser(client,
-      `document.querySelector('.edit-section-tabs .edit-section-tab:first-child')?.textContent?.includes('미적용')`,
+      `document.querySelector('.edit-section-tabs .edit-section-tab:last-child')?.textContent?.includes('미적용')`,
       'F02 unapplied style badge survives workspace switch');
     if (!(await evaluate(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`))) {
-      await clickSelector(client, '.edit-section-tabs .edit-section-tab:first-child');
+      await clickSelector(client, '.edit-section-tabs .edit-section-tab:last-child');
     }
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`,
       'F02 style panel remounted after returning to edit');
@@ -1747,6 +1805,8 @@ async function run() {
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'latest saved editor preview');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'latest server page does not contain the continued hero title');
     assert(apiState.currentPage.theme?.accent === updatedAccent, 'latest server page does not contain the applied accent');
+    assert(apiState.currentPage.theme?.animOn === false && apiState.currentPage.theme?.animType === 'scale' && apiState.currentPage.theme?.animPlayback === 'loop', 'applying the staged design must retain page animation edits');
+    assert(apiState.currentPage.share?.enabled === true && apiState.currentPage.share?.position === 'bottom-left', 'share position must persist through design apply and publish');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-text')?.visible === false, 'visibility change did not persist');
 
     await capture(client, 'desktop-editor-saved');
@@ -1911,7 +1971,7 @@ async function run() {
       await setViewport(client, desktopViewport.width, desktopViewport.height, false);
       await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, `${desktopViewport.name} editor`);
 
-      await clickButtonByText(client, '.edit-section-tabs', '페이지 옵션');
+      await clickButtonByText(client, '.edit-section-tabs', '페이지 설정');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
     const pageOptionsShellStyle = await evaluate(client, `(() => {
       const el = document.querySelector('.page-global-options-card');
@@ -1923,9 +1983,9 @@ async function run() {
         background: style.backgroundColor,
       };
     })()`);
-    assert(pageOptionsShellStyle?.padding === '14px', `page options shell padding drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
-    assert(pageOptionsShellStyle?.borderWidth === '1px', `page options shell border drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
-    assert(pageOptionsShellStyle?.borderRadius === '12px', `page options shell radius drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.padding === '0px', `page options shell padding drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.borderWidth === '0px', `page options shell border drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
+    assert(pageOptionsShellStyle?.borderRadius === '0px', `page options shell radius drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
     await capture(client, 'desktop-narrow-1180-page-options');
 
     await clickButtonByText(client, '.edit-section-tabs', '블록');
@@ -2327,6 +2387,7 @@ async function run() {
       scope: 'authenticated-editor-browser-regression',
       stageOneBlockList: stageOneList,
       stageTwoSettings,
+      stageThreePageSettings,
       customCodePreview: ['html-css-visible', 'javascript-click', 'dynamic-height', 'parent-session-isolated', 'api-write-blocked'],
       loginCount: apiState.loginCount,
       sessionCount: apiState.sessionCount,
