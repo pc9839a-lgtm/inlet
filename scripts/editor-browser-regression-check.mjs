@@ -1708,6 +1708,7 @@ async function run() {
       const actual = await evaluate(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return { padding: style.paddingTop, margin: style.marginTop, paddingValue: style.getPropertyValue('--widget-padding'), marginValue: style.getPropertyValue('--widget-margin') }; })()`);
       throw new Error(error.message + ': ' + JSON.stringify(actual));
     });
+    await capture(client, 'desktop-common-settings-spacing');
     await setInputValue(client, outerSpacing, '999');
     await focusSelector(client, innerSpacing);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(outerSpacing)})?.value === '48'`, 'out-of-range spacing clamps on blur');
@@ -1715,7 +1716,6 @@ async function run() {
     await setInputValue(client, outerSpacing, '');
     await focusSelector(client, innerSpacing);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(outerSpacing)})?.value === '48'`, 'empty number input keeps the previous spacing');
-    await capture(client, 'desktop-common-settings-spacing');
     await setInputValue(client, innerSpacing, '22');
     await setInputValue(client, outerSpacing, '24');
     assert(apiState.saveCount === 0, 'number and spacing changes must not publish');
@@ -1928,6 +1928,7 @@ async function run() {
     await focusSelector(client, accentHex);
     await setInputValue(client, accentHex, updatedAccent);
     await focusSelector(client, '.style-subnav button:first-child');
+    await capture(client, 'desktop-common-settings-color');
     await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
     await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`, 'animation changes retain the unapplied design color');
@@ -2304,7 +2305,7 @@ async function run() {
     assert(inlineDetailStyle?.inlineMarginTop === '0px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.labelFontSize === '13px', `inline editor labels must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.textareaFontSize === '14px', `inline editor text must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
-    assert(inlineDetailStyle?.tabHeight === 32, `inline editor tabs must keep 32px height: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.tabHeight === 36, `inline editor tabs must keep the shared 36px height: ${JSON.stringify(inlineDetailStyle)}`);
         await capture(client, 'desktop-narrow-1180-screen-order-detail');
       }
 
