@@ -43,10 +43,52 @@ function manifest() {
 const articles = manifest();
 if (articles.length !== 45) warn('manifest_count', 'Expected 45 published articles, found ' + articles.length);
 
-const [root, index, rootSitemap, lifeSitemap, robots, lifeRobots] = await Promise.all([
+const [root, index, rootSitemap, lifeSitemap, robots, lifeRobots, adsTxt, privacy, standards, continuation] = await Promise.all([
   get(ROOT + '/'), get(LIFE + '/'), get(ROOT + '/sitemap.xml'),
   get(LIFE + '/sitemap.xml'), get(ROOT + '/robots.txt'), get(LIFE + '/robots.txt'),
+  get(ROOT + '/ads.txt'), get(LIFE + '/privacy-policy/'),
+  get(LIFE + '/editorial-standards/'),
+  get(LIFE + '/car/car-inspection-period/2/'),
 ]);
+// Phase 3: verify live AdSense identity, privacy disclosures,
+// canonical/legacy host consolidation and non-indexed continuation pages.
+const expectedPublisher = 'pub-1906196934401001';
+if (adsTxt.status !== 200 || !adsTxt.html.includes(`google.com, ${expectedPublisher}, DIRECT, f08c47fec0942fa0`)) {
+  warn('root_ads_txt', 'Live ads.txt is missing or does not match the published AdSense client');
+}
+if (!root.html.includes('ca-' + expectedPublisher)) {
+  warn('root_publisher_mismatch', 'Root publisher identity does not match ads.txt');
+}
+if (privacy.status !== 200 || !privacy.html.includes('Google AdSense') ||
+    !privacy.html.includes('https://adssettings.google.com/') ||
+    !privacy.html.includes('https://policies.google.com/technologies/partner-sites')) {
+  warn('life_privacy_disclosures', 'Google advertising cookie and opt-out disclosures missing from live privacy policy');
+}
+if (standards.status !== 200 || !standards.html.includes('광고와 편집의 분리')) {
+  warn('life_editorial_standards', 'Published editorial standards could not be verified');
+}
+const continuationUrl = LIFE + '/car/car-inspection-period/2/';
+if (continuation.status !== 200 ||
+    !/<meta\\s+name="robots"\\s+content="noindex,follow/i.test(continuation.html) ||
+    !continuation.html.includes(`<link rel="canonical" href="${continuationUrl}">`)) {
+  warn('life_continuation_indexing', 'Continued guide must be noindex with self-canonical');
+}
+try {
+  const oldUrl = 'https://life.pagero.kr/car/car-inspection-period/';
+  const redirectResponse = await fetch(oldUrl, {
+    redirect: 'manual',
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PageRoPhase3QA/1.0)' },
+    signal: AbortSignal.timeout(TIMEOUT),
+  });
+  const location = redirectResponse.headers.get('location') || '';
+  if (redirectResponse.status !== 301 || location !== ROOT + '/life/car/car-inspection-period/') {
+    warn('legacy_life_redirect', `expected 301 to canonical; received ${redirectResponse.status} location=${location}`);
+  }
+} catch (error) {
+  warn('legacy_life_redirect_network', String(error));
+}
+got('phase3', 'Checked ads.txt, root publisher, privacy, editorial policy, legacy redirect and noindex continuation');
+
 if (root.status !== 200) warn('root_status', root.status);
 if (index.status !== 200) warn('life_index_status', index.status);
 if (!root.html.includes('c63-assets/index-pagero-main-fix-20260615.js')) warn('root_not_actual_c63', 'Frozen production bundle not loaded');
@@ -114,6 +156,10 @@ const summary = {
   dashboard_access: false,
   production_modified: false,
   root_status: root.status,
+  ads_txt_status: adsTxt.status,
+  privacy_status: privacy.status,
+  editorial_standards_status: standards.status,
+  continuation_status: continuation.status,
   life_index_status: index.status,
   published_articles: articles.length,
   valid_public_articles: goodArticles,
