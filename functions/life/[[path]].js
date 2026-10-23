@@ -1,6 +1,7 @@
 // Read from an immutable verified content deployment. The legacy hostname now
 // issues a 301 redirect and must never be used as the reverse-proxy upstream.
-const LIFE_UPSTREAM_ORIGIN = 'https://11463f2c.life-pagero.pages.dev';
+// Phase 3: immutable snapshot verified by life-origin/verified-immutable-snapshot status on 1944b808.
+const LIFE_UPSTREAM_ORIGIN = 'https://f484bd2f.life-pagero.pages.dev';
 const LIFE_PUBLIC_ORIGIN = 'https://pagero.kr/life';
 const LIFE_PREFIX = '/life';
 
