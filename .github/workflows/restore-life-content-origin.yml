@@ -128,13 +128,13 @@ jobs:
           python - <<'PY'
           import os,re,pathlib
           log=pathlib.Path(os.environ['GITHUB_WORKSPACE'],'life-deploy.log').read_text(encoding='utf-8',errors='replace')
-          log=re.sub(r'\\x1b\\[[0-?]*[ -/]*[@-~]','',log)
-          urls=re.findall(r'https://[0-9a-f]{8,}\\.life-pagero\\.pages\\.dev/?',log,re.I)
+          log=re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]','',log)
+          urls=re.findall(r'https://[0-9a-f]{8,}\.life-pagero\.pages\.dev/?',log,re.I)
           if not urls:
             raise SystemExit('FAIL: Wrangler returned no immutable life-pagero.pages.dev deployment URL')
           url=urls[-1].rstrip('/')
           with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as output:
-            output.write('immutable_url='+url+'\\n')
+            output.write('immutable_url='+url+'\n')
           print('Immutable deployment candidate:',url,flush=True)
           PY
       - name: Verify exact immutable privacy-policy deployment
