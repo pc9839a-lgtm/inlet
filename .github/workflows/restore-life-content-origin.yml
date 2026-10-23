@@ -1,3 +1,4 @@
+# 2026-10-23 phase 3: publish consent disclosure in a verified immutable snapshot and record its deployment URL.
 # 2026-10-23 AdSense phase 2: publish verified 18-guide source precision and five first-page comparisons; preserve customer-page ad exclusion.
 # 2026-10-22 publisher batch 3: source-depth review, 2026 practical benefit comparisons, expired car tax date corrections.
 # 2026-10-22 editorial factual update: KDCA 2026-27 flu schedule + emergency welfare and disability benefit comparisons.
@@ -15,6 +16,9 @@ on:
     branches: [main]
     paths: [.github/workflows/restore-life-content-origin.yml]
   workflow_dispatch:
+permissions:
+  contents: read
+  statuses: write
 concurrency:
   group: life-pagero-renewable-origin
   cancel-in-progress: false
@@ -65,6 +69,9 @@ jobs:
           test -f dist/car/car-inspection-period/index.html
           grep -q '생활비서' dist/index.html
           grep -q 'pagero.kr/life/' dist/index.html
+          # Fail closed: never publish this phase's snapshot with an old policy.
+          grep -q 'https://adssettings.google.com/' dist/privacy-policy/index.html
+          grep -q 'https://policies.google.com/technologies/partner-sites' dist/privacy-policy/index.html
           # Two historic JSON filenames are re-used by the compressed bundle for
           # published 2026 policy pages. Verify the actual slug and prevent generic
           # grant-help overlays from silently contaminating those policy articles.
@@ -89,6 +96,7 @@ jobs:
           PY
 
       - name: Deploy host-sensitive split (legacy 301; origin 200)
+        id: deployed_life
         shell: bash
         run: |
           set -euo pipefail
@@ -116,7 +124,48 @@ jobs:
           }
           JS
           cd origin-publish
-          ../node_modules/.bin/wrangler pages deploy dist --project-name life-pagero --branch main --commit-hash "$(git -C ../life-site rev-parse HEAD)"
+          ../node_modules/.bin/wrangler pages deploy dist --project-name life-pagero --branch main --commit-hash "$(git -C ../life-site rev-parse HEAD)" 2>&1 | tee "$GITHUB_WORKSPACE/life-deploy.log"
+          python - <<'PY'
+          import os,re,pathlib
+          log=pathlib.Path(os.environ['GITHUB_WORKSPACE'],'life-deploy.log').read_text(encoding='utf-8',errors='replace')
+          log=re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]','',log)
+          urls=re.findall(r'https://[0-9a-f]{8,}\.life-pagero\.pages\.dev/?',log,re.I)
+          if not urls:
+            raise SystemExit('FAIL: Wrangler returned no immutable life-pagero.pages.dev deployment URL')
+          url=urls[-1].rstrip('/')
+          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as output:
+            output.write('immutable_url='+url+'\n')
+          print('Immutable deployment candidate:',url,flush=True)
+          PY
+      - name: Verify exact immutable privacy-policy deployment
+        shell: bash
+        env:
+          IMMUTABLE_URL: ${{ steps.deployed_life.outputs.immutable_url }}
+        run: |
+          python - <<'PY'
+          import os,sys,time,urllib.request
+          origin=os.environ.get('IMMUTABLE_URL','').rstrip('/')
+          pages={
+            '/privacy-policy/':['Google AdSense','https://adssettings.google.com/','https://policies.google.com/technologies/partner-sites'],
+            '/car/car-inspection-period/':['생활비서','rel="canonical"','https://pagero.kr/life/car/car-inspection-period/'],
+            '/editorial-standards/':['광고와 편집의 분리'],
+          }
+          for path,needles in pages.items():
+            verified=False
+            for i in range(1,9):
+              try:
+                req=urllib.request.Request(origin+path,headers={'User-Agent':'Mozilla/5.0 (LIFEImmutablePhase3Gate)'})
+                with urllib.request.urlopen(req,timeout=18) as response:
+                  body=response.read(750000).decode('utf-8','replace')
+                  robots=response.headers.get('X-Robots-Tag','')
+                  verified=(response.status==200 and 'noindex' in robots.lower() and all(n in body for n in needles))
+                print('IMMUTABLE_GUARD',path,i,verified,flush=True)
+                if verified:break
+              except Exception as error:print('IMMUTABLE_RETRY',path,i,type(error).__name__,flush=True)
+              time.sleep(5)
+            if not verified:sys.exit('FAIL: new immutable snapshot not verified: '+origin+path)
+          print('PASS verified immutable source',origin,flush=True)
+          PY
       - name: Prove old host redirects and default origin serves live HTML
         shell: bash
         run: |
@@ -155,4 +204,34 @@ jobs:
             if attempt<8:time.sleep(12)
           if missing or legacy:sys.exit('ERROR: default LIFE origin or old domain verification failed: '+str({'missing':list(missing),'legacy':list(legacy)}))
           print('OK: renewable LIFE content origin and old-host 301 work independently')
+          PY
+      - name: Record immutable deployment for canonical proxy promotion
+        shell: bash
+        env:
+          VERIFIED_LIFE_URL: ${{ steps.deployed_life.outputs.immutable_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os,json,urllib.request
+          repo=os.environ['GITHUB_REPOSITORY']
+          sha=os.environ['GITHUB_SHA']
+          target=os.environ['VERIFIED_LIFE_URL'].strip()
+          payload={
+            'state':'success',
+            'context':'life-origin/verified-immutable-snapshot',
+            'description':'Privacy, editorial and legacy redirect gates verified',
+            'target_url':target,
+          }
+          req=urllib.request.Request(
+            f'https://api.github.com/repos/{repo}/statuses/{sha}',
+            data=json.dumps(payload).encode('utf-8'),
+            headers={
+              'Authorization':'Bearer '+os.environ['GH_TOKEN'],
+              'Accept':'application/vnd.github+json',
+              'X-GitHub-Api-Version':'2022-11-28',
+              'Content-Type':'application/json',
+            },method='POST')
+          with urllib.request.urlopen(req,timeout=20) as response:
+            if response.status!=201:raise SystemExit('GitHub immutable origin status publish failed')
+          print('Verified deployment URL recorded as commit status:',target,flush=True)
           PY
