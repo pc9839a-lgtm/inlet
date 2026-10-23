@@ -1,0 +1,31 @@
+name: Audit GSC 94 discovered URLs across PageRo publishers
+on:
+  push:
+    branches: [audit/gsc-discovered94-20261023]
+    paths:
+      - scripts/gsc-discovered94-public-audit.mjs
+      - .github/workflows/audit-gsc-discovered94-public.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate audit syntax
+        run: node --check scripts/gsc-discovered94-public-audit.mjs
+      - name: Inspect actual GSC-reported URLs without modifying production
+        run: node scripts/gsc-discovered94-public-audit.mjs
+      - name: Retain all 94 URL findings regardless of result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gsc-discovered94-live-evidence
+          path: artifacts/gsc-discovered94-public-audit.json
+          retention-days: 14
+          if-no-files-found: ignore
