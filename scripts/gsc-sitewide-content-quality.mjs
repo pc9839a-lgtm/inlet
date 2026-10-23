@@ -42,8 +42,9 @@ async function inspect(url,map) {
   item.canonical=canonical(v.html)[0]||'';
   item.robots=[...metas(v.html,'robots'),...metas(v.html,'googlebot'),v.xRobots].filter(Boolean).join(' | ');
   const content=part(v.html,'main')||part(v.html,'article')||part(v.html,'body');
-  const article=part(content,'article')||content;
-  const text=plain(article);
+  // A listing <main> can contain many <article> cards: extracting the first
+  // <article> only produces false 'thin content' alerts. Read the entire main.
+  const text=plain(content);
   item.mainLength=text.length;
   item._grams=grams(text);
   if(v.status!==200)item.problems.push('http_not_200');
