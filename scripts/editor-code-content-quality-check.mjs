@@ -11,7 +11,7 @@ const html = `<!doctype html><html><head><title>Never edit</title><style>.hero{c
 <img src="responsive.jpg" srcset="retina.jpg 2x"><img src="one" src="two">
 </section></body></html>`;
 const fields = readCodeContentFields(html);
-assert.deepEqual(fields.map((f) => f.value), ['도윤 & 지혜', 'https://cdn.example/old.jpg?a=1&b=2', 'https://example.com/?a=1&b=2', '초대장 보기', '이름']);
+assert.deepEqual(fields.map((f) => f.value), ['  도윤 & 지혜  ', 'https://cdn.example/old.jpg?a=1&b=2', 'https://example.com/?a=1&b=2', '초대장 보기', '이름']);
 const title = fields.find((f) => f.label === '초대 제목');
 assert.equal(updateCodeContentField(html, title.id, '<새 제목> & "초대"'), html.slice(0, title.start) + '&lt;새 제목&gt; &amp; &quot;초대&quot;' + html.slice(title.end));
 const image = fields.find((f) => f.kind === 'image');
@@ -26,5 +26,6 @@ assert.deepEqual(readCodeContentFields('<script><img src="x"><h1>bad</h1>'), [])
 assert.deepEqual(readCodeContentFields('<div><script>const value="</div><h1>bad</h1>";</script></div>'), []);
 const empty = updateCodeContentField(html, title.id, '');
 assert.ok(readCodeContentFields(empty).some((field) => field.id === title.id && field.value === ''), 'clearing a title must keep its input editable');
+assert.equal(readCodeContentFields(updateCodeContentField(html, title.id, '함께해 ')).find((field) => field.id === title.id)?.value, '함께해 ', 'typing a trailing space must not erase it before the next word');
 assert.deepEqual(readCodeContentFields('<template><p>bad</p></template><textarea>bad</textarea><pre><span>bad</span></pre>'), []);
 console.log('editor code content: exact-span edits, entities, isolation, ambiguous sources and URL safety passed');

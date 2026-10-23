@@ -34,11 +34,10 @@ export function readCodeContentFields(input) {
       stack.splice(index);
       const text = html.slice(node.contentStart, token.index);
       if (!node.blocked && !node.children && TEXT.has(name) && (text.trim() || name !== 'div' || node.label) && !/[<>]/.test(text) && !dynamic(text)) {
-        const leading = text.length - text.trimStart().length;
-        const value = text.trim();
+        const value = text;
         const type = /^h[1-6]$/.test(name) ? 'title' : 'text';
         const count = ++counts[type];
-        fields.push({ id: `${node.ordinal}:text`, kind: 'text', label: node.label || `${type === 'title' ? '제목' : name === 'a' || name === 'button' ? '버튼 문구' : '문구'} ${count}`, start: node.contentStart + leading, end: node.contentStart + leading + value.length, raw: value, value: decode(value) });
+        fields.push({ id: `${node.ordinal}:text`, kind: 'text', label: node.label || `${type === 'title' ? '제목' : name === 'a' || name === 'button' ? '버튼 문구' : '문구'} ${count}`, start: node.contentStart, end: node.contentStart + value.length, raw: value, value: decode(value) });
       }
       continue;
     }

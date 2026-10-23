@@ -2079,6 +2079,8 @@ async function run() {
     assert(!await evaluate(client, `document.querySelector('.editor-composition-dialog')?.open`), 'choosing a block must close composition');
     const contentBefore = await evaluate(client, `document.querySelector('.code-editor-box textarea')?.value`);
     const titleField = '.code-content-fields input[data-code-content-kind="text"]';
+    await setInputValue(client, titleField, '함께해 ');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(titleField)})?.value === '함께해 '`, 'ordinary title preserves a space before the next word');
     await setInputValue(client, titleField, '함께해 주세요');
     await waitForBrowser(client, `document.querySelector('.code-editor-box textarea')?.value.includes('함께해 주세요')`, 'ordinary title field updates code source');
     assert(apiState.saveCount === 2, 'ordinary content edit must not publish');
