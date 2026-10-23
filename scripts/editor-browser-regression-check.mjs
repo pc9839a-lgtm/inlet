@@ -1320,6 +1320,43 @@ async function run() {
     }
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'focused hero settings textarea');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-hero[data-block-settings-id="editor-hero"]')`, 'hero settings render separately from the list');
+    qaStep('stage4 shared fields and choice keyboard behavior');
+    const stageFourField = await evaluate(client, `(() => {
+      const field = document.querySelector(${JSON.stringify(heroEditorSelector)});
+      const style = getComputedStyle(field);
+      return { radius: style.borderRadius, size: style.fontSize, minHeight: style.minHeight };
+    })()`);
+    assert(stageFourField.radius === '8px' && stageFourField.size === '14px',
+      'stage4 common text fields must use the shared readable input style: ' + JSON.stringify(stageFourField));
+    await clickButtonByText(client, '#editor-block-settings-editor-hero .editor-tabs-v2-list', '스타일');
+    const stageFourChoice = '#editor-block-settings-editor-hero .editor-segmented-v2[aria-label="정렬"]';
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourChoice)})`, 'stage4 named alignment control');
+    await focusSelector(client, `${stageFourChoice} button:nth-child(2)`);
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(stageFourChoice + ' button:nth-child(2)')})?.getAttribute('aria-pressed') === 'true'`, 'stage4 choice keyboard selection');
+    const stageFourChoiceStyle = await evaluate(client, `(() => {
+      const group = document.querySelector(${JSON.stringify(stageFourChoice)});
+      const button = group.querySelector('[aria-pressed="true"]');
+      const style = getComputedStyle(button);
+      return { border: getComputedStyle(group).borderTopWidth, background: style.backgroundColor,
+        outline: style.outlineStyle, outlineWidth: style.outlineWidth,
+        overflow: button.scrollWidth > button.clientWidth + 2 };
+    })()`);
+    assert(stageFourChoiceStyle.border === '0px' && stageFourChoiceStyle.background === 'rgb(255, 255, 255)'
+      && stageFourChoiceStyle.outline === 'solid' && stageFourChoiceStyle.outlineWidth === '2px'
+      && !stageFourChoiceStyle.overflow,
+      'stage4 choices must have one rail, visible selection and keyboard focus: ' + JSON.stringify(stageFourChoiceStyle));
+    await capture(client, 'desktop-shared-choices-stage4');
+    await clickSelector(client, `${stageFourChoice} button:first-child`);
+    await clickButtonByText(client, '#editor-block-settings-editor-hero .editor-tabs-v2-list', '이미지');
+    const stageFourRange = await evaluate(client, `(() => {
+      const range = document.querySelector('#editor-block-settings-editor-hero input[type="range"]');
+      const style = getComputedStyle(range);
+      return { padding: style.paddingLeft, border: style.borderTopWidth, width: range.getBoundingClientRect().width };
+    })()`);
+    assert(stageFourRange.padding === '0px' && stageFourRange.border === '0px' && stageFourRange.width > 100,
+      'stage4 range must retain its native slider geometry: ' + JSON.stringify(stageFourRange));
+    await clickButtonByText(client, '#editor-block-settings-editor-hero .editor-tabs-v2-list', '내용');
     // D01: exercise the actual selected inspector DOM and CSS scroll contract.
     // A taller editor must scroll internally, without changing block order.
     const inspectorScroll = await evaluate(client, `(() => {
@@ -1413,6 +1450,26 @@ async function run() {
     assert(fixedAdvancedState && !fixedAdvancedState.open
       && fixedAdvancedState.last && fixedAdvancedState.hidden,
       `D02 fixed editor anchor must be hidden after its content: ${JSON.stringify(fixedAdvancedState)}`);
+    await waitForBrowser(client, `!!document.querySelector('.topnav-fixed-card .editor-tabs-v2-list')`, 'stage4 fixed-block lazy controls loaded');
+    await clickButtonByText(client, '.topnav-fixed-card .editor-tabs-v2-list', '스타일');
+    const stageFourToggle = '.topnav-fixed-card .editor-toggle-row-v2 [role="switch"]';
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourToggle)})`, 'stage4 fixed-block switch');
+    const stageFourToggleBefore = await evaluate(client, `(() => {
+      const toggle = document.querySelector(${JSON.stringify(stageFourToggle)});
+      const row = toggle.closest('.editor-toggle-row-v2');
+      return { checked: toggle.getAttribute('aria-checked'), height: toggle.getBoundingClientRect().height,
+        border: getComputedStyle(row).borderTopWidth, padding: getComputedStyle(row).paddingTop };
+    })()`);
+    assert(stageFourToggleBefore.height === 44 && stageFourToggleBefore.border === '0px'
+      && stageFourToggleBefore.padding === '0px',
+      'stage4 switch must have a 44px target without an outer card: ' + JSON.stringify(stageFourToggleBefore));
+    await focusSelector(client, stageFourToggle);
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(stageFourToggle)})?.getAttribute('aria-checked') !== ${JSON.stringify(stageFourToggleBefore.checked)}`, 'stage4 switch toggles by keyboard');
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(stageFourToggle)})?.getAttribute('aria-checked') === ${JSON.stringify(stageFourToggleBefore.checked)}`, 'stage4 switch original value restored');
+    await capture(client, 'desktop-shared-toggle-stage4');
+    assert(apiState.saveCount === 0, 'stage4 shared controls must not publish');
     await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
     await waitForBrowser(client, `!document.querySelector('.topnav-fixed-card .block-editor-advanced-settings')`,
       'D02 fixed navigation settings closed after inspection');
@@ -1630,6 +1687,45 @@ async function run() {
       return labels.includes('내용') && labels.includes('스타일') && !labels.includes('기본');
     })()`, 'D06 form tabs use content/style vocabulary');
     assert(apiState.saveCount === 0, 'D06 switching editor tabs must not auto-publish');
+
+    // Older form controls and modern widget controls share the same visual owner.
+    await clickButtonByText(client, '#editor-block-settings-editor-form .editor-tabs-v2-list', '내용');
+    const stageFourLegacyField = await evaluate(client, `(() => {
+      const input = document.querySelector('#editor-block-settings-editor-form .field input');
+      const style = getComputedStyle(input);
+      return { radius: style.borderRadius, size: style.fontSize, minHeight: style.minHeight };
+    })()`);
+    assert(stageFourLegacyField.radius === stageFourField.radius && stageFourLegacyField.size === stageFourField.size
+      && stageFourLegacyField.minHeight === '42px',
+      'stage4 legacy form fields must match modern fields: ' + JSON.stringify(stageFourLegacyField));
+    await clickSelector(client, '#editor-block-settings-editor-form details:has(.privacy-compact-panel) > summary');
+    const stageFourLegacyToggle = '#editor-block-settings-editor-form .toggle [role="switch"]';
+    const stageFourLegacyChecked = await evaluate(client, `document.querySelector(${JSON.stringify(stageFourLegacyToggle)}).getAttribute('aria-checked')`);
+    await focusSelector(client, stageFourLegacyToggle);
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(stageFourLegacyToggle)})?.getAttribute('aria-checked') !== ${JSON.stringify(stageFourLegacyChecked)}`, 'stage4 legacy switch keyboard off');
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(stageFourLegacyToggle)})?.getAttribute('aria-checked') === ${JSON.stringify(stageFourLegacyChecked)}`, 'stage4 legacy switch value restored');
+    assert(await evaluate(client, `document.querySelector(${JSON.stringify(stageFourLegacyToggle)}).getBoundingClientRect().height === 44`), 'stage4 legacy switch must share the 44px target');
+    const stageFourLegacyTrack = await evaluate(client, `(() => {
+      const toggle = document.querySelector(${JSON.stringify(stageFourLegacyToggle)});
+      return { background: getComputedStyle(toggle).backgroundColor,
+        track: getComputedStyle(toggle, '::before').borderRadius,
+        thumb: getComputedStyle(toggle.querySelector('i')).width };
+    })()`);
+    assert(stageFourLegacyTrack.background === 'rgba(0, 0, 0, 0)' && stageFourLegacyTrack.track === '999px'
+      && stageFourLegacyTrack.thumb === '22px',
+      'stage4 legacy active styles must not paint a second switch background: ' + JSON.stringify(stageFourLegacyTrack));
+    await capture(client, 'desktop-shared-form-stage4');
+    await clickButtonByText(client, '#editor-block-settings-editor-form .editor-tabs-v2-list', '제출');
+    const stageFourLegacyChoice = '#editor-block-settings-editor-form .choice[aria-label="연락처"]';
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourLegacyChoice)})`, 'stage4 legacy contact choice');
+    await focusSelector(client, `${stageFourLegacyChoice} button:nth-child(2)`);
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(stageFourLegacyChoice + ' button:nth-child(2)')})?.getAttribute('aria-pressed') === 'true'`, 'stage4 legacy choice keyboard selection');
+    await capture(client, 'desktop-shared-form-choices-stage4');
+    await clickSelector(client, `${stageFourLegacyChoice} button:first-child`);
+    assert(apiState.saveCount === 0, 'stage4 legacy controls must not publish');
 
     // E2E-11 / E2E-12: page/theme inspector previews the style draft, then applies it into the page draft.
     await clickButtonByText(client, '.edit-section-tabs', '페이지 설정');

@@ -1,6 +1,6 @@
 export function SegmentedControl({ label, value, options = [], onChange }) {
   return (
-    <div className="editor-segmented-v2">
+    <div className="editor-segmented-v2" role="group" aria-label={label}>
       <span className="editor-control-v2-copy">
         <strong>{label}</strong>
       </span>
