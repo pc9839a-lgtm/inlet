@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  statuses: write
 jobs:
   indexability-and-discovery:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
@@ -79,3 +80,43 @@ jobs:
           INLET_BROWSER_QA_EXPECT_TEXT: "분야별 생활정보 전체보기,LIFE EDITORIAL ARCHIVE"
           INLET_BROWSER_QA_EXPECT_COMPUTED: ".life-archive-grid|display|grid"
         run: node scripts/browser-visual-quality-check.mjs
+  publish-result:
+    needs: [indexability-and-discovery, visible-browser]
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Record post-deploy crawl verdict on the deployed commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          CRAWL_RESULT: ${{ needs.indexability-and-discovery.result }}
+          BROWSER_RESULT: ${{ needs.visible-browser.result }}
+        run: |
+          python - <<'PY'
+          import os,json,urllib.request
+          good=(os.environ['CRAWL_RESULT']=='success' and os.environ['BROWSER_RESULT']=='success')
+          state='success' if good else 'failure'
+          repo=os.environ['GITHUB_REPOSITORY']
+          sha=os.environ['TARGET_SHA']
+          payload={
+            'state':state,
+            'context':'adsense/phase3-public-after-deploy',
+            'description':'LIFE 45-guide live crawl and desktop/mobile browser passed' if good else 'LIFE public crawl or browser verification failed',
+            'target_url':f"https://github.com/{repo}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+          }
+          req=urllib.request.Request(
+            f'https://api.github.com/repos/{repo}/statuses/{sha}',
+            data=json.dumps(payload).encode('utf-8'),
+            headers={
+              'Authorization':'Bearer '+os.environ['GH_TOKEN'],
+              'Accept':'application/vnd.github+json',
+              'X-GitHub-Api-Version':'2022-11-28',
+              'Content-Type':'application/json',
+            },method='POST')
+          with urllib.request.urlopen(req,timeout=20) as response:
+            if response.status != 201: raise SystemExit('Could not record postdeploy audit status')
+          print('POSTDEPLOY_AUDIT',state,'deployed_sha',sha,'crawl',os.environ['CRAWL_RESULT'],'browser',os.environ['BROWSER_RESULT'],flush=True)
+          if not good:raise SystemExit('Postdeploy audit failed; never report this commit as verified')
+          PY
