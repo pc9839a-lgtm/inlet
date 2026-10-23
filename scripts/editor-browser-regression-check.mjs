@@ -1696,6 +1696,7 @@ async function run() {
     // Duplicate a real text block through the UI and verify the two rows get
     // different ordinal identities, then undo to avoid affecting later QA.
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .editor-tabs-v2-list')`, 'text settings load before exact spacing edits');
     await clickButtonByText(client, '#editor-block-settings-editor-text .editor-tabs-v2-list', '스타일');
     const innerSpacing = '#editor-block-settings-editor-text input[aria-label="안쪽 상하 (px)"]';
     const outerSpacing = '#editor-block-settings-editor-text input[aria-label="바깥 상하 (px)"]';
