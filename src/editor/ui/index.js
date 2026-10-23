@@ -5,3 +5,4 @@ export { EditorSection } from './EditorSection.jsx';
 export { EditorTabs } from './EditorTabs.jsx';
 export { SegmentedControl } from './SegmentedControl.jsx';
 export { ToggleRow } from './ToggleRow.jsx';
+export { NumberControl } from './NumberControl.jsx';

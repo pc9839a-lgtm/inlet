@@ -180,7 +180,7 @@ export function ScreenOrderRowActions({
         <Trash2 size={14} /> 삭제
       </button>
     </div>,
-    triggerRef.current?.closest('dialog') || document.body,
+    document.body,
   ) : null;
 
   return (

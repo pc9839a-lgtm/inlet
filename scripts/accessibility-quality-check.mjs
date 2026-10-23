@@ -189,7 +189,7 @@ assert(files.codeCss.includes('100dvh'), 'code dialog should use dynamic viewpor
 assert(files.workspaceShellCss.includes('@media (max-width: 1180px)'), 'workspace must reflow before narrow/zoomed desktop becomes two-column overflow');
 assert(files.mobileWorkspaceMode.includes("const COARSE_POINTER_QUERY = '(pointer: coarse)'"), 'mobile operations mode must distinguish coarse-pointer mobile from desktop browser zoom');
 assert(files.mobileWorkspaceMode.includes('widthMedia.matches && pointerMedia.matches'), 'mobile workspace must require both narrow width and coarse pointer');
-assert(files.editorWorkspaceCss.includes('@media (max-width: 759px)'), 'compact two-area editor must stack before the canvas and inspector stop fitting');
+assert(files.editorWorkspaceCss.includes('@media (max-width: 899px)'), 'compact two-area editor must stack before the canvas and inspector stop fitting');
 assert(files.editorWorkspaceCss.includes('overflow: auto !important;'), 'zoomed desktop editor must remain scroll-reachable');
 assert(files.editorWorkspaceCss.includes('.canvas-editor-shell'), 'zoom reflow must stay scoped to the desktop canvas editor');
 assert(files.workspaceShellCss.includes('100dvh'), 'workspace shell should use dynamic viewport units');

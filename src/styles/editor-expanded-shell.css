@@ -138,44 +138,46 @@ body .builder-shell .edit-layout .block-editor-v2 .block-editor-anchor-value > b
   background: transparent;
 }
 
+/* Shared content/style tabs: one flat owner for every inspector width. */
 .editor-tabs-v2-list {
-  position: sticky;
-  top: 0;
+  position: static;
   z-index: 4;
   display: flex;
-  gap: 2px;
-  width: fit-content;
+  gap: 8px;
+  width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: 2px;
-  border-radius: 8px;
-  background: #f2f4f7;
+  padding: 0;
+  border-bottom: 1px solid #e4e7ec;
+  border-radius: 0;
+  background: transparent;
 }
 
 body .builder-shell .edit-layout .block-editor-v2 .editor-tabs-v2-list > button {
-  min-width: 62px !important;
-  min-height: 30px !important;
-  padding: 0 10px !important;
+  min-width: 0 !important;
+  min-height: 36px !important;
+  padding: 0 8px !important;
   border: 0 !important;
-  border-radius: 6px !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
   background: transparent !important;
   color: #667085 !important;
   box-shadow: none !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
 }
 
 body .builder-shell .edit-layout .block-editor-v2 .editor-tabs-v2-list > button[aria-selected='true'] {
-  background: #fff !important;
+  border-bottom-color: #344054 !important;
   color: #101828 !important;
-  box-shadow: 0 1px 2px rgba(16,24,40,.08) !important;
+  font-weight: 600 !important;
 }
 
 .editor-tabs-v2-panel {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
-  padding: 14px 0 8px;
+  padding: 16px 0 8px;
 }
 
 .editor-section-v2 {
@@ -202,8 +204,8 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-section-v2-trigger {
 
 .editor-section-v2-body {
   display: grid;
-  gap: 12px;
-  padding: 12px 0 14px;
+  gap: 16px;
+  padding: 16px 0 24px;
   border-top: 1px solid var(--editor-v2-line);
 }
 
@@ -248,7 +250,7 @@ body .builder-shell .edit-layout .block-editor-v2-heading strong,
 body .builder-shell .edit-layout :is(.editor-section-v2-copy strong, .editor-control-v2-copy strong) {
   color: var(--product-text);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 body .builder-shell .edit-layout .block-editor-v2-heading strong {
@@ -268,7 +270,7 @@ body .builder-shell .edit-layout .editor-section-v2-trigger {
 body .builder-shell .edit-layout .editor-section-v2-body {
   min-width: 0;
   display: grid;
-  gap: 11px;
-  padding: 12px 4px 16px;
+  gap: 16px;
+  padding: 16px 0 24px;
 }
 

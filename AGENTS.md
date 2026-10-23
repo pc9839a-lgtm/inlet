@@ -7,6 +7,7 @@ Before modifying or deploying Pagero, read:
 - `docs/PAGERO_MAINTENANCE_HANDOFF_KO.md`
 - `docs/PAGERO_PLAN_POLICY_KO.md` for the owner-approved plan names, prices, and plan-count lock.
 - `docs/PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md` for the current PageRo internal-feature baseline, priorities, editor follow-up, and stale-document rules.
+- `docs/PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md` before editor work, especially the current owner constraints and benchmark application rules.
 
 The production root source of truth is `functions/index.js`, not a file named
 `functions/frozenHome.js` and not the local Vite home alone.
@@ -31,6 +32,10 @@ work unless a current-main bug is reproduced. B3 production launch smoke is
 currently skipped by owner request. P5 custom-domain code reconstruction landed
 through PR #352-#354; production migration/provider smoke remains approval-gated.
 After P5 operating validation, the next planned product backlog starts at P7.
+
+The current owner-requested editor redesign is tracked as ED-UX in the master
+document. The completed-code rule above must not be used to dismiss a rejected
+editor design or to claim that passing tests establish UX acceptance.
 
 ## Documentation Source Rules
 
@@ -149,6 +154,14 @@ and statistics.
 
 ## Editor UI Rules
 
+* Current owner constraint: do not add, expand, or connect AI generation,
+  chat, recommendations, or automatic code-to-form extraction in this editor
+  redesign. Historical E4 documentation is not authorization for AI work.
+* Treat owner-rejected screenshots as unresolved UX/design work even when
+  functional tests pass. Do not report QA success as design acceptance.
+* Preserve the owner's left editing / right page-preview arrangement,
+  persistent composition list, direct code editing, and one 390px preview.
+  Do not copy a competitor's right inspector over these explicit constraints.
 * Keep the block list separate from detailed widget settings.
 * A block row contains drag handle, order, icon, name, visibility, and actions.
 * Keep global page options separate from block settings.
@@ -159,11 +172,20 @@ and statistics.
 * Do not change working API, auth, database, routing, or public-home behavior
   during editor-only work.
 
-Patch editor work in this order:
+Plan and patch editor work in this order:
 
-1. block list
-2. selected-block settings panel
-3. page/global settings separation
-4. shared controls and styles
-5. panel cleanup
-6. one widget editor at a time
+1. Diagnose the actual editing task and the owner-rejected screen. Map each
+   reference to a concrete interaction or layout decision; a brand list is not
+   a benchmark application.
+2. Set the page/selection/settings relationship and information hierarchy.
+   Do not start with borders, radii, font weights, or button colors.
+3. Resolve representative text, image, spacing, and code settings screens.
+   Default to one primary control per property; do not show a slider, number
+   input, and preset strip for the same spacing value by default.
+4. Compare the rendered screens against the chosen references at matching
+   viewport and task states. Check long Korean names, hidden rows, and
+   unsaved changes. State any unavailable evidence.
+5. Apply the proven pattern to other widget editors and consolidate styles
+   under their component owners. Finish visual details afterward.
+6. Verify functional safety separately from visual quality and usability.
+   Preserve save/recovery, keyboard, media, and publish-isolation coverage.

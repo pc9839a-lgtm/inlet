@@ -53,17 +53,15 @@ assert(workflowSource.includes('include-hidden-files: true'), 'hidden browser sc
 assert(browserSource.includes("`${origin}/login`") && browserSource.includes("input[placeholder=\"email@example.com\"]"), 'browser QA must start from the real login screen');
 assert(browserSource.includes("pathname === '/api/auth/login'") && browserSource.includes("pathname === '/api/auth/session'"), 'browser QA must mock login and session refresh APIs');
 assert(browserSource.includes("pathname === '/api/projects'") && browserSource.includes(".service-landing-card"), 'browser QA must load and select a dashboard page');
-assert(workspacePreviewSource.includes('PREVIEW_CONTENT_WIDTHS = [360, 390, 430]')
-  && workspacePreviewSource.includes('data-content-width={width}')
-  && workspacePreviewSource.includes('aria-pressed={contentWidth === width}')
-  && workspacePreviewSource.includes('new ResizeObserver(measure)')
-  && workspacePreviewSource.includes("querySelector('.landing-page')"),
-  'D04 editor preview must expose accessible content widths and measure actual rendered landing pixels');
+assert(workspacePreviewSource.includes('PREVIEW_CONTENT_WIDTH = 390')
+  && workspacePreviewSource.includes('className="preview-width-value"')
+  && !workspacePreviewSource.includes('ResizeObserver') && !workspacePreviewSource.includes('preview-width-option'),
+  'D04 editor preview must expose exactly one fixed 390px width without selection state');
 assert(workspacePreviewCssSource.includes('var(--editor-preview-content-width, 390px)')
   && workspacePreviewCssSource.includes('.builder-shell.edit-mode-shell .preview-workspace .phone-frame'),
-  'D04 CSS viewport selection must be scoped to editor mode, never public landing');
-assert(browserSource.includes('D04 actual content width') && browserSource.includes('d04WidthSamples'),
-  'D04 real editor Chrome regression must click all three widths and verify actual pixels');
+  'D04 fixed preview geometry must be scoped to editor mode, never public landing');
+assert(browserSource.includes('D04 actual content width 390') && browserSource.includes('d04FixedWidth'),
+  'D04 real editor Chrome regression must verify the single width and actual pixels');
 assert(browserSource.includes('previewManagementUi') && browserSource.includes('!previewManagementUi.canvasHeading') && browserSource.includes('!previewManagementUi.conversionCockpit') && browserSource.includes('!previewManagementUi.publishChecklist'), 'browser QA must verify the redundant preview management bars are absent');
 assert(browserSource.includes("clickSelector(client, '#workspace-tab-inbox')") && browserSource.includes('inboxTransitionFocused'), 'browser QA must verify inbox remains available and keyboard accessible via the workspace tab');
 assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes("#editor-block-editor-hero") && browserSource.includes(".screen-order-v2-head") && browserSource.includes(".screen-order-v2-settings textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit the active inline block editor, and verify live preview');
@@ -123,7 +121,7 @@ assert(browserSource.includes('focused settings navigation must keep the back co
   && browserSource.includes('beforeD05'),
   'focused settings navigation must keep its back control reachable on narrow desktop');
 assert(browserSource.includes('stageTwoSettings')
-  && browserSource.includes('back returns keyboard focus to the original row')
+  && browserSource.includes('list and selected settings must stay visible together')
   && browserSource.includes('unapplied code draft survives list navigation')
   && browserSource.includes('preview reselects the previous block after page options'),
   'stage 2 browser QA must preserve settings navigation, keyboard focus, staged code and preview selection');

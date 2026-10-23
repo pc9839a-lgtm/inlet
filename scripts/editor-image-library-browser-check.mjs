@@ -229,10 +229,7 @@ async function setInputValue(client, selector, value) {
   assert(result, `Unable to set input value for ${selector}`);
 }
 async function clickSelector(client, selector) {
-  if (selector === imageRowHeadSelector) {
-    await evaluate(client, `document.querySelector('.edit-section-tab[aria-haspopup="dialog"]')?.click()`);
-    await waitForBrowser(client, `document.querySelector('.editor-composition-dialog')?.open`, 'composition drawer');
-  }
+
   const clicked = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)}); if (!element) return false;
     element.scrollIntoView({ block: 'center', inline: 'center' }); element.click(); return true;

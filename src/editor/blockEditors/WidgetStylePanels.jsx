@@ -1,5 +1,6 @@
 import { Color } from '../controls.jsx';
 import { SegmentedControl, ToggleRow } from '../ui/index.js';
+import { WidgetSpacingControls } from './WidgetSpacingControls.jsx';
 
 const ALIGN = [
   { value: 'left', label: '왼쪽' },
@@ -30,6 +31,7 @@ export function TextStylePanel({ s, set }) {
     <SegmentedControl label="형태" value={s.layout || 'plain'} onChange={(value) => set({ layout: value })} options={[{ value: 'plain', label: '기본' }, { value: 'card', label: '카드' }, { value: 'notice', label: '강조' }]} />
     <SegmentedControl label="글자 크기" value={s.size || 'medium'} onChange={(value) => set({ size: value })} options={SIZES} />
     <AlignmentControl s={s} set={set} />
+    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 
@@ -39,6 +41,7 @@ export function CardsStylePanel({ s, set }) {
     <SegmentedControl label="표현" value={s.tone || 'soft'} onChange={(value) => set({ tone: value })} options={[{ value: 'soft', label: '소프트' }, { value: 'solid', label: '채움' }, { value: 'outline', label: '라인' }]} />
     {(s.layout || 'grid') === 'grid' && <SegmentedControl label="열 개수" value={String(s.columns || 2)} onChange={(value) => set({ columns: Number(value) })} options={[{ value: '1', label: '1열' }, { value: '2', label: '2열' }]} />}
     <AlignmentControl s={s} set={set} options={ALIGN_NO_RIGHT} />
+    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 
@@ -46,6 +49,7 @@ export function LinksStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="배치" value={s.layout || 'list'} onChange={(value) => set({ layout: value })} options={[{ value: 'list', label: '목록' }, { value: 'card', label: '카드' }, { value: 'carousel', label: '슬라이드' }]} />
     <AlignmentControl s={s} set={set} />
+    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 
@@ -53,6 +57,7 @@ export function DownloadStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="배치" value={s.layout || 'card'} onChange={(value) => set({ layout: value })} options={[{ value: 'card', label: '카드' }, { value: 'list', label: '목록' }]} />
     <AlignmentControl s={s} set={set} />
+    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 
@@ -60,6 +65,7 @@ export function ScheduleStylePanel({ s, set }) {
   return <>
     <Color label="강조색" value={s.highlightColor || '#8AA2C8'} onChange={(value) => set({ highlightColor: value })} />
     <AlignmentControl s={s} set={set} defaultValue="center" />
+    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 
@@ -67,6 +73,7 @@ export function ActivityStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="테마" value={s.style || 'glass'} onChange={(value) => set({ style: value })} options={[{ value: 'minimal', label: '미니멀' }, { value: 'glass', label: '글라스' }, { value: 'dark', label: '다크' }]} />
     <ToggleRow label="목록 움직임" checked={(s.animation || 'stack') !== 'none'} onChange={(value) => set({ animation: value ? 'stack' : 'none' })} />
+    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 
@@ -75,18 +82,21 @@ export function MapStylePanel({ s, set }) {
     <AlignmentControl s={s} set={set} />
     <SegmentedControl label="레이아웃" value={s.layout || 'default'} onChange={(value) => set({ layout: value })} options={[{ value: 'default', label: '기본' }, { value: 'full', label: '넓게' }, { value: 'minimal', label: '심플' }]} />
     {s.showEmbedMap !== false && <SegmentedControl label="지도 높이" value={s.height || 'medium'} onChange={(value) => set({ height: value })} options={SIZES} />}
+    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 
 export function FaqStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="형태" value={s.layout || 'accordion'} onChange={(value) => set({ layout: value })} options={[{ value: 'accordion', label: '접기' }, { value: 'card', label: '카드' }, { value: 'plain', label: '기본' }]} />
+    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 
 export function SearchStylePanel({ s, set }) {
   return <>
     <SegmentedControl label="형태" value={s.layout || 'card'} onChange={(value) => set({ layout: value })} options={[{ value: 'card', label: '카드' }, { value: 'bar', label: '바' }, { value: 'minimal', label: '심플' }]} />
+    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 
