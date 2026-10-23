@@ -1,7 +1,7 @@
 name: Audit GSC 94 discovered URLs across PageRo publishers
 on:
   push:
-    branches: [audit/gsc-discovered94-20261023]
+    branches: [audit/gsc-discovered94-20261023, main]
     paths:
       - scripts/gsc-discovered94-public-audit.mjs
       - .github/workflows/audit-gsc-discovered94-public.yml
