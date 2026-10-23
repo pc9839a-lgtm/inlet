@@ -121,7 +121,7 @@ assert(files.workspaceTabs.includes('role="tab"'), 'workspace navigation items s
 assert(files.workspaceTabs.includes('aria-selected={active}'), 'workspace navigation should expose selected state');
 assert(files.workspaceTabs.includes('tabIndex={active ? 0 : -1}'), 'workspace tabs should use roving tab focus');
 assert(files.workspaceTabs.includes('aria-controls={`workspace-panel-${key}`}'), 'workspace tabs should name controlled panels');
-assert(files.workspaceTabs.includes('previousTabRef'), 'workspace focus recovery should remember the previous tab');
+assert(!files.workspaceTabs.includes('previousTab === tab') && files.workspaceTabs.includes('}, [tab]);'), 'workspace focus recovery must also run when navigation remounts in the editor header');
 assert(files.workspaceTabs.includes('focusLost'), 'workspace focus recovery should detect lost focus');
 assert(files.workspaceTabs.includes('tabRefs.current.get(tab)?.focus'), 'workspace focus recovery should move focus to the active tab when the source unmounts');
 for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End']) {
@@ -189,9 +189,9 @@ assert(files.codeCss.includes('100dvh'), 'code dialog should use dynamic viewpor
 assert(files.workspaceShellCss.includes('@media (max-width: 1180px)'), 'workspace must reflow before narrow/zoomed desktop becomes two-column overflow');
 assert(files.mobileWorkspaceMode.includes("const COARSE_POINTER_QUERY = '(pointer: coarse)'"), 'mobile operations mode must distinguish coarse-pointer mobile from desktop browser zoom');
 assert(files.mobileWorkspaceMode.includes('widthMedia.matches && pointerMedia.matches'), 'mobile workspace must require both narrow width and coarse pointer');
-assert(files.editorWorkspaceCss.includes('@media (max-width: 1180px)'), 'editor must reflow below 1180px without a 900px lower bound');
+assert(files.editorWorkspaceCss.includes('@media (max-width: 759px)'), 'compact two-area editor must stack before the canvas and inspector stop fitting');
 assert(files.editorWorkspaceCss.includes('overflow: auto !important;'), 'zoomed desktop editor must remain scroll-reachable');
-assert(files.editorWorkspaceCss.includes('.edit-mode-shell:not(.mobile-operations-shell)'), 'zoom reflow must not override true mobile operations mode');
+assert(files.editorWorkspaceCss.includes('.canvas-editor-shell'), 'zoom reflow must stay scoped to the desktop canvas editor');
 assert(files.workspaceShellCss.includes('100dvh'), 'workspace shell should use dynamic viewport units');
 assert(files.createModalCss.includes('@media (max-height:520px),(max-width:640px)'), 'create dialog should reflow for short mobile-keyboard viewports');
 assert(files.workspaceTabs && files.editorSharedCss, 'workspace accessibility sources should load');
