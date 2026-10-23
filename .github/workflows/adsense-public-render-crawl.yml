@@ -1,19 +1,15 @@
 name: AdSense public render and 45-guide discovery audit
 on:
-  push:
-    branches: [audit/adsense-public-render-crawl-20261022, main]
-    paths:
-      - scripts/adsense-public-crawl.mjs
-      - .github/workflows/adsense-public-render-crawl.yml
-  pull_request:
-    paths:
-      - scripts/adsense-public-crawl.mjs
-      - .github/workflows/adsense-public-render-crawl.yml
+  workflow_run:
+    workflows: ["Deploy Cloudflare Pages"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   indexability-and-discovery:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -41,6 +37,7 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
   visible-browser:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
