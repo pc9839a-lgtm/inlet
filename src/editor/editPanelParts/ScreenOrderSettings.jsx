@@ -10,18 +10,18 @@ export function ScreenOrderSettings({ block, identity, onBack, renderBlockEditor
   const title = identity?.customLabel || identity?.detail || typeLabel;
 
   React.useEffect(() => {
-    backRef.current?.focus();
+    backRef.current?.focus({ preventScroll: true });
   }, []);
 
   return (
     <div className="screen-order-v2-settings-view">
       <header className="screen-order-v2-settings-header">
-        <button ref={backRef} className="screen-order-v2-settings-back" type="button" onClick={onBack}>
+        <button className="screen-order-v2-settings-back" type="button" onClick={onBack}>
           <ArrowLeft size={16} aria-hidden="true" />
           블록 목록
         </button>
         <div className="screen-order-v2-settings-title">
-          <h2 title={title}>{title}</h2>
+          <h2 ref={backRef} tabIndex={-1} title={title}>{title}</h2>
           <span>{typeLabel}{!block.visible ? ' · 숨김' : ''}</span>
         </div>
       </header>

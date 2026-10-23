@@ -76,13 +76,61 @@ html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks[hidden
   display: none !important;
 }
 
-/* Restored two-column editor: left editor workspace / right preview. */
+/* Page-wide design settings share the inspector. */
 body .builder-shell.edit-mode-shell .editor-page-options-stack {
   width: 100%;
   min-width: 0;
   display: grid;
   gap: 10px;
 }
+
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] {
+  background: #fff !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout > .edit-section-tabs > .edit-section-tab {
+  border: 1px solid #d9dde4 !important;
+  font-weight: 500 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings[data-scroll-region='block-settings'] {
+  max-height: none !important;
+  overflow: visible !important;
+  scrollbar-gutter: auto;
+}
+.editor-selection-empty { padding: 40px 0; color: #667085; text-align: center; }
+.editor-selection-empty h2 { font-size: 14px; font-weight: 500; }
+.editor-selection-empty button { margin-top: 12px; }
+html body #root .editor-composition-dialog {
+  inset: 0 auto 0 0;
+  width: min(420px, 100vw) !important;
+  max-width: 100vw !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-right: 1px solid #d9dde4 !important;
+  background: #fff;
+  color: #101828;
+  overflow: auto;
+}
+.editor-composition-dialog::backdrop { background: rgba(16,24,40,.2); }
+.editor-composition-surface { display: grid; gap: 20px; padding: 16px; }
+.editor-composition-heading { display: flex; align-items: center; justify-content: space-between; }
+.editor-composition-heading h2 { margin: 0; font-size: 16px; }
+.editor-composition-heading button { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; background: transparent; }
+html body #root .editor-composition-dialog .fixed-add-dock {
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+html body #root .editor-composition-dialog .fixed-add-dock.open .add-block-panel { max-height: 50dvh; overflow-y: auto; }
+.editor-composition-dialog :is(button,summary):focus-visible { outline: 2px solid #2563eb !important; outline-offset: 2px; }
 
 body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
   width: 100% !important;
@@ -103,3 +151,8 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
   }
 
 }
+
+/* Canvas editor */
+html body #root .canvas-editor-shell .screen-order-v2-settings-header { padding-top: 12px; }
+html body #root .canvas-editor-shell .screen-order-v2-settings-title > span { display: none; }
+html body #root .canvas-editor-shell .screen-order-v2-settings-back { display: none !important; }

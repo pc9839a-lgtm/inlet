@@ -4,6 +4,9 @@ import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
 import { GlobalFixedBlocks } from './editPanelParts/GlobalFixedBlocks.jsx';
 import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
 import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
+import { CompositionDrawer } from './editPanelParts/CompositionDrawer.jsx';
+import { createFixedBlockDescriptors } from './editPanelParts/fixedBlockDescriptors.js';
+import { ScreenOrderSettings } from './editPanelParts/ScreenOrderSettings.jsx';
 
 const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
 
@@ -15,10 +18,26 @@ export function EditPanelLayout({
   stylePanelProps,
 }) {
   const [section, setSection] = React.useState('order');
+  const [compositionOpen, setCompositionOpen] = React.useState(false);
+  const compositionButton = React.useRef(null);
+  const compositionDialog = React.useRef(null);
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
+  const fixedSelected = createFixedBlockDescriptors(fixedBlocksProps).find((item) => item.open);
+  const closeComposition = () => { compositionDialog.current?.close(); setCompositionOpen(false); };
+  const chooseBlock = (id) => {
+    if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
+    setSection('order');
+    closeComposition();
+  };
+  const chooseFixed = (id) => {
+    if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
+    setSection('order');
+    closeComposition();
+  };
 
   React.useEffect(() => {
     if (selectedBlockId) setSection('order');
+    if (selectedBlockId) closeComposition();
   }, [selectedBlockId]);
 
   const openPageOptions = () => {
@@ -51,9 +70,12 @@ export function EditPanelLayout({
           data-selected={section === 'order' ? 'true' : 'false'}
           type="button"
           aria-pressed={section === 'order'}
-          onClick={() => setSection('order')}
+          ref={compositionButton}
+          aria-haspopup="dialog"
+          aria-expanded={compositionOpen}
+          onClick={() => setCompositionOpen(true)}
         >
-          블록
+          구성
         </button>
         <button
           className="edit-section-tab"
@@ -78,18 +100,21 @@ export function EditPanelLayout({
           </div>
         ) : (
           <>
-            <ScreenOrderList {...screenOrderListProps} />
-            <section className="screen-order-fixed-blocks" aria-label="고정 영역" hidden={!!screenOrderListProps?.selectedId}>
-              <div className="section-title screen-order-fixed-blocks-title">
-                <h2>고정 영역</h2>
-              </div>
-              <GlobalFixedBlocks {...fixedBlocksProps} />
-            </section>
+            {fixedSelected ? <ScreenOrderSettings block={fixedSelected.block} identity={{ customLabel: fixedSelected.title }} onBack={() => setCompositionOpen(true)} renderBlockEditor={fixedSelected.renderEditor} />
+              : <ScreenOrderList {...screenOrderListProps} inspectorOnly onRequestList={() => setCompositionOpen(true)} />}
+            {!selectedBlockId && <div className="editor-selection-empty"><h2>선택한 항목 없음</h2><button type="button" onClick={() => setCompositionOpen(true)}>구성 열기</button></div>}
           </>
         )}
       </div>
 
-      {section === 'order' && !screenOrderListProps?.selectedId && <AddBlockDock {...addBlockDockProps} />}
+      <CompositionDrawer dialogRef={compositionDialog} open={compositionOpen} onClose={closeComposition}>
+        <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
+        <section className="screen-order-fixed-blocks" aria-label="고정 영역">
+          <h3>고정 영역</h3>
+          <GlobalFixedBlocks {...fixedBlocksProps} openId="" toggleBlockOpen={chooseFixed} />
+        </section>
+        <AddBlockDock {...addBlockDockProps} />
+      </CompositionDrawer>
     </div>
   );
 }

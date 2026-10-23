@@ -5,6 +5,13 @@
   box-sizing: border-box;
 }
 
+.code-content-fields { display: grid; gap: 18px; }
+.code-content-fields > p { margin: 0; color: #667085; font-size: 12px; line-height: 1.5; }
+body .builder-shell .code-content-fields .image-input .image-preview-frame { height: 160px !important; min-height: 0 !important; }
+.code-advanced-editor { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e4e7ec; }
+.code-advanced-editor > summary { padding: 8px 0; color: #667085; font-size: 12px; cursor: pointer; }
+.code-advanced-editor[open] > summary { margin-bottom: 12px; }
+
 .code-editor-box {
   width: 100%;
   min-width: 0;

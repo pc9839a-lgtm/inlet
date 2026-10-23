@@ -291,7 +291,7 @@ function createQaPage() {
           anchorId: 'editor-code',
           editorLabel: '',
           widgetMode: 'custom',
-          html: '<div id="code-preview-qa">QA code block<button id="code-toggle">더보기</button><div id="code-details" hidden>추가 내용</div></div>',
+          html: '<div id="code-preview-qa"><h2>초대합니다</h2><img src="/favicon.svg" alt="초대 사진" style="width:100%;height:80px;object-fit:contain"><a href="https://example.com/invite">초대장 보기</a>QA code block<button id="code-toggle">더보기</button><div id="code-details" hidden>추가 내용</div></div>',
           css: '#code-preview-qa{background:rgb(219,234,254);padding:16px}#code-details{height:240px}',
           js: "document.getElementById('code-toggle').onclick = () => { const details = document.getElementById('code-details'); details.hidden = !details.hidden; };",
           runJs: true,
@@ -594,17 +594,16 @@ async function setInputValue(client, selector, value) {
 }
 
 async function showBlockList(client) {
-  const returned = await evaluate(client, `(() => {
-    const back = document.querySelector('.screen-order-v2-settings-back');
-    if (!back) return false;
-    back.click();
-    return true;
+  await evaluate(client, `(() => {
+    if (document.querySelector('.editor-composition-dialog')?.open) return;
+    document.querySelector('.edit-section-tab[aria-haspopup="dialog"]')?.click();
   })()`);
-  if (returned) await waitForBrowser(client, `!document.querySelector('.screen-order-v2-settings') && document.querySelector('.screen-order-v2-list-view')?.getClientRects().length > 0 && document.activeElement?.matches('.screen-order-v2-title-wrap')`, 'return to block list');
+  await waitForBrowser(client, `document.querySelector('.editor-composition-dialog')?.open && document.querySelector('.screen-order-v2-list-view')?.getClientRects().length > 0`, 'composition drawer open');
 }
 
 async function clickSelector(client, selector) {
-  if (/^#editor-block-(?!settings-)|^\.topnav-fixed-card|^\.fixed-add-dock/.test(selector)) await showBlockList(client);
+  if ((selector.startsWith('.panel-') || selector.startsWith('#workspace-tab-')) && await evaluate(client, `!!document.querySelector('.editor-composition-dialog')?.open`)) await pressKeyboardKey(client, 'Escape');
+  if (/^#editor-block-(?!settings-)|^\.topnav-fixed-card|^\.fixed-add-dock|^\.add-toggle/.test(selector)) await showBlockList(client);
   const clicked = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
     if (!element || element.getClientRects().length === 0) return false;
@@ -616,6 +615,7 @@ async function clickSelector(client, selector) {
 }
 
 async function clickButtonByText(client, scopeSelector, text) {
+  if (scopeSelector.startsWith('.panel-actions') && await evaluate(client, `!!document.querySelector('.editor-composition-dialog')?.open`)) await pressKeyboardKey(client, 'Escape');
   if (scopeSelector.startsWith('.fixed-add-dock')) await showBlockList(client);
   const clicked = await evaluate(client, `(() => {
     const scope = document.querySelector(${JSON.stringify(scopeSelector)}) || document;
@@ -668,7 +668,8 @@ async function focusSelector(client, selector) {
 }
 
 async function clickPointer(client, selector) {
-  if (/^#editor-block-(?!settings-)|^\.fixed-add-dock/.test(selector)) await showBlockList(client);
+  if (selector.includes('phone-frame') && await evaluate(client, `!!document.querySelector('.editor-composition-dialog')?.open`)) await pressKeyboardKey(client, 'Escape');
+  if (/^#editor-block-(?!settings-)|^\.fixed-add-dock|^\.add-toggle/.test(selector)) await showBlockList(client);
   const point = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
     if (!element) return null;
@@ -794,7 +795,7 @@ async function collectDesktopMetrics(client) {
       return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
     };
     const shell = document.querySelector('.builder-shell');
-    const left = document.querySelector('.left-workspace');
+    const left = document.querySelector('.work-panel');
     const preview = document.querySelector('.preview-workspace');
     const frame = document.querySelector('.phone-frame');
     const header = document.querySelector('.panel-header');
@@ -837,7 +838,7 @@ async function collectNarrowDesktopMetrics(client) {
       bodyScrollWidth: document.body?.scrollWidth || 0,
       documentScrollWidth: document.documentElement?.scrollWidth || 0,
       shell: rect(document.querySelector('.builder-shell')),
-      left: rect(document.querySelector('.left-workspace')),
+      left: rect(document.querySelector('.work-panel')),
       workPanel: rect(document.querySelector('.work-panel')),
       editLayout: rect(document.querySelector('.edit-layout')),
       preview: rect(document.querySelector('.preview-workspace')),
@@ -859,7 +860,7 @@ async function collectMobileMetrics(client) {
       return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width, height: box.height };
     };
     const shell = document.querySelector('.builder-shell');
-    const left = document.querySelector('.left-workspace');
+    const left = document.querySelector('.work-panel');
     const header = document.querySelector('.mobile-operations-header');
     const workPanel = document.querySelector('.work-panel');
     const tabs = document.querySelector('.top-tabs');
@@ -909,11 +910,11 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.editTabs, metrics.innerWidth, 'desktop edit subsection tabs');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
-  assert(metrics.left?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
+  assert(metrics.preview?.right <= metrics.workPanel?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
-  assert(metrics.left?.width >= 575, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
+  assert(metrics.left?.width >= 350 && metrics.left?.width <= 365, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
   assert(metrics.preview?.width >= 500, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
-  assert(metrics.frame?.width >= 400 && metrics.frame?.width <= 432, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
+  assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 434, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
@@ -930,9 +931,9 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
   assertInsideViewport(metrics.editTabs, width, 'narrow desktop edit subsection tabs');
   assert(!metrics.cockpit, 'narrow desktop preview must not expose the removed conversion cockpit');
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1, `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
-  assert(metrics.workPanel?.width >= width - 4, `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
-  assert(metrics.editLayout?.width >= width - 48, `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (width >= 760 ? 2 : 1), `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
+  assert(metrics.workPanel?.width >= (width >= 760 ? 350 : width - 4), `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
+  assert(metrics.editLayout?.width >= (width >= 760 ? 310 : width - 48), `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
 }
 
@@ -1284,7 +1285,7 @@ async function run() {
       }))()`));
     }
     await clickSelector(client, '.preview-width-option[data-content-width="390"]');
-    assert(d04WidthSamples.every((item) => Number(item.selected) === item.actual && item.frame >= item.actual + 14),
+    assert(d04WidthSamples.every((item) => Number(item.selected) === item.actual && item.frame >= item.actual + 2),
       `D04 selected and measured content widths must agree without counting phone borders: ${JSON.stringify(d04WidthSamples)}`);
     assert(apiState.saveCount === 0, 'D04 width selection must not publish');
 
@@ -1313,7 +1314,7 @@ async function run() {
     assert(editSectionTabStyle.activeClassName === 'edit-section-tab', `active edit section tab must not reuse the global active class: ${editSectionTabStyle.activeClassName}`);
     assert(editSectionTabStyle.inactiveClassName === 'edit-section-tab', `inactive edit section tab class drifted: ${editSectionTabStyle.inactiveClassName}`);
     assert(editSectionTabStyle.activeDataSelected === 'true', 'active edit section tab must expose data-selected=true');
-    assert(editSectionTabStyle.tabsBackground === 'rgb(238, 241, 245)', `edit section tabs must use light gray segmented background, got ${editSectionTabStyle.tabsBackground}`);
+    assert(editSectionTabStyle.tabsBackground === 'rgb(255, 255, 255)', `edit section tabs must use light gray segmented background, got ${editSectionTabStyle.tabsBackground}`);
     assert(editSectionTabStyle.tabsBorderTopWidth === '0px', `edit section tabs outer border must be removed, got ${editSectionTabStyle.tabsBorderTopWidth}`);
     assert(editSectionTabStyle.tabsHeight === 38, `edit section tabs container must be exactly 38px tall: ${editSectionTabStyle.tabsHeight}px`);
     assert(editSectionTabStyle.activeBackground === 'rgb(255, 255, 255)', `active edit section tab must be white, got ${editSectionTabStyle.activeBackground}`);
@@ -1346,6 +1347,7 @@ async function run() {
     const heroVisibilitySelector = '#editor-block-editor-hero .screen-order-v2-visibility-button';
     const formActionSelector = '#editor-block-editor-form .screen-order-v2-action';
 
+    await showBlockList(client);
     const dragKeyboardState = await evaluate(client, `(() => {
       const drag = document.querySelector('#editor-block-editor-hero .screen-order-v2-drag');
       return drag ? { tabIndex: drag.tabIndex, role: drag.getAttribute('role'), ariaHidden: drag.getAttribute('aria-hidden') } : null;
@@ -1386,7 +1388,7 @@ async function run() {
     await waitForBrowser(client, `!document.querySelector('.screen-order-v2-menu')`, 'Space-opened dropdown Escape close');
 
     const heroEditorSelector = '.screen-order-v2-settings textarea[placeholder="핵심 제목을 입력하세요"]';
-    if (!(await evaluate(client, `document.querySelector(${JSON.stringify(heroTitleSelector)})?.getAttribute('aria-pressed') === 'true'`))) {
+    if (await evaluate(client, `!!document.querySelector('.editor-composition-dialog')?.open`) || !(await evaluate(client, `document.querySelector(${JSON.stringify(heroTitleSelector)})?.getAttribute('aria-pressed') === 'true'`))) {
       await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     }
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'focused hero settings textarea');
@@ -1473,7 +1475,7 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-hero.hero-background') && !document.querySelector(${JSON.stringify(heroHeightNumber)})`, 'stage6 background mode shows relevant controls');
     await showBlockList(client);
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
-    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'stage6 hero after reselection');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-hero') && !document.querySelector('.editor-composition-dialog')?.open`, 'stage6 hero after reselection');
     await clickButtonByText(client, `${stageSixHero} .editor-tabs-v2-list`, '이미지');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroPlacement + ' button:nth-child(2)')})?.getAttribute('aria-pressed') === 'true' && document.querySelector(${JSON.stringify(heroFilterNumber)})?.value === '25'`, 'stage6 stored background mode must not appear as top');
     assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
@@ -1557,10 +1559,10 @@ async function run() {
     // the same disclosure placement and genuinely collapsed anchor controls.
     await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
     await waitForBrowser(client,
-      `!!document.querySelector('.topnav-fixed-card .block-editor-advanced-settings')`,
+      `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')`,
       'D02 fixed top navigation advanced anchor settings');
     const fixedAdvancedState = await evaluate(client, `(() => {
-      const details = document.querySelector('.topnav-fixed-card .block-editor-advanced-settings');
+      const details = document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings');
       const root = details?.closest('.block-editor-v2-content');
       const input = details?.querySelector('.block-editor-anchor-value input');
       return details && input ? {
@@ -1572,9 +1574,9 @@ async function run() {
     assert(fixedAdvancedState && !fixedAdvancedState.open
       && fixedAdvancedState.last && fixedAdvancedState.hidden,
       `D02 fixed editor anchor must be hidden after its content: ${JSON.stringify(fixedAdvancedState)}`);
-    await waitForBrowser(client, `!!document.querySelector('.topnav-fixed-card .editor-tabs-v2-list')`, 'stage4 fixed-block lazy controls loaded');
-    await clickButtonByText(client, '.topnav-fixed-card .editor-tabs-v2-list', '스타일');
-    const stageFourToggle = '.topnav-fixed-card .editor-toggle-row-v2 [role="switch"]';
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-topnav .editor-tabs-v2-list')`, 'stage4 fixed-block lazy controls loaded');
+    await clickButtonByText(client, '#editor-block-settings-editor-topnav .editor-tabs-v2-list', '스타일');
+    const stageFourToggle = '#editor-block-settings-editor-topnav .editor-toggle-row-v2 [role="switch"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourToggle)})`, 'stage4 fixed-block switch');
     const stageFourToggleBefore = await evaluate(client, `(() => {
       const toggle = document.querySelector(${JSON.stringify(stageFourToggle)});
@@ -1592,8 +1594,8 @@ async function run() {
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(stageFourToggle)})?.getAttribute('aria-checked') === ${JSON.stringify(stageFourToggleBefore.checked)}`, 'stage4 switch original value restored');
     await capture(client, 'desktop-shared-toggle-stage4');
     assert(apiState.saveCount === 0, 'stage4 shared controls must not publish');
-    await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
-    await waitForBrowser(client, `!document.querySelector('.topnav-fixed-card .block-editor-advanced-settings')`,
+    await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+    await waitForBrowser(client, `!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')`,
       'D02 fixed navigation settings closed after inspection');
     if (!(await evaluate(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`))) {
       await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
@@ -1626,17 +1628,17 @@ async function run() {
     const stageTwoSettings = await evaluate(client, `(() => {
       const panel = document.querySelector('#editor-block-settings-editor-hero');
       const list = document.querySelector('.screen-order-v2-list-view');
-      const back = document.querySelector('.screen-order-v2-settings-back');
+      const back = document.querySelector('.edit-section-tab[aria-haspopup="dialog"]');
       return {
-        listHidden: getComputedStyle(list).display === 'none',
+        listHidden: list.getClientRects().length === 0,
         separateFromRows: !!panel && !panel.closest('.screen-order-v2-list'),
         rowEditors: document.querySelectorAll('.screen-order-v2-slot .block-editor-v2').length,
         title: document.querySelector('.screen-order-v2-settings-title h2')?.textContent,
         backVisible: back?.getClientRects().length > 0,
         panelWidth: panel?.getBoundingClientRect().width,
-        paneWidth: document.querySelector('.left-workspace').getBoundingClientRect().width,
-        fixedHidden: getComputedStyle(document.querySelector('.screen-order-fixed-blocks')).display === 'none',
-        addHidden: !document.querySelector('.fixed-add-dock'),
+        paneWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
+        fixedHidden: document.querySelector('.screen-order-fixed-blocks').getClientRects().length === 0,
+        addHidden: document.querySelector('.fixed-add-dock').getClientRects().length === 0,
         helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
       };
     })()`);
@@ -1646,7 +1648,7 @@ async function run() {
       && stageTwoSettings.fixedHidden && stageTwoSettings.addHidden && stageTwoSettings.helperCopyRemoved,
       'stage 2 must focus the selected block without expanding rows or mixing unrelated controls: ' + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
-    await clickSelector(client, '.screen-order-v2-settings-back');
+    await clickSelector(client, '.edit-section-tab[aria-haspopup="dialog"]');
     await waitForBrowser(client, `document.activeElement === document.querySelector('#editor-block-editor-hero .screen-order-v2-title-wrap')`, 'back returns keyboard focus to the original row');
     assert(JSON.stringify(await normalBlockOrder(client)) === JSON.stringify(orderBeforeBack), 'settings navigation must preserve block order');
 
@@ -1663,7 +1665,7 @@ async function run() {
         chevrons: document.querySelectorAll('.screen-order-v2-chevron').length,
         visibility: !!item.querySelector('.screen-order-v2-visibility-button'),
         actions: !!item.querySelector('.screen-order-v2-action'),
-        paneWidth: document.querySelector('.left-workspace').getBoundingClientRect().width,
+        paneWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
         panelWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
         layoutWidth: document.querySelector('.edit-layout').getBoundingClientRect().width,
         rowWidth: item.getBoundingClientRect().width,
@@ -1683,7 +1685,7 @@ async function run() {
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview click opens focused settings with the existing content');
     await clickPointer(client, '.phone-frame #block-editor-hero');
     assert(await evaluate(client, `!!document.querySelector('#editor-block-settings-editor-hero')`), 'reselecting the same preview block must keep its settings open');
-    await clickSelector(client, '.screen-order-v2-settings-back');
+    await clickSelector(client, '.edit-section-tab[aria-haspopup="dialog"]');
     assert(!await evaluate(client, `!!document.querySelector('.add-panel')`), 'preview selection must close the previous add picker');
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'content survives returning to list and reopening settings');
@@ -1869,10 +1871,10 @@ async function run() {
         collapsed: cards.every((node) => node.querySelector('.page-option-expand')?.getAttribute('aria-expanded') === 'false'),
         shareControlsHidden: !document.querySelector('.share-position-control')?.getClientRects().length,
         rowWidth: document.querySelector('.page-global-options-card').getBoundingClientRect().width,
-        paneWidth: document.querySelector('.left-workspace').getBoundingClientRect().width,
+        paneWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
       };
     })()`);
-    assert(JSON.stringify(stageThreePageSettings.tabs) === JSON.stringify(['블록', '페이지 설정'])
+    assert(JSON.stringify(stageThreePageSettings.tabs) === JSON.stringify(['구성', '페이지 설정'])
       && stageThreePageSettings.designFirst && stageThreePageSettings.designTitle === '전체 디자인'
       && stageThreePageSettings.status === '스타일 적용됨' && stageThreePageSettings.globalHeadingRemoved
       && stageThreePageSettings.rows.length === 2 && stageThreePageSettings.rows.every((row) => row.border === '0px' && row.radius === '0px')
@@ -1964,7 +1966,7 @@ async function run() {
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 적용됨')`),
       'D06 style apply must clearly distinguish page draft from public publish');
 
-    await clickButtonByText(client, '.edit-section-tabs', '블록');
+    await clickButtonByText(client, '.edit-section-tabs', '구성');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
 
     // E2E-13: the header shows the latest draft without opening the live
@@ -2072,6 +2074,41 @@ async function run() {
 
     // Code blocks must be distinguishable by a persisted editor-only custom label.
     await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
+    await waitForBrowser(client, `!!document.querySelector('.code-content-fields')`, 'ordinary code content fields');
+    assert(!await evaluate(client, `document.querySelector('.code-advanced-editor')?.open`), 'raw HTML must be collapsed by default');
+    assert(!await evaluate(client, `document.querySelector('.editor-composition-dialog')?.open`), 'choosing a block must close composition');
+    const contentBefore = await evaluate(client, `document.querySelector('.code-editor-box textarea')?.value`);
+    const titleField = '.code-content-fields input[data-code-content-kind="text"]';
+    await setInputValue(client, titleField, '함께해 주세요');
+    await waitForBrowser(client, `document.querySelector('.code-editor-box textarea')?.value.includes('함께해 주세요')`, 'ordinary title field updates code source');
+    assert(apiState.saveCount === 2, 'ordinary content edit must not publish');
+    await capture(client, 'desktop-canvas-code-content');
+    const sourceAfterTitle = await evaluate(client, `document.querySelector('.code-editor-box textarea')?.value`);
+    assert(sourceAfterTitle === contentBefore.replace('초대합니다', '함께해 주세요'), 'title input must preserve all unrelated HTML bytes');
+    await setInputValue(client, '.code-content-fields input[data-code-content-kind="link"]', 'tel:01012345678');
+    await waitForBrowser(client, `document.querySelector('.code-editor-box textarea')?.value.includes('tel:01012345678')`, 'ordinary button target field updates code');
+    await setInputValue(client, titleField, '초대합니다');
+    await setInputValue(client, '.code-content-fields input[data-code-content-kind="link"]', 'https://example.com/invite');
+    assert(await evaluate(client, `document.querySelector('.code-editor-box textarea')?.value === ${JSON.stringify(contentBefore)}`), 'ordinary editing roundtrip must restore the exact original source');
+    await setInputValue(client, titleField, '');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(titleField)})?.value === ''`, 'empty title remains editable');
+    await setInputValue(client, titleField, '초대합니다');
+    await wait(400);
+    const photoPath = path.resolve(screenshotDir, 'code-photo-fixture.png');
+    await writeFile(photoPath, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1cAAAAASUVORK5CYII=', 'base64'));
+    const photoDocument = await client.send('DOM.getDocument');
+    const photoInput = await client.send('DOM.querySelector', { nodeId: photoDocument.root.nodeId, selector: '.code-content-fields input[type="file"]' });
+    assert(photoInput.nodeId > 0, 'ordinary code photo must expose an upload input');
+    await client.send('DOM.setFileInputFiles', { files: [photoPath], nodeId: photoInput.nodeId });
+    await waitForBrowser(client, `document.querySelector('.code-editor-box textarea')?.value.includes('src="data:image/')`, 'ordinary photo upload updates custom code');
+    const photoSource = await evaluate(client, `document.querySelector('.code-editor-box textarea')?.value`);
+    assert(photoSource.replace(/src="data:image\/[^"\s]+"/, 'src="/favicon.svg"') === contentBefore, 'photo upload must preserve every unrelated code byte');
+    assert(apiState.saveCount === 2, 'photo upload must not publish');
+    await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
+    await waitForBrowser(client, `document.querySelector('.code-editor-box textarea')?.value === ${JSON.stringify(contentBefore)}`, 'undo ordinary photo restores exact code');
+
+
+    await clickSelector(client, '.code-advanced-editor > summary');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-code input[aria-label="구분 이름"]')`, 'code block custom label input');
     await setInputValue(client, '#editor-block-settings-editor-code input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
@@ -2084,9 +2121,10 @@ async function run() {
     await setInputValue(client, codeDraftSelector, `${codeOriginal}\n<!-- D06 staged code regression -->`);
     await waitForBrowser(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="pending"]')`, 'D06 code draft pending before apply');
     assert(apiState.saveCount === 2, 'D06 pending code edits must not publish');
-    await clickSelector(client, '.screen-order-v2-settings-back');
+    await clickSelector(client, '.edit-section-tab[aria-haspopup="dialog"]');
     await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(codeDraftSelector)})?.value === ${JSON.stringify(`${codeOriginal}\n<!-- D06 staged code regression -->`)}`, 'unapplied code draft survives list navigation');
+    if (!await evaluate(client, `document.querySelector('.code-advanced-editor')?.open`)) await clickSelector(client, '.code-advanced-editor > summary');
     assert(await evaluate(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="pending"]')`), 'returning to code settings must retain the pending apply state');
     await clickSelector(client, '.code-editor-actions button');
     await waitForBrowser(client, `!!document.querySelector('.code-editor-actions [data-code-draft-state="applied"]')`, 'D06 code applied to page draft');
@@ -2210,7 +2248,7 @@ async function run() {
     assert(pageOptionsShellStyle?.borderRadius === '0px', `page options shell radius drifted at desktop matrix width: ${JSON.stringify(pageOptionsShellStyle)}`);
     await capture(client, 'desktop-narrow-1180-page-options');
 
-    await clickButtonByText(client, '.edit-section-tabs', '블록');
+    await clickButtonByText(client, '.edit-section-tabs', '구성');
     await showBlockList(client);
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-card')`, 'narrow desktop screen order');
     const screenOrderShellStyle = await evaluate(client, `(() => {
@@ -2290,9 +2328,9 @@ async function run() {
           `D05 narrow desktop row selection ${desktopViewport.width}px`);
         await wait(160);
         const focusedSettings = await evaluate(client, `(() => {
-          const back = document.querySelector('.screen-order-v2-settings-back');
+          const back = document.querySelector('.edit-section-tab[aria-haspopup="dialog"]');
           const rect = back?.getBoundingClientRect();
-          return { focused: document.activeElement === back, top: rect?.top, bottom: rect?.bottom, height: innerHeight };
+          return { focused: document.activeElement === document.querySelector('.screen-order-v2-settings-title h2'), top: rect?.top, bottom: rect?.bottom, height: innerHeight };
         })()`);
         assert(focusedSettings.focused && focusedSettings.top >= 0 && focusedSettings.bottom <= focusedSettings.height,
           `focused settings navigation must keep the back control visible at ${desktopViewport.width}px: ${JSON.stringify(focusedSettings)}`);
@@ -2302,6 +2340,7 @@ async function run() {
         const matrixMetrics = await collectDesktopMetrics(client);
         assertDesktop(matrixMetrics);
       }
+      if (await evaluate(client, `!!document.querySelector('.editor-composition-dialog')?.open`)) await pressKeyboardKey(client, 'Escape');
       await assertEditorHeader(client, `stage5 header ${desktopViewport.width}px`);
       await capture(client, `desktop-matrix-${desktopViewport.width}`);
     }

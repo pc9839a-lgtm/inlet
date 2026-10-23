@@ -157,7 +157,7 @@ export function WorkspaceLeftPanel({
 
   return (
     <aside className="left-workspace">
-      {!showTemplateIntro && <div className="workspace-persistent-header">{header}</div>}
+      {!showTemplateIntro && <div className="workspace-persistent-header">{header}{tab === 'edit' && !mobileOperationsOnly && <div className="workspace-editor-nav"><WorkspaceTabs allowedTabs={allowedTabs} tab={tab} changeTab={changeTab} /></div>}</div>}
 
       <section className="work-panel">
         {showTemplateIntro ? (
@@ -168,7 +168,7 @@ export function WorkspaceLeftPanel({
           </LazyChunkBoundary>
         ) : (
           <>
-            <WorkspaceTabs allowedTabs={allowedTabs} tab={tab} changeTab={changeTab} />
+            {(tab !== 'edit' || mobileOperationsOnly) && <WorkspaceTabs allowedTabs={allowedTabs} tab={tab} changeTab={changeTab} />}
 
             <WorkspaceActivePanel
               canUseBuilder={canUseBuilder}

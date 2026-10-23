@@ -247,3 +247,33 @@ body .builder-shell .workspace-active-panel:focus {
     min-width: 72px !important;
   }
 }
+
+/* Canvas editor */
+html body #root .canvas-editor-shell .workspace-persistent-header {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-bottom: 1px solid var(--product-line);
+}
+html body #root .canvas-editor-shell .panel-header { border-bottom: 0 !important; }
+html body #root .canvas-editor-shell .workspace-editor-nav { padding: 0 12px; }
+html body #root .canvas-editor-shell .workspace-editor-nav .top-tabs {
+  width: auto !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  gap: 2px !important;
+}
+html body #root .canvas-editor-shell .workspace-editor-nav .top-tabs button {
+  width: auto !important;
+  padding: 0 10px !important;
+  font-weight: 500 !important;
+}
+@media (max-width: 1050px) {
+  html body #root .canvas-editor-shell .workspace-persistent-header { grid-template-columns: minmax(0, 1fr); }
+  html body #root .canvas-editor-shell .workspace-editor-nav { padding: 0 12px 6px; }
+  html body #root .canvas-editor-shell .workspace-editor-nav .top-tabs { justify-content: start; grid-template-columns: repeat(4, auto) !important; }
+}
