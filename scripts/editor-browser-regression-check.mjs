@@ -2075,6 +2075,8 @@ async function run() {
     // Code blocks must be distinguishable by a persisted editor-only custom label.
     await clickSelector(client, '#editor-block-editor-code .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector('.code-content-fields')`, 'ordinary code content fields');
+    await clickPointer(client, '.phone-frame #block-editor-code');
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-code .code-content-fields') && !document.querySelector('.editor-composition-dialog')?.open`, 'actual code preview click selects its content settings');
     assert(!await evaluate(client, `document.querySelector('.code-advanced-editor')?.open`), 'raw HTML must be collapsed by default');
     assert(!await evaluate(client, `document.querySelector('.editor-composition-dialog')?.open`), 'choosing a block must close composition');
     const contentBefore = await evaluate(client, `document.querySelector('.code-editor-box textarea')?.value`);

@@ -29,7 +29,9 @@ export function CodeContentFields({ html, onChange, disabled }) {
       {fields.map((field) => field.kind === 'image'
         ? <ImageInput key={field.id} label={field.label} value={field.value} disabled={disabled} onChange={(value) => change(field, value)} />
         : <EditorField key={field.id} label={field.label}>
-          <input type="text" value={field.value} disabled={disabled} data-code-content-field={field.id} data-code-content-kind={field.kind} onChange={(event) => change(field, event.target.value)} />
+          {field.kind === 'text' && /[\r\n]/.test(field.value)
+            ? <textarea rows={3} value={field.value} disabled={disabled} data-code-content-field={field.id} data-code-content-kind={field.kind} onChange={(event) => change(field, event.target.value)} />
+            : <input type="text" value={field.value} disabled={disabled} data-code-content-field={field.id} data-code-content-kind={field.kind} onChange={(event) => change(field, event.target.value)} />}
         </EditorField>)}
     </div>
   );
