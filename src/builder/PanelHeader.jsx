@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, Redo2, Save, Undo2 } from 'lucide-react';
+import './PanelHeader.css';
 import { visibleEditorPublishState } from '../runtime/saveStatusActions.js';
 import {
   getPageEditHistoryState,
@@ -41,9 +42,19 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
     admin: '관리자',
   };
   const title = titles[tab] || titles.edit;
+  const editorHeader = tab === 'edit' || tab === 'style';
   const publishState = visibleEditorPublishState({ page, saved, saveStatus, hasUnappliedDrafts: hasUnappliedDrafts || saveStatus?.hasUnappliedDrafts });
   const publishing = saveStatus?.phase === 'publishing';
   const historyEnabled = tab === 'edit' || tab === 'style' || tab === 'settings';
+
+  useEffect(() => {
+    if (!editorHeader) return undefined;
+    const closeOutside = (event) => {
+      if (!backupMenuRef.current?.contains(event.target)) closeBackupMenu();
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    return () => document.removeEventListener('pointerdown', closeOutside);
+  }, [editorHeader]);
 
   useEffect(() => {
     syncPageEditHistoryScope(page);
@@ -72,17 +83,35 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [historyEnabled]);
 
+  const status = (
+    <div className="panel-save-status operations-save-status" role="status" aria-atomic="true" title={publishState.detail || publishState.label} aria-live="polite">
+      <strong style={{ color: saveStateColors[publishState.tone] || 'var(--product-muted)' }}>{publishState.label}</strong>
+      {publishState.at && <time dateTime={publishState.at} title={publishState.at} style={{ marginLeft: 6, fontSize: 10 }}>{new Date(publishState.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</time>}
+    </div>
+  );
+
   return (
-    <header className="panel-header product-panel-header">
+    <header className={`panel-header product-panel-header${editorHeader ? ' editor-panel-header' : ''}`}>
       <div className="panel-title product-panel-title">
-        <p>{page.title}</p>
-        <div className="operations-panel-title-row">
-          <h1>{title}</h1>
-          <div className="panel-save-status operations-save-status" role="status" aria-atomic="true" title={publishState.detail || publishState.label} aria-live="polite">
-            <strong style={{ color: saveStateColors[publishState.tone] || 'var(--product-muted)' }}>{publishState.label}</strong>
-            {publishState.at && <time dateTime={publishState.at} title={publishState.at} style={{ marginLeft: 6, fontSize: 10 }}>{new Date(publishState.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</time>}
-          </div>
-        </div>
+        {editorHeader ? (
+          <>
+            <button className="panel-dashboard-button" type="button" onClick={onDashboard} aria-label="페이지 목록으로" title="페이지 목록">
+              <ArrowLeft size={18} aria-hidden="true" />
+            </button>
+            <div className="panel-editor-heading">
+              <h1 title={page.title}>{page.title || '제목 없는 페이지'}</h1>
+              {status}
+            </div>
+          </>
+        ) : (
+          <>
+            <p>{page.title}</p>
+            <div className="operations-panel-title-row">
+              <h1>{title}</h1>
+              {status}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="panel-actions">
@@ -97,8 +126,18 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
           </>
         )}
         {backupEnabled && historyEnabled && (
-          <details className="panel-backup-action" ref={backupMenuRef} style={{ position: 'relative', flex: '0 0 auto' }}>
-            <summary aria-label="편집본 백업 및 복원" style={{ display: 'flex', alignItems: 'center', minHeight: 36, padding: '0 10px', border: '1px solid var(--product-line)', borderRadius: 'var(--product-radius-control)', background: 'var(--product-panel)', color: '#30353d', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>백업</summary>
+          <details className="panel-backup-action" ref={backupMenuRef} style={{ position: 'relative', flex: '0 0 auto' }}
+            onKeyDown={(event) => {
+              if (event.key !== 'Escape' || !event.currentTarget.open) return;
+              event.preventDefault();
+              closeBackupMenu();
+              event.currentTarget.querySelector('summary')?.focus();
+            }}
+            onBlur={(event) => {
+              if (editorHeader && !event.currentTarget.contains(event.relatedTarget)) closeBackupMenu();
+            }}
+          >
+            <summary aria-label={editorHeader ? '편집 메뉴' : '편집본 백업 및 복원'} title={editorHeader ? '백업 및 복원' : undefined} style={{ display: 'flex', alignItems: 'center', minHeight: 36, padding: '0 10px', border: '1px solid var(--product-line)', borderRadius: 'var(--product-radius-control)', background: 'var(--product-panel)', color: '#30353d', fontSize: 12, fontWeight: 900, cursor: 'pointer' }}>{editorHeader ? <MoreHorizontal size={18} aria-hidden="true" /> : '백업'}</summary>
             <div className="panel-backup-dropdown" style={{ position: 'absolute', top: 'calc(100% + 5px)', right: 0, zIndex: 60, display: 'grid', gap: 4, minWidth: 118, padding: 6, border: '1px solid var(--product-line)', borderRadius: 'var(--product-radius-control)', background: 'var(--product-panel)', boxShadow: '0 8px 24px rgba(0,0,0,.14)' }}>
               <button className="ghost-btn" type="button" onClick={() => { closeBackupMenu(); onBackup?.(); }}>파일 저장</button>
               <button className="ghost-btn" type="button" onClick={selectBackupFile}>파일 복원</button>
@@ -115,7 +154,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
             onChange={importBackupFile}
           />
         )}
-        <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>
+        {!editorHeader && <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>}
         <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
         <button
           className="primary-btn"

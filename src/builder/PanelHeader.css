@@ -1,0 +1,141 @@
+/* Editor header: page identity, publish state, then primary actions.
+   Keep inbox/stats/settings chrome on their existing layout. */
+body .builder-shell .panel-header.editor-panel-header {
+  height: auto !important;
+  min-height: 64px !important;
+  max-height: none !important;
+  display: flex !important;
+  gap: 12px !important;
+  padding: 10px 12px !important;
+  overflow: visible !important;
+}
+
+body .builder-shell .editor-panel-header .panel-title {
+  flex: 1 1 auto;
+  gap: 8px !important;
+}
+
+body .builder-shell .editor-panel-header .panel-editor-heading {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 3px;
+}
+
+body .builder-shell .editor-panel-header .panel-editor-heading > h1 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--product-text);
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body .builder-shell .editor-panel-header .panel-save-status {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 2px 4px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+body .builder-shell .editor-panel-header .panel-save-status strong {
+  font-size: 11px !important;
+  font-weight: 500;
+  line-height: 1.4 !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+body .builder-shell .editor-panel-header .panel-save-status time {
+  align-self: center;
+}
+
+body .builder-shell .editor-panel-header .panel-actions {
+  display: flex !important;
+  width: auto !important;
+  gap: 4px !important;
+}
+
+body .builder-shell .editor-panel-header .panel-actions button {
+  width: auto !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+body .builder-shell .editor-panel-header .panel-dashboard-button,
+body .builder-shell .editor-panel-header .panel-actions .panel-history-btn,
+body .builder-shell .editor-panel-header .panel-backup-action > summary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--product-muted) !important;
+  cursor: pointer;
+  list-style: none;
+}
+
+body .builder-shell .editor-panel-header .panel-backup-action > summary::-webkit-details-marker {
+  display: none;
+}
+
+body .builder-shell .editor-panel-header :is(.panel-dashboard-button, .panel-history-btn, .panel-backup-action > summary):hover:not(:disabled) {
+  background: var(--product-soft) !important;
+  color: var(--product-text) !important;
+}
+
+body .builder-shell .editor-panel-header .panel-history-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+body .builder-shell .editor-panel-header .panel-backup-dropdown {
+  right: auto !important;
+  left: 0;
+  min-width: 150px !important;
+  max-width: calc(100vw - 24px);
+  text-align: left;
+}
+
+body .builder-shell .editor-panel-header .panel-backup-action:not([open]) .panel-backup-dropdown {
+  display: none !important;
+}
+
+body .builder-shell .editor-panel-header .panel-backup-dropdown > button {
+  width: 100%;
+  justify-content: flex-start;
+  border: 0 !important;
+  text-align: left;
+}
+
+body .builder-shell .editor-panel-header :is(button, summary):focus-visible {
+  outline: 2px solid var(--product-accent) !important;
+  outline-offset: 2px !important;
+}
+
+@media (max-width: 520px) {
+  body .builder-shell .panel-header.editor-panel-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  body .builder-shell .editor-panel-header .panel-actions {
+    justify-self: end;
+  }
+}
