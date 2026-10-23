@@ -5,6 +5,10 @@ on:
     paths:
       - scripts/gsc-discovered94-public-audit.mjs
       - .github/workflows/audit-gsc-discovered94-public.yml
+  pull_request:
+    paths:
+      - scripts/gsc-discovered94-public-audit.mjs
+      - .github/workflows/audit-gsc-discovered94-public.yml
   workflow_dispatch:
 permissions:
   contents: read
