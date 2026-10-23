@@ -1322,6 +1322,31 @@ async function run() {
     await waitForBrowser(client, `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`, 'return to edit workspace');
     assert(await evaluate(client, `document.activeElement?.id === 'workspace-tab-edit'`), 'workspace tab focus should remain stable after returning to edit');
 
+    // The shared Switch uses a span thumb; both states must remain visible.
+    const fixedSwitchSelector = '.editor-composition-panel .fixed-block-switch';
+    const fixedSwitchChecked = await evaluate(client, `document.querySelector(${JSON.stringify(fixedSwitchSelector)}).getAttribute('aria-checked')`);
+    const fixedSwitchAppearance = `(() => {
+      const toggle = document.querySelector(${JSON.stringify(fixedSwitchSelector)});
+      const thumb = toggle?.querySelector('.switch-clean-thumb');
+      if (!thumb) return false;
+      const trackRect = toggle.getBoundingClientRect();
+      const thumbRect = thumb.getBoundingClientRect();
+      const style = getComputedStyle(thumb);
+      const right = (thumbRect.left + thumbRect.width / 2) > (trackRect.left + trackRect.width / 2);
+      return style.display !== 'none' && style.backgroundColor === 'rgb(255, 255, 255)'
+        && Math.round(thumbRect.width) === 22 && Math.round(thumbRect.height) === 22
+        && thumbRect.left >= trackRect.left && thumbRect.right <= trackRect.right
+        && right === (toggle.getAttribute('aria-checked') === 'true');
+    })()`;
+    await waitForBrowser(client, fixedSwitchAppearance, 'fixed switch visible thumb in initial position');
+    await focusSelector(client, fixedSwitchSelector);
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(fixedSwitchSelector)}).getAttribute('aria-checked') !== ${JSON.stringify(fixedSwitchChecked)}`, 'fixed switch keyboard state changed');
+    await waitForBrowser(client, fixedSwitchAppearance, 'fixed switch visible thumb in opposite position');
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(fixedSwitchSelector)}).getAttribute('aria-checked') === ${JSON.stringify(fixedSwitchChecked)}`, 'fixed switch original state restored');
+    await waitForBrowser(client, fixedSwitchAppearance, 'fixed switch thumb restored');
+
     await capture(client, 'desktop-editor-before');
 
     // P9-1: real keyboard-only operation for editor rows and overflow dropdown.
