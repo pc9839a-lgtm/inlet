@@ -101,7 +101,7 @@ function createQaPage() {
     },
     meta: { title: '', desc: '', favicon: '', og: '' },
     integrations: {
-      internal: { enabled: true }, email: { enabled: false, to: '' },
+      internal: { enabled: true }, email: { enabled: false, to: 'editor.qa@example.com', lockedToAccount: true },
       sheets: { enabled: false, provider: 'google_sheets', mode: 'webhook', status: 'disconnected', webhookUrl: '', url: '' },
     },
     blocks: [
@@ -230,12 +230,20 @@ async function setInputValue(client, selector, value) {
   assert(result, `Unable to set input value for ${selector}`);
 }
 async function clickSelector(client, selector) {
-
-  const clicked = await evaluate(client, `(() => {
-    const element = document.querySelector(${JSON.stringify(selector)}); if (!element) return false;
-    element.scrollIntoView({ block: 'center', inline: 'center' }); element.click(); return true;
+  await evaluate(client, `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({ block: 'center', inline: 'center' })`);
+  await wait(60);
+  const point = await evaluate(client, `(() => {
+    const element = document.querySelector(${JSON.stringify(selector)});
+    if (!element || element.getClientRects().length === 0 || element.disabled) return null;
+    const rect = element.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    return element.contains(document.elementFromPoint(x, y)) ? { x, y } : null;
   })()`);
-  assert(clicked, `Unable to click ${selector}`);
+  assert(point, `Unable to reach ${selector} with a real pointer`);
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', buttons: 1, clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', buttons: 0, clickCount: 1 });
 }
 async function capture(client, name) {
   const image = await client.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false });
