@@ -1751,6 +1751,7 @@ async function run() {
     await pressKeyboardKey(client, 'Space');
     await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === false`, 'text design closes without replacing content');
 
+    await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '999');
     await focusSelector(client, innerSpacing);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(outerSpacing)})?.value === '48'`, 'out-of-range spacing clamps on blur');
