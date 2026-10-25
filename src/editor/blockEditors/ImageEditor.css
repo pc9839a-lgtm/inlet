@@ -27,3 +27,10 @@ html body #root .builder-shell .image-editor-flow .crop-open-button { justify-se
 .builder-shell .image-editor-storage:not([open]) > .image-storage-cleanup { display: none !important; }
 .builder-shell .image-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: 16px; }
 .builder-shell .image-editor-flow summary:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 4px; }
+
+/* Keep the complete photo inside the short thumbnail despite legacy image rules. */
+html body #root .builder-shell .image-editor-flow .image-input--compact .image-preview-frame > img {
+  width: 100% !important; height: 110px !important; max-height: 110px !important;
+  object-fit: contain !important; object-position: center !important;
+}
+.builder-shell .image-editor-flow .image-display-controls { display: grid; gap: 16px; min-width: 0; }

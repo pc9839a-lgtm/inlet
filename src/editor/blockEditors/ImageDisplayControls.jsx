@@ -3,7 +3,7 @@ import { SegmentedControl, NumberControl } from '../ui/index.js';
 
 export default function ImageDisplayControls({ display, s, set, editSrc, blockId, cropOpen, setCropOpen, changeDisplay }) {
   return (
-    <div className="image-edit-attached editor-v2-control-list">
+    <div className="image-display-controls editor-v2-control-list">
       <SegmentedControl
         label="맞춤"
         value={display}

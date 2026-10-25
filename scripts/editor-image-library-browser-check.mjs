@@ -314,6 +314,15 @@ async function run() {
     await waitForBrowser(client, `!document.querySelector('.image-library-picker[role="dialog"]')`, 'image library dialog close');
     await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image preview');
     await waitForBrowser(client, `(document.body?.innerText || '').includes('내 이미지에서 선택 완료')`, 'image selection success feedback');
+    const thumbnail = await evaluate(client, `(() => {
+      const img = document.querySelector('.image-input--compact .image-preview-frame > img');
+      const frame = img.parentElement;
+      return { loaded: img.complete && img.naturalWidth > 0,
+        imageHeight: img.getBoundingClientRect().height, frameHeight: frame.clientHeight,
+        fit: getComputedStyle(img).objectFit };
+    })()`);
+    assert(thumbnail.loaded && thumbnail.imageHeight <= thumbnail.frameHeight + 1 && thumbnail.fit === 'contain',
+      'compact photo thumbnail must show the complete image inside its frame: ' + JSON.stringify(thumbnail));
     await capture(client, 'desktop-image-library-selected');
     await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="맞춤"] button:nth-child(2)');
     const heightInput = '.image-editor-flow input[aria-label="이미지 높이 (px)"]';
@@ -342,7 +351,7 @@ async function run() {
     await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="사진 구성"] button:nth-child(2)');
     await waitForBrowser(client, `!!document.querySelector('.image-editor-more .editor-segmented-v2[aria-label="갤러리 배치"]')`, 'gallery controls available in extras');
     await clickSelector(client, '.image-editor-more .editor-segmented-v2[aria-label="갤러리 배치"] button:nth-child(2)');
-    await waitForBrowser(client, `!document.querySelector('.image-editor-flow .image-edit-attached')`, 'grid gallery omits inapplicable crop controls');
+    await waitForBrowser(client, `!document.querySelector('.image-editor-flow .image-display-controls')`, 'grid gallery omits inapplicable crop controls');
     await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="사진 구성"] button:first-child');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heightInput)})?.value === '360' && document.querySelector('.image-input--compact .image-preview-control.has-image img')?.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))})`, 'returning from gallery preserves single photo and crop');
     await clickSelector(client, '.image-editor-more > summary');
@@ -355,6 +364,8 @@ async function run() {
     assert(apiState.saveCount === 0, 'selecting an existing image must remain local until explicit publish');
     await clickSelector(client, '.panel-actions .primary-btn');
     await waitForState(() => apiState.saveCount === 1 && apiState.publicVerifyCount >= 1, 'image selection publish and public verification');
+    await waitForBrowser(client, `(document.querySelector('.panel-actions .primary-btn')?.textContent || '').includes('발행됨')`, 'image publish acknowledged by editor before reload');
+
     const savedImageBlock = apiState.currentPage.blocks.find((block) => block.id === 'editor-image');
     assert(savedImageBlock?.s?.image === selectedImageValue, `published image block mismatch: ${savedImageBlock?.s?.image || ''}`);
     assert(savedImageBlock.s.imageDisplay === 'fill' && savedImageBlock.s.imageHeightPx === 360
@@ -371,6 +382,8 @@ async function run() {
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`, 'saved image height restored after reload');
     await clickSelector(client, '.image-editor-more > summary');
     await waitForBrowser(client, `document.querySelector('.image-editor-more input[placeholder="이미지 설명을 입력하세요"]')?.value === '사진 설명 수정 확인'`, 'saved image caption restored');
+    assert(await evaluate(client, `!document.querySelector('[role="dialog"], [role="alertdialog"]')`),
+      'saved image editor must remain usable after reload without an unresolved draft dialog');
     await capture(client, 'desktop-image-library-reloaded');
 
     assert(apiState.loginCount === 1, `login API must run exactly once: ${apiState.loginCount}`);
