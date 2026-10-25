@@ -312,7 +312,7 @@ async function run() {
 
     await clickSelector(client, `.image-library-picker-item[title="${libraryFileName}"]`);
     await waitForBrowser(client, `!document.querySelector('.image-library-picker[role="dialog"]')`, 'image library dialog close');
-    await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image preview');
+    await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings .image-preview-control.has-image img'); return !!image && image.complete && image.naturalWidth > 0 && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image preview');
     await waitForBrowser(client, `(document.body?.innerText || '').includes('내 이미지에서 선택 완료')`, 'image selection success feedback');
     const thumbnail = await evaluate(client, `(() => {
       const img = document.querySelector('.image-input--compact .image-preview-frame > img');
@@ -378,7 +378,7 @@ async function run() {
     await waitForBrowser(client, `window.__qaImageReloadMarker !== 'departing-document' && !!document.querySelector(${JSON.stringify(imageRowHeadSelector)})`, 'reloaded editor image row');
     await waitForState(() => apiState.pageLoadCount > pageReadsBeforeReload, 'fresh server image page read after reload');
     await clickSelector(client, imageRowHeadSelector);
-    await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image after reload');
+    await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings .image-preview-control.has-image img'); return !!image && image.complete && image.naturalWidth > 0 && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image after reload');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`, 'saved image height restored after reload');
     await clickSelector(client, '.image-editor-more > summary');
     await waitForBrowser(client, `document.querySelector('.image-editor-more input[placeholder="이미지 설명을 입력하세요"]')?.value === '사진 설명 수정 확인'`, 'saved image caption restored');
