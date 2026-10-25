@@ -470,7 +470,9 @@ assert(widgetStyleEditors.filter((source) => !source.includes('export default fu
     ? source.includes('className="text-editor-design"') && source.includes('<TextStylePanel') && !source.includes('<EditorTabs')
     : source.includes('export default function ImageEditor')
       ? source.includes('className="image-editor-flow"') && source.includes('<ImageDisplayControls') && source.includes('className="image-editor-more"') && !source.includes('<EditorTabs')
-      : source.includes("label: '스타일'")),
+      : source.includes('export default function CodeEditor')
+        ? source.includes('<CodeEditorBox') && source.includes('className="code-editor-options"') && source.includes('<CodeStylePanel') && !source.includes('<EditorTabs')
+        : source.includes("label: '스타일'")),
   'registered editors must retain reachable style controls; text and image use direct flows instead of tabs');
 assert(widgetStylePanels.includes('function AlignmentControl') && !widgetStylePanels.includes('WidgetSurfaceControls') && !widgetStylePanels.includes('label="배경 직접 지정"') && !widgetStylePanels.includes('label="그림자 추가"') && !widgetStylePanels.includes('label="위아래 여백"') && !widgetStylePanels.includes('label="모서리"'), 'widget style panels must omit redundant shared surface controls');
 assert(!widgetStylePanels.includes('label="제목 굵게"') && !widgetStylePanels.includes('label="제목 밑줄"') && !widgetStylePanels.includes('<ToggleRow label="굵게"') && !widgetStylePanels.includes('<ToggleRow label="밑줄"'), 'hero and text style panels must omit emphasis controls duplicated by rich text editing');

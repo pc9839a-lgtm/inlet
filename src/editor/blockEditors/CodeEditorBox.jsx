@@ -2,7 +2,6 @@ export default function CodeEditorBox({ draft, onDraftChange, onOpenModal, onApp
   return (
     <div className="code-editor-box">
       <div className="code-editor-head">
-        <strong>코드 입력</strong>
         <button type="button" onClick={onOpenModal}>크게 편집</button>
       </div>
       <textarea
@@ -13,7 +12,7 @@ export default function CodeEditorBox({ draft, onDraftChange, onOpenModal, onApp
         spellCheck={false}
       />
       <div className="code-editor-actions">
-        <span data-code-draft-state={codePending ? 'pending' : 'applied'}>{codeDraftHint}</span>
+        <span role="status" aria-live="polite" data-code-draft-state={codePending ? 'pending' : 'applied'}>{codeDraftHint}</span>
         <button type="button" onClick={onApply}>적용</button>
       </div>
     </div>

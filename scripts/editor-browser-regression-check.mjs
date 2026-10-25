@@ -2157,10 +2157,26 @@ async function run() {
     await clickPointer(client, '.phone-frame #block-editor-code');
     assert(await evaluate(client, `!document.querySelector('.code-content-fields') && !document.querySelector('.code-advanced-editor') && !document.querySelector('.editor-composition-dialog')`), 'code blocks must expose only code editing and the composition list must have no drawer');
     await evaluate(client, `document.querySelector('.preview-workspace').scrollTop = 0`);
+    const directCode = await evaluate(client, `(() => {
+      const panel = document.querySelector('#editor-block-settings-editor-code');
+      return { tabs: panel.querySelectorAll('[role="tablist"]').length,
+        duplicateHeading: !!panel.querySelector('.code-editor-head strong'),
+        optionsClosed: !panel.querySelector('.code-editor-options').open,
+        height: panel.querySelector('.code-editor-box textarea').getBoundingClientRect().height };
+    })()`);
+    assert(directCode.tabs === 0 && !directCode.duplicateHeading && directCode.optionsClosed && directCode.height >= 240,
+      'code selection must show its input directly without tabs, repeated headings or naming fields: ' + JSON.stringify(directCode));
     await capture(client, 'desktop-left-code-only');
+    await focusSelector(client, '#editor-block-settings-editor-code .code-editor-options > summary');
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-code .code-editor-options')?.open === true`, 'code naming and height options open by keyboard');
+
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-code input[aria-label="구분 이름"]')`, 'code block custom label input');
     await setInputValue(client, '#editor-block-settings-editor-code input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
+
+    await clickSelector(client, '#editor-block-settings-editor-code .code-editor-options > summary');
+    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-code .code-editor-options')?.open === false`, 'code options close while direct editing stays available');
 
     // D06: code has a separate apply phase. Editing alone never publishes,
     // while applying updates only the local page draft.
