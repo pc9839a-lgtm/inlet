@@ -30,3 +30,11 @@ html body #root .builder-shell .editor-number-presets > button[aria-pressed='tru
   .builder-shell .editor-number-presets { grid-column: 2; }
 }
 @media (pointer: coarse) { .builder-shell .editor-number-control :is(input[type='number'],button) { min-height: 44px !important; } }
+
+/* Exact spacing values need one input, without a second range or preset strip. */
+html body #root .builder-shell .editor-number-control[data-slider='false'] {
+  grid-template-columns: minmax(0, 1fr) 86px !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+.builder-shell .editor-number-control[data-slider='false'] > .editor-number-inputs { display: block; }

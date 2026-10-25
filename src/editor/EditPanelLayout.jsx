@@ -53,6 +53,15 @@ export function EditPanelLayout({
   return (
     <div className="edit-layout" data-editor-layout="left-persistent">
       <aside className="editor-composition-panel" aria-label="구성">
+        <button
+          className="editor-page-settings-button"
+          type="button"
+          aria-pressed={section === 'options'}
+          aria-controls="editor-selection-panel"
+          onClick={openPageOptions}
+        >
+          페이지 설정{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
+        </button>
         <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
         <section className="screen-order-fixed-blocks" aria-label="고정 영역">
           <h3>고정 영역</h3>
@@ -61,32 +70,7 @@ export function EditPanelLayout({
         <AddBlockDock {...addBlockDockProps} />
       </aside>
       <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>
-      <nav
-        className="edit-section-tabs"
-        data-pagero-ui="edit-section-tabs-v2"
-        aria-label="편집 영역 선택"
-      >
-        <button
-          className="edit-section-tab"
-          data-selected={section === 'order' ? 'true' : 'false'}
-          type="button"
-          aria-pressed={section === 'order'}
-          onClick={() => setSection('order')}
-        >
-          블록
-        </button>
-        <button
-          className="edit-section-tab"
-          data-selected={section === 'options' ? 'true' : 'false'}
-          type="button"
-          aria-pressed={section === 'options'}
-          onClick={openPageOptions}
-        >
-          페이지 설정{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
-        </button>
-      </nav>
-
-      <div className="edit-section-panel" data-editor-section={section}>
+      <div id="editor-selection-panel" className="edit-section-panel" data-editor-section={section}>
         {section === 'options' ? (
           <div className="editor-page-options-stack">
             {stylePanelProps && (

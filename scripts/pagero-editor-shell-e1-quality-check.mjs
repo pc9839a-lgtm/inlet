@@ -48,16 +48,13 @@ assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.include
 assert(css.includes('grid-template-columns: clamp(500px, 50vw, 660px) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'editing must remain left of the page preview');
 assert(addDockCss.includes('/* Active editor dock geometry.') && addDockCss.includes('position: sticky !important;') && addDockCss.includes('max-height: min(62dvh, 620px) !important;') && !css.includes('.fixed-add-dock'), 'active editor add dock must be owned by editor-widget-add-dock.css');
 assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;') && css.includes('overflow: auto !important;'), 'zoomed desktop must preserve reachable page and inspector');
-assert(
-  editPanelLayoutCss.includes("html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2']")
-    && editPanelLayoutCss.includes("html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab")
-    && editPanelLayoutCss.includes(">.edit-section-tab[data-selected='true']") === false
-    && editPanelLayoutCss.includes(".edit-section-tab[data-selected='true']")
-    && editPanelLayoutCss.includes('height: 38px !important;')
-    && editPanelLayoutCss.includes('height: 32px !important;'),
-  'EditPanelLayout.css must own the exact compact subsection tab geometry',
-);
-assert(editPanelLayoutCss.includes("data-pagero-ui='edit-section-tabs-v2'") && editPanelLayoutCss.includes("data-selected='true'") && editPanelLayoutCss.includes('border-radius: 0 !important;') && editPanelLayoutCss.includes('background: #fff !important;') && editPanelLayoutCss.includes('border-bottom-color: #344054 !important;'), 'EditPanelLayout.css must keep flat tabs with a visible selected underline');
+assert(layout.includes('className="editor-page-settings-button"')
+  && layout.includes('aria-controls="editor-selection-panel"')
+  && !layout.includes('edit-section-tabs') && !editPanelLayoutCss.includes('edit-section-tabs'),
+  'page settings must use one composition entry without a second inspector tab bar');
+assert(editPanelLayoutCss.includes('.editor-composition-panel > .editor-page-settings-button')
+  && editPanelLayoutCss.includes('min-height: 40px !important;'),
+  'the page-settings entry must remain visibly reachable in the composition owner');
 assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
 assert(previewPaneCss.includes('WorkspacePreviewPane — owns editor preview presentation') && previewPaneCss.includes('.preview-workspace') && previewPaneCss.includes('.preview-sticky') && previewPaneCss.includes('.phone-frame') && previewPaneCss.includes('scroll-margin-block: 120px') && !css.includes('.preview-workspace') && !css.includes('.preview-sticky') && !css.includes('.phone-frame'), 'WorkspacePreviewPane.css must own preview presentation while editor-workspace.css stays geometry-only');
 assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') && pageOptionsCss.includes('padding: 0;') && pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('background: transparent;') && !css.includes('page-global-options'), 'page options base contract must live in PageGlobalOptions.css and stay out of editor-workspace.css');

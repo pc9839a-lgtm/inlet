@@ -31,7 +31,6 @@ export function TextStylePanel({ s, set }) {
     <SegmentedControl label="형태" value={s.layout || 'plain'} onChange={(value) => set({ layout: value })} options={[{ value: 'plain', label: '기본' }, { value: 'card', label: '카드' }, { value: 'notice', label: '강조' }]} />
     <SegmentedControl label="글자 크기" value={s.size || 'medium'} onChange={(value) => set({ size: value })} options={SIZES} />
     <AlignmentControl s={s} set={set} />
-    <WidgetSpacingControls s={s} set={set} />
   </>;
 }
 

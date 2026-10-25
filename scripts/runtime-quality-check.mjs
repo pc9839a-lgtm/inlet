@@ -465,7 +465,11 @@ assert(fixedBlockRenderers.includes('<BlockAdvancedAnchorSettings') && fixedBloc
 assert(advancedAnchorSettings.includes('<details className="block-editor-advanced-settings">') && advancedAnchorSettings.includes('고급 설정 · 이동 앵커') && advancedAnchorSettings.includes('<AnchorControl') && advancedAnchorSettings.includes("value={block.s?.anchorId || ''}"), 'D02: advanced disclosure must retain saved anchor and copy/edit controls');
 assert(editorExpandedShellCss.includes('.block-editor-advanced-settings:not([open]) > .block-editor-advanced-body') && editorExpandedShellCss.includes('display: none !important'), 'D02: closed advanced settings must hide all anchor controls regardless of legacy CSS');
 assert(scheduleEditor.includes("import { EditorTabs } from '../ui/index.js'") && scheduleEditor.includes('<EditorTabs'), 'ScheduleEditor must import and render EditorTabs inside its lazy chunk');
-assert(widgetStyleEditors.filter((source) => !source.includes('export default function TimerEditor')).every((source) => source.includes("label: '스타일'")), 'registered widget editors except the intentionally fixed timer must expose an explicit style tab');
+assert(widgetStyleEditors.filter((source) => !source.includes('export default function TimerEditor')).every((source) =>
+  source.includes('export default function TextEditor')
+    ? source.includes('className="text-editor-design"') && source.includes('<TextStylePanel') && !source.includes('<EditorTabs')
+    : source.includes("label: '스타일'")),
+  'registered editors must retain reachable style controls; text uses an in-flow disclosure instead of tabs');
 assert(widgetStylePanels.includes('function AlignmentControl') && !widgetStylePanels.includes('WidgetSurfaceControls') && !widgetStylePanels.includes('label="배경 직접 지정"') && !widgetStylePanels.includes('label="그림자 추가"') && !widgetStylePanels.includes('label="위아래 여백"') && !widgetStylePanels.includes('label="모서리"'), 'widget style panels must omit redundant shared surface controls');
 assert(!widgetStylePanels.includes('label="제목 굵게"') && !widgetStylePanels.includes('label="제목 밑줄"') && !widgetStylePanels.includes('<ToggleRow label="굵게"') && !widgetStylePanels.includes('<ToggleRow label="밑줄"'), 'hero and text style panels must omit emphasis controls duplicated by rich text editing');
 assert(widgetStylePanels.includes('label="직접 색상"') && widgetStylePanels.includes("buttonColorMode: value ? 'custom' : 'theme'"), 'bottom bar direct color mode must use one concise toggle');

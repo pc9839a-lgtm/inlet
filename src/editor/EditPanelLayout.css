@@ -1,4 +1,4 @@
-/* EditPanelLayout — owns the editor subsection shell, tabs and local panel stack. */
+/* EditPanelLayout — owns composition navigation and the selected editor panel. */
 
 body .builder-shell .edit-layout,
 body .builder-shell .edit-layout * {
@@ -13,60 +13,26 @@ body .builder-shell .edit-layout {
   gap: 8px;
 }
 
-/* Edit section tabs — isolated owner. Do not reuse generic .active state. */
-html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] {
+/* Page settings belongs to the persistent composition, not a second inspector tab bar. */
+html body #root .builder-shell.edit-mode-shell .editor-composition-panel > .editor-page-settings-button {
+  display: block !important;
   width: 100% !important;
-  min-width: 0 !important;
-  height: 38px !important;
-  min-height: 38px !important;
-  max-height: 38px !important;
-  display: grid !important;
-  grid-template-columns: repeat(2, max-content) !important;
-  justify-content: start;
-  gap: 16px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
+  min-height: 40px !important;
+  margin: 0 0 16px !important;
+  padding: 8px !important;
   border: 0 !important;
-  border-bottom: 1px solid #e4e7ec !important;
-  border-radius: 0 !important;
-  background: #fff !important;
-  box-shadow: none !important;
-}
-
-html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab {
-  width: 100% !important;
-  min-width: 0 !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
-  margin: 0 !important;
-  padding: 0 10px !important;
-  border: 0 !important;
-  border-bottom: 2px solid transparent !important;
-  border-radius: 0 !important;
+  border-radius: 4px !important;
   background: transparent !important;
-  color: var(--product-muted) !important;
-  box-shadow: none !important;
+  color: #475467 !important;
   font-size: 12px !important;
-  line-height: 1 !important;
   font-weight: 500 !important;
-  cursor: pointer !important;
-  appearance: none !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+  white-space: normal;
 }
-
-html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab:hover {
-  background: rgba(255, 255, 255, .72) !important;
-  color: var(--product-text) !important;
-}
-
-html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[data-selected='true'],
-html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[aria-pressed='true'] {
-  border-bottom-color: #344054 !important;
-  background: #fff !important;
-  color: var(--product-text) !important;
-  box-shadow: none !important;
-  font-weight: 600 !important;
+html body #root .builder-shell.edit-mode-shell .editor-composition-panel > .editor-page-settings-button:is(:hover, [aria-pressed='true']) {
+  background: #f4f5f7 !important;
+  color: #101828 !important;
 }
 
 body .builder-shell .edit-section-panel {
@@ -87,18 +53,6 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack {
   gap: 10px;
 }
 
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .editor-inspector-panel > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] {
-  background: #fff !important;
-  gap: 8px !important;
-  padding: 0 !important;
-  overflow: visible !important;
-}
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .editor-inspector-panel > .edit-section-tabs > .edit-section-tab {
-  border: 0 !important;
-  border-bottom: 2px solid transparent !important;
-  font-weight: 500 !important;
-}
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .editor-inspector-panel > .edit-section-tabs > .edit-section-tab[aria-pressed='true'] { border-bottom-color: #344054 !important; font-weight: 600 !important; }
 html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings[data-scroll-region='block-settings'] {
   max-height: none !important;
   overflow: visible !important;
@@ -128,8 +82,8 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
 }
 
 /* Canvas editor */
-html body #root .canvas-editor-shell .screen-order-v2-settings-header { padding-top: 12px; }
-html body #root .canvas-editor-shell .screen-order-v2-settings-title > span { display: none; }
+html body #root .canvas-editor-shell .screen-order-v2-settings-header { padding-top: 0; }
+html body #root .canvas-editor-shell .screen-order-v2-settings-title > .screen-order-settings-hidden { display: inline-block; color: #667085; font-size: 12px; }
 
 
 /* Persistent composition beside the selected editor, both in the left workspace. */

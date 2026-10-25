@@ -6,7 +6,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor }) {
   const metaType = block.s?.widgetMode === 'youtube' ? 'youtube' : block.type;
   const meta = META[metaType] || META.text;
   const typeLabel = `${meta.label}${identity?.repeated ? ` ${identity.occurrence}` : ''}`;
-  const title = identity?.customLabel || identity?.detail || typeLabel;
+  const title = identity?.customLabel || typeLabel;
 
   React.useEffect(() => {
     backRef.current?.focus({ preventScroll: true });
@@ -17,7 +17,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor }) {
       <header className="screen-order-v2-settings-header">
         <div className="screen-order-v2-settings-title">
           <h2 ref={backRef} tabIndex={-1} title={title}>{title}</h2>
-          <span>{typeLabel}{!block.visible ? ' · 숨김' : ''}</span>
+          {!block.visible && <span className="screen-order-settings-hidden">숨김</span>}
         </div>
       </header>
       <div

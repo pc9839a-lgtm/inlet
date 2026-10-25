@@ -1,0 +1,25 @@
+/* Text editing stays in one flow; opening design never replaces the content. */
+.builder-shell .text-editor-flow {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.builder-shell .text-editor-design { min-width: 0; }
+.builder-shell .text-editor-design > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 0;
+  list-style: none;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.builder-shell .text-editor-design > summary::-webkit-details-marker { display: none; }
+.builder-shell .text-editor-design[open] > summary svg { transform: rotate(180deg); }
+.builder-shell .text-editor-design-controls { display: grid; gap: 16px; padding: 12px 0 4px; }
+.builder-shell .text-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: 16px; }
+
+.builder-shell .text-editor-design:not([open]) > .text-editor-design-controls { display: none; }

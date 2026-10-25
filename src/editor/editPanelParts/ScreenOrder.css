@@ -320,16 +320,17 @@
 }
 
 .screen-order-v2-settings-title {
-  display: grid;
+  display: flex;
   min-width: 0;
-  gap: 4px;
+  gap: 8px;
+  align-items: center;
 }
 
 .screen-order-v2-settings-title h2 {
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: var(--product-text);
   font-size: 18px;
   line-height: 1.4;
