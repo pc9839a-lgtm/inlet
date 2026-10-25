@@ -34,7 +34,7 @@ export {
   warnImageStorageUse,
 };
 
-export function ImageInput({ label, value, onChange, disabled = false, duplicateValues = [], variant = 'default' }) {
+export function ImageInput({ label, value, onChange, disabled = false, duplicateValues = [], variant = 'default', compact = false }) {
   const storageInfo = storedImageInfo(value);
   const mediaLibrary = useEditorMediaLibrary();
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -48,11 +48,11 @@ export function ImageInput({ label, value, onChange, disabled = false, duplicate
   } = useImageInputPicker({ label, value, duplicateValues, onChange, disabled });
   const processing = uploadState.status === 'processing';
   const safeVariant = ['default', 'favicon', 'share'].includes(variant) ? variant : 'default';
-  const showStorageNote = safeVariant === 'default';
+  const showStorageNote = safeVariant === 'default' && (!compact || storageInfo.heavy || uploadState.status !== 'idle');
   const canUseLibrary = !!mediaLibrary?.page && !!mediaLibrary?.authUser;
 
   return (
-    <div className={`image-input image-input--${safeVariant} ${processing ? 'is-processing' : ''}`}>
+    <div className={`image-input image-input--${safeVariant} ${compact ? 'image-input--compact' : ''} ${processing ? 'is-processing' : ''}`}>
       <span>{label}</span>
       <input
         ref={ref}
@@ -70,8 +70,16 @@ export function ImageInput({ label, value, onChange, disabled = false, duplicate
         onEdit={openPicker}
         onClear={clearImage}
         variant={safeVariant}
+        showActions={!compact}
       />
-      {canUseLibrary && (
+      {compact && <div className="image-input-source-actions">
+        <button type="button" className="image-input-upload-action" disabled={disabled || processing} onClick={openPicker}>
+          {value ? '사진 바꾸기' : '사진 올리기'}
+        </button>
+        {canUseLibrary && <button type="button" className="image-input-library-action" disabled={disabled || processing} onClick={() => setLibraryOpen(true)}>내 이미지</button>}
+        {value && <button type="button" className="image-input-remove-action" aria-label={`${label} 삭제`} disabled={disabled || processing} onClick={clearImage}>삭제</button>}
+      </div>}
+      {!compact && canUseLibrary && (
         <button
           type="button"
           className="image-input-library-action"

@@ -1,0 +1,29 @@
+/* Photo replacement and display settings share one selected-item flow. */
+.builder-shell .image-editor-flow { display: grid; gap: 20px; min-width: 0; }
+.builder-shell .image-editor-flow .image-preview-placeholder { color: #98a2b3; }
+.builder-shell .image-editor-flow .image-input-source-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+html body #root .builder-shell .image-editor-flow .image-input-source-actions > button,
+html body #root .builder-shell .image-editor-flow .crop-open-button {
+  width: auto !important; min-height: 36px !important; margin: 0 !important; padding: 7px 10px !important;
+  border: 1px solid #d0d5dd !important; border-radius: 6px !important; background: #fff !important;
+  color: #344054 !important; font-size: 12px !important; font-weight: 500 !important; box-shadow: none !important;
+}
+html body #root .builder-shell .image-editor-flow .image-input-source-actions > .image-input-upload-action {
+  background: #344054 !important; border-color: #344054 !important; color: #fff !important;
+}
+html body #root .builder-shell .image-editor-flow .image-input-source-actions > .image-input-remove-action {
+  margin-left: auto !important; border-color: transparent !important; color: #667085 !important;
+}
+html body #root .builder-shell .image-editor-flow .crop-open-button { justify-self: start; }
+.builder-shell .image-editor-more > summary,
+.builder-shell .image-editor-storage > summary {
+  display: flex; align-items: center; justify-content: space-between; min-height: 40px; list-style: none;
+  color: #344054; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.builder-shell .image-editor-more > summary::-webkit-details-marker { display: none; }
+.builder-shell .image-editor-more[open] > summary svg { transform: rotate(180deg); }
+.builder-shell .image-editor-more-controls { display: grid; gap: 16px; padding: 12px 0 4px; }
+.builder-shell .image-editor-more:not([open]) > .image-editor-more-controls { display: none; }
+.builder-shell .image-editor-storage:not([open]) > .image-storage-cleanup { display: none !important; }
+.builder-shell .image-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: 16px; }
+.builder-shell .image-editor-flow summary:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 4px; }

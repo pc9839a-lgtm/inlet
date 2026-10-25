@@ -347,9 +347,9 @@ assert(lazyRuntimeBoundary.includes("this.props.variant !== 'preview' && recover
 assert(fixedBlockRenderers.includes('renderLazyEditor') && fixedBlockRenderers.includes('createFixedBlockRenderers'), 'fixed block editor renderers must stay split from App');
 assert(blockEditorRegistry.includes('export const BLOCK_EDITORS'), 'block editor registry must stay split from App');
 assert(imageGalleryEditor.includes("import { EditorList } from '../ui/index.js'") && imageGalleryEditor.includes('<GalleryMultiUpload'), 'image gallery editor must keep multi-upload and use the shared item list');
-assert(imageDisplayControls.includes('<SegmentedControl') && imageDisplayControls.includes('label="표시 방식"') && imageDisplayControls.includes("value: 'original'") && imageDisplayControls.includes("value: 'fill'"), 'image display controls must expose original and fill as one explicit mode choice');
-assert(imageDisplayControls.includes('<ToggleRow label="모서리 둥글게"') && !imageDisplayControls.includes('image-mode-toolbar'), 'image corner rounding must stay separate from image display mode');
-assert(imageDisplayControls.includes("display === 'fill'") && imageDisplayControls.includes('위치·높이 조정') && imageEditorModel.includes("imageDisplay: 'fill'") && imageEditorModel.includes('imageHeightPx') && imageEditorModel.includes('imageX') && imageEditorModel.includes('imageY'), 'fill mode must keep its height and focal-position editor contract');
+assert(imageDisplayControls.includes('<SegmentedControl') && imageDisplayControls.includes('label="맞춤"') && imageDisplayControls.includes("value: 'original'") && imageDisplayControls.includes("value: 'fill'"), 'image display controls must expose original and fill as one explicit mode choice');
+assert(widgetStyleEditors.some((source) => source.includes('export default function ImageEditor') && source.includes('<ToggleRow label="모서리 둥글게"')) && !imageDisplayControls.includes('image-mode-toolbar'), 'image corner rounding must stay separate from image display mode');
+assert(imageDisplayControls.includes("display === 'fill'") && imageDisplayControls.includes('사진 위치 조정') && imageEditorModel.includes("imageDisplay: 'fill'") && imageEditorModel.includes('imageHeightPx') && imageEditorModel.includes('imageX') && imageEditorModel.includes('imageY'), 'fill mode must keep its height and focal-position editor contract');
 assert(mediaBlocks.includes('objectPosition:') && mediaBlocks.includes('s.imageX ?? 50') && mediaBlocks.includes('s.imageY ?? 50') && mediaBlocks.includes('s.imageHeightPx || 260') && mediaBlocks.includes("s.rounded ? 'rounded' : ''"), 'image renderer must consume crop height, focal position, and rounded state');
 assert(baseComponentsImageCss.includes('.crop-modal .crop-preview{max-height:none!important}'), 'image crop preview must not cap heights below the renderer maximum');
 assert(dividerEditorSource.includes('label="선 모양"') && dividerEditorSource.includes("value: 'solid'") && dividerEditorSource.includes("value: 'dashed'") && dividerEditorSource.includes("value: 'dotted'"), 'divider editor must expose every renderer-supported line style');
@@ -468,8 +468,10 @@ assert(scheduleEditor.includes("import { EditorTabs } from '../ui/index.js'") &&
 assert(widgetStyleEditors.filter((source) => !source.includes('export default function TimerEditor')).every((source) =>
   source.includes('export default function TextEditor')
     ? source.includes('className="text-editor-design"') && source.includes('<TextStylePanel') && !source.includes('<EditorTabs')
-    : source.includes("label: '스타일'")),
-  'registered editors must retain reachable style controls; text uses an in-flow disclosure instead of tabs');
+    : source.includes('export default function ImageEditor')
+      ? source.includes('className="image-editor-flow"') && source.includes('<ImageDisplayControls') && source.includes('className="image-editor-more"') && !source.includes('<EditorTabs')
+      : source.includes("label: '스타일'")),
+  'registered editors must retain reachable style controls; text and image use direct flows instead of tabs');
 assert(widgetStylePanels.includes('function AlignmentControl') && !widgetStylePanels.includes('WidgetSurfaceControls') && !widgetStylePanels.includes('label="배경 직접 지정"') && !widgetStylePanels.includes('label="그림자 추가"') && !widgetStylePanels.includes('label="위아래 여백"') && !widgetStylePanels.includes('label="모서리"'), 'widget style panels must omit redundant shared surface controls');
 assert(!widgetStylePanels.includes('label="제목 굵게"') && !widgetStylePanels.includes('label="제목 밑줄"') && !widgetStylePanels.includes('<ToggleRow label="굵게"') && !widgetStylePanels.includes('<ToggleRow label="밑줄"'), 'hero and text style panels must omit emphasis controls duplicated by rich text editing');
 assert(widgetStylePanels.includes('label="직접 색상"') && widgetStylePanels.includes("buttonColorMode: value ? 'custom' : 'theme'"), 'bottom bar direct color mode must use one concise toggle');

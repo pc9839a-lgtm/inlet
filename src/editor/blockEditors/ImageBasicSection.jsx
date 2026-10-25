@@ -16,26 +16,26 @@ export default function ImageBasicSection({
 
   return (
     <>
+      {mode === 'single' && <ImageInput label="사진" value={s.image} onChange={updateSingleImage} compact />}
       <SegmentedControl
-        label="이미지 구성"
+        label="사진 구성"
         value={mode}
         onChange={(value) => set({ mode: value })}
         options={[
-          { value: 'single', label: '단일 이미지' },
-          { value: 'gallery', label: '갤러리' },
+          { value: 'single', label: '한 장' },
+          { value: 'gallery', label: '여러 장' },
         ]}
       />
-      <StoredImageCleanup
-        summary={storageSummary}
-        mode={mode}
-        onRemoveSingle={() => updateSingleImage('')}
-        onRemoveGallery={removeGallery}
-      />
-      {mode === 'gallery' ? (
-        <ImageGalleryEditor gallery={gallery} set={set} updateGallery={updateGallery} removeGallery={removeGallery} />
-      ) : (
-        <ImageInput label="이미지" value={s.image} onChange={updateSingleImage} />
-      )}
+      {mode === 'gallery' && <ImageGalleryEditor gallery={gallery} set={set} updateGallery={updateGallery} removeGallery={removeGallery} />}
+      {storageSummary.items.length > 0 && <details className="image-editor-storage" open={storageSummary.heavyItems.length > 0}>
+        <summary>이미지 용량 {storageSummary.label}</summary>
+        <StoredImageCleanup
+          summary={storageSummary}
+          mode={mode}
+          onRemoveSingle={() => updateSingleImage('')}
+          onRemoveGallery={removeGallery}
+        />
+      </details>}
     </>
   );
 }

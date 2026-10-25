@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -8,11 +8,11 @@ const origin = String(process.env.INLET_EDITOR_BROWSER_QA_ORIGIN || 'http://127.
 const screenshotDir = process.env.INLET_EDITOR_BROWSER_QA_SCREENSHOT_DIR || '.tmp-editor-browser-regression';
 const debugPort = Number(process.env.INLET_EDITOR_IMAGE_LIBRARY_QA_CHROME_PORT || 9342);
 const chromeInput = String(process.env.INLET_EDITOR_BROWSER_QA_CHROME_PATH || '').trim();
-const libraryKey = 'editor-project/images/library-image.png';
-const libraryFileName = 'library-image.png';
+const libraryKey = 'editor-project/images/library-image.jpg';
+const libraryFileName = 'library-image.jpg';
 const selectedImageValue = `/api/files/download?key=${encodeURIComponent(libraryKey)}`;
 const imageRowHeadSelector = '.screen-order-v2-list #editor-block-editor-image .screen-order-v2-head';
-const pixelPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZQmcAAAAASUVORK5CYII=';
+const fixturePhoto = await readFile(new URL('../assets/dyjh-wedding-no-text.jpg', import.meta.url));
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -133,8 +133,8 @@ function createApiMock(client) {
   });
   const fulfillImage = (requestId) => client.send('Fetch.fulfillRequest', {
     requestId, responseCode: 200,
-    responseHeaders: [{ name: 'Content-Type', value: 'image/png' }, { name: 'Cache-Control', value: 'no-cache, no-store' }],
-    body: pixelPngBase64,
+    responseHeaders: [{ name: 'Content-Type', value: 'image/jpeg' }, { name: 'Cache-Control', value: 'no-cache, no-store' }],
+    body: fixturePhoto.toString('base64'),
   });
   const handler = async ({ requestId, request }) => {
     const url = new URL(request.url);
@@ -161,7 +161,7 @@ function createApiMock(client) {
       state.mediaListRequests.push(Object.fromEntries(url.searchParams.entries()));
       await fulfillJson(requestId, 200, {
         ok: true, kind: 'image', hasMore: false, cursor: '',
-        assets: [{ key: libraryKey, kind: 'image', fileName: libraryFileName, size: 68, uploadedAt: '2026-09-16T00:00:00.000Z', contentType: 'image/png', purpose: 'page-image', downloadUrl: `${origin}${selectedImageValue}` }],
+        assets: [{ key: libraryKey, kind: 'image', fileName: libraryFileName, size: fixturePhoto.length, uploadedAt: '2026-09-16T00:00:00.000Z', contentType: 'image/jpeg', purpose: 'page-image', downloadUrl: `${origin}${selectedImageValue}` }],
       });
       return;
     }
@@ -284,6 +284,21 @@ async function run() {
     await clickSelector(client, imageRowHeadSelector);
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-settings .image-input-library-action')`, 'image block library action');
     assert(apiState.saveCount === 0, 'opening the image editor must not publish the page');
+    const imageFlow = await evaluate(client, `(() => {
+      const panel = document.querySelector('.screen-order-v2-settings');
+      const source = panel.querySelector('.image-input--compact');
+      const flow = panel.querySelector('.image-editor-flow');
+      return { directSource: flow?.firstElementChild === source,
+        upload: source?.querySelector('.image-input-upload-action')?.textContent.trim(),
+        library: !!source?.querySelector('.image-input-library-action'),
+        tabs: panel.querySelectorAll('[role="tablist"]').length,
+        moreClosed: !panel.querySelector('.image-editor-more')?.open,
+        fitVisible: panel.querySelector('.editor-segmented-v2[aria-label="맞춤"]')?.getClientRects().length > 0 };
+    })()`);
+    assert(imageFlow.directSource && imageFlow.upload === '사진 올리기' && imageFlow.library
+      && imageFlow.tabs === 0 && imageFlow.moreClosed && imageFlow.fitVisible,
+      'image editor must start with photo selection and expose fit without tab switching: ' + JSON.stringify(imageFlow));
+
     await capture(client, 'desktop-image-library-before');
 
     await clickSelector(client, '.screen-order-v2-settings .image-input-library-action');
@@ -300,6 +315,41 @@ async function run() {
     await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image preview');
     await waitForBrowser(client, `(document.body?.innerText || '').includes('내 이미지에서 선택 완료')`, 'image selection success feedback');
     await capture(client, 'desktop-image-library-selected');
+    await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="맞춤"] button:nth-child(2)');
+    const heightInput = '.image-editor-flow input[aria-label="이미지 높이 (px)"]';
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heightInput)})`, 'image height available directly');
+    await setInputValue(client, heightInput, '320');
+    await waitForBrowser(client, `Math.round(document.querySelector('.phone-frame #block-editor-image .image-wrap.image-fill')?.getBoundingClientRect().height || 0) === 320`, 'direct image height reaches page preview');
+    assert(await evaluate(client, `document.querySelectorAll('.image-editor-flow input[type="range"]').length === 0`), 'main image height and spacing must not duplicate number fields with sliders');
+    await capture(client, 'desktop-image-direct-settings');
+
+    // Crop changes stay private to the dialog until Apply.
+    await clickSelector(client, '.image-editor-flow .crop-open-button');
+    await waitForBrowser(client, `!!document.querySelector('.crop-modal[role="dialog"]')`, 'photo crop dialog');
+    await setInputValue(client, '.crop-modal input[aria-label="높이 (px)"]', '400');
+    await clickSelector(client, '.crop-actions button:nth-child(2)');
+    await waitForBrowser(client, `!document.querySelector('.crop-modal') && document.querySelector(${JSON.stringify(heightInput)})?.value === '320'`, 'cancel crop preserves current image height');
+    await clickSelector(client, '.image-editor-flow .crop-open-button');
+    await waitForBrowser(client, `document.querySelector('.crop-modal input[aria-label="높이 (px)"]')?.value === '320'`, 'reopened crop restores committed height');
+    await setInputValue(client, '.crop-modal input[aria-label="높이 (px)"]', '360');
+    await clickSelector(client, '.crop-actions button.primary');
+    await waitForBrowser(client, `!document.querySelector('.crop-modal') && document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`, 'apply crop updates main image height');
+    await waitForBrowser(client, `Math.round(document.querySelector('.phone-frame #block-editor-image .image-wrap.image-fill')?.getBoundingClientRect().height || 0) === 360`, 'applied crop height reaches page');
+    await clickSelector(client, '.image-editor-more > summary');
+    await waitForBrowser(client, `document.querySelector('.image-editor-more')?.open === true`, 'image additional settings opened');
+    await setInputValue(client, '.image-editor-more input[placeholder="이미지 설명을 입력하세요"]', '사진 설명 수정 확인');
+    await waitForBrowser(client, `(document.querySelector('.phone-frame #block-editor-image')?.textContent || '').includes('사진 설명 수정 확인')`, 'image caption updates selected page');
+    await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="사진 구성"] button:nth-child(2)');
+    await waitForBrowser(client, `!!document.querySelector('.image-editor-more .editor-segmented-v2[aria-label="갤러리 배치"]')`, 'gallery controls available in extras');
+    await clickSelector(client, '.image-editor-more .editor-segmented-v2[aria-label="갤러리 배치"] button:nth-child(2)');
+    await waitForBrowser(client, `!document.querySelector('.image-editor-flow .image-edit-attached')`, 'grid gallery omits inapplicable crop controls');
+    await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="사진 구성"] button:first-child');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heightInput)})?.value === '360' && document.querySelector('.image-input--compact .image-preview-control.has-image img')?.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))})`, 'returning from gallery preserves single photo and crop');
+    await clickSelector(client, '.image-editor-more > summary');
+    assert(await evaluate(client, `document.querySelector('.image-input-upload-action')?.getClientRects().length > 0 && document.querySelector(${JSON.stringify(heightInput)})?.getClientRects().length > 0`), 'closing image extras must keep replacement and height controls available');
+    assert(apiState.saveCount === 0, 'image fit, height, crop apply/cancel and caption edits must not publish');
+    await capture(client, 'desktop-image-crop-applied');
+
 
     await wait(1100);
     assert(apiState.saveCount === 0, 'selecting an existing image must remain local until explicit publish');
@@ -307,6 +357,9 @@ async function run() {
     await waitForState(() => apiState.saveCount === 1 && apiState.publicVerifyCount >= 1, 'image selection publish and public verification');
     const savedImageBlock = apiState.currentPage.blocks.find((block) => block.id === 'editor-image');
     assert(savedImageBlock?.s?.image === selectedImageValue, `published image block mismatch: ${savedImageBlock?.s?.image || ''}`);
+    assert(savedImageBlock.s.imageDisplay === 'fill' && savedImageBlock.s.imageHeightPx === 360
+      && savedImageBlock.s.caption === '사진 설명 수정 확인', 'image display, applied crop height and caption must persist together');
+
 
     const pageReadsBeforeReload = apiState.pageLoadCount;
     await evaluate(client, "window.__qaImageReloadMarker = 'departing-document'; true");
@@ -315,6 +368,9 @@ async function run() {
     await waitForState(() => apiState.pageLoadCount > pageReadsBeforeReload, 'fresh server image page read after reload');
     await clickSelector(client, imageRowHeadSelector);
     await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings .image-preview-control.has-image img'); return !!image && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image after reload');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`, 'saved image height restored after reload');
+    await clickSelector(client, '.image-editor-more > summary');
+    await waitForBrowser(client, `document.querySelector('.image-editor-more input[placeholder="이미지 설명을 입력하세요"]')?.value === '사진 설명 수정 확인'`, 'saved image caption restored');
     await capture(client, 'desktop-image-library-reloaded');
 
     assert(apiState.loginCount === 1, `login API must run exactly once: ${apiState.loginCount}`);
@@ -329,9 +385,10 @@ async function run() {
     console.log(JSON.stringify({
       ok: true,
       scope: 'editor-project-image-library-browser-e2e',
+      directImageFlow: true, cropCancelPreserved: true, cropApplyAndReload: true, galleryModePreserved: true,
       flow: ['login', 'page-select', 'open-image-block', 'open-library', 'list-project-images', 'select-image', 'local-draft', 'publish', 'reload'],
       mediaListCount: apiState.mediaListCount, mediaRequest, selectedImageValue, saveCount: apiState.saveCount,
-      publicVerifyCount: apiState.publicVerifyCount, sessionCount: apiState.sessionCount, imageDownloadCount: apiState.imageDownloadCount, screenshots: 3,
+      publicVerifyCount: apiState.publicVerifyCount, sessionCount: apiState.sessionCount, imageDownloadCount: apiState.imageDownloadCount, screenshots: 5,
     }, null, 2));
   } finally {
     await client?.close().catch(() => {});

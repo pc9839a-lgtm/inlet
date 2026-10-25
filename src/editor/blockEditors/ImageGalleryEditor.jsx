@@ -27,6 +27,7 @@ export default function ImageGalleryEditor({ gallery, set, updateGallery, remove
         renderItem={(item) => (
           <ImageInput
             label="이미지"
+            compact
             value={item.src}
             duplicateValues={gallery.filter((_, index) => index !== item.index)}
             onChange={(value) => updateGallery(item.index, value)}

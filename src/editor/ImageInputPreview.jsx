@@ -1,4 +1,5 @@
 import './ImageInputPreview.css';
+import { Image as ImageIcon } from 'lucide-react';
 
 function UploadStatus({ label, uploadState }) {
   const processing = uploadState?.status === 'processing';
@@ -32,7 +33,7 @@ function PreviewActions({ label, disabled, onEdit, onClear }) {
   );
 }
 
-export function ImageInputPreview({ label, value, disabled, uploadState, onEdit, onClear, variant = 'default' }) {
+export function ImageInputPreview({ label, value, disabled, uploadState, onEdit, onClear, variant = 'default', showActions = true }) {
   const processing = uploadState?.status === 'processing';
   const assetVariant = variant === 'favicon' || variant === 'share';
   const modeClass = assetVariant ? `is-${variant}` : 'is-default';
@@ -42,6 +43,8 @@ export function ImageInputPreview({ label, value, disabled, uploadState, onEdit,
       <div className="image-preview-frame">
         {value ? (
           <img src={value} alt="" />
+        ) : !showActions ? (
+          <ImageIcon size={28} className="image-preview-placeholder" aria-hidden="true" />
         ) : (
           <button
             type="button"
@@ -56,7 +59,7 @@ export function ImageInputPreview({ label, value, disabled, uploadState, onEdit,
         )}
         <UploadStatus label={label} uploadState={uploadState} />
       </div>
-      {value && <PreviewActions label={label} disabled={disabled} onEdit={onEdit} onClear={onClear} />}
+      {value && showActions && <PreviewActions label={label} disabled={disabled} onEdit={onEdit} onClear={onClear} />}
     </div>
   );
 }

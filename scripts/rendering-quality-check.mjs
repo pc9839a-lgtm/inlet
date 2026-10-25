@@ -85,6 +85,7 @@ const files = {
   formEditor: await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8'),
   formDesign: await readFile('src/editor/blockEditors/FormDesignSection.jsx', 'utf8'),
   formSubmission: await readFile('src/editor/blockEditors/FormSubmissionSection.jsx', 'utf8'),
+  imageEditor: await readFile('src/editor/blockEditors/ImageEditor.jsx', 'utf8'),
   imageDisplay: await readFile('src/editor/blockEditors/ImageDisplayControls.jsx', 'utf8'),
   imageGallery: await readFile('src/editor/blockEditors/ImageGalleryDisplaySection.jsx', 'utf8'),
   codeEditor: await readFile('src/editor/blockEditors/CodeEditor.jsx', 'utf8'),
@@ -208,7 +209,7 @@ assert(files.info.includes('location-guide-actions') && files.info.includes('loc
 assert(files.previewCss.includes('.map-height-small iframe') && files.previewCss.includes('.map-height-large iframe'), 'map height presets missing');
 assert(files.previewCss.includes('.faq-card .faq-list details') && files.previewCss.includes('.faq-plain .faq-list details'), 'FAQ layout styles missing');
 
-assert(files.imageDisplay.includes("value: 'original'") && files.imageDisplay.includes("value: 'fill'") && files.imageDisplay.includes('rounded'), 'image display controls missing');
+assert(files.imageDisplay.includes("value: 'original'") && files.imageDisplay.includes("value: 'fill'") && files.imageEditor.includes('rounded'), 'image display controls missing');
 assert(files.imageGallery.includes('galleryGridCount') && files.imageGallery.includes('galleryShowArrows') && files.imageGallery.includes('galleryShowDots'), 'gallery display controls missing');
 assert(files.media.includes('gallery.slice(0, gridCount)') && files.media.includes('image-gallery-grid-${visibleGallery.length}'), 'gallery renderer contract missing');
 assert(files.previewCss.includes('.image-gallery-grid-4') && files.previewCss.includes('.gallery-arrows') && files.previewCss.includes('.dots'), 'gallery CSS missing');
