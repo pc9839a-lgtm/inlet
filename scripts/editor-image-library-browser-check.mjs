@@ -1,3 +1,4 @@
+import { pageDraftContentSignature } from '../src/runtime/pageDraftStore.js';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -382,8 +383,23 @@ async function run() {
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`, 'saved image height restored after reload');
     await clickSelector(client, '.image-editor-more > summary');
     await waitForBrowser(client, `document.querySelector('.image-editor-more input[placeholder="이미지 설명을 입력하세요"]')?.value === '사진 설명 수정 확인'`, 'saved image caption restored');
-    assert(await evaluate(client, `!document.querySelector('[role="dialog"], [role="alertdialog"]')`),
-      'saved image editor must remain usable after reload without an unresolved draft dialog');
+    const hasRecoveryDialog = await evaluate(client, `!!document.querySelector('[role="dialog"], [role="alertdialog"]')`);
+    if (hasRecoveryDialog) {
+      const candidates = await evaluate(client, `Object.entries(localStorage).filter(([key]) => key.startsWith('inlet-page-drafts-v1')).flatMap(([key, raw]) => {
+        try { const value = JSON.parse(raw); return value.page ? [{ key, ...value }] : Object.values(value.drafts || {}); } catch { return []; }
+      })`);
+      const server = JSON.parse(pageDraftContentSignature(apiState.currentPage));
+      const differences = (left, right, prefix = '') => {
+        if (JSON.stringify(left) === JSON.stringify(right)) return [];
+        if (left && right && typeof left === 'object' && typeof right === 'object') {
+          return [...new Set([...Object.keys(left), ...Object.keys(right)])].flatMap((key) => differences(left[key], right[key], prefix ? prefix + '.' + key : key)).slice(0, 30);
+        }
+        return [{ path: prefix, draft: String(left).slice(0, 160), server: String(right).slice(0, 160) }];
+      };
+      console.error('image recovery comparison:', JSON.stringify(candidates.map((draft) => ({ baseRevision: draft.baseRevision,
+        serverRevision: apiState.currentPage.revision, diff: differences(JSON.parse(pageDraftContentSignature(draft.page)), server) }))));
+    }
+    assert(!hasRecoveryDialog, 'saved image editor must remain usable after reload without an unresolved draft dialog');
     await capture(client, 'desktop-image-library-reloaded');
 
     assert(apiState.loginCount === 1, `login API must run exactly once: ${apiState.loginCount}`);
