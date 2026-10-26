@@ -99,6 +99,37 @@ if (/noindex/i.test(root.headers.get('x-robots-tag') || '')) warn('root_noindex'
 if (robots.status !== 200 || !robots.html.includes('Sitemap: https://pagero.kr/life/sitemap.xml')) warn('robots_life_sitemap', 'Root robots missing LIFE sitemap');
 if (lifeRobots.status !== 200 || !lifeRobots.html.includes('Sitemap: https://pagero.kr/life/sitemap.xml')) warn('life_robots_status', 'Expected LIFE sitemap declaration; HTTP '+lifeRobots.status);
 if (rootSitemap.status !== 200 || !rootSitemap.html.includes('<urlset')) warn('root_sitemap', 'Invalid root sitemap response');
+
+const guideHub = await get(ROOT + '/guide/');
+const hubCanonical = ROOT + '/guide/';
+const guideResources = [
+  '/guide/landing-page-prelaunch/',
+  '/guide/form-submission-debug/',
+  '/guide/lead-funnel-metrics/',
+  '/tools/lead-calculator/',
+];
+if (guideHub.status !== 200 || !guideHub.headers.get('content-type')?.includes('text/html')) {
+  warn('pagero_guide_hub_http', 'Guide hub should serve HTTP 200 HTML on canonical pagero.kr');
+}
+if (!guideHub.html.includes('<link rel="canonical" href="' + hubCanonical + '">')) {
+  warn('pagero_guide_hub_canonical', 'Guide hub canonical missing or incorrect');
+}
+if (!guideHub.html.includes('name="description"') || !guideHub.html.includes('<h1>')) {
+  warn('pagero_guide_hub_html', 'Guide hub missing crawlable title/description/H1');
+}
+if (!root.html.includes('href="/guide/"')) {
+  warn('pagero_guide_hub_discovery', 'Main PageRo HTML must have a static link to the editorial hub');
+}
+if (!rootSitemap.html.includes('<loc>' + hubCanonical + '</loc>')) {
+  warn('pagero_guide_hub_sitemap', 'Main sitemap does not include canonical editorial guide hub');
+}
+for (const resource of guideResources) {
+  if (!guideHub.html.includes('href="' + resource + '"')) {
+    warn('pagero_guide_resource', 'Guide hub did not link the existing resource: '+resource);
+  }
+}
+got('pagero_guide_hub', 'Checked canonical crawlable guide hub and its four verified practical resources on public main site');
+
 if (lifeSitemap.status !== 200 || !lifeSitemap.html.includes('<urlset')) warn('life_sitemap', 'Invalid LIFE sitemap response');
 if (!index.html.includes('LIFE EDITORIAL ARCHIVE')) warn('life_home_archive', '45-article editorial index missing');
 
