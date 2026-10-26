@@ -1,10 +1,11 @@
 import { Field, Toggle } from '../controls.jsx';
 import { T } from './formEditorModel.js';
+import { ChevronDown } from 'lucide-react';
 
 export default function FormPrivacySettings({ s, set }) {
   return (
     <details className="form-basic-detail form-inline-detail">
-      <summary><strong>{T.privacy}</strong><span>{T.formBottom}</span></summary>
+      <summary><strong>{T.privacy}</strong><span>{(s.privacyRequired ?? true) ? T.required : T.optional}</span><ChevronDown size={16} aria-hidden="true" /></summary>
       <div className="privacy-compact-panel">
         <Toggle label={T.privacyRequired} checked={s.privacyRequired ?? true} onChange={(value) => set({ privacyRequired: value })} />
         <Field label={T.privacyText} textarea value={s.privacy} onChange={(v) => set({ privacy: v })} />

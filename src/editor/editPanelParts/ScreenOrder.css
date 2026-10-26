@@ -608,7 +608,7 @@
   gap: 10px !important;
 }
 
-.edit-layout .screen-order-v2-settings .block-editor-v2 :is(.mini-detail, .form-question-card) {
+.edit-layout .screen-order-v2-settings .block-editor-v2 .mini-detail {
   border: 1px solid var(--editor-line) !important;
   border-radius: 6px !important;
   background: #fff !important;
@@ -616,14 +616,14 @@
   overflow: hidden !important;
 }
 
-.edit-layout .screen-order-v2-settings .block-editor-v2 :is(.mini-detail > summary, .form-question-head-row) {
+.edit-layout .screen-order-v2-settings .block-editor-v2 .mini-detail > summary {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   gap: 8px !important;
 }
 
-.edit-layout .screen-order-v2-settings .block-editor-v2 :is(.form-question-body, .mini-body) {
+.edit-layout .screen-order-v2-settings .block-editor-v2 .mini-body {
   display: grid !important;
   gap: 10px !important;
   padding: 12px !important;
@@ -670,7 +670,7 @@
   gap: 6px !important;
 }
 
-.edit-layout .screen-order-v2-settings .block-editor-v2 :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button, .form-question-head-row button, .form-question-actions button) {
+.edit-layout .screen-order-v2-settings .block-editor-v2 :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button) {
   min-height: 38px !important;
   min-width: 0 !important;
   padding: 0 12px !important;
@@ -685,7 +685,7 @@
   line-height: 1 !important;
 }
 
-.edit-layout .screen-order-v2-settings .block-editor-v2 :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button, .form-question-head-row button, .form-question-actions button):is(:hover, :focus-visible) {
+.edit-layout .screen-order-v2-settings .block-editor-v2 :is(.anchor-control button, .image-actions button, .image-empty-button, .add-line-clean, .danger-btn-clean, .eyedropper, .mini-detail > summary, .mini-list button):is(:hover, :focus-visible) {
   border-color: #b9cbe1 !important;
   background: #f8fbff !important;
 }

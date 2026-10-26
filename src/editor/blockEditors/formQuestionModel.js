@@ -36,6 +36,7 @@ export function createFormQuestion(patch = {}) {
 export function duplicateFormQuestion(question) {
   return {
     ...question,
+    options: Array.isArray(question.options) ? [...question.options] : [],
     id: uid(),
     label: (question.label || T.item) + ' ' + T.copy,
   };
