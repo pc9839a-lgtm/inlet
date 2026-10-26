@@ -426,7 +426,8 @@ html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .wid
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .fixed-add-dock.open .add-panel {
   position: static !important;
   max-height: none !important;
-  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
   border: 1px solid #e4e7ec !important;
   box-shadow: none !important;
 }
