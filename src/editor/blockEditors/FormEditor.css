@@ -75,8 +75,9 @@ body .builder-shell .edit-layout .block-editor-v2 .question-compact-row > .toggl
 
 .block-editor-v2 .form-basic-detail {
   overflow: hidden;
-  border: 1px solid var(--editor-v2-line);
-  border-radius: 8px;
+  border: 0;
+  border-bottom: 1px solid var(--editor-v2-line);
+  border-radius: 0;
   background: #fff;
 }
 
@@ -86,8 +87,8 @@ body .builder-shell .edit-layout .block-editor-v2 .question-compact-row > .toggl
   grid-template-areas: "title icon" "description icon";
   align-items: center;
   gap: 3px 12px;
-  min-height: 58px;
-  padding: 10px 12px;
+  min-height: 44px;
+  padding: 8px 0;
   cursor: pointer;
   list-style: none;
 }
@@ -100,7 +101,7 @@ body .builder-shell .edit-layout .block-editor-v2 .question-compact-row > .toggl
   grid-area: title;
   color: var(--editor-v2-text);
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 600;
   line-height: 1.3;
 }
 

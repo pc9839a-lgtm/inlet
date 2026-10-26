@@ -1,4 +1,4 @@
-/* EditPanelLayout — owns the editor subsection shell, tabs and local panel stack. */
+/* EditPanelLayout — owns composition navigation and the selected editor panel. */
 
 body .builder-shell .edit-layout,
 body .builder-shell .edit-layout * {
@@ -13,57 +13,26 @@ body .builder-shell .edit-layout {
   gap: 8px;
 }
 
-/* Edit section tabs — isolated owner. Do not reuse generic .active state. */
-html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] {
+/* Page settings belongs to the persistent composition, not a second inspector tab bar. */
+html body #root .builder-shell.edit-mode-shell .editor-composition-panel > .editor-page-settings-button {
+  display: block !important;
   width: 100% !important;
-  min-width: 0 !important;
-  height: 38px !important;
-  min-height: 38px !important;
-  max-height: 38px !important;
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 2px !important;
-  margin: 0 !important;
-  padding: 3px !important;
-  overflow: hidden !important;
+  min-height: 40px !important;
+  margin: 0 0 16px !important;
+  padding: 8px !important;
   border: 0 !important;
-  border-radius: 8px !important;
-  background: #eef1f5 !important;
-  box-shadow: none !important;
-}
-
-html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab {
-  width: 100% !important;
-  min-width: 0 !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
-  margin: 0 !important;
-  padding: 0 10px !important;
-  border: 1px solid transparent !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
   background: transparent !important;
-  color: var(--product-muted) !important;
-  box-shadow: none !important;
+  color: #475467 !important;
   font-size: 12px !important;
-  line-height: 1 !important;
-  font-weight: 850 !important;
-  cursor: pointer !important;
-  appearance: none !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+  white-space: normal;
 }
-
-html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab:hover {
-  background: rgba(255, 255, 255, .72) !important;
-  color: var(--product-text) !important;
-}
-
-html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[data-selected='true'],
-html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] > .edit-section-tab[aria-pressed='true'] {
-  border-color: #d9dde4 !important;
-  background: #fff !important;
-  color: var(--product-text) !important;
-  box-shadow: none !important;
-  font-weight: 950 !important;
+html body #root .builder-shell.edit-mode-shell .editor-composition-panel > .editor-page-settings-button:is(:hover, [aria-pressed='true']) {
+  background: #f4f5f7 !important;
+  color: #101828 !important;
 }
 
 body .builder-shell .edit-section-panel {
@@ -84,16 +53,6 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack {
   gap: 10px;
 }
 
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout > .edit-section-tabs[data-pagero-ui='edit-section-tabs-v2'] {
-  background: #fff !important;
-  gap: 8px !important;
-  padding: 0 !important;
-  overflow: visible !important;
-}
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout > .edit-section-tabs > .edit-section-tab {
-  border: 1px solid #d9dde4 !important;
-  font-weight: 500 !important;
-}
 html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings[data-scroll-region='block-settings'] {
   max-height: none !important;
   overflow: visible !important;
@@ -102,36 +61,6 @@ html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings[dat
 .editor-selection-empty { padding: 40px 0; color: #667085; text-align: center; }
 .editor-selection-empty h2 { font-size: 14px; font-weight: 500; }
 .editor-selection-empty button { margin-top: 12px; }
-html body #root .editor-composition-dialog {
-  inset: 0 auto 0 0;
-  width: min(420px, 100vw) !important;
-  max-width: 100vw !important;
-  height: 100dvh !important;
-  max-height: 100dvh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-right: 1px solid #d9dde4 !important;
-  background: #fff;
-  color: #101828;
-  overflow: auto;
-}
-.editor-composition-dialog::backdrop { background: rgba(16,24,40,.2); }
-.editor-composition-surface { display: grid; gap: 20px; padding: 16px; }
-.editor-composition-heading { display: flex; align-items: center; justify-content: space-between; }
-.editor-composition-heading h2 { margin: 0; font-size: 16px; }
-.editor-composition-heading button { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; background: transparent; }
-html body #root .editor-composition-dialog .fixed-add-dock {
-  position: static !important;
-  inset: auto !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  transform: none !important;
-  margin: 0 !important;
-}
-html body #root .editor-composition-dialog .fixed-add-dock.open .add-block-panel { max-height: 50dvh; overflow-y: auto; }
-.editor-composition-dialog :is(button,summary):focus-visible { outline: 2px solid #2563eb !important; outline-offset: 2px; }
-
 body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
   width: 100% !important;
   min-width: 0 !important;
@@ -142,7 +71,7 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
 /* PC editor section-panel and add-dock layout.
    Component surfaces are owned by their component stylesheets. */
 @media (min-width: 900px) {
-  html body #root .builder-shell.edit-mode-shell .edit-layout > .edit-section-panel {
+  html body #root .builder-shell.edit-mode-shell .editor-inspector-panel > .edit-section-panel {
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
@@ -153,6 +82,34 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel {
 }
 
 /* Canvas editor */
-html body #root .canvas-editor-shell .screen-order-v2-settings-header { padding-top: 12px; }
-html body #root .canvas-editor-shell .screen-order-v2-settings-title > span { display: none; }
-html body #root .canvas-editor-shell .screen-order-v2-settings-back { display: none !important; }
+html body #root .canvas-editor-shell .screen-order-v2-settings-header { padding-top: 0; }
+html body #root .canvas-editor-shell .screen-order-v2-settings-title > .screen-order-settings-hidden { display: inline-block; color: #667085; font-size: 12px; }
+
+
+/* Persistent composition beside the selected editor, both in the left workspace. */
+html body #root .builder-shell.canvas-editor-shell .edit-layout {
+  grid-template-columns: var(--editor-composition-width, 220px) minmax(0, 1fr) !important;
+  align-items: start;
+  gap: 0 !important;
+  min-height: 100%;
+}
+.editor-composition-panel { min-width: 0; padding: 12px; }
+.editor-inspector-panel { min-width: 0; padding: 16px 16px 32px; border-left: 1px solid #e4e7ec; container: editor-inspector / inline-size; }
+.editor-composition-panel .screen-order-fixed-blocks { margin-top: 24px; }
+.editor-composition-panel .screen-order-fixed-blocks h3 { font-size: 12px; font-weight: 500; }
+html body #root .builder-shell .editor-composition-panel .fixed-add-dock .widget-group-grid,
+html body #root .builder-shell .editor-composition-panel .fixed-add-dock .widget-group > div { grid-template-columns: minmax(0, 1fr) !important; }
+html body #root .editor-composition-panel .fixed-add-dock {
+  position: static !important; inset: auto !important; transform: none !important;
+  width: 100% !important; max-width: 100% !important; margin: 16px 0 0 !important;
+}
+html body #root .editor-composition-panel .fixed-add-dock.open .add-panel {
+  position: static !important; width: 100% !important; max-height: 50dvh !important; overflow-y: auto !important;
+}
+@media (min-width: 900px) {
+  html body #root .canvas-editor-shell .editor-composition-panel,
+  html body #root .canvas-editor-shell .editor-inspector-panel {
+    position: sticky; top: 0; max-height: calc(100dvh - 108px); overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain;
+  }
+}
+@media (max-width: 1050px) { .canvas-editor-shell { --editor-composition-width: 180px; } }

@@ -5,13 +5,6 @@
   box-sizing: border-box;
 }
 
-.code-content-fields { display: grid; gap: 18px; }
-.code-content-fields > p { margin: 0; color: #667085; font-size: 12px; line-height: 1.5; }
-body .builder-shell .code-content-fields .image-input .image-preview-frame { height: 160px !important; min-height: 0 !important; }
-.code-advanced-editor { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e4e7ec; }
-.code-advanced-editor > summary { padding: 8px 0; color: #667085; font-size: 12px; cursor: pointer; }
-.code-advanced-editor[open] > summary { margin-bottom: 12px; }
-
 .code-editor-box {
   width: 100%;
   min-width: 0;
@@ -38,7 +31,7 @@ body .builder-shell .code-content-fields .image-input .image-preview-frame { hei
 .code-editor-modal-head strong {
   color: var(--product-text, #101217);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 500;
 }
 
 .code-editor-head button,
@@ -55,7 +48,7 @@ body .builder-shell .code-content-fields .image-input .image-preview-frame { hei
   color: #30353d;
   box-shadow: none;
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -90,9 +83,9 @@ body .builder-shell .code-content-fields .image-input .image-preview-frame { hei
 }
 
 .code-editor-box textarea {
-  height: 220px;
-  min-height: 160px;
-  max-height: 420px;
+  height: 300px;
+  min-height: 240px;
+  max-height: 520px;
 }
 
 .code-editor-box textarea:focus,
@@ -205,3 +198,16 @@ body .builder-shell .code-content-fields .image-input .image-preview-frame { hei
     max-height:calc(var(--pagero-visual-viewport-height,100dvh) - 20px);
   }
 }
+
+/* Code is the primary surface; naming and display height are secondary. */
+.code-editor-head { justify-content: flex-end; }
+.builder-shell .code-editor-options { margin-top: 16px; }
+.builder-shell .code-editor-options > summary {
+  display: flex; justify-content: space-between; align-items: center; min-height: 40px;
+  list-style: none; color: #344054; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.builder-shell .code-editor-options > summary::-webkit-details-marker { display: none; }
+.builder-shell .code-editor-options[open] > summary svg { transform: rotate(180deg); }
+.builder-shell .code-editor-options-body { display: grid; gap: 16px; padding-top: 12px; }
+.builder-shell .code-editor-options:not([open]) > .code-editor-options-body { display: none; }
+.builder-shell .code-editor-options > summary:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 4px; }

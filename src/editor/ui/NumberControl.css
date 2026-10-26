@@ -1,0 +1,40 @@
+.builder-shell .editor-number-control {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; min-width: 0;
+}
+.builder-shell .editor-number-control > label { color: #344054; font-size: 13px; font-weight: 500; line-height: 1.5; }
+.builder-shell .editor-number-inputs { display: grid; grid-template-columns: minmax(48px, 1fr) 86px; align-items: center; gap: 12px; min-width: 0; }
+html body #root .builder-shell .editor-number-inputs > input[type='range'] {
+  appearance: none; width: 100%; min-width: 0; min-height: 28px; margin: 0; padding: 0;
+  border: 0; background: transparent; cursor: pointer;
+}
+.builder-shell .editor-number-inputs > input[type='range']::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: #e4e7ec; }
+.builder-shell .editor-number-inputs > input[type='range']::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; margin-top: -4.5px; border: 0; border-radius: 50%; background: #475467; }
+.builder-shell .editor-number-inputs > input[type='range']::-moz-range-track { height: 3px; border-radius: 2px; background: #e4e7ec; }
+.builder-shell .editor-number-inputs > input[type='range']::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #475467; }
+.builder-shell .editor-number-value { display: flex; align-items: center; gap: 4px; min-width: 0; padding-right: 8px; border: 1px solid #d0d5dd; border-radius: 6px; color: #667085; font-size: 12px; background: #fff; }
+html body #root .builder-shell .editor-number-value > input {
+  box-sizing: border-box; width: 100% !important; min-width: 0 !important; min-height: 36px !important;
+  margin: 0 !important; padding: 6px 8px !important; border: 0 !important; border-radius: 6px !important;
+  background: #fff !important; color: #1d2939 !important; font-size: 13px !important; font-weight: 400 !important; line-height: 1.5 !important; font-variant-numeric: tabular-nums;
+}
+.builder-shell .editor-number-presets { display: flex; flex-wrap: wrap; gap: 4px; }
+html body #root .builder-shell .editor-number-presets > button {
+  min-width: 34px; min-height: 28px; padding: 3px 7px; border: 0; border-radius: 4px;
+  background: transparent; color: #667085; font-size: 11px; font-weight: 400; line-height: 1.5; cursor: pointer;
+}
+html body #root .builder-shell .editor-number-presets > button[aria-pressed='true'] { color: #101828; background: #f2f4f7; }
+.builder-shell .editor-number-control :is(input,button):focus-visible { outline: 2px solid #2563eb !important; outline-offset: 2px; }
+.builder-shell .crop-slider > .editor-number-control { grid-column: 1 / -1; width: 100%; }
+@container editor-inspector (min-width: 340px) {
+  html body #root .builder-shell .editor-number-control { grid-template-columns: 88px minmax(0,1fr) !important; align-items: center !important; gap: 6px 12px !important; }
+  .builder-shell .editor-number-presets { grid-column: 2; }
+}
+@media (pointer: coarse) { .builder-shell .editor-number-control :is(input[type='number'],button) { min-height: 44px !important; } }
+
+/* Exact spacing values need one input, without a second range or preset strip. */
+html body #root .builder-shell .editor-number-control[data-slider='false'] {
+  grid-template-columns: minmax(0, 1fr) 86px !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+.builder-shell .editor-number-control[data-slider='false'] > .editor-number-inputs { display: block; }

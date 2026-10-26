@@ -16,7 +16,7 @@
   color: var(--product-text);
   font-size: 14px;
   line-height: 1.35;
-  font-weight: 850;
+  font-weight: 500;
   letter-spacing: -.025em;
 }
 
@@ -99,7 +99,7 @@ body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy st
   overflow: hidden !important;
   color: var(--pg-ink) !important;
   font-size: 16px !important;
-  font-weight: 950 !important;
+  font-weight: 600 !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
@@ -114,7 +114,7 @@ body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy em
   color: #64748b !important;
   font-size: 11px !important;
   font-style: normal !important;
-  font-weight: 850 !important;
+  font-weight: 500 !important;
   white-space: nowrap !important;
 }
 
@@ -178,7 +178,7 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
     color: #0f172a !important;
     font-size: 15px !important;
     line-height: 1.3 !important;
-    font-weight: 950 !important;
+    font-weight: 600 !important;
     letter-spacing: -.025em !important;
   }
 
@@ -293,3 +293,16 @@ body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-
     transform: translateX(18px) !important;
   }
 }
+/* Fixed entries in the persistent composition list remain readable at narrow widths. */
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-card {
+  padding: 0 !important; border: 0 !important; border-radius: 0 !important;
+  background: transparent !important; box-shadow: none !important;
+}
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-head {
+  display: grid !important; grid-template-columns: minmax(0, 1fr) 46px 26px !important;
+  gap: 4px !important; padding: 6px 0 !important; min-height: 44px !important;
+}
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-copy { min-width: 0 !important; }
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-copy em { display: none !important; }
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-copy strong { font-size: 12px !important; white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.35; }
+html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-open-button { width: 26px !important; min-width: 26px !important; height: 32px !important; min-height: 32px !important; }

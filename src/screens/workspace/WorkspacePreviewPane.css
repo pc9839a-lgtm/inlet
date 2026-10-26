@@ -68,8 +68,7 @@ html body #root .builder-shell .preview-workspace .phone-frame {
   border: 8px solid #111827 !important;
 }
 
-/* D04: editor-only selectable viewport. Widths refer to rendered landing content;
-   the 8px phone borders are excluded from the selected and measured values. */
+/* D04: fixed editor viewport; public landing sizing remains independent. */
 html body #root .builder-shell.edit-mode-shell .preview-workspace .preview-sticky {
   width: min(480px, 100%) !important;
   display: flex;
@@ -90,49 +89,13 @@ html body #root .builder-shell.edit-mode-shell .preview-workspace .preview-width
   font-size: 12px;
 }
 
-html body #root .builder-shell.edit-mode-shell .preview-width-options {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px;
-  border-radius: 9px;
-  background: var(--product-panel);
-  border: 1px solid var(--product-line);
-}
-
-html body #root .builder-shell.edit-mode-shell .preview-width-option {
-  min-width: 41px;
-  min-height: 30px;
-  padding: 5px 7px;
-  border: 0;
-  border-radius: 6px;
-  color: var(--product-muted);
-  background: transparent;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-html body #root .builder-shell.edit-mode-shell .preview-width-option[aria-pressed='true'] {
-  background: var(--product-text);
-  color: #fff;
-}
-
-html body #root .builder-shell.edit-mode-shell .preview-width-option:focus-visible {
-  outline: 2px solid var(--product-text);
-  outline-offset: 2px;
-}
-
-html body #root .builder-shell.edit-mode-shell .preview-width-measured {
-  min-width: 74px;
+html body #root .builder-shell.edit-mode-shell .preview-width-value {
+  color: #475467;
   font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
 }
 
 html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame {
-  /* Public landing retains its 414px cap; the editor alone uses the chosen width. */
+  /* Public landing retains its 414px cap; the editor alone uses the fixed width. */
   --landing-runtime-width: var(--editor-preview-content-width, 390px);
   box-sizing: border-box;
   width: min(calc(var(--editor-preview-content-width, 390px) + 16px), 100%) !important;
@@ -306,7 +269,7 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .
 
 /* Canvas editor */
 html body #root .canvas-editor-shell > .preview-workspace {
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 2;
   display: flex !important;
   justify-content: center;
@@ -316,7 +279,7 @@ html body #root .canvas-editor-shell > .preview-workspace {
   min-height: 0 !important;
   padding: 20px 16px !important;
   overflow: auto !important;
-  background: #edf0f3 !important;
+  background: #f6f7f9 !important;
 }
 html body #root .canvas-editor-shell .preview-workspace .preview-sticky {
   position: relative !important;
@@ -331,24 +294,31 @@ html body #root .canvas-editor-shell .preview-workspace .preview-sticky {
 html body #root .canvas-editor-shell .preview-workspace .phone-frame {
   min-width: 0 !important;
   flex-shrink: 0;
-  border: 1px solid #d6dbe2 !important;
+  border: 1px solid #e4e7ec !important;
   border-radius: 4px !important;
-  width: min(calc(var(--editor-preview-content-width, 390px) + 2px), 100%) !important;
+  width: calc(var(--editor-preview-content-width, 390px) + 2px) !important;
+  max-width: none !important;
   height: calc(100dvh - 156px) !important;
   max-height: none !important;
-  box-shadow: 0 4px 20px rgba(16,24,40,.06);
+  box-shadow: 0 1px 4px rgba(16,24,40,.04);
 }
 
-@media (max-width: 759px) {
-  html body #root .canvas-editor-shell > .preview-workspace { grid-column: 1; grid-row: 2; height: auto !important; }
-}
-
-@media (max-width: 759px) {
-  html body #root .canvas-editor-shell .preview-workspace .phone-frame { height: 420px !important; }
-}
 @media (max-width: 1050px) {
+  html body #root .canvas-editor-shell > .preview-workspace { padding-inline: 4px !important; }
   html body #root .canvas-editor-shell .preview-workspace .phone-frame { height: calc(100dvh - 192px) !important; }
 }
-@media (max-width: 759px) {
+@media (max-width: 899px) {
+  html body #root .canvas-editor-shell > .preview-workspace { grid-column: 1; grid-row: 3; height: auto !important; }
   html body #root .canvas-editor-shell .preview-workspace .phone-frame { height: 420px !important; }
+}
+
+/* Editor selection stays visible without covering the page design. */
+html body #root .canvas-editor-shell .preview-workspace .preview-selected-block {
+  outline: 1px solid #667085 !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+html body #root .canvas-editor-shell .preview-workspace .preview-selected-block::after {
+  content: none !important;
+  display: none !important;
 }

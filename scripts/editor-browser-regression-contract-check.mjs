@@ -53,17 +53,15 @@ assert(workflowSource.includes('include-hidden-files: true'), 'hidden browser sc
 assert(browserSource.includes("`${origin}/login`") && browserSource.includes("input[placeholder=\"email@example.com\"]"), 'browser QA must start from the real login screen');
 assert(browserSource.includes("pathname === '/api/auth/login'") && browserSource.includes("pathname === '/api/auth/session'"), 'browser QA must mock login and session refresh APIs');
 assert(browserSource.includes("pathname === '/api/projects'") && browserSource.includes(".service-landing-card"), 'browser QA must load and select a dashboard page');
-assert(workspacePreviewSource.includes('PREVIEW_CONTENT_WIDTHS = [360, 390, 430]')
-  && workspacePreviewSource.includes('data-content-width={width}')
-  && workspacePreviewSource.includes('aria-pressed={contentWidth === width}')
-  && workspacePreviewSource.includes('new ResizeObserver(measure)')
-  && workspacePreviewSource.includes("querySelector('.landing-page')"),
-  'D04 editor preview must expose accessible content widths and measure actual rendered landing pixels');
+assert(workspacePreviewSource.includes('PREVIEW_CONTENT_WIDTH = 390')
+  && workspacePreviewSource.includes('className="preview-width-value"')
+  && !workspacePreviewSource.includes('ResizeObserver') && !workspacePreviewSource.includes('preview-width-option'),
+  'D04 editor preview must expose exactly one fixed 390px width without selection state');
 assert(workspacePreviewCssSource.includes('var(--editor-preview-content-width, 390px)')
   && workspacePreviewCssSource.includes('.builder-shell.edit-mode-shell .preview-workspace .phone-frame'),
-  'D04 CSS viewport selection must be scoped to editor mode, never public landing');
-assert(browserSource.includes('D04 actual content width') && browserSource.includes('d04WidthSamples'),
-  'D04 real editor Chrome regression must click all three widths and verify actual pixels');
+  'D04 fixed preview geometry must be scoped to editor mode, never public landing');
+assert(browserSource.includes('D04 actual content width 390') && browserSource.includes('d04FixedWidth'),
+  'D04 real editor Chrome regression must verify the single width and actual pixels');
 assert(browserSource.includes('previewManagementUi') && browserSource.includes('!previewManagementUi.canvasHeading') && browserSource.includes('!previewManagementUi.conversionCockpit') && browserSource.includes('!previewManagementUi.publishChecklist'), 'browser QA must verify the redundant preview management bars are absent');
 assert(browserSource.includes("clickSelector(client, '#workspace-tab-inbox')") && browserSource.includes('inboxTransitionFocused'), 'browser QA must verify inbox remains available and keyboard accessible via the workspace tab');
 assert(browserSource.includes("pathname === '/api/account-page'") && browserSource.includes("#editor-block-editor-hero") && browserSource.includes(".screen-order-v2-head") && browserSource.includes(".screen-order-v2-settings textarea[placeholder=\"핵심 제목을 입력하세요\"]") && browserSource.includes('브라우저 저장 검증 완료'), 'browser QA must open the current account page, edit the active inline block editor, and verify live preview');
@@ -73,7 +71,7 @@ assert(browserSource.includes("clickButtonByText(client, '.add-panel', '구분�
 assert(browserSource.includes("#editor-block-editor-text .screen-order-v2-visibility-button") && browserSource.includes("#editor-block-editor-form .screen-order-v2-action") && browserSource.includes("'위로 이동'"), 'browser QA must verify visibility and order changes through the current screen-order V2 controls');
 assert(browserSource.includes("Input.dispatchMouseEvent") && browserSource.includes("pointer drag moved divider to first position") && browserSource.includes(".screen-order-v2-drag"), 'browser QA must verify reorder through real Chrome mouse input, not only menu actions');
 assert(screenOrderMovementSource.includes('const moveUp = () =>') && screenOrderMovementSource.includes('const moveDown = () =>') && !screenOrderMovementSource.includes('event.stopPropagation'), 'screen-order move actions must stay event-independent because the overflow menu invokes them without an event');
-assert(browserSource.includes("clickButtonByText(client, '.edit-section-tabs', '페이지 설정')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a page theme change from the restored left editor before publish');
+assert(browserSource.includes("clickSelector(client, '.editor-page-settings-button')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a page theme change from the restored left editor before publish');
 assert(browserSource.includes("window.__pageroQaPreviewCalls") && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')"), 'browser QA must verify preview can open without interrupting continued editing');
 assert(browserSource.includes("saveDelayMs = 900") && browserSource.includes("continuedHeroTitle") && browserSource.includes("newer local draft after delayed publish response"), 'browser QA must cover edits made while a publish response is in flight');
 assert(browserSource.includes("revisionHeroTitle") && browserSource.includes("finalHeroTitle") && browserSource.includes("'버전 기록'") && browserSource.includes("clickPointer(client, '.page-revision-history-section .page-revision-history-row .ghost-btn')"), 'browser QA must restore a prior revision through real Chrome pointer input in the settings UI');
@@ -119,11 +117,11 @@ assert(browserSource.includes('D06 form tabs use content/style vocabulary')
 assert(!editPanelLayoutSource.includes('scrollIntoView')
   && !screenOrderListItemsSource.includes('scrollIntoView'),
   'D05 normal editor selection must not trigger duplicate document scroll effects');
-assert(browserSource.includes('focused settings navigation must keep the back control visible')
+assert(browserSource.includes('selected settings heading must remain visible')
   && browserSource.includes('beforeD05'),
-  'focused settings navigation must keep its back control reachable on narrow desktop');
+  'selected settings must keep their heading and focus reachable on narrow desktop');
 assert(browserSource.includes('stageTwoSettings')
-  && browserSource.includes('back returns keyboard focus to the original row')
+  && browserSource.includes('list and selected settings must stay visible together')
   && browserSource.includes('unapplied code draft survives list navigation')
   && browserSource.includes('preview reselects the previous block after page options'),
   'stage 2 browser QA must preserve settings navigation, keyboard focus, staged code and preview selection');
@@ -132,7 +130,7 @@ assert(browserSource.includes('stageThreePageSettings')
   && browserSource.includes('applying the staged design must retain page animation edits')
   && browserSource.includes('share position must persist through design apply and publish'),
   'stage 3 browser QA must preserve page settings disclosure, unified theme apply/reset and share persistence');
-assert(browserSource.includes("desktop editor and preview overlap") && browserSource.includes("desktop shell must keep two grid columns") && browserSource.includes("narrow desktop shell must stack into one grid column") && browserSource.includes("desktop edit subsection tabs"), 'desktop matrix must lock non-overlap, two-column desktop, stacked narrow desktop, and editor tab bounds');
+assert(browserSource.includes("desktop editor and preview overlap") && browserSource.includes("desktop shell must keep two grid columns") && browserSource.includes("narrow desktop shell must stack into one grid column") && browserSource.includes("desktop page settings entry"), 'desktop matrix must lock non-overlap, two-column desktop, stacked narrow desktop, and page-settings entry bounds');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
 assert(browserSource.includes("const tabs = document.querySelector('.top-tabs')") && !browserSource.includes("const tabs = document.querySelector('.workspace-tabs')"), 'mobile editor metrics must use the current top-tabs DOM owner');
