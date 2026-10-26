@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 
+// Recheck production awards hub after merging editorial-index links PR #31 (3 links).
 const sitemapUrls=[
   'https://pagero.kr/sitemap.xml',
   'https://pagero.kr/life/sitemap.xml',
