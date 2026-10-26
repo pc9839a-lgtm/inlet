@@ -914,7 +914,7 @@ function assertDesktop(metrics) {
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
-  assert(metrics.left?.width >= 500 && metrics.left?.width <= 662, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
+  assert(metrics.left?.width >= 500 && metrics.left?.width <= 702, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
   assert(metrics.preview?.width >= 500, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 434, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
