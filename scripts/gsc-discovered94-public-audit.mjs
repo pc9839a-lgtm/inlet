@@ -228,6 +228,8 @@ const totals={
  listedSitemap:findings.filter(f=>f.inSitemap).length,
  linkedFromInitialHubHtml:findings.filter(f=>f.hasSourceLink).length,
 };
+const advisory= findings.filter(f=>!f.inSitemap||!f.hasSourceLink).map(f=>({url:f.url,inSitemap:f.inSitemap,linkedFromHub:f.hasSourceLink,issues:f.issues}));
+console.log('DISCOVERED94_ADVISORY',JSON.stringify(advisory,null,2));
 if(findings.length!==94)errors.push({reason:'count_mismatch',got:findings.length});
 for(const f of findings){if(f.status!==200||f.noindex||!f.canonical||f.canonical!==f.url||f.issues.some(x=>x.startsWith('network:')))errors.push({url:f.url,issues:f.issues});}
 const report={checkedAt:snapshotAt,scope:'Read-only HTTP/HTML probe of exact 94 GSC-discovered URLs; never asserts Google crawl/index status',totals,businessVoucher,errors,findings,notes};

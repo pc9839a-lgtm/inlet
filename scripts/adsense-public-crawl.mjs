@@ -101,6 +101,23 @@ if (lifeRobots.status !== 200 || !lifeRobots.html.includes('Sitemap: https://pag
 if (rootSitemap.status !== 200 || !rootSitemap.html.includes('<urlset')) warn('root_sitemap', 'Invalid root sitemap response');
 if (lifeSitemap.status !== 200 || !lifeSitemap.html.includes('<urlset')) warn('life_sitemap', 'Invalid LIFE sitemap response');
 if (!index.html.includes('LIFE EDITORIAL ARCHIVE')) warn('life_home_archive', '45-article editorial index missing');
+
+const decisionPaths = [
+  ['/life/car/car-inspection-period/','검사기간 확인'],
+  ['/life/car/car-inspection-reservation/','검사 예약'],
+  ['/life/car/used-car-transfer-documents/','명의이전 서류'],
+  ['/life/car/used-car-transfer-cost/','이전비용'],
+  ['/life/support/child-allowance-2026/','아동수당'],
+  ['/life/support/parental-benefit-2026/','부모급여'],
+  ['/life/support/basic-pension-2026/','기초연금'],
+  ['/life/support/livelihood-benefit-2026/','생계급여'],
+];
+if (!index.html.includes('id="life-pathways-title"')) warn('life_decision_hub', 'Situation-first editorial navigation is missing from public homepage');
+for (const [url, label] of decisionPaths) {
+  if (!index.html.includes('href="'+url+'"')) warn('life_decision_link_missing', label+': '+url);
+}
+got('life_reader_pathways','Checked practical reading paths for car administration and household support in real production HTML');
+
 if (!index.html.includes('href="/life/editorial-standards/"')) warn('editorial_policy_discovery', 'Editorial standards link not directly discoverable');
 
 const listed = new Set([...lifeSitemap.html.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/g)].map(m => m[1].replace(/&amp;/g, '&')));
@@ -114,6 +131,21 @@ for (const post of articles) {
 if (missingIndex.length) warn('home_to_articles', missingIndex.slice(0,12).join(', ') + ' total=' + missingIndex.length);
 if (missingSitemap.length) warn('sitemap_to_articles', missingSitemap.slice(0,12).join(', ') + ' total=' + missingSitemap.length);
 got('discovery', 'LIFE listed article URLs=' + listed.size + ', publisher source articles=' + articles.length);
+
+const decisionArticles = new Set([
+  '/life/car/car-inspection-period/',
+  '/life/car/car-inspection-reservation/',
+  '/life/car/used-car-transfer-documents/',
+  '/life/car/used-car-transfer-cost/',
+  '/life/support/child-allowance-2026/',
+  '/life/support/parental-benefit-2026/',
+  '/life/support/livelihood-benefit-2026/',
+  '/life/support/housing-benefit-2026/',
+]);
+if (!standards.html.includes('작성·검수 기준 확인일: 2026-10-23')) {
+  warn('life_editorial_date', 'Editorial policy review date was replaced by build date or is missing');
+}
+got('reader_decisions', 'Eight canonical LIFE guides must contain a situation-based comparison section');
 
 const batches = [];
 for (let i = 0; i < articles.length; i += 8) batches.push(articles.slice(i,i+8));
@@ -142,6 +174,7 @@ for (const batch of batches) {
       if (!html.includes('href="/life/"') && !html.includes('href="/life/car/"')) problems.push('missing_life_navigation');
       if (!html.includes('href="https://') && !html.includes('href="http://')) problems.push('no_external_citations');
       if (html.includes('생활비서 연결 오류')) problems.push('proxy_fallback');
+      if (decisionArticles.has(post.pathname) && !html.includes('<section class="reader-decision"')) problems.push('missing_practical_comparison');
     }
     if (problems.length) failing.push({ page: post.pathname, problems });
     else goodArticles++;
