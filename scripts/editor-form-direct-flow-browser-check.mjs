@@ -47,30 +47,20 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   await evaluate(client, `(() => { const el = document.querySelector('.form-question-card.open select'); el.value = 'multi'; el.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await enterText('.form-question-card.open .option-editor-row input', '평일 오후');
   await waitForBrowser(client, `(document.querySelector('.phone-frame #block-editor-form')?.innerText || '').includes('평일 오후')`, 'choice text reflected in the form preview');
-  const optionState = async () => evaluate(client, `(() => {
-    let fiber = document.querySelector('.form-editor-flow');
-    fiber = fiber?.[Object.keys(fiber).find(key => key.startsWith('__reactFiber$'))];
-    while (fiber && !fiber.memoizedProps?.s?.questions) fiber = fiber.return;
-    return { option: document.querySelector('.form-question-card.open .option-editor-row input')?.value, questions: fiber?.memoizedProps?.s?.questions?.map(q => ({id:q.id,label:q.label,options:q.options,required:q.required})) };
-  })()`);
-  const copyDiagnostic = [{ stage: 'option-edit', state: await optionState() }];
   await clickPointer(client, '.form-question-card.open [role="switch"]');
   await waitForBrowser(client, `document.querySelector('.form-question-card.open [role="switch"]')?.getAttribute('aria-checked') === 'true'`, 'question required toggle');
   const titleGeometry = await evaluate(client, `(() => { const el = document.querySelector('.form-question-card.open .form-question-identity strong'); const card = el.closest('.form-question-card'); return { width: el.getBoundingClientRect().width, cardWidth: card.getBoundingClientRect().width, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, title: el.textContent, titleHeight: el.getBoundingClientRect().height, headerHeight: card.querySelector('.form-question-head-row').getBoundingClientRect().height }; })()`);
   assert(titleGeometry.width > titleGeometry.cardWidth * .55 && titleGeometry.scrollWidth <= titleGeometry.clientWidth + 1 && titleGeometry.titleHeight <= titleGeometry.headerHeight && titleGeometry.title === longLabel, 'long Korean question name must fit the row and wrap within the available header: ' + JSON.stringify(titleGeometry));
   await capture(client, 'desktop-form-choice-edit');
-  copyDiagnostic.push({ stage: 'required-toggle', state: await optionState() });
   for (const width of [900, 1024]) {
     await setViewport(client, width, 900, false);
     assert(await evaluate(client, `(() => { const root = document.querySelector('.form-editor-flow'); return root.scrollWidth <= root.clientWidth + 1 && [...root.querySelectorAll('input,select,button')].filter(el => el.getClientRects().length).every(el => el.getBoundingClientRect().width <= root.getBoundingClientRect().width + 1); })()`), 'form controls must fit the inspector at ' + width);
     await capture(client, 'desktop-form-choice-' + width);
-    copyDiagnostic.push({ stage: 'viewport-' + width, state: await optionState() });
   }
   await setViewport(client, 1440, 960, false);
   await clickPointer(client, '.form-question-card.open .form-question-actions button:nth-child(3)');
   await waitForBrowser(client, `document.querySelectorAll('.form-question-card').length === 4 && document.querySelector('.form-question-card.open .form-question-identity strong')?.textContent.endsWith('복사')`, 'question duplicate selected');
   const copied = await evaluate(client, `({type: document.querySelector('.form-question-card.open select')?.value, option: document.querySelector('.form-question-card.open .option-editor-row input')?.value, required: document.querySelector('.form-question-card.open [role="switch"]')?.getAttribute('aria-checked')})`);
-  if (copied.option !== '평일 오후') console.error('[form-copy-diagnostic] ' + JSON.stringify({copyDiagnostic,after:await optionState()}));
   assert(copied.type === 'multi' && copied.option === '평일 오후' && copied.required === 'true', 'duplicate must retain question type, options and required state: ' + JSON.stringify(copied));
   await clickPointer(client, '.form-question-card.open .form-question-actions button:first-child');
   await waitForBrowser(client, `document.querySelectorAll('.form-question-card')[2]?.classList.contains('open')`, 'keyboard alternative moves question up');

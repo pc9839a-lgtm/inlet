@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 await import('./page-edit-history-quality-check.mjs');
 await import('./page-revision-restore-quality-check.mjs');
 await import('./page-publish-semantics-quality-check.mjs');
+await import('./editor-form-copy-regression-check.mjs');
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
