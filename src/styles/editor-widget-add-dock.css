@@ -268,18 +268,18 @@
 /* Active editor dock geometry.
    Sized by the editor pane rather than viewport; migrated from the retired workflow patch. */
 html body #root .builder-shell.edit-mode-shell .edit-layout:has(.fixed-add-dock) {
-  padding-bottom: 84px !important;
+  padding-bottom: 16px !important;
 }
 
 html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock {
-  position: sticky !important;
+  position: static !important;
   left: auto !important;
   right: auto !important;
-  bottom: 10px !important;
+  bottom: auto !important;
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
-  margin: 12px 0 0 !important;
+  margin: 0 0 10px !important;
   padding: 6px !important;
   box-sizing: border-box !important;
   overflow: visible !important;
@@ -324,7 +324,7 @@ html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .add
 }
 
 html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open {
-  max-height: calc(100dvh - 92px) !important;
+  max-height: none !important;
 }
 
 html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open .add-panel {
@@ -333,13 +333,13 @@ html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
-  max-height: min(62dvh, 620px) !important;
+  max-height: none !important;
   margin: 0 0 8px !important;
   padding-inline: 0 !important;
   box-sizing: border-box !important;
   overflow-x: hidden !important;
-  overflow-y: auto !important;
-  overscroll-behavior: contain;
+  overflow-y: visible !important;
+  overscroll-behavior: auto;
 }
 
 html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock :is(.widget-group-grid, .widget-group) {
@@ -382,7 +382,7 @@ html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .wid
 /* Editor add dock — compact product density. */
 html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock.open .add-panel {
   border-radius: 9px !important;
-  box-shadow: 0 8px 24px rgba(15,23,42,.08) !important;
+  box-shadow: none !important;
 }
 
 html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group {
@@ -420,4 +420,13 @@ html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .wid
   html body #root .builder-shell.edit-mode-shell .edit-layout .fixed-add-dock .widget-group button {
     min-height: 38px !important;
   }
+}
+
+/* Editor-only: open add list expands inline; never creates a second scrollbar. */
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .fixed-add-dock.open .add-panel {
+  position: static !important;
+  max-height: none !important;
+  overflow: visible !important;
+  border: 1px solid #e4e7ec !important;
+  box-shadow: none !important;
 }
