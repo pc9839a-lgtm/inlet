@@ -1,13 +1,13 @@
-/* Pagero form editor: keep question rows on one compact baseline. */
-body .builder-shell .edit-layout .block-editor-v2 .form-question-list {
+/* Reservation question rows keep their existing compact baseline; consultation forms own their layout in FormEditor.css. */
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-list {
   gap: 10px !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-card {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-card {
   border-radius: 14px !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-head-row {
   display: grid !important;
   grid-template-columns: 40px minmax(0, 1fr) 40px 40px !important;
   align-items: center !important;
@@ -18,16 +18,16 @@ body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row {
   margin: 0 !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row.reservation-custom-head-row {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-head-row.reservation-custom-head-row {
   grid-template-columns: 40px minmax(0, 1fr) 40px !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > button {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-head-row > button {
   align-self: center !important;
   margin: 0 !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > :is(.drag-handle, .icon-only) {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-head-row > :is(.drag-handle, .icon-only) {
   width: 40px !important;
   min-width: 40px !important;
   height: 40px !important;
@@ -35,7 +35,7 @@ body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > :is(
   border-radius: 10px !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-title {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-title {
   display: grid !important;
   grid-template-columns: 30px minmax(0, 1fr) auto auto 20px !important;
   align-items: center !important;
@@ -48,54 +48,54 @@ body .builder-shell .edit-layout .block-editor-v2 .form-question-title {
   margin: 0 !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-title > span {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-title > span {
   width: 30px !important;
   height: 30px !important;
   border-radius: 9px !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-title > strong {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-title > strong {
   min-width: 0 !important;
   font-size: 14px !important;
   line-height: 1.2 !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-title > :is(em, b) {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-title > :is(em, b) {
   min-height: 24px !important;
   padding: 0 8px !important;
   margin: 0 !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-body {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-body {
   gap: 12px !important;
   padding: 14px 16px 16px !important;
 }
 
-body .builder-shell .edit-layout .block-editor-v2 .form-question-body .field {
+body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-body .field {
   margin: 0 !important;
 }
 
 @media (max-width: 760px) {
-  body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row {
+  body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-head-row {
     grid-template-columns: 38px minmax(0, 1fr) 38px 38px !important;
     gap: 6px !important;
     padding: 7px !important;
   }
 
-  body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row.reservation-custom-head-row {
+  body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-head-row.reservation-custom-head-row {
     grid-template-columns: 38px minmax(0, 1fr) 38px !important;
   }
 
-  body .builder-shell .edit-layout .block-editor-v2 .form-question-title {
+  body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-title {
     grid-template-columns: 28px minmax(0, 1fr) 18px !important;
     gap: 7px !important;
   }
 
-  body .builder-shell .edit-layout .block-editor-v2 .form-question-title > :is(em, b) {
+  body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-title > :is(em, b) {
     display: none !important;
   }
 
-  body .builder-shell .edit-layout .block-editor-v2 .form-question-head-row > :is(.drag-handle, .icon-only) {
+  body .builder-shell .edit-layout .block-editor-v2[data-block-type="reservation"] .form-question-head-row > :is(.drag-handle, .icon-only) {
     width: 38px !important;
     min-width: 38px !important;
   }

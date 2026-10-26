@@ -44,7 +44,8 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   await setInputValue(client, '.form-question-card.open .option-editor-row input', '평일 오후');
   await clickPointer(client, '.form-question-card.open [role="switch"]');
   await waitForBrowser(client, `document.querySelector('.form-question-card.open [role="switch"]')?.getAttribute('aria-checked') === 'true'`, 'question required toggle');
-  assert(await evaluate(client, `(() => { const el = document.querySelector('.form-question-card.open .form-question-identity strong'); return el.scrollWidth <= el.clientWidth + 1 && el.textContent === ${JSON.stringify(longLabel)}; })()`), 'long Korean question name must wrap without horizontal clipping');
+  const titleGeometry = await evaluate(client, `(() => { const el = document.querySelector('.form-question-card.open .form-question-identity strong'); const card = el.closest('.form-question-card'); return { width: el.getBoundingClientRect().width, cardWidth: card.getBoundingClientRect().width, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, title: el.textContent, titleHeight: el.getBoundingClientRect().height, headerHeight: card.querySelector('.form-question-head-row').getBoundingClientRect().height }; })()`);
+  assert(titleGeometry.width > titleGeometry.cardWidth * .55 && titleGeometry.scrollWidth <= titleGeometry.clientWidth + 1 && titleGeometry.titleHeight <= titleGeometry.headerHeight && titleGeometry.title === longLabel, 'long Korean question name must fit the row and wrap within the available header: ' + JSON.stringify(titleGeometry));
   await capture(client, 'desktop-form-choice-edit');
   for (const width of [900, 1024]) {
     await setViewport(client, width, 900, false);
@@ -53,8 +54,9 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   }
   await setViewport(client, 1440, 960, false);
   await clickPointer(client, '.form-question-card.open .form-question-actions button:nth-child(3)');
-  await waitForBrowser(client, `document.querySelectorAll('.form-question-card').length === 4`, 'question duplicate');
-  assert(await evaluate(client, `document.querySelector('.form-question-card.open select')?.value === 'multi' && document.querySelector('.form-question-card.open .option-editor-row input')?.value === '평일 오후' && document.querySelector('.form-question-card.open [role="switch"]')?.getAttribute('aria-checked') === 'true'`), 'duplicate must retain question type, options and required state');
+  await waitForBrowser(client, `document.querySelectorAll('.form-question-card').length === 4 && document.querySelector('.form-question-card.open .form-question-identity strong')?.textContent.endsWith('복사')`, 'question duplicate selected');
+  const copied = await evaluate(client, `({type: document.querySelector('.form-question-card.open select')?.value, option: document.querySelector('.form-question-card.open .option-editor-row input')?.value, required: document.querySelector('.form-question-card.open [role="switch"]')?.getAttribute('aria-checked')})`);
+  assert(copied.type === 'multi' && copied.option === '평일 오후' && copied.required === 'true', 'duplicate must retain question type, options and required state: ' + JSON.stringify(copied));
   await clickPointer(client, '.form-question-card.open .form-question-actions button:first-child');
   await waitForBrowser(client, `document.querySelectorAll('.form-question-card')[2]?.classList.contains('open')`, 'keyboard alternative moves question up');
   await clickPointer(client, '.form-question-card.open .form-question-actions .danger');

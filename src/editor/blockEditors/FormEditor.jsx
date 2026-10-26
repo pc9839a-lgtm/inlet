@@ -41,7 +41,7 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
         <FormSuccessSettings s={s} set={set} />
         <details className="form-basic-detail form-design-detail">
           <summary><strong>디자인</strong><ChevronDown size={16} aria-hidden="true" /></summary>
-          <div><FormDesignSection s={s} set={set} /></div>
+          <div><FormDesignSection s={s} set={set} direct /></div>
         </details>
         <FormSubmissionSection s={s} set={set} />
       </div>
