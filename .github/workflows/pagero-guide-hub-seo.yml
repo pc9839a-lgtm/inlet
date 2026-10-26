@@ -1,0 +1,35 @@
+name: PageRo Guide Hub SEO
+on:
+  pull_request:
+    paths:
+      - 'public/guide/**'
+      - 'public/tools/lead-calculator/index.html'
+      - 'public/sitemap.xml'
+      - 'functions/lib/pageroRootSeo.js'
+      - 'functions/_middleware.js'
+      - 'scripts/pagero-guide-hub-seo-quality-check.mjs'
+      - '.github/workflows/pagero-guide-hub-seo.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'public/guide/**'
+      - 'public/sitemap.xml'
+      - 'functions/lib/pageroRootSeo.js'
+      - 'scripts/pagero-guide-hub-seo-quality-check.mjs'
+      - '.github/workflows/pagero-guide-hub-seo.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify SEO hub code syntax
+        run: node --check scripts/pagero-guide-hub-seo-quality-check.mjs
+      - name: Verify real static hub and root SEO discovery
+        run: node scripts/pagero-guide-hub-seo-quality-check.mjs
