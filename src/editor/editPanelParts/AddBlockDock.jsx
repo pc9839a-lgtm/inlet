@@ -7,8 +7,8 @@ export function AddBlockDock({ addOpen, setAddOpen, addBlock, addSectionPattern,
 
   return (
     <section className={`add-dock fixed-add-dock ${panelOpen ? 'open' : ''}`}>
-      {panelOpen && <AddBlockPanel onAdd={addBlock} onAddPattern={addSectionPattern} />}
       {!embedded && <AddBlockDockToggle open={addOpen} onToggle={() => setAddOpen(!addOpen)} />}
+      {panelOpen && <AddBlockPanel onAdd={addBlock} onAddPattern={addSectionPattern} />}
     </section>
   );
 }
