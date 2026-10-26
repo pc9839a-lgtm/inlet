@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { checkFormDirectFlow } from './editor-form-direct-flow-browser-check.mjs';
 
 const origin = String(process.env.INLET_EDITOR_BROWSER_QA_ORIGIN || 'http://127.0.0.1:4174').replace(/\/$/, '');
 const screenshotDir = process.env.INLET_EDITOR_BROWSER_QA_SCREENSHOT_DIR || '.tmp-editor-browser-regression';
@@ -1159,6 +1160,8 @@ async function run() {
       'F04 consultation preview reset without persisting');
 
 
+    await checkFormDirectFlow({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState });
+
     // ED-R08 integrated Chrome QA: download an actual JSON backup, attempt a
     // wrong-page upload, then import the real downloaded file through Chrome's
     // file-input protocol. No publish is allowed until the user chooses it.
@@ -2108,6 +2111,8 @@ async function run() {
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes(${JSON.stringify(continuedHeroTitle)})`, 'latest saved editor preview');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === continuedHeroTitle, 'latest server page does not contain the continued hero title');
     assert(apiState.currentPage.theme?.accent === updatedAccent, 'latest server page does not contain the applied accent');
+    const savedFormFlow = apiState.currentPage.blocks.find((block) => block.id === 'editor-form')?.s;
+    assert(savedFormFlow?.title === '상담 신청 · 변경 확인' && savedFormFlow?.submit === '상담 예약하기' && savedFormFlow?.questions?.length === 2 && savedFormFlow?.privacyRequired === true, 'form direct editing must persist through publish with retained questions and privacy requirement');
     assert(apiState.currentPage.theme?.animOn === false && apiState.currentPage.theme?.animType === 'scale' && apiState.currentPage.theme?.animPlayback === 'loop', 'applying the staged design must retain page animation edits');
     assert(apiState.currentPage.share?.enabled === true && apiState.currentPage.share?.position === 'bottom-left', 'share position must persist through design apply and publish');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-text')?.visible === false, 'visibility change did not persist');

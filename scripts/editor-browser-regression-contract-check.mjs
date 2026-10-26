@@ -93,10 +93,10 @@ assert(previewPaneSource.includes("frameRef.current?.querySelector('.landing-pag
   && previewPaneSource.includes('scroller.scrollTop = next')
   && !previewPaneSource.includes('target?.scrollIntoView'),
   'D05 preview selection must scroll only inside the phone content, never the window');
-assert(formEditorSource.includes("id: 'content',\n          label: '내용'")
+assert(formEditorSource.includes('className="form-editor-flow"') && !formEditorSource.includes('<EditorTabs')
   && timerEditorSource.includes("id: 'basic',\n          label: '내용'")
   && timerEditorSource.includes("id: 'design',\n          label: '스타일'"),
-  'D06 shared editor tabs must use consistent visible content/style terms and preserve persisted tab IDs');
+  'Form uses a direct flow while timer retains its content/style tab IDs');
 assert(!editPanelLayoutSource.includes('edit-workflow-hint'),
   'focused editing must not repeat the draft/apply/publish explanation above every block');
 assert(stylePanelSource.includes('스타일 미적용')

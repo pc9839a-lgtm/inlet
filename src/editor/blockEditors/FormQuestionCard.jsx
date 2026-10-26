@@ -20,21 +20,19 @@ export default function FormQuestionCard({
 }) {
   return (
     <div
-      draggable
-      onDragStart={onDragStart}
       onDragOver={(event) => event.preventDefault()}
       onDragEnter={onDragEnter}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
       className={`form-question-card ${isOpen ? 'open' : ''} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+      data-question-id={question.id}
     >
       <FormQuestionHeader
         question={question}
         index={index}
         isOpen={isOpen}
         onToggleOpen={onToggleOpen}
-        onDuplicate={onDuplicate}
-        onRemove={onRemove}
+        onDragStart={onDragStart}
       />
 
       {isOpen && (
@@ -44,6 +42,8 @@ export default function FormQuestionCard({
           total={total}
           onUpdate={onUpdate}
           onMove={onMove}
+          onDuplicate={onDuplicate}
+          onRemove={onRemove}
         />
       )}
     </div>

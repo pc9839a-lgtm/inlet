@@ -19,8 +19,8 @@ export default function FormFieldsSection({
   onDrop,
 }) {
   return (
-    <div className="editor-v2-control-list">
-      <FormQuestionQuickAdd onAdd={onAdd} />
+    <section className="form-fields-section" aria-label="입력 항목">
+      <h3>입력 항목 <span>{questions.length}</span></h3>
       <FormQuestionList
         questions={questions}
         openQuestionId={openQuestionId}
@@ -37,6 +37,7 @@ export default function FormFieldsSection({
         onDragEnd={onDragEnd}
       />
       <FormQuestionEmptyState show={!questions.length} />
-    </div>
+      <FormQuestionQuickAdd onAdd={onAdd} />
+    </section>
   );
 }

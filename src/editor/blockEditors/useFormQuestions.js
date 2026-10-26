@@ -9,7 +9,7 @@ import {
 } from './formQuestionListModel.js';
 
 export function useFormQuestions({ questions, set }) {
-  const [openQuestionId, setOpenQuestionId] = useState(questions[0]?.id || '');
+  const [openQuestionId, setOpenQuestionId] = useState('');
   const [dragQuestionId, setDragQuestionId] = useState('');
   const [dragOverQuestionId, setDragOverQuestionId] = useState('');
 
