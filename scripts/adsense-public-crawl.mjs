@@ -177,6 +177,13 @@ if (!standards.html.includes('작성·검수 기준 확인일: 2026-10-23')) {
   warn('life_editorial_date', 'Editorial policy review date was replaced by build date or is missing');
 }
 got('reader_decisions', 'Eight canonical LIFE guides must contain a situation-based comparison section');
+for (const slug of ['car-tax-annual-payment-2026', 'car-tax-second-half-2026']) {
+  const loc=ROOT+'/life/car/'+slug+'/';
+  if (!lifeSitemap.html.includes('<loc>'+loc+'</loc><lastmod>2026-10-26</lastmod>')) {
+    warn('life_tax_article_sitemap', 'Officially corrected 2026 car-tax article lacks changed lastmod: '+loc);
+  }
+}
+got('tax_deadline_accuracy','Verified 2 publicly corrected October 2026 tax articles and their sitemap dates');
 
 const batches = [];
 for (let i = 0; i < articles.length; i += 8) batches.push(articles.slice(i,i+8));
@@ -206,6 +213,20 @@ for (const batch of batches) {
       if (!html.includes('href="https://') && !html.includes('href="http://')) problems.push('no_external_citations');
       if (html.includes('생활비서 연결 오류')) problems.push('proxy_fallback');
       if (decisionArticles.has(post.pathname) && !html.includes('<section class="reader-decision"')) problems.push('missing_practical_comparison');
+      if (post.pathname === '/life/car/car-tax-annual-payment-2026/') {
+        if (!html.includes('2026년 10월 26일 현재 연납 신청은')
+            || !html.includes('2027년 공식')
+            || html.includes('올해 남은 정기 신청 기회는 9월')) {
+          problems.push('expired_car_tax_annual_advice');
+        }
+      }
+      if (post.pathname === '/life/car/car-tax-second-half-2026/') {
+        if (!html.includes('2026년 10월 26일 현재')
+            || !html.includes('12월 16~31일')
+            || html.includes('2026년 9월 현재')) {
+          problems.push('stale_second_half_car_tax_advice');
+        }
+      }
     }
     if (problems.length) failing.push({ page: post.pathname, problems });
     else goodArticles++;
