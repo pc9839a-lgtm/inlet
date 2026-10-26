@@ -1,3 +1,4 @@
+# 2026-10-26: publish fact-checked expired car-tax deadline corrections from LIFE source, verify immutable HTML before promoting.
 # 2026-10-23 practical benefit and car procedure comparisons with stable review dates.
 # 2026-10-23 editorial reader-value refresh: deploy 4 task-first guides from life-pagero main, verify immutable homepage and record the new origin.
 # 2026-10-23 phase 3: publish consent disclosure in a verified immutable snapshot and record its deployment URL.
@@ -148,6 +149,8 @@ jobs:
           import os,sys,time,urllib.request
           origin=os.environ.get('IMMUTABLE_URL','').rstrip('/')
           pages={
+            '/car/car-tax-annual-payment-2026/':['2026년 10월 26일 현재 연납 신청은','2027년 공식','공식자료 확인'],
+            '/car/car-tax-second-half-2026/':['2026년 10월 26일 현재','12월 16~31일','공식자료 확인'],
             '/car/used-car-transfer-documents/':['class="reader-decision"','공식자료 확인'],
             '/support/child-allowance-2026/':['class="reader-decision"','공식자료 확인'],
             '/support/parental-benefit-2026/':['class="reader-decision"','공식자료 확인'],
