@@ -40,7 +40,7 @@ const injected=await injectPageroRootSeo(url,new Response(html,{headers:{'Conten
 const home=await injected.text();
 assert(home.includes('href="/guide/"'), 'Root SSR fallback must point to hub in raw HTML');
 assert(home.includes('href="/guide/lead-funnel-metrics/"'), 'Previous guide references must not disappear');
-assert(home.includes('href="/life/'), 'Life editorial navigation must remain intact');
+assert(home.includes('생활에 필요한 정보를 한곳에'), 'Life editorial section must remain intact');
 assert.equal((home.match(/rel="canonical"/g)||[]).length,1,'Root should have only one canonical');
 
 let nextCalls=0;
