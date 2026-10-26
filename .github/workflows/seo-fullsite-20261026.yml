@@ -1,9 +1,16 @@
-name: SEO Fullsite audit Oct 26
+name: SEO Fullsite technical audit
 on:
   pull_request:
     paths:
       - scripts/seo-fullsite-20261026.mjs
       - .github/workflows/seo-fullsite-20261026.yml
+  push:
+    branches: [main]
+    paths:
+      - scripts/seo-fullsite-20261026.mjs
+      - .github/workflows/seo-fullsite-20261026.yml
+  schedule:
+    - cron: '37 2 * * 1'
   workflow_dispatch:
 permissions:
   contents: read
