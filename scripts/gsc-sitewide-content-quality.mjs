@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+// 2026-10-26: read-only full-site recrawl; reports must not be confused with live Google index verdicts.
 const maps=['https://pagero.kr/sitemap.xml','https://pagero.kr/life/sitemap.xml','https://awards.pagero.kr/sitemap.xml','https://calltag.pagero.kr/sitemap.xml','https://peopleent.pagero.kr/sitemap.xml','https://vowday.pagero.kr/sitemap.xml'];
 const HOSTS=new Set(['pagero.kr','awards.pagero.kr','calltag.pagero.kr','peopleent.pagero.kr','vowday.pagero.kr']);
 const allowed=u=>{try{const x=new URL(u);return x.protocol==='https:'&&HOSTS.has(x.hostname);}catch{return false;}};

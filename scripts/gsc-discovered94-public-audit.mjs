@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+// 2026-10-26: read-only full-site recrawl; reports must not be confused with live Google index verdicts.
 
 // Exact 94 URLs reported as 'Discovered - currently not indexed' by the site owner.
 // This is a read-only HTTP and HTML diagnostic, NOT a Google indexing verdict.

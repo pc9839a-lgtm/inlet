@@ -1,0 +1,37 @@
+name: SEO Fullsite technical audit
+on:
+  pull_request:
+    paths:
+      - scripts/seo-fullsite-20261026.mjs
+      - .github/workflows/seo-fullsite-20261026.yml
+  push:
+    branches: [main]
+    paths:
+      - scripts/seo-fullsite-20261026.mjs
+      - .github/workflows/seo-fullsite-20261026.yml
+  schedule:
+    - cron: '37 2 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  seo-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate script
+        run: node --check scripts/seo-fullsite-20261026.mjs
+      - name: Read only public SEO crawl
+        run: node scripts/seo-fullsite-20261026.mjs
+      - name: Archive report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-fullsite-20261026
+          path: artifacts/seo-fullsite-20261026.json
+          retention-days: 14
+          if-no-files-found: ignore
