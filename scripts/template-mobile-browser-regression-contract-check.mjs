@@ -56,8 +56,7 @@ assert(qaAll.includes("['browser:templates-mobile:contract:qa', ['scripts/templa
 for (const token of [
   'template-mobile-browser-regression:',
   'Prepare Korean browser font',
-  'fonts-noto-cjk',
-  'fc-match "Noto Sans CJK KR"',
+  'bash scripts/prepare-korean-browser-font.sh',
   'Real browser three-template mobile regression',
   'INLET_TEMPLATE_MOBILE_QA_ORIGIN: http://127.0.0.1:4176',
   'INLET_TEMPLATE_MOBILE_QA_SCREENSHOT_DIR: .tmp-template-mobile-regression',

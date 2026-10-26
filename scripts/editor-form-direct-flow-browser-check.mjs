@@ -1,5 +1,12 @@
 // Runs inside the authenticated editor fixture; never targets production data.
-export async function checkFormDirectFlow({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState }) {
+export async function checkFormDirectFlow({ client, evaluate, assert, waitForBrowser, clickPointer, focusSelector, pressKeyboardKey, capture, setViewport, apiState }) {
+  const enterText = async (selector, text) => {
+    await clickPointer(client, selector);
+    await client.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2 });
+    await client.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2 });
+    await client.send('Input.insertText', { text });
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(selector)})?.value === ${JSON.stringify(text)}`, 'native keyboard form edit');
+  };
   await clickPointer(client, '#editor-block-editor-form .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.form-editor-flow')`, 'direct form editor loaded');
   const initial = await evaluate(client, `(() => {
@@ -21,10 +28,8 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   await setViewport(client, 1440, 960, false);
   await capture(client, 'desktop-form-direct-overview');
 
-  await clickPointer(client, '.form-basic-grid input');
-  await setInputValue(client, '.form-basic-grid input', '상담 신청 · 변경 확인');
-  await clickPointer(client, '.form-editor-flow > .field input');
-  await setInputValue(client, '.form-editor-flow > .field input', '상담 예약하기');
+  await enterText('.form-basic-grid input', '상담 신청 · 변경 확인');
+  await enterText('.form-editor-flow > .field input', '상담 예약하기');
   await waitForBrowser(client, `(document.querySelector('.phone-frame #block-editor-form')?.innerText || '').includes('상담 신청 · 변경 확인') && document.querySelector('.phone-frame #block-editor-form button[type="submit"]')?.textContent.includes('상담 예약하기')`, 'form title and submit text update preview without tabs');
 
   const addSummary = '.form-question-add > summary';
@@ -36,12 +41,12 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   await clickPointer(client, addSummary);
   await clickPointer(client, '.form-question-tools button:nth-child(7)');
   await waitForBrowser(client, `document.querySelectorAll('.form-question-card').length === 3 && !!document.querySelector('.form-question-card.open .option-editor') && !document.querySelector('.form-question-add').open`, 'new choice question opens with options and closes picker');
+  await waitForBrowser(client, `document.activeElement === document.querySelector('.form-question-card.open .form-question-body > .field input')`, 'new question focuses its editable name');
   const longLabel = '상담 전에 확인하고 싶은 내용과 연락받기 편한 시간을 선택해 주세요';
-  await clickPointer(client, '.form-question-card.open .form-question-body > .field input');
-  await setInputValue(client, '.form-question-card.open .form-question-body > .field input', longLabel);
+  await enterText('.form-question-card.open .form-question-body > .field input', longLabel);
   await evaluate(client, `(() => { const el = document.querySelector('.form-question-card.open select'); el.value = 'multi'; el.dispatchEvent(new Event('change', { bubbles: true })); })()`);
-  await clickPointer(client, '.form-question-card.open .option-editor-row input');
-  await setInputValue(client, '.form-question-card.open .option-editor-row input', '평일 오후');
+  await enterText('.form-question-card.open .option-editor-row input', '평일 오후');
+  await waitForBrowser(client, `(document.querySelector('.phone-frame #block-editor-form')?.innerText || '').includes('평일 오후')`, 'choice text reflected in the form preview');
   await clickPointer(client, '.form-question-card.open [role="switch"]');
   await waitForBrowser(client, `document.querySelector('.form-question-card.open [role="switch"]')?.getAttribute('aria-checked') === 'true'`, 'question required toggle');
   const titleGeometry = await evaluate(client, `(() => { const el = document.querySelector('.form-question-card.open .form-question-identity strong'); const card = el.closest('.form-question-card'); return { width: el.getBoundingClientRect().width, cardWidth: card.getBoundingClientRect().width, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, title: el.textContent, titleHeight: el.getBoundingClientRect().height, headerHeight: card.querySelector('.form-question-head-row').getBoundingClientRect().height }; })()`);

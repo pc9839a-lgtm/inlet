@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import FormQuestionBody from './FormQuestionBody.jsx';
 import FormQuestionHeader from './FormQuestionHeader.jsx';
 
@@ -18,8 +19,20 @@ export default function FormQuestionCard({
   onDrop,
   onDragEnd,
 }) {
+  const ref = useRef(null);
+  const focusOnCreate = useRef(isOpen);
+  useEffect(() => {
+    if (!focusOnCreate.current || !isOpen) return;
+    const input = ref.current?.querySelector('.form-question-body input');
+    if (!input) return;
+    focusOnCreate.current = false;
+    input.focus();
+    input.select();
+  }, [isOpen]);
+
   return (
     <div
+      ref={ref}
       onDragOver={(event) => event.preventDefault()}
       onDragEnter={onDragEnter}
       onDrop={onDrop}
