@@ -62,12 +62,12 @@ export function EditPanelLayout({
         >
           페이지 설정{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
         </button>
+        <AddBlockDock {...addBlockDockProps} />
         <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
         <section className="screen-order-fixed-blocks" aria-label="고정 영역">
           <h3>고정 영역</h3>
           <GlobalFixedBlocks {...fixedBlocksProps} openId="" toggleBlockOpen={chooseFixed} />
         </section>
-        <AddBlockDock {...addBlockDockProps} />
       </aside>
       <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>
       <div id="editor-selection-panel" className="edit-section-panel" data-editor-section={section}>
