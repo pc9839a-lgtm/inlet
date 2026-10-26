@@ -88,7 +88,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-title > .screen-o
 
 /* Persistent composition beside the selected editor, both in the left workspace. */
 html body #root .builder-shell.canvas-editor-shell .edit-layout {
-  grid-template-columns: var(--editor-composition-width, 220px) minmax(0, 1fr) !important;
+  grid-template-columns: var(--editor-composition-width, clamp(230px, 36%, 256px)) minmax(0, 1fr) !important;
   align-items: start;
   gap: 0 !important;
   min-height: 100%;
@@ -106,10 +106,16 @@ html body #root .editor-composition-panel .fixed-add-dock {
 html body #root .editor-composition-panel .fixed-add-dock.open .add-panel {
   position: static !important; width: 100% !important; max-height: 50dvh !important; overflow-y: auto !important;
 }
+/* The work-panel owns the sole vertical scrollbar. Neither inner column may scroll. */
 @media (min-width: 900px) {
-  html body #root .canvas-editor-shell .editor-composition-panel,
-  html body #root .canvas-editor-shell .editor-inspector-panel {
-    position: sticky; top: 0; max-height: calc(100dvh - 108px); overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain;
+  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel,
+  html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overscroll-behavior-y: auto;
   }
 }
-@media (max-width: 1050px) { .canvas-editor-shell { --editor-composition-width: 180px; } }
+@media (min-width: 900px) and (max-width: 1050px) {
+  .canvas-editor-shell { --editor-composition-width: 220px; }
+}

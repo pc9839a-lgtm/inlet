@@ -832,3 +832,20 @@ html body #root .builder-shell .editor-composition-panel .screen-order-v2-head {
 html body #root .builder-shell .editor-composition-panel .screen-order-v2-drag { width: 14px !important; min-width: 14px !important; }
 html body #root .builder-shell .editor-composition-panel :is(.screen-order-v2-visibility-button, .screen-order-v2-action) { width: 26px !important; min-width: 26px !important; }
 html body #root .builder-shell .editor-composition-panel .screen-order-v2-title-wrap { grid-template-columns: 20px minmax(0, 1fr) !important; gap: 4px !important; }
+
+/* Persistent composition: show full Korean block names instead of clipping them. */
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head {
+  height: auto !important;
+  min-height: 44px !important;
+  padding-block: 6px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-title-wrap {
+  overflow: visible !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong,
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-detail {
+  overflow: visible !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+}

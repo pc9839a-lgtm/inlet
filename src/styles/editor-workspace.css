@@ -1,7 +1,7 @@
 /* Edit shell owner: left editing workspace and right page preview. */
 html body #root .builder-shell.canvas-editor-shell {
   display: grid;
-  grid-template-columns: clamp(500px, 50vw, 660px) minmax(0, 1fr) !important;
+  grid-template-columns: clamp(500px, 50vw, 700px) minmax(0, 1fr) !important;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
 }
@@ -14,7 +14,10 @@ html body #root .canvas-editor-shell .work-panel {
   height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-  overflow: hidden !important;
+  /* One scroll for composition, selected settings and the expanded add catalog. */
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain;
   border-right: 1px solid var(--product-line);
   background: #fff;
 }

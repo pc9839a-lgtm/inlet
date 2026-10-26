@@ -45,8 +45,12 @@ assert(editPanelLayoutCss.includes('editor-page-options-stack'), 'page options a
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card)') && fixedBlocksCss.includes('border-radius: 10px !important') && fixedBlocksCss.includes('min-height: 52px !important') && !css.includes('.screen-order-fixed-blocks'), 'fixed-area cards must stay compact under FixedBlocksSection.css ownership');
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('grid-template-columns: clamp(500px, 50vw, 660px) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'editing must remain left of the page preview');
-assert(addDockCss.includes('/* Active editor dock geometry.') && addDockCss.includes('position: sticky !important;') && addDockCss.includes('max-height: min(62dvh, 620px) !important;') && !css.includes('.fixed-add-dock'), 'active editor add dock must be owned by editor-widget-add-dock.css');
+assert(css.includes('grid-template-columns: clamp(500px, 50vw, 700px) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'editing must remain left of the page preview');
+assert(addDockCss.includes('/* Active editor dock geometry.')
+  && addDockCss.includes('position: static !important;')
+  && addDockCss.includes('max-height: none !important;')
+  && addDockCss.includes('overflow-y: visible !important;')
+  && !css.includes('.fixed-add-dock'), 'editor add catalog must expand inline without nested scrolling');
 assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;') && css.includes('overflow: auto !important;'), 'zoomed desktop must preserve reachable page and inspector');
 assert(layout.includes('className="editor-page-settings-button"')
   && layout.includes('aria-controls="editor-selection-panel"')

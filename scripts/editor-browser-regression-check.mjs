@@ -914,7 +914,7 @@ function assertDesktop(metrics) {
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
-  assert(metrics.left?.width >= 500 && metrics.left?.width <= 662, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
+  assert(metrics.left?.width >= 500 && metrics.left?.width <= 702, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
   assert(metrics.preview?.width >= 500, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 434, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
@@ -1493,43 +1493,47 @@ async function run() {
     assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
     await capture(client, 'desktop-hero-background-stage6');
     await clickButtonByText(client, '#editor-block-settings-editor-hero .editor-tabs-v2-list', '내용');
-    // D01: exercise the actual selected inspector DOM and CSS scroll contract.
-    // A taller editor must scroll internally, without changing block order.
+    // D01: composition, inspector and add catalog share one scroll owner.
+    // A taller editor must scroll through the work-panel, not a nested panel.
     const inspectorScroll = await evaluate(client, `(() => {
       const settings = document.querySelector('#editor-block-settings-editor-hero');
       const panel = settings?.closest('.editor-inspector-panel');
+      const composition = document.querySelector('.editor-composition-panel');
+      const workPanel = document.querySelector('.work-panel');
       const content = settings?.querySelector('.block-editor-v2');
-      if (!panel || !content) return null;
+      if (!panel || !composition || !workPanel || !content) return null;
       const original = content.style.minHeight;
       let result;
       try {
         content.style.minHeight = '1600px';
-        panel.scrollTop = 320;
-        const style = getComputedStyle(panel);
+        workPanel.scrollTop = 320;
         result = {
           role: panel.getAttribute('role'),
           label: panel.getAttribute('aria-label'),
           tabIndex: panel.tabIndex,
-          overflowY: style.overflowY,
-          maxHeight: parseFloat(style.maxHeight),
-          height: panel.clientHeight,
-          contentHeight: panel.scrollHeight,
-          scrollTop: panel.scrollTop,
+          inspectorOverflowY: getComputedStyle(panel).overflowY,
+          compositionOverflowY: getComputedStyle(composition).overflowY,
+          workOverflowY: getComputedStyle(workPanel).overflowY,
+          workHeight: workPanel.clientHeight,
+          workContentHeight: workPanel.scrollHeight,
+          workScrollTop: workPanel.scrollTop,
           innerOverflowY: getComputedStyle(settings).overflowY,
-          outerOverflowY: getComputedStyle(document.querySelector('.work-panel')).overflowY,
         };
       } finally {
         content.style.minHeight = original;
-        panel.scrollTop = 0;
+        workPanel.scrollTop = 0;
       }
       return result;
     })()`);
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
-      && inspectorScroll.label?.includes('선택 항목 편집'), `D01 keyboard-scroll region must be accessible: ${JSON.stringify(inspectorScroll)}`);
-    assert(inspectorScroll.overflowY === 'auto' && inspectorScroll.maxHeight > 0
-      && inspectorScroll.contentHeight > inspectorScroll.height && inspectorScroll.scrollTop > 0
-      && inspectorScroll.innerOverflowY === 'visible' && inspectorScroll.outerOverflowY === 'hidden',
-      `D01 long settings must use exactly one accessible inspector scroll area: ${JSON.stringify(inspectorScroll)}`);
+      && inspectorScroll.label?.includes('선택 항목 편집'), `D01 keyboard-scroll region must remain accessible: ${JSON.stringify(inspectorScroll)}`);
+    assert(inspectorScroll.inspectorOverflowY === 'visible'
+      && inspectorScroll.compositionOverflowY === 'visible'
+      && inspectorScroll.workOverflowY === 'auto'
+      && inspectorScroll.workContentHeight > inspectorScroll.workHeight
+      && inspectorScroll.workScrollTop > 0
+      && inspectorScroll.innerOverflowY === 'visible',
+      `D01 long settings must use one work-panel scrollbar: ${JSON.stringify(inspectorScroll)}`);
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
@@ -1679,6 +1683,7 @@ async function run() {
         outerBorder: card.borderTopWidth, outerPadding: card.paddingTop,
         gap: list.rowGap, rowBorder: row.borderTopWidth, rowRadius: row.borderRadius,
         height: head.height,
+        titleWhiteSpace: getComputedStyle(item.querySelector('.screen-order-v2-identity-copy strong')).whiteSpace,
         chevrons: document.querySelectorAll('.screen-order-v2-chevron').length,
         visibility: !!item.querySelector('.screen-order-v2-visibility-button'),
         actions: !!item.querySelector('.screen-order-v2-action'),
@@ -1690,7 +1695,8 @@ async function run() {
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '0px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '0px' && stageOneList.height >= 44 && stageOneList.height <= 46
+      && stageOneList.rowRadius === '0px' && stageOneList.height >= 44
+      && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
       'stage 1 list must retain flat rows and visible action controls after settings navigation: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
@@ -1698,6 +1704,25 @@ async function run() {
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
     await clickSelector(client, '.fixed-add-dock .add-toggle');
     await waitForBrowser(client, `!!document.querySelector('.add-panel')`, 'add picker before preview selection');
+    const addCatalogScroll = await evaluate(client, `(() => {
+      const dock = document.querySelector('.editor-composition-panel .fixed-add-dock');
+      const catalog = dock?.querySelector('.add-panel');
+      const workspace = document.querySelector('.work-panel');
+      if (!dock || !catalog || !workspace) return null;
+      return {
+        dockPosition: getComputedStyle(dock).position,
+        catalogOverflowY: getComputedStyle(catalog).overflowY,
+        catalogMaxHeight: getComputedStyle(catalog).maxHeight,
+        workOverflowY: getComputedStyle(workspace).overflowY,
+        catalogInComposition: !!catalog.closest('.editor-composition-panel'),
+      };
+    })()`);
+    assert(addCatalogScroll?.dockPosition === 'static'
+      && addCatalogScroll.catalogOverflowY === 'visible'
+      && addCatalogScroll.catalogMaxHeight === 'none'
+      && addCatalogScroll.workOverflowY === 'auto'
+      && addCatalogScroll.catalogInComposition,
+      'expanded block picker must share one editor scroll owner: ' + JSON.stringify(addCatalogScroll));
     await clickPointer(client, '.phone-frame #block-editor-hero');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview click opens focused settings with the existing content');
     await clickPointer(client, '.phone-frame #block-editor-hero');
