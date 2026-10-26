@@ -101,4 +101,9 @@ fs.mkdirSync('artifacts',{recursive:true});
 fs.writeFileSync('artifacts/seo-fullsite-20261026.json',JSON.stringify(report,null,2)+'\n');
 console.log('FULLSITE_SEO_SUMMARY',JSON.stringify({checkedAt:report.checkedAt,sitemaps:sitemapStatus,byHost,issueCounts},null,2));
 console.log('FULLSITE_SEO_FLAGGED',JSON.stringify(report.flagged.slice(0,100),null,2));
-if(pages.length<100||pages.some(p=>p.status!==200))process.exitCode=1;
+// Catch regressions that can actually block discovery or create broken indexable URLs.
+const critical=new Set(['canonical','redirected','noindex_in_sitemap','missing_title','invalid_json_ld','no_static_incoming_from_sitemap_pages','fetch_error']);
+const regression=pages.filter(p=>p.status!==200||p.issues.some(issue=>critical.has(issue)||issue==='h1_count_0'));
+const brokenMap=sitemapStatus.filter(s=>s.status!==200||!s.isUrlset);
+console.log('FULLSITE_SEO_REGRESSIONS',JSON.stringify({criticalCount:regression.length,sitemapErrors:brokenMap.length,urls:regression.map(p=>({url:p.url,issues:p.issues}))},null,2));
+if(pages.length<100||regression.length||brokenMap.length)process.exitCode=1;
