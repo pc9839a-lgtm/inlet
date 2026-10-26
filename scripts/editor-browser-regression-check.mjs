@@ -1868,20 +1868,18 @@ async function run() {
     assert(apiState.saveCount === 0, 'F05 reordering must remain a local draft until explicit publish');
 
 
-    // D06: the form uses the same visible "내용 / 스타일" vocabulary as
-    // hero, text, link, and other block editors without changing tab IDs.
+    // The form exposes primary fields directly; preserve the shared-control
+    // keyboard and preview/publish safety checks through its disclosures.
     if (!(await evaluate(client, `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'`))) {
       await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
     }
     await waitForBrowser(client, `(() => {
       const panel = document.querySelector('#editor-block-settings-editor-form');
-      const labels = [...(panel?.querySelectorAll('.editor-tabs-v2-list button') || [])].map((tab) => tab.textContent.trim());
-      return labels.includes('내용') && labels.includes('스타일') && !labels.includes('기본');
-    })()`, 'D06 form tabs use content/style vocabulary');
+      return !!panel?.querySelector('.form-editor-flow > .form-basic-grid') && !!panel.querySelector('.form-design-detail > summary') && !panel.querySelector('[role="tablist"]');
+    })()`, 'D06 form direct flow exposes content and design');
     assert(apiState.saveCount === 0, 'D06 switching editor tabs must not auto-publish');
 
     // Older form controls and modern widget controls share the same visual owner.
-    await clickButtonByText(client, '#editor-block-settings-editor-form .editor-tabs-v2-list', '내용');
     const stageFourLegacyField = await evaluate(client, `(() => {
       const input = document.querySelector('#editor-block-settings-editor-form .field input');
       const style = getComputedStyle(input);
@@ -1891,7 +1889,7 @@ async function run() {
       && stageFourLegacyField.minHeight === '42px',
       'stage4 legacy form fields must match modern fields: ' + JSON.stringify(stageFourLegacyField));
     await clickSelector(client, '#editor-block-settings-editor-form details:has(.privacy-compact-panel) > summary');
-    const stageFourLegacyToggle = '#editor-block-settings-editor-form .toggle [role="switch"]';
+    const stageFourLegacyToggle = '#editor-block-settings-editor-form .privacy-compact-panel .toggle [role="switch"]';
     const stageFourLegacyChecked = await evaluate(client, `document.querySelector(${JSON.stringify(stageFourLegacyToggle)}).getAttribute('aria-checked')`);
     await focusSelector(client, stageFourLegacyToggle);
     await pressKeyboardKey(client, 'Space');
@@ -1909,7 +1907,8 @@ async function run() {
       && stageFourLegacyTrack.thumb === '22px',
       'stage4 legacy active styles must not paint a second switch background: ' + JSON.stringify(stageFourLegacyTrack));
     await capture(client, 'desktop-shared-form-stage4');
-    await clickButtonByText(client, '#editor-block-settings-editor-form .editor-tabs-v2-list', '제출');
+    await clickSelector(client, '#editor-block-settings-editor-form details:has(.privacy-compact-panel) > summary');
+    await clickSelector(client, '#editor-block-settings-editor-form .form-duplicate-detail > summary');
     const stageFourLegacyChoice = '#editor-block-settings-editor-form .choice[aria-label="연락처"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourLegacyChoice)})`, 'stage4 legacy contact choice');
     await focusSelector(client, `${stageFourLegacyChoice} button:nth-child(2)`);

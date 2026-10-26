@@ -110,7 +110,7 @@ assert(codeEditorSource.includes('codePending')
   && !codeBoxSource.includes('격리된 영역에서 실행합니다.')
   && !codeModalSource.includes('격리된 영역에서 실행합니다.'),
   'D06 code editor and modal must consistently describe pending vs applied state and preview execution');
-assert(browserSource.includes('D06 form tabs use content/style vocabulary')
+assert(browserSource.includes('D06 form direct flow exposes content and design')
   && browserSource.includes('D06 code draft pending before apply')
   && browserSource.includes('D06 code apply must not publish')
   && browserSource.includes('D06 pending style must say it is preview-only'),
