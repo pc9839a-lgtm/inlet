@@ -466,16 +466,23 @@ assert(advancedAnchorSettings.includes('<details className="block-editor-advance
 assert(editorExpandedShellCss.includes('.block-editor-advanced-settings:not([open]) > .block-editor-advanced-body') && editorExpandedShellCss.includes('display: none !important'), 'D02: closed advanced settings must hide all anchor controls regardless of legacy CSS');
 assert(scheduleEditor.includes("import { EditorTabs } from '../ui/index.js'") && scheduleEditor.includes('<EditorTabs'), 'ScheduleEditor must import and render EditorTabs inside its lazy chunk');
 assert(widgetStyleEditors.filter((source) => !source.includes('export default function TimerEditor')).every((source) =>
-  source.includes('export default function TextEditor')
-    ? source.includes('className="text-editor-design"') && source.includes('<TextStylePanel') && !source.includes('<EditorTabs')
-    : source.includes('export default function ImageEditor')
+  source.includes('export default function HeroEditor')
+    ? source.includes('className="hero-editor-flow"')
+      && source.includes('<HeroBasicSection')
+      && source.includes('<HeroImageSection')
+      && source.includes('className="hero-editor-design"')
+      && source.includes('<HeroStylePanel')
+      && !source.includes('<EditorTabs')
+    : source.includes('export default function TextEditor')
+      ? source.includes('className="text-editor-design"') && source.includes('<TextStylePanel') && !source.includes('<EditorTabs')
+      : source.includes('export default function ImageEditor')
       ? source.includes('className="image-editor-flow"') && source.includes('<ImageDisplayControls') && source.includes('className="image-editor-more"') && !source.includes('<EditorTabs')
       : source.includes('export default function CodeEditor')
         ? source.includes('<CodeEditorBox') && source.includes('className="code-editor-options"') && source.includes('<CodeStylePanel') && !source.includes('<EditorTabs')
         : source.includes('export default function FormEditor')
           ? source.includes('className="form-editor-flow"') && source.includes('<FormDesignSection') && !source.includes('<EditorTabs')
           : source.includes("label: '스타일'")),
-  'registered editors must retain reachable style controls; text, image, code and form use direct flows instead of tabs');
+  'registered editors must retain reachable style controls; hero, text, image, code and form use direct flows instead of tabs');
 assert(widgetStylePanels.includes('function AlignmentControl') && !widgetStylePanels.includes('WidgetSurfaceControls') && !widgetStylePanels.includes('label="배경 직접 지정"') && !widgetStylePanels.includes('label="그림자 추가"') && !widgetStylePanels.includes('label="위아래 여백"') && !widgetStylePanels.includes('label="모서리"'), 'widget style panels must omit redundant shared surface controls');
 assert(!widgetStylePanels.includes('label="제목 굵게"') && !widgetStylePanels.includes('label="제목 밑줄"') && !widgetStylePanels.includes('<ToggleRow label="굵게"') && !widgetStylePanels.includes('<ToggleRow label="밑줄"'), 'hero and text style panels must omit emphasis controls duplicated by rich text editing');
 assert(widgetStylePanels.includes('label="직접 색상"') && widgetStylePanels.includes("buttonColorMode: value ? 'custom' : 'theme'"), 'bottom bar direct color mode must use one concise toggle');
