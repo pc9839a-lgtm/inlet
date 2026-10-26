@@ -1683,6 +1683,7 @@ async function run() {
         outerBorder: card.borderTopWidth, outerPadding: card.paddingTop,
         gap: list.rowGap, rowBorder: row.borderTopWidth, rowRadius: row.borderRadius,
         height: head.height,
+        titleWhiteSpace: getComputedStyle(item.querySelector('.screen-order-v2-identity-copy strong')).whiteSpace,
         chevrons: document.querySelectorAll('.screen-order-v2-chevron').length,
         visibility: !!item.querySelector('.screen-order-v2-visibility-button'),
         actions: !!item.querySelector('.screen-order-v2-action'),
@@ -1694,7 +1695,8 @@ async function run() {
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '0px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '0px' && stageOneList.height >= 44 && stageOneList.height <= 46
+      && stageOneList.rowRadius === '0px' && stageOneList.height >= 44
+      && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
       'stage 1 list must retain flat rows and visible action controls after settings navigation: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
@@ -1702,6 +1704,25 @@ async function run() {
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
     await clickSelector(client, '.fixed-add-dock .add-toggle');
     await waitForBrowser(client, `!!document.querySelector('.add-panel')`, 'add picker before preview selection');
+    const addCatalogScroll = await evaluate(client, `(() => {
+      const dock = document.querySelector('.editor-composition-panel .fixed-add-dock');
+      const catalog = dock?.querySelector('.add-panel');
+      const workspace = document.querySelector('.work-panel');
+      if (!dock || !catalog || !workspace) return null;
+      return {
+        dockPosition: getComputedStyle(dock).position,
+        catalogOverflowY: getComputedStyle(catalog).overflowY,
+        catalogMaxHeight: getComputedStyle(catalog).maxHeight,
+        workOverflowY: getComputedStyle(workspace).overflowY,
+        catalogInComposition: !!catalog.closest('.editor-composition-panel'),
+      };
+    })()`);
+    assert(addCatalogScroll?.dockPosition === 'static'
+      && addCatalogScroll.catalogOverflowY === 'visible'
+      && addCatalogScroll.catalogMaxHeight === 'none'
+      && addCatalogScroll.workOverflowY === 'auto'
+      && addCatalogScroll.catalogInComposition,
+      'expanded block picker must share one editor scroll owner: ' + JSON.stringify(addCatalogScroll));
     await clickPointer(client, '.phone-frame #block-editor-hero');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview click opens focused settings with the existing content');
     await clickPointer(client, '.phone-frame #block-editor-hero');
