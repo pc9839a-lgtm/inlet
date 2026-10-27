@@ -1993,9 +1993,32 @@ async function run() {
       && stageThreePageSettings.collapsed && stageThreePageSettings.shareControlsHidden
       && stageThreePageSettings.rowWidth <= stageThreePageSettings.paneWidth,
       'stage 3 page settings must show design first with flat collapsed behavior rows: ' + JSON.stringify(stageThreePageSettings));
+    // D07: design basics remain visible; advanced typography and effects are disclosures.
+    const designDirectFlow = await evaluate(client, `(() => {
+      const panel = document.querySelector('.editor-page-options-stack .style-panel');
+      const extra = [...panel.querySelectorAll('.style-more-groups > details')];
+      const mode = panel.querySelector('.style-background-group > .style-segment-line');
+      return {
+        duplicateTabs: panel.querySelectorAll('.style-subnav').length,
+        accent: !!panel.querySelector('input[aria-label="버튼색 HEX"]'),
+        text: !!panel.querySelector('input[aria-label="글자색 HEX"]'),
+        font: !!panel.querySelector('.style-primary-colors .style-segment'),
+        background: !!mode,
+        backgroundChoices: mode?.querySelectorAll('button').length,
+        extraClosed: extra.length === 2 && extra.every((item) => !item.open),
+        extraHidden: extra.every((item) => !item.querySelector('.style-advanced-body')?.getClientRects().length),
+      };
+    })()`);
+    assert(designDirectFlow.duplicateTabs === 0 && designDirectFlow.accent
+      && designDirectFlow.text && designDirectFlow.font && designDirectFlow.background
+      && designDirectFlow.backgroundChoices === 3 && designDirectFlow.extraClosed && designDirectFlow.extraHidden,
+      'D07 design essentials must be visible without tabs: ' + JSON.stringify(designDirectFlow));
+    await clickSelector(client, '.style-more-groups > details:first-child > summary');
+    await waitForBrowser(client, `!!document.querySelector('.style-more-groups > details:first-child[open] .style-advanced-body .style-segment')`, 'D07 typography options expand');
+    await clickSelector(client, '.style-more-groups > details:first-child > summary');
+    await waitForBrowser(client, `!document.querySelector('.style-more-groups > details:first-child .style-advanced-body')?.getClientRects().length`, 'D07 typography options collapse');
     await capture(client, 'desktop-page-settings-stage3');
-    await clickButtonByText(client, '.style-subnav', '색상');
-    await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`, 'style accent input');
+    await waitForBrowser(client, `!!document.querySelector('.style-primary-colors input[aria-label="버튼색 HEX"]')`, 'direct style accent input');
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
     await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled`, 'style apply enabled');
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 미적용')`),
@@ -2009,15 +2032,15 @@ async function run() {
     const accentHex = '.style-panel input[aria-label="버튼색 HEX"]';
     await focusSelector(client, accentHex);
     await setInputValue(client, accentHex, '#abc');
-    await focusSelector(client, '.style-subnav button:first-child');
+    await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await waitForBrowser(client, `document.querySelector('.style-panel input[type="color"]')?.value === '#aabbcc'`, 'shared HEX input accepts short colors');
     await focusSelector(client, accentHex);
     await setInputValue(client, accentHex, '#oops');
-    await focusSelector(client, '.style-subnav button:first-child');
+    await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(accentHex)})?.value.toLowerCase() === '#aabbcc'`, 'invalid HEX does not replace the last valid color');
     await focusSelector(client, accentHex);
     await setInputValue(client, accentHex, updatedAccent);
-    await focusSelector(client, '.style-subnav button:first-child');
+    await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await capture(client, 'desktop-common-settings-color');
     await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
@@ -2079,10 +2102,9 @@ async function run() {
     }
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`,
       'F02 style panel remounted after returning to edit');
-    await clickButtonByText(client, '.style-subnav', '색상');
     await waitForBrowser(client,
-      `document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`,
-      'F02 staged accent survives workspace switch');
+      `document.querySelector('.style-primary-colors input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`,
+      'F02 staged accent survives workspace switch without tab navigation');
     assert(await evaluate(client, `document.querySelector('.style-apply-btn')?.disabled === false`),
       'F02 restored staged style must remain unapplied');
     assert(apiState.saveCount === 0, 'F02 cancelled publish and tab switches must make no server writes');
