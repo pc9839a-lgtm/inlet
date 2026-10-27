@@ -66,7 +66,7 @@ export function EditPanelLayout({
         <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
         <section className="screen-order-fixed-blocks" aria-label="고정 영역">
           <h3>고정 영역</h3>
-          <GlobalFixedBlocks {...fixedBlocksProps} openId="" toggleBlockOpen={chooseFixed} />
+          <GlobalFixedBlocks {...fixedBlocksProps} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
         </section>
       </aside>
       <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>

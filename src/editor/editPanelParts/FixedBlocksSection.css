@@ -1,308 +1,191 @@
+/* Fixed regions use the same compact composition-row language as normal blocks.
+   Fixed entries cannot be reordered, duplicated, or removed. */
 .screen-order-fixed-blocks {
   width: 100%;
   min-width: 0;
-  margin-top: 14px;
+  margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid #e4e7ec;
 }
 
-.screen-order-fixed-blocks-title {
+.screen-order-fixed-blocks h3 {
   margin: 0 0 8px;
-  padding: 0 2px;
-}
-
-.screen-order-fixed-blocks-title h2 {
-  margin: 0;
-  color: var(--product-text);
-  font-size: 14px;
+  color: #667085;
+  font-size: 12px;
   line-height: 1.35;
   font-weight: 500;
-  letter-spacing: -.025em;
 }
 
-.screen-order-fixed-blocks .fixed-block-card {
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row {
+  position: relative;
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  margin: 0 0 6px;
-  overflow: hidden;
-  border: 1px solid #eaecf0;
-  border-radius: 9px;
-  background: #fff;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-bottom: 1px solid #eaecf0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
 }
 
-.screen-order-fixed-blocks .fixed-block-card:last-child {
-  margin-bottom: 0;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row:hover {
+  background: #fafbfc;
 }
 
-.screen-order-fixed-blocks .fixed-block-head,
-.screen-order-fixed-blocks .fixed-block-editor,
-.screen-order-fixed-blocks .fixed-block-copy {
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true'] {
+  background: #f4f5f7;
+}
+
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true']::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 2px;
+  background: #667085;
+}
+
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row .fixed-block-head {
+  display: grid !important;
+  grid-template-columns: 20px minmax(0, 1fr) 30px 30px !important;
+  align-items: center !important;
+  gap: 2px !important;
   width: 100%;
   min-width: 0;
-  max-width: 100%;
-}
-
-.screen-order-fixed-blocks .fixed-block-copy {
-  overflow: hidden;
-}
-
-.screen-order-fixed-blocks .fixed-block-copy strong,
-.screen-order-fixed-blocks .fixed-block-copy em {
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.screen-order-fixed-blocks .fixed-block-editor {
-  overflow-x: hidden;
-}
-
-
-
-
-
-/* Fixed-block visual controls migrated from the global final-clean layer. */
-body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-card {
-  border: 1px solid var(--pg-line) !important;
-  border-radius: 18px !important;
-  background: #fff !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-}
-
-body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-head {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 52px 38px !important;
-  align-items: center !important;
-  gap: 10px !important;
-  min-height: 62px !important;
-  padding: 9px 10px !important;
+  min-height: 44px !important;
+  height: auto !important;
+  margin: 0;
+  padding: 6px 3px 6px 2px !important;
+  overflow: visible;
   border: 0 !important;
-  border-radius: 18px !important;
+  border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
-body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  min-width: 0 !important;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-anchor {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  min-width: 20px;
+  height: 30px;
+  color: #a8b1be;
+  cursor: default;
 }
 
-body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy strong {
-  min-width: 0 !important;
-  overflow: hidden !important;
-  color: var(--pg-ink) !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-select {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 32px;
+  margin: 0;
+  padding: 3px 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #101828;
+  text-align: left;
+  cursor: pointer;
 }
 
-body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-copy em {
-  display: inline-flex !important;
-  align-items: center !important;
-  min-height: 22px !important;
-  padding: 0 8px !important;
-  border-radius: 999px !important;
-  background: #f1f5f9 !important;
-  color: #64748b !important;
-  font-size: 11px !important;
-  font-style: normal !important;
-  font-weight: 500 !important;
-  white-space: nowrap !important;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-select .screen-order-v2-identity-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
 }
 
-
-
-/* Fixed editor body base surface formerly supplied by editor-workspace.css. */
-body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-editor {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  padding: 12px !important;
-  overflow: visible !important;
-  border-top: 1px solid var(--product-line) !important;
-  background: #f8fafc !important;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-select strong,
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-select .screen-order-v2-identity-detail {
+  display: block;
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
-/* Fixed-block editor internals previously supplied by the global polish layer. */
-.screen-order-fixed-blocks .fixed-block-editor {
-  display: grid !important;
-  gap: 10px !important;
-  border-top: 1px solid #edf2f8 !important;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-select strong {
+  color: #101828;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 500;
 }
 
-.screen-order-fixed-blocks :is(.topnav-fixed-editor, .bottom-cta-editor, .footer-fixed-editor) {
-  display: grid !important;
-  gap: 10px !important;
-  padding: 0 12px 12px !important;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-select .screen-order-v2-identity-detail {
+  color: #667085;
+  font-size: 11px;
 }
 
-/* Fixed-block component owner for the active editor surface. */
-body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card) {
-  margin: 0 0 6px !important;
-  border-radius: 10px !important;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row.is-hidden .fixed-composition-select {
+  opacity: .6;
 }
 
-body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-head, .edit-animation-head) {
-  min-height: 52px !important;
-  padding: 7px 10px !important;
-  border-radius: 10px !important;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row :is(.screen-order-v2-visibility, .screen-order-v2-visibility-button) {
+  width: 28px !important;
+  min-width: 28px !important;
 }
 
-body .builder-shell.edit-mode-shell .screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card):last-child {
-  margin-bottom: 0 !important;
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row :is(.screen-order-v2-visibility-button, .fixed-open-button) {
+  display: grid;
+  place-items: center;
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  margin: 0;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: #748094;
+  box-shadow: none !important;
+  cursor: pointer;
 }
 
-@media (min-width: 900px) {
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks {
-    margin-top: 16px !important;
-    padding-top: 16px !important;
-    border-top: 1px solid #d9e4f2 !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks-title {
-    min-height: 22px !important;
-    margin: 0 0 10px !important;
-    padding: 0 !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks-title h2 {
-    margin: 0 !important;
-    color: #0f172a !important;
-    font-size: 15px !important;
-    line-height: 1.3 !important;
-    font-weight: 600 !important;
-    letter-spacing: -.025em !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-card {
-    margin: 0 0 10px !important;
-    border: 1px solid #d9e4f2 !important;
-    border-radius: 18px !important;
-    background: #fff !important;
-    box-shadow: none !important;
-    overflow: hidden !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-card:last-child {
-    margin-bottom: 0 !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-head {
-    min-height: 62px !important;
-    padding: 10px 12px !important;
-    border: 0 !important;
-    border-radius: 17px !important;
-    background: #fff !important;
-  }
-
-  html body #root .builder-shell.edit-mode-shell .screen-order-fixed-blocks .fixed-block-editor {
-    padding: 12px !important;
-    border-top: 1px solid #edf2f8 !important;
-    background: #f7fafd !important;
-  }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row :is(.fixed-open-button[aria-pressed='true'], .screen-order-v2-visibility-button:hover, .fixed-open-button:hover, .screen-order-v2-visibility-button:focus-visible, .fixed-open-button:focus-visible) {
+  background: #e9edf3 !important;
+  color: #101828;
 }
 
-@media (max-width: 760px) {
-  .screen-order-fixed-blocks {
-    margin-top: 10px;
-    padding-top: 10px;
-  }
-
-  .screen-order-fixed-blocks .fixed-block-head {
-    gap: 4px;
-    padding: 7px 6px;
-  }
-
-  .screen-order-fixed-blocks .fixed-block-copy em {
-    display: none;
-  }
-
-  .screen-order-fixed-blocks .fixed-block-editor {
-    padding: 10px;
-  }
-
-  body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-head {
-    grid-template-columns: minmax(0, 1fr) 52px 44px !important;
-    min-height: 62px !important;
-  }
-
-  body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-open-button {
-    width: 44px !important;
-    min-width: 44px !important;
-    height: 44px !important;
-    min-height: 44px !important;
-  }
-
-  body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-switch {
-    width: 46px !important;
-    min-width: 46px !important;
-    max-width: 46px !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    max-height: 44px !important;
-    padding: 8px 2px !important;
-    border: 0 !important;
-    background: transparent !important;
-    overflow: visible !important;
-  }
-
-  body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-switch::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 8px !important;
-    left: 0 !important;
-    width: 46px !important;
-    height: 28px !important;
-    box-sizing: border-box !important;
-    border: 1px solid #d7e1ec !important;
-    border-radius: 999px !important;
-    background: #e7edf5 !important;
-  }
-
-  body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-switch.active::before,
-  body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-switch[aria-checked='true']::before {
-    border-color: var(--pg-green) !important;
-    background: var(--pg-green) !important;
-  }
-
-  body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-switch > .switch-clean-thumb {
-    position: relative !important;
-    z-index: 1 !important;
-    display: block !important;
-    width: 22px !important;
-    min-width: 22px !important;
-    height: 22px !important;
-    min-height: 22px !important;
-    border-radius: 999px !important;
-    background: #fff !important;
-    box-shadow: 0 2px 7px rgba(15, 23, 42, .16) !important;
-    transform: translateX(0) !important;
-    transition: transform .18s ease !important;
-  }
-
-  body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-switch.active > .switch-clean-thumb,
-  body .builder-shell .edit-layout .screen-order-fixed-blocks .fixed-block-switch[aria-checked='true'] > .switch-clean-thumb {
-    transform: translateX(18px) !important;
-  }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row :is(.fixed-composition-select, .fixed-open-button, .screen-order-v2-visibility-button):focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
 }
-/* Fixed entries in the persistent composition list remain readable at narrow widths. */
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-card {
-  padding: 0 !important; border: 0 !important; border-radius: 0 !important;
-  background: transparent !important; box-shadow: none !important;
+
+/* Compatibility for non-composition FixedBlockCard surfaces. */
+.screen-order-fixed-blocks .fixed-block-card:not(.fixed-composition-row) {
+  min-width: 0;
+  margin: 0 0 6px;
+  border: 1px solid #eaecf0;
+  border-radius: 9px;
+  background: #fff;
 }
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-head {
-  display: grid !important; grid-template-columns: minmax(0, 1fr) 46px 26px !important;
-  gap: 4px !important; padding: 6px 0 !important; min-height: 44px !important;
+
+.screen-order-fixed-blocks .fixed-block-card:not(.fixed-composition-row) .fixed-block-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px 38px;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 8px;
 }
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-copy { min-width: 0 !important; }
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-copy em { display: none !important; }
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-block-copy strong { font-size: 12px !important; white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.35; }
-html body #root .builder-shell.edit-mode-shell.canvas-editor-shell .edit-layout .editor-composition-panel .fixed-open-button { width: 26px !important; min-width: 26px !important; height: 32px !important; min-height: 32px !important; }
+
+.screen-order-fixed-blocks .fixed-block-card:not(.fixed-composition-row) .fixed-block-editor {
+  min-width: 0;
+  padding: 12px;
+  border-top: 1px solid #eaecf0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-order-fixed-blocks .fixed-composition-row { transition: none; }
+}

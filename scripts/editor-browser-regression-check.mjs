@@ -1316,30 +1316,43 @@ async function run() {
     await waitForBrowser(client, `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`, 'return to edit workspace');
     assert(await evaluate(client, `document.activeElement?.id === 'workspace-tab-edit'`), 'workspace tab focus should remain stable after returning to edit');
 
-    // The shared Switch uses a span thumb; both states must remain visible.
-    const fixedSwitchSelector = '.editor-composition-panel .fixed-block-switch';
-    const fixedSwitchChecked = await evaluate(client, `document.querySelector(${JSON.stringify(fixedSwitchSelector)}).getAttribute('aria-checked')`);
-    const fixedSwitchAppearance = `(() => {
-      const toggle = document.querySelector(${JSON.stringify(fixedSwitchSelector)});
-      const thumb = toggle?.querySelector('.switch-clean-thumb');
-      if (!thumb) return false;
-      const trackRect = toggle.getBoundingClientRect();
-      const thumbRect = thumb.getBoundingClientRect();
-      const style = getComputedStyle(thumb);
-      const right = (thumbRect.left + thumbRect.width / 2) > (trackRect.left + trackRect.width / 2);
-      return style.display !== 'none' && style.backgroundColor === 'rgb(255, 255, 255)'
-        && Math.round(thumbRect.width) === 22 && Math.round(thumbRect.height) === 22
-        && thumbRect.left >= trackRect.left && thumbRect.right <= trackRect.right
-        && right === (toggle.getAttribute('aria-checked') === 'true');
-    })()`;
-    await waitForBrowser(client, fixedSwitchAppearance, 'fixed switch visible thumb in initial position');
-    await focusSelector(client, fixedSwitchSelector);
+    // Fixed regions use the same selection and eye visibility pattern as normal blocks.
+    const fixedEyeSelector = '#editor-block-editor-topnav .screen-order-v2-visibility-button';
+    const fixedRows = await evaluate(client, `(() => {
+      const rows = [...document.querySelectorAll('.screen-order-fixed-blocks .fixed-composition-row')];
+      return rows.map((row) => {
+        const head = row.querySelector('.fixed-block-head');
+        const select = row.querySelector('.fixed-composition-select');
+        const label = select?.querySelector('strong');
+        const style = label && getComputedStyle(label);
+        const eye = row.querySelector('.screen-order-v2-visibility-button');
+        return {
+          id: row.id,
+          selected: row.dataset.selected,
+          fixed: row.dataset.fixedPosition,
+          draggable: !!row.querySelector('[draggable="true"]'),
+          headHeight: head?.getBoundingClientRect().height,
+          name: label?.textContent,
+          labelOverflow: style?.textOverflow,
+          labelWhiteSpace: style?.whiteSpace,
+          selectionIsButton: select?.tagName,
+          visibleIsSwitch: eye?.getAttribute('role'),
+        };
+      });
+    })()`);
+    assert(fixedRows.length === 3
+      && fixedRows.every((row) => row.fixed === 'true' && !row.draggable
+        && row.headHeight >= 44 && row.labelOverflow === 'clip'
+        && row.labelWhiteSpace === 'normal' && row.selectionIsButton === 'BUTTON'
+        && row.visibleIsSwitch === 'switch'),
+      'fixed list entries must show plain readable rows without false drag affordances: ' + JSON.stringify(fixedRows));
+    const fixedEyeChecked = await evaluate(client, `document.querySelector(${JSON.stringify(fixedEyeSelector)})?.getAttribute('aria-checked')`);
+    await focusSelector(client, fixedEyeSelector);
     await pressKeyboardKey(client, 'Space');
-    await waitForBrowser(client, `document.querySelector(${JSON.stringify(fixedSwitchSelector)}).getAttribute('aria-checked') !== ${JSON.stringify(fixedSwitchChecked)}`, 'fixed switch keyboard state changed');
-    await waitForBrowser(client, fixedSwitchAppearance, 'fixed switch visible thumb in opposite position');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(fixedEyeSelector)})?.getAttribute('aria-checked') !== ${JSON.stringify(fixedEyeChecked)}`, 'fixed eye visibility changes by keyboard');
     await pressKeyboardKey(client, 'Space');
-    await waitForBrowser(client, `document.querySelector(${JSON.stringify(fixedSwitchSelector)}).getAttribute('aria-checked') === ${JSON.stringify(fixedSwitchChecked)}`, 'fixed switch original state restored');
-    await waitForBrowser(client, fixedSwitchAppearance, 'fixed switch thumb restored');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(fixedEyeSelector)})?.getAttribute('aria-checked') === ${JSON.stringify(fixedEyeChecked)}`, 'fixed eye visibility restores by keyboard');
+    assert(apiState.saveCount === 0, 'fixed visibility must not auto-publish');
 
     await capture(client, 'desktop-editor-before');
 
@@ -1598,8 +1611,23 @@ async function run() {
     // the same disclosure placement and genuinely collapsed anchor controls.
     await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
     await waitForBrowser(client,
-      `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')`,
-      'D02 fixed top navigation advanced anchor settings');
+      `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')
+        && document.querySelector('#editor-block-editor-topnav')?.dataset.selected === 'true'
+        && document.querySelector('#editor-block-editor-hero')?.dataset.selected === 'false'`,
+      'fixed top navigation selected in the list with a separate inspector');
+    const fixedSelection = await evaluate(client, `(() => {
+      const selected = document.querySelector('#editor-block-editor-topnav');
+      const body = document.querySelector('#editor-block-settings-editor-topnav');
+      return {
+        editButtonPressed: selected?.querySelector('.fixed-open-button')?.getAttribute('aria-pressed'),
+        rowEditors: document.querySelectorAll('.screen-order-fixed-blocks .fixed-block-editor').length,
+        inspectorOutsideList: !!body && !body.closest('.screen-order-fixed-blocks'),
+        inspectorTitle: document.querySelector('.screen-order-v2-settings-title h2')?.textContent,
+      };
+    })()`);
+    assert(fixedSelection.editButtonPressed === 'true' && fixedSelection.rowEditors === 0
+      && fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
+      'fixed selection must behave as a normal row with settings only in the shared inspector: ' + JSON.stringify(fixedSelection));
     const fixedAdvancedState = await evaluate(client, `(() => {
       const details = document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings');
       const root = details?.closest('.block-editor-v2-content');
