@@ -1405,6 +1405,27 @@ async function run() {
     }
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'focused hero settings textarea');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-hero[data-block-settings-id="editor-hero"]')`, 'hero settings render separately from the list');
+    const heroDirectFlow = await evaluate(client, `(() => {
+      const hero = document.querySelector('#editor-block-settings-editor-hero');
+      const imageInput = hero?.querySelector('.hero-image-section .image-input');
+      const imageDetails = hero?.querySelector('.hero-image-adjustments');
+      const styleDetails = hero?.querySelector('.hero-editor-design');
+      return {
+        heroTabs: hero?.querySelectorAll('.editor-tabs-v2-list').length || 0,
+        title: !!hero?.querySelector('textarea[placeholder="핵심 제목을 입력하세요"]'),
+        description: !!hero?.querySelector('textarea[placeholder="설명 문구를 입력하세요"]'),
+        image: !!imageInput,
+        imageDetailsOpen: imageDetails?.open,
+        styleDetailsOpen: styleDetails?.open,
+        imageOptionsHidden: !imageDetails?.querySelector('.hero-image-controls')?.getClientRects().length,
+        styleOptionsHidden: !styleDetails?.querySelector('.hero-editor-design-controls')?.getClientRects().length,
+      };
+    })()`);
+    assert(heroDirectFlow.heroTabs === 0 && heroDirectFlow.title && heroDirectFlow.description
+      && heroDirectFlow.image && heroDirectFlow.imageDetailsOpen === false
+      && heroDirectFlow.styleDetailsOpen === false
+      && heroDirectFlow.imageOptionsHidden && heroDirectFlow.styleOptionsHidden,
+      'hero must expose text and image in one direct flow with advanced controls collapsed: ' + JSON.stringify(heroDirectFlow));
     qaStep('stage4 shared fields and choice keyboard behavior');
     const stageFourField = await evaluate(client, `(() => {
       const field = document.querySelector(${JSON.stringify(heroEditorSelector)});
@@ -1413,7 +1434,7 @@ async function run() {
     })()`);
     assert(stageFourField.radius === '6px' && stageFourField.size === '14px',
       'stage4 common text fields must use the shared readable input style: ' + JSON.stringify(stageFourField));
-    await clickButtonByText(client, '#editor-block-settings-editor-hero .editor-tabs-v2-list', '스타일');
+    await clickSelector(client, '#editor-block-settings-editor-hero .hero-editor-design > summary');
     const stageFourChoice = '#editor-block-settings-editor-hero .editor-segmented-v2[aria-label="정렬"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourChoice)})`, 'stage4 named alignment control');
     await focusSelector(client, `${stageFourChoice} button:nth-child(2)`);
@@ -1433,7 +1454,7 @@ async function run() {
       'stage4 choices must have one rail, visible selection and keyboard focus: ' + JSON.stringify(stageFourChoiceStyle));
     await capture(client, 'desktop-shared-choices-stage4');
     await clickSelector(client, `${stageFourChoice} button:first-child`);
-    await clickButtonByText(client, '#editor-block-settings-editor-hero .editor-tabs-v2-list', '이미지');
+    await clickSelector(client, '#editor-block-settings-editor-hero .hero-image-adjustments > summary');
     const stageFourRange = await evaluate(client, `(() => {
       const range = document.querySelector('#editor-block-settings-editor-hero input[type="range"]');
       const style = getComputedStyle(range);
@@ -1471,9 +1492,7 @@ async function run() {
     const heroTextSwitch = `${stageSixHero} [role="switch"][aria-label="글자 표시"]`;
     await clickSelector(client, heroTextSwitch);
     await waitForBrowser(client, `!document.querySelector('.phone-frame #block-editor-hero .hero-full-content') && !document.querySelector(${JSON.stringify(heroFilterNumber)})`, 'stage6 text off hides text and its filter controls');
-    await clickButtonByText(client, `${stageSixHero} .editor-tabs-v2-list`, '내용');
-    assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'stage6 hiding text must preserve its content');
-    await clickButtonByText(client, `${stageSixHero} .editor-tabs-v2-list`, '이미지');
+    assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'stage6 hiding preview text must preserve the continuously visible editor title');
     await clickSelector(client, heroTextSwitch);
     await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-hero .hero-full-content') && !!document.querySelector(${JSON.stringify(heroFilterNumber)})`, 'stage6 text on restores content');
     await setInputValue(client, heroFilterNumber, '25');
@@ -1488,11 +1507,11 @@ async function run() {
     await showBlockList(client);
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-hero')`, 'stage6 hero after reselection');
-    await clickButtonByText(client, `${stageSixHero} .editor-tabs-v2-list`, '이미지');
+    await clickSelector(client, `${stageSixHero} .hero-image-adjustments > summary`);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroPlacement + ' button:nth-child(2)')})?.getAttribute('aria-pressed') === 'true' && document.querySelector(${JSON.stringify(heroFilterNumber)})?.value === '25'`, 'stage6 stored background mode must not appear as top');
     assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
     await capture(client, 'desktop-hero-background-stage6');
-    await clickButtonByText(client, '#editor-block-settings-editor-hero .editor-tabs-v2-list', '내용');
+    assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'content must stay available alongside background-image settings');
     // D01: composition, inspector and add catalog share one scroll owner.
     // A taller editor must scroll through the work-panel, not a nested panel.
     const inspectorScroll = await evaluate(client, `(() => {
