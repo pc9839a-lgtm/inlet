@@ -39,7 +39,10 @@ assert(!workspaceShellCss.includes('.preview-sticky') && !workspaceShellCss.incl
 
 assert(!workspaceShellCss.includes('.switch-clean') && !workspaceShellCss.includes('.fixed-open-button') && !workspaceShellCss.includes('.fixed-block-head') && !workspaceShellCss.includes('.edit-animation') && !workspaceShellCss.includes('.screen-drop-zone'), 'workspace shell must stay free of editor component presentation');
 assert(sharedUiCss.includes('Shared editor controls migrated from editor-final-clean') && sharedUiCss.includes('.switch-clean') && sharedUiCss.includes('.fixed-open-button'), 'shared editor controls must be owned by editor-shared-ui.css');
-assert(fixedBlocksCss.includes('Fixed-block visual controls migrated from the global final-clean layer') && fixedBlocksCss.includes('.fixed-block-head'), 'fixed block visuals must be owned by FixedBlocksSection.css');
+assert(fixedBlocksCss.includes('Fixed regions use the same compact composition-row language as normal blocks')
+  && fixedBlocksCss.includes('.fixed-composition-row .fixed-block-head')
+  && !workspaceShellCss.includes('.fixed-composition-row'),
+  'fixed block row visuals must remain owned by FixedBlocksSection.css');
 assert(animationCss.includes('Animation options — component-owned editor surface') && animationCss.includes('.edit-animation-settings') && animationCss.includes('.edit-animation-options'), 'animation options must own their component stylesheet');
 assert(screenOrderCss.includes('Selected block-editor controls owned by ScreenOrder') && screenOrderCss.includes('.screen-order-v2-settings .block-editor-v2'), 'inline selected block control styling must be owned by ScreenOrder.css');
 
