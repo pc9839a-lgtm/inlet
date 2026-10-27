@@ -12,6 +12,7 @@ const pageOptionsProps = await readFile('src/editor/editPanelSectionProps/pageGl
 const fixedBlocksProps = await readFile('src/editor/editPanelSectionProps/fixedBlocksProps.js', 'utf8');
 const fixedBlocks = await readFile('src/editor/editPanelParts/GlobalFixedBlocks.jsx', 'utf8');
 const fixedBlockHeader = await readFile('src/editor/editPanelParts/FixedBlockCardHeader.jsx', 'utf8');
+const fixedBlockCard = await readFile('src/editor/editPanelParts/FixedBlockCard.jsx', 'utf8');
 const editorControls = await readFile('src/editor/editPanelParts/editorControls.jsx', 'utf8');
 const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSection.css', 'utf8');
 const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
@@ -72,11 +73,11 @@ assert(pageOptionsList.includes('AnimationOptionsCard') && pageOptionsList.inclu
 assert(!pageOptionsProps.includes('topNavBlock') && !pageOptionsProps.includes('bottomBlock') && !pageOptionsProps.includes('footerBlock'), 'page option props must stay global-only');
 assert(fixedBlocksProps.includes('topNavBlock: selection.topNavBlock') && fixedBlocksProps.includes('bottomBlock: selection.bottomBlock') && fixedBlocksProps.includes('footerBlock: selection.footerBlock'), 'fixed block props must own top, bottom, and footer editors');
 assert(sectionProps.includes('fixedBlocksProps: createFixedBlocksProps'), 'edit panel section props must expose fixed blocks separately');
-assert(editLayout.includes('<GlobalFixedBlocks {...fixedBlocksProps} openId='), 'screen order mode must own the fixed block editor group');
+assert(editLayout.includes('<GlobalFixedBlocks {...fixedBlocksProps} compositionRow selectedId={fixedBlocksProps.openId} openId='), 'screen order mode must render fixed entries in the persistent composition');
 assert(editLayout.includes('aria-label="고정 영역"') && editLayout.includes('<h3>고정 영역</h3>'), 'fixed blocks must be clearly labeled outside page options');
 assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
-assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-block-card') && fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-block-editor'), 'fixed block section must own card and editor layout');
-assert(fixedBlocksCss.includes('@media (max-width: 760px)') && fixedBlocksCss.includes('.fixed-block-copy em'), 'fixed block section must retain compact mobile behavior');
+assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row') && fixedBlocksCss.includes('.fixed-composition-row .fixed-block-head'), 'fixed region section must own inline row geometry');
+assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px 30px !important') && fixedBlocksCss.includes('overflow-wrap: anywhere'), 'fixed block rows must align with normal block controls and wrap long Korean names');
 assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share option must not repeat an explanatory subtitle');
 assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'mobile share position choices must use a readable 2x2 grid');
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
@@ -88,10 +89,10 @@ assert(editorLabels.includes("normalBlocks: '\\uC77C\\uBC18 \\uBE14\\uB85D'") &&
 assert(mobileScreenOrderCss.includes('grid-template-columns: 44px minmax(0,1fr) 44px 44px'), 'mobile screen order must reserve full touch columns without horizontal overflow');
 assert(/\.screen-order-v2-drag\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile drag handle must expose a 44px touch target');
 assert(/\.screen-order-v2-visibility-button,[\s\S]*?\.screen-order-v2-action\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile visibility and action controls must expose 44px touch targets');
-assert(fixedBlockHeader.includes('className="fixed-block-switch"'), 'fixed block visibility switch must have a scoped mobile hit-target class');
+assert(fixedBlockCard.includes('<ScreenOrderRowVisibility visible={visible}') && fixedBlockCard.includes('data-fixed-position="true"') && fixedBlockCard.includes('aria-pressed={selected}'), 'fixed rows must share normal visibility and selection semantics without drag affordances');
 assert(editorControls.includes("className = ''") && editorControls.includes('className ?'), 'shared Switch must accept an optional scoped class without changing other switch callers');
-assert(/\.fixed-open-button\s*\{[^}]*width:\s*44px\s*!important;[^}]*height:\s*44px\s*!important;/s.test(fixedBlocksCss), 'mobile fixed block open button must expose a 44px touch target');
-assert(/\.fixed-block-switch\s*\{[^}]*height:\s*44px\s*!important;[\s\S]*?\.fixed-block-switch::before\s*\{[^}]*height:\s*28px\s*!important;/s.test(fixedBlocksCss), 'fixed block switch must keep a 44px hit target while preserving the compact 28px visual track');
+assert(fixedBlocksCss.includes('min-height: 44px !important') && fixedBlocksCss.includes('.fixed-composition-select'), 'fixed rows must remain at least 44px high with a reachable selection button');
+assert(fixedBlocksCss.includes('.screen-order-v2-visibility-button') && fixedBlocksCss.includes('.fixed-open-button'), 'fixed row eye and edit actions must retain their own CSS owner');
 assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includes('.screen-order-v2-head') && screenOrderCss.includes('.screen-order-v2-menu'), 'screen order V2 stylesheet must remain the normal-block layout owner');
 assert(screenOrderList.includes('<ScreenOrderSettings') && !screenOrderList.includes('hidden={!!selectedBlock}') && editLayout.includes('editor-composition-panel') && !screenOrderItem.includes('renderBlockEditor'), 'selected settings must render beside the persistent block list');
 assert(!editLayout.includes('selectedBlockSettingsProps') && !screenOrderItem.includes('SelectedBlockSettings'), 'redundant selected block settings component must stay removed');
@@ -105,7 +106,7 @@ assert(!codeEditorCss.includes('.code-editor-name {') && codeEditorCss.includes(
 assert(screenOrderIdentityModel.includes("block?.type === 'code'") && screenOrderIdentityModel.includes('previewText(s.editorLabel)') && screenOrderRowIdentity.includes('identity?.customLabel') && screenOrderRowIdentity.includes('displayLabel') && screenOrderRowIdentity.includes('<strong title={primaryLabel}>{primaryLabel}</strong>'), 'screen order must promote the stored custom label while preserving the full accessible identity');
 assert(editLayout.includes('data-editor-section={section}'), 'edit section panel must expose the active subsection for deterministic PC styling');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('.editor-page-settings-button') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
-assert(screenOrderCss.includes('Desktop ScreenOrder surface owner') && fixedBlocksCss.includes('Fixed-block component owner for the active editor surface'), 'screen order and fixed blocks must keep explicit component-owned PC visual contracts');
+assert(screenOrderCss.includes('Desktop ScreenOrder surface owner') && fixedBlocksCss.includes('Fixed regions use the same compact composition-row language as normal blocks'), 'screen order and fixed region rows must retain separate component owners');
 assert(pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('.page-option-head') && screenOrderCss.includes('border-radius: 0 !important'), 'page settings and block rows must retain separate flat component surface owners');
 assert(screenOrderCss.includes('.screen-order-v2-list') && screenOrderCss.includes('gap: 0 !important') && screenOrderCss.includes('border-bottom: 1px solid var(--product-line) !important') && !editorWorkspaceCss.includes('.screen-order-v2-card'), 'PC screen order must retain a flat compact list in its component owner');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
@@ -114,7 +115,7 @@ assert(editorExpandedControlsCss.includes('min-height: 42px !important;') && edi
 assert(legacyScreenOrderTokens.every((token) => !workspaceShellCss.includes(token)), 'workspace shell must not restore legacy normal-block selectors');
 assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean'].every((token) => editorSharedUiCss.includes(token)) && fixedBlocksCss.includes('.fixed-block-head'), 'shared controls and fixed-block visuals must live with their current owners');
 assert(animationOptionsCard.includes("import './AnimationOptionsCard.css';") && animationOptionsCss.includes('.edit-animation-settings') && animationOptionsCss.includes('.edit-animation-options'), 'animation options must load and own their component CSS');
-assert(animationOptionsCss.includes('.edit-animation-settings') && fixedBlocksCss.includes('Fixed editor body base surface formerly supplied by editor-workspace.css') && !editorWorkspaceCss.includes('.fixed-block-card') && !editorWorkspaceCss.includes('.edit-animation-card') && !editorWorkspaceCss.includes('.fixed-block-editor') && !editorWorkspaceCss.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation card presentation');
+assert(animationOptionsCss.includes('.edit-animation-settings') && fixedBlocksCss.includes('.fixed-composition-row') && !editorWorkspaceCss.includes('.fixed-block-card') && !editorWorkspaceCss.includes('.edit-animation-card') && !editorWorkspaceCss.includes('.fixed-block-editor') && !editorWorkspaceCss.includes('.edit-animation-settings'), 'workspace geometry must not own fixed region row or animation presentation');
 assert(editorExpandedShellCss.includes('Block editor shell details migrated from editor-workspace.css') && editorExpandedShellCss.includes('.block-editor-v2-header') && editorExpandedShellCss.includes('.editor-section-v2-trigger') && editorExpandedControlsCss.includes('Block editor controls migrated from editor-workspace.css') && editorExpandedControlsCss.includes('.editor-field-v2') && editorExpandedControlsCss.includes('.image-mode-toolbar') && !editorWorkspaceCss.includes('.block-editor-v2-header') && !editorWorkspaceCss.includes('.editor-field-v2') && !editorWorkspaceCss.includes('.editor-section-v2-trigger'), 'expanded UI styles must own block editor shell and controls instead of workspace geometry');
 assert(!workspaceShellCss.includes('.screen-icon-action') && !workspaceShellCss.includes('.switch-clean') && !workspaceShellCss.includes('.fixed-block-head') && !workspaceShellCss.includes('.edit-animation') && !workspaceShellCss.includes('.screen-drop-zone'), 'workspace shell must stay geometry-only for editor component ownership');
 await assertMissingFile('src/editor/editPanelParts/PageGlobalOptionsHeader.jsx');
@@ -141,8 +142,8 @@ console.log(JSON.stringify({
   mobileTouchTargetPx: 44,
   mobileOverflowGuard: true,
   largeMobileControls: true,
-  fixedBlockMobileTouchTargetPx: 44,
-  fixedBlockSwitchVisualTrackPx: 28,
+  fixedBlockMinimumRowPx: 44,
+  fixedBlockVisibilityControl: 'eye',
   legacyScreenOrderCssRemoved: true,
   legacyScreenOrderMenuSourcesRemoved: true,
 }, null, 2));
