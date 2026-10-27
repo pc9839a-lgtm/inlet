@@ -487,8 +487,14 @@ assert(widgetStyleEditors.filter((source) => !source.includes('export default fu
         ? source.includes('<CodeEditorBox') && source.includes('className="code-editor-options"') && source.includes('<CodeStylePanel') && !source.includes('<EditorTabs')
         : source.includes('export default function FormEditor')
           ? source.includes('className="form-editor-flow"') && source.includes('<FormDesignSection') && !source.includes('<EditorTabs')
-          : source.includes("label: '스타일'")),
-  'registered editors must retain reachable style controls; hero, text, image, code and form use direct flows instead of tabs');
+          : source.includes('export default function DividerEditor')
+            ? source.includes('layout-editor-direct-flow') && source.includes('label="선 모양"')
+              && source.includes('label="위아래 간격"') && !source.includes('<EditorTabs')
+            : source.includes('export default function SpacerEditor')
+              ? source.includes('layout-editor-direct-flow') && source.includes('label="여백 높이"')
+                && source.includes('slider={false}') && !source.includes('<EditorTabs')
+              : source.includes("label: '스타일'")),
+  'registered editors must expose reachable style controls; hero, text, image, code, form, divider and spacer use direct flows');
 assert(widgetStylePanels.includes('function AlignmentControl') && !widgetStylePanels.includes('WidgetSurfaceControls') && !widgetStylePanels.includes('label="배경 직접 지정"') && !widgetStylePanels.includes('label="그림자 추가"') && !widgetStylePanels.includes('label="위아래 여백"') && !widgetStylePanels.includes('label="모서리"'), 'widget style panels must omit redundant shared surface controls');
 assert(!widgetStylePanels.includes('label="제목 굵게"') && !widgetStylePanels.includes('label="제목 밑줄"') && !widgetStylePanels.includes('<ToggleRow label="굵게"') && !widgetStylePanels.includes('<ToggleRow label="밑줄"'), 'hero and text style panels must omit emphasis controls duplicated by rich text editing');
 assert(widgetStylePanels.includes('label="직접 색상"') && widgetStylePanels.includes("buttonColorMode: value ? 'custom' : 'theme'"), 'bottom bar direct color mode must use one concise toggle');
