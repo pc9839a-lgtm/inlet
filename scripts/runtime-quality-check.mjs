@@ -493,8 +493,13 @@ assert(widgetStyleEditors.filter((source) => !source.includes('export default fu
             : source.includes('export default function SpacerEditor')
               ? source.includes('layout-editor-direct-flow') && source.includes('label="여백 높이"')
                 && source.includes('slider={false}') && !source.includes('<EditorTabs')
-              : source.includes("label: '스타일'")),
-  'registered editors must expose reachable style controls; hero, text, image, code, form, divider and spacer use direct flows');
+              : source.includes('export default function TopNavEditor')
+                ? source.includes('className="topnav-editor-flow"')
+                  && source.includes('<TopNavBasicSection') && source.includes('<TopNavMenuListSection')
+                  && source.includes('className="topnav-editor-design"')
+                  && source.includes('<TopNavStylePanel') && !source.includes('<EditorTabs')
+                : source.includes("label: '스타일'")),
+  'registered editors must expose reachable style controls; hero, text, image, code, form, divider, spacer and top navigation use direct flows');
 assert(widgetStylePanels.includes('function AlignmentControl') && !widgetStylePanels.includes('WidgetSurfaceControls') && !widgetStylePanels.includes('label="배경 직접 지정"') && !widgetStylePanels.includes('label="그림자 추가"') && !widgetStylePanels.includes('label="위아래 여백"') && !widgetStylePanels.includes('label="모서리"'), 'widget style panels must omit redundant shared surface controls');
 assert(!widgetStylePanels.includes('label="제목 굵게"') && !widgetStylePanels.includes('label="제목 밑줄"') && !widgetStylePanels.includes('<ToggleRow label="굵게"') && !widgetStylePanels.includes('<ToggleRow label="밑줄"'), 'hero and text style panels must omit emphasis controls duplicated by rich text editing');
 assert(widgetStylePanels.includes('label="직접 색상"') && widgetStylePanels.includes("buttonColorMode: value ? 'custom' : 'theme'"), 'bottom bar direct color mode must use one concise toggle');
