@@ -1866,6 +1866,7 @@ async function run() {
 
     // E2E-02 / E2E-03: the block-add dock is intentionally simple: open it and add a block directly.
     const initialNormalBlockCount = await normalBlockCount(client);
+    const normalOrderBeforeAdd = await normalBlockOrder(client);
     await clickSelector(client, '.add-toggle');
     await waitForBrowser(client, `!!document.querySelector('.add-panel .widget-group-grid')`, 'simple block add panel');
     assert(!(await evaluate(client, `!!document.querySelector('.section-add-modes')`)), 'block add panel must not expose recommendation/industry mode tabs');
@@ -1873,7 +1874,7 @@ async function run() {
     assert(!(await evaluate(client, `!!document.querySelector('.section-pattern-card')`)), 'block add panel must not expose recommended section cards');
     await clickButtonByText(client, '.add-panel', '구분선');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'added divider row');
-    const addedDividerId = (await normalBlockOrder(client)).find((id) => !['editor-block-editor-hero', 'editor-block-editor-text', 'editor-block-editor-form'].includes(id));
+    const addedDividerId = (await normalBlockOrder(client)).find((id) => !normalOrderBeforeAdd.includes(id));
     assert(addedDividerId, 'added divider block id was not resolved');
     assert(apiState.saveCount === 0, 'adding a block must remain local before publish');
 
@@ -1887,6 +1888,7 @@ async function run() {
     const addedDividerBlockId = addedDividerId.replace(/^editor-block-/, '');
     await openBlockSettings(client, addedDividerBlockId);
     const dividerSettingsRoot = `#editor-block-settings-${addedDividerBlockId}`;
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(dividerSettingsRoot + ' .layout-editor-direct-flow')})`, 'direct divider editor lazy-loaded');
     const directDivider = await evaluate(client, `(() => {
       const editor = document.querySelector(${JSON.stringify(dividerSettingsRoot)});
       const flow = editor?.querySelector('.layout-editor-direct-flow');
