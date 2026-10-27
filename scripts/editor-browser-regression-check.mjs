@@ -1643,6 +1643,9 @@ async function run() {
       `D02 fixed editor anchor must be hidden after its content: ${JSON.stringify(fixedAdvancedState)}`);
     // D08 top navigation: logo and menu names are editable at the same time,
     // while appearance stays collapsed until intentionally requested.
+    await waitForBrowser(client,
+      `!!document.querySelector('#editor-block-settings-editor-topnav .topnav-editor-flow')`,
+      'D08 top navigation direct editor lazy-loaded');
     const topnavDirectState = await evaluate(client, `(() => {
       const panel = document.querySelector('#editor-block-settings-editor-topnav');
       const flow = panel?.querySelector('.topnav-editor-flow');
