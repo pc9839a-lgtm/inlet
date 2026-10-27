@@ -544,7 +544,11 @@ assert(richField.includes('<textarea') && richField.includes("querySelectorAll('
 assert(!richField.includes('type="color"') && !richField.includes("document.execCommand('foreColor'"), 'RichField must not expose per-widget color formatting controls');
 assert(previewUtils.includes('dangerouslySetInnerHTML') && previewUtils.includes('style="color:${color}"') && previewUtils.includes('<u>${inner}</u>') && previewUtils.includes('<strong>${inner}</strong>'), 'preview rich text renderer must preserve color, underline, and bold markup');
 assert(stylePanel.includes('onPreviewThemeChange?.({ ...draftTheme, ...patch })') && app.includes('const [stylePreviewTheme, setStylePreviewTheme] = useState(null)'), 'StylePanel draft changes must keep live preview wiring');
-assert(!stylePanel.includes('defaultStyleBlockId') && !stylePanel.includes('block.type') && stylePanel.includes('const [section, setSection] = useState('), 'StylePanel must stay a global style panel instead of auto-selecting fixed layout widgets');
+assert(!stylePanel.includes('defaultStyleBlockId') && !stylePanel.includes('block.type')
+  && stylePanel.includes('className="simple-panel style-panel style-panel-v17 style-panel-staged style-direct-flow"')
+  && stylePanel.includes('updateTheme(draftTheme)')
+  && !stylePanel.includes('className="style-subnav"'),
+  'StylePanel must remain a global staged theme editor with one direct flow, not a block editor or nested tab navigation');
 assert(app.includes("if (nextTab === 'edit')") && app.includes("setOpenId('');") && app.includes('setAddOpen(false);'), 'Edit tab entry must collapse previously opened widget editors');
 assert(stylePanel.includes('commonStyle') && stylePanel.includes('bg:') && stylePanel.includes('color:') && stylePanel.includes('text:'), 'StylePanel global style sections must stay available');
 assert(stylePanel.includes('bgMode') && stylePanel.includes('bgImage') && stylePanel.includes('globalAlign') && stylePanel.includes('updateTheme(draftTheme)'), 'StylePanel must expose background, image, text alignment, and apply controls');

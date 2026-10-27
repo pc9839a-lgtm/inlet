@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { ImageInput, Color } from '../editor/controls.jsx';
 import { NumberControl } from '../editor/ui/NumberControl.jsx';
 import { notify } from '../lib/uiFeedback.js';
@@ -119,8 +119,7 @@ function getPageBg(theme = {}) {
 }
 
 export default function StylePanel({ page, updateTheme, stagedTheme = null, onPreviewThemeChange }) {
-  const [section, setSection] = useState('background');
-  // The editor owns the un-applied theme, not this mountable subsection.
+  // Unapplied values belong to the editor and survive panel unmounting.
   const draftTheme = stagedTheme ?? page.theme ?? {};
   const bgMode = draftTheme.bgMode || 'solid';
   const dirty = JSON.stringify(draftTheme) !== JSON.stringify(page.theme || {});
@@ -138,7 +137,7 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
   const resetDraft = () => onPreviewThemeChange?.(null);
 
   return (
-    <div className="simple-panel style-panel style-panel-v17 style-panel-staged">
+    <div className="simple-panel style-panel style-panel-v17 style-panel-staged style-direct-flow">
       <div className="style-apply-bar">
         <div>
           <strong>{T.commonStyle}</strong>
@@ -150,57 +149,83 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
         </div>
       </div>
 
-      <div className="style-subnav">
-        {[[ 'background', T.bg ], [ 'color', T.color ], [ 'text', T.text ]].map(([key, label]) => (
-          <button key={key} type="button" className={section === key ? 'active' : ''} aria-pressed={section === key} onClick={() => setSection(key)}>{label}</button>
-        ))}
-      </div>
+      <section className="style-primary-group" aria-label="기본 디자인">
+        <div className="style-panel-box style-primary-colors">
+          <StyleColorLine label={T.buttonColor} value={draftTheme.accent} fallback="#2563EB" onChange={(next) => updateDraft({ accent: next })} />
+          <StyleColorLine label={T.textColor} value={draftTheme.text} fallback="#111827" onChange={(next) => updateDraft({ text: next })} />
+          <StyleSegment label={T.font} value={draftTheme.fontFamily || 'pretendard'} onChange={(next) => updateDraft({ fontFamily: next })} options={[[ 'pretendard', 'Pretendard' ], [ 'noto', 'Noto' ], [ 'serif', 'Serif' ]]} />
+        </div>
+      </section>
 
-      {section === 'background' && (
-        <section className="card style-card style-bg-card">
-          <StyleSegment label={T.type} value={bgMode} onChange={(next) => updateDraft({ bgMode: next, bgOverlay: next === 'image' ? (draftTheme.bgOverlay ?? true) : draftTheme.bgOverlay })} options={[[ 'solid', T.solid ], [ 'gradient', T.gradient ], [ 'image', T.image ]]} />
-          <StyleSegment label={T.effect} value={draftTheme.bgEffect || 'none'} onChange={(next) => updateDraft({ bgEffect: next })} options={[[ 'none', T.none ], [ 'snow', T.snow ], [ 'petals', T.petals ], [ 'sparkle', T.sparkle ]]} />
-          {(draftTheme.bgEffect || 'none') !== 'none' && <StyleRangeLine label={T.opacity} value={draftTheme.bgEffectOpacity ?? 45} min={10} max={90} suffix="%" onChange={(next) => updateDraft({ bgEffectOpacity: next })} />}
+      <section className="style-primary-group style-background-group" aria-label="페이지 배경">
+        <h3>{T.bg}</h3>
+        <StyleSegment label={T.type} value={bgMode} onChange={(next) => updateDraft({ bgMode: next, bgOverlay: next === 'image' ? (draftTheme.bgOverlay ?? true) : draftTheme.bgOverlay })} options={[[ 'solid', T.solid ], [ 'gradient', T.gradient ], [ 'image', T.image ]]} />
 
-          {bgMode === 'solid' && (
-            <div className="style-panel-box">
-              <StyleColorLine label={T.bgColor} value={draftTheme.bgSolid || draftTheme.bg} fallback="#F5F7FA" onChange={(next) => updateDraft({ bgSolid: next, bg: next, bgPreset: 'custom' })} />
-              <div className="style-line style-preset-line"><span>{T.preset}</span><div className="style-preset-row-v16">{BG_PRESETS.map((color) => <button key={color} type="button" className={(draftTheme.bg || draftTheme.bgSolid) === color ? 'active' : ''} aria-label={`${T.preset} ${color}`} aria-pressed={(draftTheme.bg || draftTheme.bgSolid) === color} style={{ background: color }} onClick={() => updateDraft({ bg: color, bgSolid: color, bgPreset: color })} title={color} />)}</div></div>
-            </div>
-          )}
-
-          {bgMode === 'gradient' && (
-            <div className="style-panel-box">
-              <StyleColorLine label={T.startColor} value={draftTheme.gradientFrom || '#F5F7FA'} fallback="#F5F7FA" onChange={(next) => updateDraft({ gradientFrom: next })} />
-              <StyleColorLine label={T.endColor} value={draftTheme.gradientTo || '#EAF2FF'} fallback="#EAF2FF" onChange={(next) => updateDraft({ gradientTo: next })} />
-              <StyleRangeLine label={T.ratio} value={draftTheme.gradientRatio ?? 50} min={0} max={100} suffix="%" onChange={(next) => updateDraft({ gradientRatio: next })} />
-            </div>
-          )}
-
-          {bgMode === 'image' && (
-            <div className="style-panel-box style-photo-box">
-              <div className="style-photo-upload"><ImageInput label={T.bgImage} value={draftTheme.bgImage} onChange={(next) => updateDraft({ bgImage: next, bgOverlay: draftTheme.bgOverlay ?? true })} /></div>
-              <StyleSegment label={T.ratio} value={draftTheme.bgImageFit || 'cover'} onChange={(next) => updateDraft({ bgImageFit: next })} options={[[ 'cover', T.fill ], [ 'contain', T.contain ], [ 'auto', T.original ]]} />
-              <StyleSegment label={T.position} value={draftTheme.bgImagePosition || 'center'} onChange={(next) => updateDraft({ bgImagePosition: next })} options={[[ 'center', T.center ], [ 'top', T.top ], [ 'bottom', T.bottom ]]} />
-              <div className="style-overlay-card-v16"><div className="style-overlay-title"><strong>{T.overlay}</strong><button type="button" className={draftTheme.bgOverlay !== false ? 'active' : ''} aria-label={T.overlay} aria-pressed={draftTheme.bgOverlay !== false} onClick={() => updateDraft({ bgOverlay: !(draftTheme.bgOverlay !== false) })}>{draftTheme.bgOverlay !== false ? 'ON' : 'OFF'}</button></div>{draftTheme.bgOverlay !== false && (<><StyleColorLine label={T.color} value={draftTheme.bgOverlayColor || '#F5F7FA'} fallback="#F5F7FA" onChange={(next) => updateDraft({ bgOverlayColor: next })} /><StyleRangeLine label={T.opacity} value={draftTheme.bgOverlayOpacity ?? 72} min={0} max={90} suffix="%" onChange={(next) => updateDraft({ bgOverlayOpacity: next })} /></>)}</div>
-              <div className="style-bg-preview-v16" style={{ background: getPageBg(draftTheme), backgroundSize: draftTheme.bgImageFit === 'contain' ? 'contain' : draftTheme.bgImageFit === 'auto' ? 'auto' : 'cover', backgroundPosition: draftTheme.bgImagePosition || 'center' }} />
-            </div>
-          )}
-        </section>
-      )}
-
-      {section === 'color' && <section className="card style-card"><div className="style-panel-box"><StyleColorLine label={T.buttonColor} value={draftTheme.accent} fallback="#2563EB" onChange={(next) => updateDraft({ accent: next })} /></div></section>}
-
-      {section === 'text' && (
-        <section className="card style-card">
+        {bgMode === 'solid' && (
           <div className="style-panel-box">
-            <StyleColorLine label={T.textColor} value={draftTheme.text} fallback="#111827" onChange={(next) => updateDraft({ text: next })} />
+            <StyleColorLine label={T.bgColor} value={draftTheme.bgSolid || draftTheme.bg} fallback="#F5F7FA" onChange={(next) => updateDraft({ bgSolid: next, bg: next, bgPreset: 'custom' })} />
+            <div className="style-line style-preset-line">
+              <span>{T.preset}</span>
+              <div className="style-preset-row-v16">
+                {BG_PRESETS.map((color) => (
+                  <button key={color} type="button" className={(draftTheme.bg || draftTheme.bgSolid) === color ? 'active' : ''} aria-label={`${T.preset} ${color}`} aria-pressed={(draftTheme.bg || draftTheme.bgSolid) === color} style={{ background: color }} onClick={() => updateDraft({ bg: color, bgSolid: color, bgPreset: color })} title={color} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {bgMode === 'gradient' && (
+          <div className="style-panel-box">
+            <StyleColorLine label={T.startColor} value={draftTheme.gradientFrom || '#F5F7FA'} fallback="#F5F7FA" onChange={(next) => updateDraft({ gradientFrom: next })} />
+            <StyleColorLine label={T.endColor} value={draftTheme.gradientTo || '#EAF2FF'} fallback="#EAF2FF" onChange={(next) => updateDraft({ gradientTo: next })} />
+            <StyleRangeLine label={T.ratio} value={draftTheme.gradientRatio ?? 50} min={0} max={100} suffix="%" onChange={(next) => updateDraft({ gradientRatio: next })} />
+          </div>
+        )}
+
+        {bgMode === 'image' && (
+          <div className="style-panel-box style-photo-box">
+            <div className="style-photo-upload"><ImageInput label={T.bgImage} value={draftTheme.bgImage} onChange={(next) => updateDraft({ bgImage: next, bgOverlay: draftTheme.bgOverlay ?? true })} /></div>
+            <details className="style-advanced-group style-image-options">
+              <summary><strong>사진 표시 옵션</strong><ChevronDown size={16} aria-hidden="true" /></summary>
+              <div className="style-advanced-body">
+                <StyleSegment label={T.ratio} value={draftTheme.bgImageFit || 'cover'} onChange={(next) => updateDraft({ bgImageFit: next })} options={[[ 'cover', T.fill ], [ 'contain', T.contain ], [ 'auto', T.original ]]} />
+                <StyleSegment label={T.position} value={draftTheme.bgImagePosition || 'center'} onChange={(next) => updateDraft({ bgImagePosition: next })} options={[[ 'center', T.center ], [ 'top', T.top ], [ 'bottom', T.bottom ]]} />
+                <div className="style-overlay-card-v16">
+                  <div className="style-overlay-title">
+                    <strong>{T.overlay}</strong>
+                    <button type="button" className={draftTheme.bgOverlay !== false ? 'active' : ''} aria-label={T.overlay} aria-pressed={draftTheme.bgOverlay !== false} onClick={() => updateDraft({ bgOverlay: !(draftTheme.bgOverlay !== false) })}>{draftTheme.bgOverlay !== false ? 'ON' : 'OFF'}</button>
+                  </div>
+                  {draftTheme.bgOverlay !== false && (
+                    <>
+                      <StyleColorLine label={T.color} value={draftTheme.bgOverlayColor || '#F5F7FA'} fallback="#F5F7FA" onChange={(next) => updateDraft({ bgOverlayColor: next })} />
+                      <StyleRangeLine label={T.opacity} value={draftTheme.bgOverlayOpacity ?? 72} min={0} max={90} suffix="%" onChange={(next) => updateDraft({ bgOverlayOpacity: next })} />
+                    </>
+                  )}
+                </div>
+                <div className="style-bg-preview-v16" role="img" aria-label="배경 이미지 미리보기" style={{ background: getPageBg(draftTheme), backgroundSize: draftTheme.bgImageFit === 'contain' ? 'contain' : draftTheme.bgImageFit === 'auto' ? 'auto' : 'cover', backgroundPosition: draftTheme.bgImagePosition || 'center' }} />
+              </div>
+            </details>
+          </div>
+        )}
+      </section>
+
+      <div className="style-more-groups">
+        <details className="style-advanced-group">
+          <summary><strong>글자 정렬·분위기</strong><ChevronDown size={16} aria-hidden="true" /></summary>
+          <div className="style-advanced-body">
             <StyleSegment label={T.align} value={draftTheme.globalAlign || 'left'} onChange={(next) => updateDraft({ globalAlign: next })} options={ALIGN_OPTIONS} />
             <StyleSegment label={T.mood} value={draftTheme.font || 'modern'} onChange={(next) => updateDraft({ font: next })} options={[[ 'modern', T.modern ], [ 'soft', T.soft ], [ 'bold', T.bold ]]} />
-            <StyleSegment label={T.font} value={draftTheme.fontFamily || 'pretendard'} onChange={(next) => updateDraft({ fontFamily: next })} options={[[ 'pretendard', 'Pretendard' ], [ 'noto', 'Noto' ], [ 'serif', 'Serif' ]]} />
           </div>
-        </section>
-      )}
+        </details>
+        <details className="style-advanced-group">
+          <summary><strong>배경 효과</strong><ChevronDown size={16} aria-hidden="true" /></summary>
+          <div className="style-advanced-body">
+            <StyleSegment label={T.effect} value={draftTheme.bgEffect || 'none'} onChange={(next) => updateDraft({ bgEffect: next })} options={[[ 'none', T.none ], [ 'snow', T.snow ], [ 'petals', T.petals ], [ 'sparkle', T.sparkle ]]} />
+            {(draftTheme.bgEffect || 'none') !== 'none' && <StyleRangeLine label={T.opacity} value={draftTheme.bgEffectOpacity ?? 45} min={10} max={90} suffix="%" onChange={(next) => updateDraft({ bgEffectOpacity: next })} />}
+          </div>
+        </details>
+      </div>
     </div>
   );
 }
