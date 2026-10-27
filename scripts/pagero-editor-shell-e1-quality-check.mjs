@@ -42,7 +42,11 @@ assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not o
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
 assert(!css.includes('.block-editor-v2-header') && !css.includes('.editor-field-v2') && !css.includes('.editor-section-v2-trigger') && !css.includes('.editor-segmented-v2') && !css.includes('.image-mode-toolbar'), 'workspace geometry must not own block editor internals');
 assert(editPanelLayoutCss.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack owned by EditPanelLayout.css');
-assert(fixedBlocksCss.includes('.screen-order-fixed-blocks :is(.fixed-block-card, .edit-animation-card)') && fixedBlocksCss.includes('border-radius: 10px !important') && fixedBlocksCss.includes('min-height: 52px !important') && !css.includes('.screen-order-fixed-blocks'), 'fixed-area cards must stay compact under FixedBlocksSection.css ownership');
+assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row')
+  && fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px 30px !important')
+  && fixedBlocksCss.includes('.fixed-composition-select')
+  && !css.includes('.screen-order-fixed-blocks'),
+  'fixed areas must use aligned compact rows under FixedBlocksSection.css ownership');
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
 assert(css.includes('grid-template-columns: clamp(500px, 50vw, 700px) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'editing must remain left of the page preview');
