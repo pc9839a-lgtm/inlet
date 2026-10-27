@@ -355,7 +355,13 @@ assert(baseComponentsImageCss.includes('.crop-modal .crop-preview{max-height:non
 assert(dividerEditorSource.includes('label="선 모양"') && dividerEditorSource.includes("value: 'solid'") && dividerEditorSource.includes("value: 'dashed'") && dividerEditorSource.includes("value: 'dotted'"), 'divider editor must expose every renderer-supported line style');
 assert(dividerEditorSource.includes('width < 100 &&') && dividerEditorSource.includes('label="정렬"') && dividerEditorSource.includes('marginY') && dividerEditorSource.includes('<Color label="선 색상"'), 'divider editor must expose alignment only when width changes its position, plus spacing and color controls');
 assert(layoutBlocksSource.includes('s.width ?? 100') && layoutBlocksSource.includes('s.thickness ?? 1') && layoutBlocksSource.includes('s.marginY ?? 24') && layoutBlocksSource.includes("s.color || '#E2E8F0'") && layoutBlocksSource.includes("s.align || 'center'"), 'divider renderer must consume every exposed style control');
-assert(spacerEditorSource.includes('<NumberControl label="여백 높이"') && spacerEditorSource.includes('min={8} max={200} step={4}') && !spacerEditorSource.includes('SegmentedControl'), 'spacer editor must retain exact height bounds with direct number input');
+assert(spacerEditorSource.includes('label="여백 높이"') && spacerEditorSource.includes('min={8}') && spacerEditorSource.includes('max={200}') && spacerEditorSource.includes('step={4}')
+  && spacerEditorSource.includes('slider={false}') && !spacerEditorSource.includes('EditorTabs') && !spacerEditorSource.includes('presets='),
+  'spacer must expose only a numeric height input, preserving its 8–200px bounds');
+assert(dividerEditorSource.includes('layout-editor-direct-flow') && dividerEditorSource.includes('label="위아래 간격"')
+  && (dividerEditorSource.match(/slider={false}/g) || []).length === 3
+  && !dividerEditorSource.includes('EditorTabs') && !dividerEditorSource.includes('presets='),
+  'divider must expose direct width, thickness and vertical margin numbers without redundant range or presets');
 assert(layoutBlocksSource.includes('Math.max(8, Math.min(200, Number(block.s?.height ?? 40)))') && layoutBlocksSource.includes('style={{ height:') && layoutBlocksSource.includes('height}px'), 'spacer renderer must preserve the editor height range exactly');
 assert(imageGalleryEditor.includes('max={4}') && imageGalleryEditor.includes('.slice(0, 4)') && imageGalleryEditor.includes("onAdd={gallery.length < 4 ?") && imageGalleryEditor.includes('onRemove={(item) => removeGallery(item.index)}'), 'image gallery item list must enforce its four-image limit and removal callback');
 assert(mediaBlocks.includes("s.galleryLayout === 'grid'") && mediaBlocks.includes('gallery.slice(0, gridCount)') && mediaBlocks.includes('image-gallery-grid-${visibleGallery.length}') && pageModel.includes("galleryLayout: ['slide','grid']") && pageModel.includes('s.galleryGridCount = Number(s.galleryGridCount) === 2 ? 2 : 4'), 'image gallery grid mode and 2/4 item count must be sanitized and consumed by the public renderer');
@@ -481,8 +487,14 @@ assert(widgetStyleEditors.filter((source) => !source.includes('export default fu
         ? source.includes('<CodeEditorBox') && source.includes('className="code-editor-options"') && source.includes('<CodeStylePanel') && !source.includes('<EditorTabs')
         : source.includes('export default function FormEditor')
           ? source.includes('className="form-editor-flow"') && source.includes('<FormDesignSection') && !source.includes('<EditorTabs')
-          : source.includes("label: '스타일'")),
-  'registered editors must retain reachable style controls; hero, text, image, code and form use direct flows instead of tabs');
+          : source.includes('export default function DividerEditor')
+            ? source.includes('layout-editor-direct-flow') && source.includes('label="선 모양"')
+              && source.includes('label="위아래 간격"') && !source.includes('<EditorTabs')
+            : source.includes('export default function SpacerEditor')
+              ? source.includes('layout-editor-direct-flow') && source.includes('label="여백 높이"')
+                && source.includes('slider={false}') && !source.includes('<EditorTabs')
+              : source.includes("label: '스타일'")),
+  'registered editors must expose reachable style controls; hero, text, image, code, form, divider and spacer use direct flows');
 assert(widgetStylePanels.includes('function AlignmentControl') && !widgetStylePanels.includes('WidgetSurfaceControls') && !widgetStylePanels.includes('label="배경 직접 지정"') && !widgetStylePanels.includes('label="그림자 추가"') && !widgetStylePanels.includes('label="위아래 여백"') && !widgetStylePanels.includes('label="모서리"'), 'widget style panels must omit redundant shared surface controls');
 assert(!widgetStylePanels.includes('label="제목 굵게"') && !widgetStylePanels.includes('label="제목 밑줄"') && !widgetStylePanels.includes('<ToggleRow label="굵게"') && !widgetStylePanels.includes('<ToggleRow label="밑줄"'), 'hero and text style panels must omit emphasis controls duplicated by rich text editing');
 assert(widgetStylePanels.includes('label="직접 색상"') && widgetStylePanels.includes("buttonColorMode: value ? 'custom' : 'theme'"), 'bottom bar direct color mode must use one concise toggle');

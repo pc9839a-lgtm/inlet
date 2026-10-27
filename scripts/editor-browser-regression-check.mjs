@@ -1866,6 +1866,7 @@ async function run() {
 
     // E2E-02 / E2E-03: the block-add dock is intentionally simple: open it and add a block directly.
     const initialNormalBlockCount = await normalBlockCount(client);
+    const normalOrderBeforeAdd = await normalBlockOrder(client);
     await clickSelector(client, '.add-toggle');
     await waitForBrowser(client, `!!document.querySelector('.add-panel .widget-group-grid')`, 'simple block add panel');
     assert(!(await evaluate(client, `!!document.querySelector('.section-add-modes')`)), 'block add panel must not expose recommendation/industry mode tabs');
@@ -1873,7 +1874,7 @@ async function run() {
     assert(!(await evaluate(client, `!!document.querySelector('.section-pattern-card')`)), 'block add panel must not expose recommended section cards');
     await clickButtonByText(client, '.add-panel', '구분선');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'added divider row');
-    const addedDividerId = (await normalBlockOrder(client)).find((id) => !['editor-block-editor-hero', 'editor-block-editor-text', 'editor-block-editor-form'].includes(id));
+    const addedDividerId = (await normalBlockOrder(client)).find((id) => !normalOrderBeforeAdd.includes(id));
     assert(addedDividerId, 'added divider block id was not resolved');
     assert(apiState.saveCount === 0, 'adding a block must remain local before publish');
 
@@ -1881,6 +1882,44 @@ async function run() {
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount}`, 'undo block add');
     await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'redo block add');
+
+    // ED-UX spacing: the divider exposes direct numeric properties, not a tab,
+    // three sliders, or per-property preset strips.
+    const addedDividerBlockId = addedDividerId.replace(/^editor-block-/, '');
+    await openBlockSettings(client, addedDividerBlockId);
+    const dividerSettingsRoot = `#editor-block-settings-${addedDividerBlockId}`;
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(dividerSettingsRoot + ' .layout-editor-direct-flow')})`, 'direct divider editor lazy-loaded');
+    const directDivider = await evaluate(client, `(() => {
+      const editor = document.querySelector(${JSON.stringify(dividerSettingsRoot)});
+      const flow = editor?.querySelector('.layout-editor-direct-flow');
+      return {
+        direct: !!flow,
+        tabs: editor?.querySelectorAll('.editor-tabs-v2-list').length ?? -1,
+        numbers: flow?.querySelectorAll('input[type="number"]').length ?? -1,
+        sliders: flow?.querySelectorAll('input[type="range"]').length ?? -1,
+        presets: flow?.querySelectorAll('.editor-number-presets').length ?? -1,
+        spacing: !!flow?.querySelector('input[aria-label="위아래 간격 (px)"]'),
+      };
+    })()`);
+    assert(directDivider.direct && directDivider.tabs === 0
+      && directDivider.numbers === 3 && directDivider.sliders === 0
+      && directDivider.presets === 0 && directDivider.spacing,
+      'divider editor must provide three direct numbers and no redundant navigation: ' + JSON.stringify(directDivider));
+    const dividerSpacing = `${dividerSettingsRoot} input[aria-label="위아래 간격 (px)"]`;
+    const dividerLength = `${dividerSettingsRoot} input[aria-label="길이 (%)"]`;
+    const initialDividerSpacing = await evaluate(client, `document.querySelector(${JSON.stringify(dividerSpacing)})?.value`);
+    const initialDividerWidth = await evaluate(client, `document.querySelector(${JSON.stringify(dividerLength)})?.value`);
+    await setInputValue(client, dividerSpacing, '16');
+    await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)})).marginTop === '16px'
+      && getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)})).marginBottom === '16px'`,
+      'divider single spacing input updates both visible preview margins');
+    await setInputValue(client, dividerSpacing, String(initialDividerSpacing));
+    await setInputValue(client, dividerLength, '60');
+    await waitForBrowser(client, `document.querySelector(${JSON.stringify(dividerSettingsRoot)})?.querySelector('[aria-label="정렬"]') !== null
+      && getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)} + ' > div')).width !== '0px'`,
+      'divider narrow line exposes alignment while remaining visible');
+    await setInputValue(client, dividerLength, String(initialDividerWidth));
+    assert(apiState.saveCount === 0, 'direct divider numeric edits must remain unpublished');
 
     // E2E-04: visibility toggle must update the preview without publishing.
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-visibility-button');
