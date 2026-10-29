@@ -431,3 +431,28 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .fi
   border: 1px solid #e4e7ec !important;
   box-shadow: none !important;
 }
+
+/* New block creation belongs at the top of the composition list. */
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-add-dock {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-add-dock .add-toggle {
+  min-height: 42px !important;
+  border-radius: 9px !important;
+  background: #2563eb !important;
+  box-shadow: 0 3px 10px rgba(37,99,235,.12) !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-add-dock .add-toggle:is(:hover, :focus-visible) {
+  background: #1d4ed8 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-add-dock.open .add-panel {
+  margin-top: 10px !important;
+  padding: 6px !important;
+  border: 1px solid #dae3f2 !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  overflow-y: visible !important;
+  max-height: none !important;
+}

@@ -322,3 +322,56 @@ html body #root .canvas-editor-shell .preview-workspace .preview-selected-block:
   content: none !important;
   display: none !important;
 }
+
+/* Editor shows a SINGLE 390px mobile page, not an adaptable desktop website.
+   The phone bezel lives OUTSIDE the 390px content width. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace {
+  padding: 22px 8px !important;
+  background: #f1f4f9 !important;
+  overflow: auto !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-sticky {
+  width: 100% !important;
+  max-width: 450px;
+  gap: 12px;
+  align-items: center;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-width-toolbar {
+  width: 100%;
+  max-width: 402px;
+  min-height: 26px;
+  padding: 0;
+  justify-content: flex-start;
+  color: #57677f;
+  font-size: 12px;
+  font-weight: 600;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame {
+  --landing-runtime-width: 390px;
+  box-sizing: border-box;
+  width: 402px !important;
+  max-width: none !important;
+  height: calc(100dvh - 160px) !important;
+  min-height: 420px;
+  overflow: hidden;
+  border: 6px solid #171c29 !important;
+  border-radius: 30px !important;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(19,31,53,.14), 0 3px 8px rgba(19,31,53,.06);
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-selected-block {
+  outline: 2px solid #2563eb !important;
+  outline-offset: -2px !important;
+}
+@media (min-width: 900px) and (max-width: 950px) {
+  /* At 900px total viewport, only 400px remain for the preview column.
+     Keep the content at 390px; reduce its BEZEL, never scale the page. */
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace {
+    padding-inline: 4px !important;
+  }
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame {
+    width: 392px !important;
+    border-width: 1px !important;
+    border-radius: 10px !important;
+  }
+}

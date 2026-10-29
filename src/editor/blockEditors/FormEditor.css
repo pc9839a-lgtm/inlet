@@ -275,3 +275,32 @@ body .builder-shell .edit-layout .block-editor-v2 .form-embed-button { display: 
     max-height:calc(var(--pagero-visual-viewport-height,100dvh) - 24px);
   }
 }
+
+/* Mobile form builder: questions read as editable items, not a dense table. */
+body .builder-shell.canvas-editor-shell .edit-layout .form-editor-flow {
+  gap: 22px;
+}
+body .builder-shell.canvas-editor-shell .edit-layout .form-question-list {
+  gap: 8px;
+  border: 0;
+}
+body .builder-shell.canvas-editor-shell .edit-layout .form-question-card {
+  padding: 0;
+  border: 1px solid #e4eaf3;
+  border-radius: 10px;
+  background: #f9fbfe;
+  overflow: hidden;
+}
+body .builder-shell.canvas-editor-shell .edit-layout .form-question-head-row {
+  min-height: 54px;
+  padding: 3px 12px;
+}
+body .builder-shell.canvas-editor-shell .edit-layout .form-question-body {
+  padding: 12px 14px 18px;
+  border-top: 1px solid #e4eaf3;
+  background: #fff;
+}
+body .builder-shell.canvas-editor-shell .edit-layout .form-question-identity strong {
+  font-size: 13px;
+  font-weight: 600;
+}

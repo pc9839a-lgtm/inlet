@@ -9,9 +9,11 @@ export function ScreenOrderRowIdentity({ block, identity, meta, open, onDragStar
   const customLabel = identity?.customLabel ? ` · ${identity.customLabel}` : '';
   const displayLabel = `${meta.label}${ordinal}${customLabel}`;
   const detail = identity?.detail || '';
-  const primaryLabel = identity?.customLabel || detail || `${meta.label}${ordinal}`;
   const typeLabel = `${meta.label}${ordinal}`;
-  const secondaryLabel = [primaryLabel !== typeLabel ? typeLabel : '', !block.visible ? '숨김' : ''].filter(Boolean).join(' · ');
+  // Keep the block type scannable in narrow persistent navigation.
+  // Custom code labels remain primary; regular content titles appear as detail.
+  const primaryLabel = identity?.customLabel || typeLabel;
+  const secondaryLabel = [identity?.customLabel ? typeLabel : detail, !block.visible ? '숨김' : ''].filter(Boolean).join(' · ');
   const thumbnail = identity?.thumbnail || '';
   const selectTitle = (event) => {
     stop(event);

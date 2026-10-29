@@ -49,7 +49,9 @@ assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-ro
   'fixed areas must use aligned compact rows under FixedBlocksSection.css ownership');
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('grid-template-columns: clamp(500px, 50vw, 700px) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'editing must remain left of the page preview');
+assert(css.includes('grid-template-columns: clamp(500px, calc(100vw - 460px), 1180px) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'studio must keep the left editor and reserve one 390px phone preview');
+assert(layout.includes('editor-composition-heading') && editPanelLayoutCss.includes('grid-template-columns: clamp(176px, 18vw, 256px) minmax(0, 1fr) !important;'), 'block list and selected inspector must be distinct, readable regions');
+assert(previewPaneCss.includes('width: 402px !important;') && previewPaneCss.includes('width: 392px !important;') && previewPaneCss.includes('--landing-runtime-width: 390px;'), 'desktop and compact editor must keep exactly one 390px mobile canvas');
 assert(addDockCss.includes('/* Active editor dock geometry.')
   && addDockCss.includes('position: static !important;')
   && addDockCss.includes('max-height: none !important;')
