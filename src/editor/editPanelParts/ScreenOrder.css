@@ -849,3 +849,69 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
   text-overflow: clip !important;
   overflow-wrap: anywhere;
 }
+
+/* Block studio navigation — readable card rows instead of compressed table cells.
+   The selected block stays in the same list when settings are open. */
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-list {
+  display: grid !important;
+  gap: 6px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item {
+  margin: 0 !important;
+  border: 1px solid #e4eaf3 !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item:is(:hover, :focus-within) {
+  border-color: #c6d6f1 !important;
+  background: #f5f8ff !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true'] {
+  border-color: #9bbcff !important;
+  background: #e9f1ff !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true']::before {
+  left: -1px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: #2563eb;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head {
+  min-height: 56px !important;
+  padding: 8px 5px !important;
+  gap: 3px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong {
+  color: #21304a !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item[data-selected='true'] .screen-order-v2-identity-copy strong {
+  color: #1d4ed8 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon {
+  color: #64748b !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item[data-selected='true'] .screen-order-v2-type-icon {
+  color: #2563eb !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag {
+  opacity: .72;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-title {
+  margin: 18px 2px 10px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-title h2 {
+  color: #758198 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
