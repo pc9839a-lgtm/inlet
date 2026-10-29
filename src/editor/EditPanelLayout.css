@@ -88,7 +88,9 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-title > .screen-o
 
 /* Persistent composition beside the selected editor, both in the left workspace. */
 html body #root .builder-shell.canvas-editor-shell .edit-layout {
-  grid-template-columns: var(--editor-composition-width, clamp(230px, 36%, 256px)) minmax(0, 1fr) !important;
+  /* The list is always present, but the selected block owns the remaining width.
+     Narrow Korean names wrap instead of consuming the inspector's input space. */
+  grid-template-columns: clamp(176px, 18vw, 224px) minmax(0, 1fr) !important;
   align-items: start;
   gap: 0 !important;
   min-height: 100%;
@@ -115,7 +117,4 @@ html body #root .editor-composition-panel .fixed-add-dock.open .add-panel {
     overflow: visible !important;
     overscroll-behavior-y: auto;
   }
-}
-@media (min-width: 900px) and (max-width: 1050px) {
-  .canvas-editor-shell { --editor-composition-width: 220px; }
 }
