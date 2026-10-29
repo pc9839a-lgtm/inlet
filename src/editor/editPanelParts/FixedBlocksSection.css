@@ -189,3 +189,41 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fi
 @media (prefers-reduced-motion: reduce) {
   .screen-order-fixed-blocks .fixed-composition-row { transition: none; }
 }
+
+/* Fixed blocks follow the identical block-card visual treatment, without
+   pretending they can be duplicated or reordered. */
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e3e9f2;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks h3 {
+  margin: 0 2px 10px;
+  color: #758198;
+  font-size: 12px;
+  font-weight: 600;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row {
+  margin: 0 0 6px;
+  border: 1px solid #e4eaf3;
+  border-radius: 9px;
+  background: #fff;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row:hover {
+  border-color: #c6d6f1;
+  background: #f5f8ff;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true'] {
+  border-color: #9bbcff;
+  background: #e9f1ff;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true']::before {
+  left: -1px;
+  width: 3px;
+  border-radius: 3px;
+  background: #2563eb;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row .fixed-block-head {
+  min-height: 56px !important;
+  padding: 8px 4px !important;
+}
