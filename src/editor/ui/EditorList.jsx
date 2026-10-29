@@ -13,8 +13,9 @@ export function EditorList({
   addLabel = '항목 추가',
   emptyText = '아직 추가된 항목이 없습니다.',
   detailPlacement = 'inline',
+  defaultOpenFirst = false,
 }) {
-  const [openId, setOpenId] = useState('');
+  const [openId, setOpenId] = useState(() => defaultOpenFirst ? (items[0]?.id || '') : '');
   const previousLength = useRef(items.length);
 
   useEffect(() => {

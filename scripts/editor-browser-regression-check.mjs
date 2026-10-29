@@ -1705,6 +1705,70 @@ async function run() {
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(stageFourToggle)})?.getAttribute('aria-checked') === ${JSON.stringify(stageFourToggleBefore.checked)}`, 'stage4 switch original value restored');
     await capture(client, 'desktop-shared-toggle-stage4');
     assert(apiState.saveCount === 0, 'stage4 shared controls must not publish');
+
+    // D09: bottom CTA buttons open directly without the former buttons/timer/style tabs.
+    await clickSelector(client, '.bottom-cta-card .fixed-open-button');
+    await waitForBrowser(client,
+      `!!document.querySelector('#editor-block-settings-editor-bottom .bottom-bar-editor-flow')`,
+      'D09 bottom CTA direct editor lazy-loaded');
+    const bottomDirect = await evaluate(client, `(() => {
+      const p = document.querySelector('#editor-block-settings-editor-bottom');
+      const flow = p?.querySelector('.bottom-bar-editor-flow');
+      const first = flow?.querySelector('.editor-list-item-v2:first-child');
+      const field = first?.querySelector('input[placeholder="버튼 1"]');
+      const timer = flow?.querySelector('.bottom-bar-editor-timer');
+      const design = flow?.querySelector('.bottom-bar-editor-design');
+      const timerSwitch = timer?.querySelector('[role="switch"]');
+      const colorControl = design?.querySelector('.editor-toggle-row-v2 [role="switch"]');
+      return {
+        tabs: p?.querySelectorAll('.editor-tabs-v2-list').length,
+        buttons: flow?.querySelectorAll('.editor-list-item-v2').length,
+        firstOpen: first?.querySelector('.editor-list-item-v2-trigger')?.getAttribute('aria-expanded'),
+        name: field?.value,
+        nameVisible: (field?.getClientRects().length || 0) > 0,
+        timerClosed: timer?.open === false,
+        timerHidden: timerSwitch?.getClientRects().length === 0,
+        designClosed: design?.open === false,
+        designHidden: colorControl?.getClientRects().length === 0,
+      };
+    })()`);
+    assert(bottomDirect.tabs === 0 && bottomDirect.buttons === 2
+      && bottomDirect.firstOpen === 'true' && bottomDirect.name === '상담'
+      && bottomDirect.nameVisible && bottomDirect.timerClosed && bottomDirect.timerHidden
+      && bottomDirect.designClosed && bottomDirect.designHidden,
+      'D09 first bottom button must be directly editable while timer and style are collapsed: ' + JSON.stringify(bottomDirect));
+    const bottomFirstName = '#editor-block-settings-editor-bottom input[placeholder="버튼 1"]';
+    await setInputValue(client, bottomFirstName, '상담 바로가기');
+    await waitForBrowser(client,
+      `document.querySelector('.phone-frame .bottom-bar-buttons button:first-child b')?.textContent === '상담 바로가기'`,
+      'D09 bottom CTA text edits update live mobile preview');
+    await setInputValue(client, bottomFirstName, '상담');
+    await waitForBrowser(client,
+      `document.querySelector('.phone-frame .bottom-bar-buttons button:first-child b')?.textContent === '상담'`,
+      'D09 bottom CTA original text restored');
+    await clickSelector(client, '#editor-block-settings-editor-bottom .bottom-bar-editor-timer > summary');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-bottom .bottom-bar-editor-timer')?.open === true`,
+      'D09 bottom timer options expandable');
+    const bottomTimerSwitch = '#editor-block-settings-editor-bottom .bottom-bar-editor-timer [role="switch"]';
+    const originalTimer = await evaluate(client,
+      `document.querySelector(${JSON.stringify(bottomTimerSwitch)})?.getAttribute('aria-checked')`);
+    await focusSelector(client, bottomTimerSwitch);
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client,
+      `document.querySelector(${JSON.stringify(bottomTimerSwitch)})?.getAttribute('aria-checked') !== ${JSON.stringify(originalTimer)}`,
+      'D09 timer switch remains keyboard accessible');
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client,
+      `document.querySelector(${JSON.stringify(bottomTimerSwitch)})?.getAttribute('aria-checked') === ${JSON.stringify(originalTimer)}`,
+      'D09 timer switch restored');
+    await clickSelector(client, '#editor-block-settings-editor-bottom .bottom-bar-editor-design > summary');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-bottom .bottom-bar-editor-design')?.open === true
+        && !!document.querySelector('#editor-block-settings-editor-bottom .bottom-bar-editor-design [role="switch"]')`,
+      'D09 design controls accessible without tabs');
+    assert(apiState.saveCount === 0, 'D09 bottom CTA edits must not auto-publish');
+    await capture(client, 'desktop-bottom-cta-direct-stage9');
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')`,
       'D02 fixed navigation settings closed after inspection');

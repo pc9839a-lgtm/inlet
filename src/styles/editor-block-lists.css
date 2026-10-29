@@ -855,3 +855,131 @@ body .builder-shell .edit-layout .block-editor-v2 .topnav-editor-flow .topnav-me
     transition: none;
   }
 }
+
+/* Bottom CTA direct editing: show the first button without navigation tabs. */
+.block-editor-v2 .bottom-bar-editor-flow,
+.block-editor-v2 .bottom-bar-editor-buttons,
+.block-editor-v2 .bottom-bar-editor-extra-controls {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+}
+
+.block-editor-v2 .bottom-bar-editor-flow {
+  gap: 18px;
+}
+
+.block-editor-v2 .bottom-bar-editor-buttons > .editor-segmented-v2 {
+  margin: 0;
+}
+
+.block-editor-v2 .bottom-bar-editor-timer,
+.block-editor-v2 .bottom-bar-editor-design {
+  min-width: 0;
+  border-top: 1px solid var(--editor-v2-line, #eaecf0);
+}
+
+.block-editor-v2 :is(.bottom-bar-editor-timer, .bottom-bar-editor-design) > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+  color: #344054;
+  list-style: none;
+}
+
+.block-editor-v2 :is(.bottom-bar-editor-timer, .bottom-bar-editor-design) > summary::-webkit-details-marker {
+  display: none;
+}
+
+.block-editor-v2 :is(.bottom-bar-editor-timer, .bottom-bar-editor-design) > summary strong {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.block-editor-v2 .bottom-bar-editor-status {
+  color: #667085;
+  font-size: 11px;
+}
+
+.block-editor-v2 :is(.bottom-bar-editor-timer, .bottom-bar-editor-design) > summary svg {
+  flex: 0 0 auto;
+  color: #667085;
+  transition: transform .16s ease;
+}
+
+.block-editor-v2 :is(.bottom-bar-editor-timer, .bottom-bar-editor-design)[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.block-editor-v2 :is(.bottom-bar-editor-timer, .bottom-bar-editor-design) > summary:focus-visible {
+  outline: 2px solid var(--editor-v2-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.block-editor-v2 .bottom-bar-editor-extra-controls {
+  padding: 6px 0 16px;
+}
+
+.block-editor-v2 :is(.bottom-bar-editor-timer, .bottom-bar-editor-design):not([open]) > .bottom-bar-editor-extra-controls {
+  display: none !important;
+}
+
+/* The selected bottom button uses a flat list row, with its fields underneath. */
+.block-editor-v2 .bottom-bar-editor-flow .editor-list-v2-items {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--editor-v2-line, #eaecf0);
+}
+
+.block-editor-v2 .bottom-bar-editor-flow .editor-list-item-v2 {
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid var(--editor-v2-line, #eaecf0);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.block-editor-v2 .bottom-bar-editor-flow .editor-list-item-v2-header {
+  min-width: 0;
+  background: transparent;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 .bottom-bar-editor-flow .editor-list-item-v2-trigger {
+  min-height: 44px !important;
+  width: 100% !important;
+  padding: 4px 2px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.block-editor-v2 .bottom-bar-editor-flow .editor-list-item-v2-trigger strong {
+  min-width: 0;
+  font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.block-editor-v2 .bottom-bar-editor-flow .editor-list-item-v2-body {
+  padding: 8px 0 16px;
+  border: 0;
+  background: transparent;
+}
+
+@media (pointer: coarse) {
+  body .builder-shell .edit-layout .block-editor-v2 .bottom-bar-editor-flow .editor-list-item-v2-trigger {
+    min-height: 48px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block-editor-v2 :is(.bottom-bar-editor-timer, .bottom-bar-editor-design) > summary svg {
+    transition: none;
+  }
+}
