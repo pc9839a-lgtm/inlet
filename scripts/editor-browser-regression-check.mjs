@@ -1769,6 +1769,81 @@ async function run() {
       'D09 design controls accessible without tabs');
     assert(apiState.saveCount === 0, 'D09 bottom CTA edits must not auto-publish');
     await capture(client, 'desktop-bottom-cta-direct-stage9');
+
+    // D10: footer business details remain directly editable without switching among four tabs.
+    await clickSelector(client, '.footer-fixed-card .fixed-open-button');
+    await waitForBrowser(client,
+      `!!document.querySelector('#editor-block-settings-editor-footer .footer-editor-flow')`,
+      'D10 footer direct editor lazy-loaded');
+    const footerDirect = await evaluate(client, `(() => {
+      const panel = document.querySelector('#editor-block-settings-editor-footer');
+      const flow = panel?.querySelector('.footer-editor-flow');
+      const primary = flow?.querySelector('.footer-editor-primary');
+      const contact = flow?.querySelector('.footer-editor-contact');
+      const legal = flow?.querySelector('.footer-editor-legal');
+      const design = flow?.querySelector('.footer-editor-design');
+      return {
+        tabs: panel?.querySelectorAll('.editor-tabs-v2-list').length,
+        primaryLabels: [...(primary?.querySelectorAll('.field > span') || [])].map((label) => label.textContent),
+        company: primary?.querySelector('.field:first-child input')?.value,
+        companyVisible: (primary?.querySelector('.field:first-child input')?.getClientRects().length || 0) > 0,
+        contactClosed: contact?.open === false,
+        legalClosed: legal?.open === false,
+        designClosed: design?.open === false,
+        hiddenContact: (contact?.querySelector('input')?.getClientRects().length || 0) === 0,
+        hiddenLegal: (legal?.querySelector('input')?.getClientRects().length || 0) === 0,
+        hiddenDesign: (design?.querySelector('.editor-segmented-v2')?.getClientRects().length || 0) === 0,
+      };
+    })()`);
+    assert(footerDirect.tabs === 0
+      && JSON.stringify(footerDirect.primaryLabels) === JSON.stringify(['상호명', '대표자', '연락처'])
+      && footerDirect.company === '페이지로 QA' && footerDirect.companyVisible
+      && footerDirect.contactClosed && footerDirect.legalClosed && footerDirect.designClosed
+      && footerDirect.hiddenContact && footerDirect.hiddenLegal && footerDirect.hiddenDesign,
+      'D10 footer must expose core business fields and hide other optional groups: ' + JSON.stringify(footerDirect));
+    const footerCompany = '#editor-block-settings-editor-footer .footer-editor-primary .field:first-child input';
+    await setInputValue(client, footerCompany, '페이지로 운영 테스트');
+    await waitForBrowser(client,
+      `document.querySelector('.phone-frame #block-editor-footer strong')?.textContent === '페이지로 운영 테스트'`,
+      'D10 footer company changes in live preview');
+    await setInputValue(client, footerCompany, '페이지로 QA');
+    await waitForBrowser(client,
+      `document.querySelector('.phone-frame #block-editor-footer strong')?.textContent === '페이지로 QA'`,
+      'D10 footer company preview restores without saving');
+    await focusSelector(client, '#editor-block-settings-editor-footer .footer-editor-contact > summary');
+    await pressKeyboardKey(client, 'Enter');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-footer .footer-editor-contact')?.open === true`,
+      'D10 footer optional contact information opens by keyboard');
+    const footerEmail = '#editor-block-settings-editor-footer .footer-editor-contact .field:first-child input';
+    await setInputValue(client, footerEmail, 'qa-footer@example.com');
+    await waitForBrowser(client,
+      `document.querySelector('.phone-frame #block-editor-footer')?.textContent.includes('qa-footer@example.com')`,
+      'D10 footer email live preview');
+    await setInputValue(client, footerEmail, '');
+    await waitForBrowser(client,
+      `!document.querySelector('.phone-frame #block-editor-footer')?.textContent.includes('qa-footer@example.com')`,
+      'D10 footer optional email restores');
+    await clickSelector(client, '#editor-block-settings-editor-footer .footer-editor-legal > summary');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-footer .footer-editor-legal')?.open === true`,
+      'D10 footer legal links open');
+    const footerPrivacy = '#editor-block-settings-editor-footer .footer-editor-legal .field:first-child input';
+    await setInputValue(client, footerPrivacy, 'https://example.com/privacy');
+    await waitForBrowser(client,
+      `!![...document.querySelectorAll('.phone-frame #block-editor-footer button')].find(button => button.textContent === '개인정보처리방침')`,
+      'D10 footer privacy link appears in mobile preview');
+    await setInputValue(client, footerPrivacy, '');
+    await waitForBrowser(client,
+      `![...document.querySelectorAll('.phone-frame #block-editor-footer button')].find(button => button.textContent === '개인정보처리방침')`,
+      'D10 footer privacy link restores');
+    await clickSelector(client, '#editor-block-settings-editor-footer .footer-editor-design > summary');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-footer .footer-editor-design')?.open === true
+      && document.querySelectorAll('#editor-block-settings-editor-footer .footer-editor-design .editor-segmented-v2').length === 2`,
+      'D10 footer alignment/background are accessible on demand');
+    assert(apiState.saveCount === 0, 'D10 footer edits must remain local before publish');
+    await capture(client, 'desktop-footer-direct-stage10');
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')`,
       'D02 fixed navigation settings closed after inspection');
