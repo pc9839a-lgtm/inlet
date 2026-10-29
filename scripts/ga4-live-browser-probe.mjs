@@ -49,7 +49,7 @@ try {
         requests.push({ id:payload.params.requestId, url:url.slice(0,230), resourceType:payload.params.type || '' });
       }
     }
-    if (payload.method === 'Network.responseReceived' && /google-analytics\\.com\\/(?:g\\/)?collect/.test(payload.params.response?.url || '')) responses.push({id:payload.params.requestId,status:payload.params.response.status,url:payload.params.response.url.slice(0,110)});
+    if (payload.method === 'Network.responseReceived' && (payload.params.response?.url || '').includes('google-analytics.com/') && (payload.params.response?.url || '').includes('collect')) responses.push({id:payload.params.requestId,status:payload.params.response.status,url:payload.params.response.url.slice(0,110)});
     if (payload.method === 'Network.loadingFinished') finished.push(payload.params.requestId);
     if (payload.method === 'Network.loadingFailed') failures.push({ id:payload.params.requestId, reason:payload.params.errorText, blocked:payload.params.blockedReason });
     if (payload.method === 'Runtime.exceptionThrown') exceptions.push(payload.params.exceptionDetails?.text || 'exception');
