@@ -15,6 +15,8 @@ const chrome = spawn(browserBinary, [
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const requests = [];
 const failures = [];
+const responses = [];
+const finished = [];
 const exceptions = [];
 let socket = null;
 
@@ -47,6 +49,8 @@ try {
         requests.push({ id:payload.params.requestId, url:url.slice(0,230), resourceType:payload.params.type || '' });
       }
     }
+    if (payload.method === 'Network.responseReceived' && /google-analytics\\.com\\/(?:g\\/)?collect/.test(payload.params.response?.url || '')) responses.push({id:payload.params.requestId,status:payload.params.response.status,url:payload.params.response.url.slice(0,110)});
+    if (payload.method === 'Network.loadingFinished') finished.push(payload.params.requestId);
     if (payload.method === 'Network.loadingFailed') failures.push({ id:payload.params.requestId, reason:payload.params.errorText, blocked:payload.params.blockedReason });
     if (payload.method === 'Runtime.exceptionThrown') exceptions.push(payload.params.exceptionDetails?.text || 'exception');
   });
@@ -76,6 +80,8 @@ try {
   console.log('GA4 JS fetched:',ga4js);
   console.log('GA4 collect requested:',ga4collect);
   console.log('Network:',JSON.stringify(requests));
+  console.log('GA4 collect responses:',JSON.stringify(responses));
+  console.log('GA4 collect completed:',JSON.stringify(responses.map(x=>({id:x.id,completed:finished.includes(x.id)}))));
   console.log('Failures:',JSON.stringify(failures));
   console.log('Exceptions:',JSON.stringify(exceptions.slice(0,12)));
   if(!ga4collect)process.exitCode=1;
