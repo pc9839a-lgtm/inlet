@@ -812,8 +812,11 @@ async function collectDesktopMetrics(client) {
       innerWidth,
       shell: rect(shell),
       left: rect(left),
+      composition: rect(document.querySelector('.editor-composition-panel')),
+      inspector: rect(document.querySelector('.editor-inspector-panel')),
       preview: rect(preview),
       frame: rect(frame),
+      frameContentWidth: frame?.clientWidth || 0,
       header: rect(header),
       workPanel: rect(workPanel),
       topTabs: rect(topTabs),
@@ -843,6 +846,10 @@ async function collectNarrowDesktopMetrics(client) {
       left: rect(document.querySelector('.work-panel')),
       workPanel: rect(document.querySelector('.work-panel')),
       editLayout: rect(document.querySelector('.edit-layout')),
+      composition: rect(document.querySelector('.editor-composition-panel')),
+      inspector: rect(document.querySelector('.editor-inspector-panel')),
+      frame: rect(document.querySelector('.preview-workspace .phone-frame')),
+      frameContentWidth: document.querySelector('.preview-workspace .phone-frame')?.clientWidth || 0,
       preview: rect(document.querySelector('.preview-workspace')),
       topTabs: rect(document.querySelector('.top-tabs')),
       pageSettings: rect(document.querySelector('.editor-page-settings-button')),
@@ -914,9 +921,13 @@ function assertDesktop(metrics) {
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
-  assert(metrics.left?.width >= 500 && metrics.left?.width <= 702, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
+  assert(metrics.left?.width >= 780 && metrics.left?.width <= 802, `desktop editor should have room for full-size fields: ${metrics.left?.width}px`);
+  assert(metrics.composition?.width >= 216 && metrics.composition?.width <= 226, `desktop composition must stay compact: ${metrics.composition?.width}px`);
+  assert(metrics.inspector?.width >= 550, `desktop selected settings must remain readable: ${metrics.inspector?.width}px`);
+  assert(metrics.composition?.right <= metrics.inspector?.left + 2, 'desktop list and inspector overlap');
   assert(metrics.preview?.width >= 500, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
-  assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 434, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
+  assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 394 && Math.abs(metrics.frameContentWidth - 390) <= 1,
+    `desktop 390px preview content must remain exact: ${JSON.stringify({ frame: metrics.frame, contentWidth: metrics.frameContentWidth })}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
@@ -936,6 +947,14 @@ function assertNarrowDesktop(metrics, width) {
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (width >= 900 ? 2 : 1), `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
   assert(metrics.workPanel?.width >= (width >= 900 ? 500 : width - 4), `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
   assert(metrics.editLayout?.width >= (width >= 900 ? 480 : width - 48), `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
+  if (width >= 900) {
+    const minInspector = width >= 1180 ? 480 : width >= 1024 ? 340 : 310;
+    assert(metrics.inspector?.width >= minInspector, `selected settings are cramped at ${width}px: ${JSON.stringify({ composition: metrics.composition, inspector: metrics.inspector })}`);
+    assert(metrics.composition?.width <= 224 && metrics.composition?.width >= 174, `composition takes too much editing space at ${width}px: ${metrics.composition?.width}px`);
+    assert(metrics.composition?.right <= metrics.inspector?.left + 2, `composition overlaps the inspector at ${width}px`);
+    assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 394 && Math.abs(metrics.frameContentWidth - 390) <= 1,
+      `390px phone content must stay exact at ${width}px: ${JSON.stringify({ frame: metrics.frame, contentWidth: metrics.frameContentWidth })}`);
+  }
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
 }
 
