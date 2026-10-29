@@ -45,3 +45,17 @@ jobs:
               print('::error::HTTP probe failed: '+repr(e))
               sys.exit(1)
           PY
+
+  browser:
+    name: GA4 Chrome network collection
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check live PageRo browser GA4 collection
+        env:
+          PROBE_URL: https://pagero.kr/
+        run: node scripts/ga4-live-browser-probe.mjs
