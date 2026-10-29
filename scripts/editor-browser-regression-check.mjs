@@ -1390,9 +1390,9 @@ async function run() {
       return { outline: style.outlineWidth, shadow: style.boxShadow,
         badge: getComputedStyle(block, '::after').display };
     })()`);
-    assert(canvasSelectionStyle.outline === '1px' && canvasSelectionStyle.shadow === 'none'
+    assert(canvasSelectionStyle.outline === '2px' && canvasSelectionStyle.shadow === 'none'
       && canvasSelectionStyle.badge === 'none',
-      'canvas selection must use a thin outline without a covering badge: ' + JSON.stringify(canvasSelectionStyle));
+      'mobile block selection must use a clear 2px outline without a covering badge: ' + JSON.stringify(canvasSelectionStyle));
 
 
     await focusSelector(client, heroVisibilitySelector);
