@@ -88,7 +88,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-title > .screen-o
 
 /* Persistent composition beside the selected editor, both in the left workspace. */
 html body #root .builder-shell.canvas-editor-shell .edit-layout {
-  grid-template-columns: var(--editor-composition-width, clamp(230px, 36%, 256px)) minmax(0, 1fr) !important;
+  grid-template-columns: clamp(176px, 18vw, 256px) minmax(0, 1fr) !important;
   align-items: start;
   gap: 0 !important;
   min-height: 100%;
@@ -116,6 +116,77 @@ html body #root .editor-composition-panel .fixed-add-dock.open .add-panel {
     overscroll-behavior-y: auto;
   }
 }
-@media (min-width: 900px) and (max-width: 1050px) {
-  .canvas-editor-shell { --editor-composition-width: 220px; }
+
+/* Mobile-only block studio: navigation left, selected block in the middle.
+   The whole left workspace keeps ONE scroll owner (.work-panel). */
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel {
+  padding: 20px 12px 32px;
+  background: #f8faff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 6px 12px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 {
+  margin: 0;
+  color: #17253e;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: -.035em;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading span {
+  flex: 0 0 auto;
+  color: #7c899d;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel > .editor-page-settings-button {
+  min-height: 42px !important;
+  margin: 0 0 12px !important;
+  padding: 9px 12px !important;
+  border: 1px solid #e1e7f1 !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  color: #334155 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel > .editor-page-settings-button:is(:hover, [aria-pressed='true']) {
+  border-color: #bcd0fc !important;
+  background: #e9f0ff !important;
+  color: #1d4ed8 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
+  padding: 26px clamp(18px, 2.6vw, 42px) 64px;
+  border-left: 1px solid #e5eaf3;
+  background: #fff;
+}
+html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings-header {
+  padding: 0 0 22px;
+  margin: 0 0 18px;
+  border-bottom: 1px solid #e8edf5;
+}
+html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings-title h2 {
+  color: #17253e;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -.04em;
+}
+html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings .block-editor-v2.block-editor {
+  gap: 22px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings :is(.editor-section-v2-body, .editor-tabs-v2-panel) {
+  gap: 16px;
+}
+@media (min-width: 900px) and (max-width: 1100px) {
+  html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel { padding: 18px 14px 48px; }
+  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel { padding: 16px 8px 24px; }
+  html body #root .builder-shell.canvas-editor-shell .screen-order-v2-settings-title h2 { font-size: 21px; }
 }
