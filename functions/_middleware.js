@@ -1,3 +1,4 @@
+import { injectPortfolioGa4 } from './lib/portfolioGa4.js';
 import { handlePublicOgImageRequest, injectPublicPageMeta } from './lib/publicPageMeta.js';
 
 const RUNTIME_RECOVERY_QUERY_KEYS = ['__fresh', '__runtime', '__runtimefix', '__hardreset'];
@@ -397,7 +398,7 @@ export async function onRequest(context) {
   }
 
   if (url.hostname === 'call.pagero.kr' || url.hostname === 'calltag.pagero.kr') {
-    return handleCalltagRequest(context, url);
+    return injectPortfolioGa4(context, url, await handleCalltagRequest(context, url));
   }
 
   const publicOgImageResponse = await handlePublicOgImageRequest(context, url);
@@ -407,11 +408,11 @@ export async function onRequest(context) {
   if (runtimeAssetResponse) return runtimeAssetResponse;
 
   const pageroSpaResponse = await handlePageroSpaShell(context, url);
-  if (pageroSpaResponse) return pageroSpaResponse;
+  if (pageroSpaResponse) return injectPortfolioGa4(context, url, pageroSpaResponse);
 
   const customDomainResponse = await handleCustomDomain(context, url);
   if (customDomainResponse) return customDomainResponse;
 
   const response = await context.next();
-  return injectPublicPageMeta(context, url, response);
+  return injectPortfolioGa4(context, url, await injectPublicPageMeta(context, url, response));
 }
