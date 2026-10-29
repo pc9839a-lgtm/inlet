@@ -29,6 +29,19 @@ for(const resource of referencePaths){
   assert(fs.existsSync(file), 'Hub linked to missing static file '+file);
   assert(read(file).includes('href="/guide/"'), 'Resource lacks hub backlink '+file);
 }
+
+const detailedManuals = ["getting-started","editor-overview","contact-form","preview-publish","inbox-management","analytics","seo-tracking","troubleshooting"];
+for(const slug of detailedManuals){
+  const file = 'public/guide/'+slug+'/index.html';
+  const article=read(file);
+  assert(article.includes('<section id="deep-dive"'), 'Detailed how-to section missing: '+slug);
+  assert(article.includes('class="manual-route"'), 'Actual menu path missing: '+slug);
+  assert(article.includes('<a href="#deep-dive">'), 'In-page jump link missing: '+slug);
+  assert((article.match(/class="manual-work-block"/g)||[]).length>=3,'Need 3+ practical labs: '+slug);
+  assert((article.match(/<tr>/g)||[]).length>=4,'Need real settings matrix: '+slug);
+  assert(article.includes('<link rel="canonical" href="https://pagero.kr/guide/'+slug+'/">'),'Canonical missing: '+slug);
+}
+
 const structuredScripts=[...guide.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
 assert.equal(structuredScripts.length,1,'Use one valid JSON-LD graph');
 const data=JSON.parse(structuredScripts[0][1]);
