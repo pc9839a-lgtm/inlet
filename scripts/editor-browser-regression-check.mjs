@@ -843,6 +843,9 @@ async function collectNarrowDesktopMetrics(client) {
       left: rect(document.querySelector('.work-panel')),
       workPanel: rect(document.querySelector('.work-panel')),
       editLayout: rect(document.querySelector('.edit-layout')),
+      composition: rect(document.querySelector('.editor-composition-panel')),
+      inspector: rect(document.querySelector('.editor-inspector-panel')),
+      frameContentWidth: document.querySelector('.preview-workspace .phone-frame')?.clientWidth || 0,
       preview: rect(document.querySelector('.preview-workspace')),
       topTabs: rect(document.querySelector('.top-tabs')),
       pageSettings: rect(document.querySelector('.editor-page-settings-button')),
@@ -914,8 +917,8 @@ function assertDesktop(metrics) {
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
-  assert(metrics.left?.width >= 500 && metrics.left?.width <= 702, `desktop editor pane is too narrow: ${metrics.left?.width}px`);
-  assert(metrics.preview?.width >= 500, `desktop preview pane became too narrow: ${metrics.preview?.width}px`);
+  assert(metrics.left?.width >= 900 && metrics.left?.width <= 1182, `desktop mobile-block studio has insufficient editing space: ${metrics.left?.width}px`);
+  assert(metrics.preview?.width >= 420 && metrics.preview?.width <= 550, `desktop single-phone preview column is incorrect: ${metrics.preview?.width}px`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 434, `desktop phone frame width is invalid: ${metrics.frame?.width}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
@@ -936,6 +939,12 @@ function assertNarrowDesktop(metrics, width) {
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (width >= 900 ? 2 : 1), `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
   assert(metrics.workPanel?.width >= (width >= 900 ? 500 : width - 4), `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
   assert(metrics.editLayout?.width >= (width >= 900 ? 480 : width - 48), `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
+  if (width >= 900) {
+    const minimumInspector = width >= 1180 ? 470 : width >= 1024 ? 350 : 300;
+    assert(metrics.inspector?.width >= minimumInspector, `selected widget editor too narrow at ${width}px: ${JSON.stringify(metrics.inspector)}`);
+    assert(metrics.composition?.width >= 174 && metrics.composition?.width <= 258, `block composition width drifted at ${width}px: ${JSON.stringify(metrics.composition)}`);
+    assert(Math.abs(metrics.frameContentWidth - 390) <= 1, `single mobile preview content must stay 390px at ${width}px: ${metrics.frameContentWidth}px`);
+  }
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
 }
 
@@ -1849,11 +1858,11 @@ async function run() {
       };
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
-      && stageOneList.gap === '0px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '0px' && stageOneList.height >= 44
+      && stageOneList.gap === '6px' && stageOneList.rowBorder === '1px'
+      && stageOneList.rowRadius === '9px' && stageOneList.height >= 54
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
-      'stage 1 list must retain flat rows and visible action controls after settings navigation: ' + JSON.stringify(stageOneList));
+      'block studio must show card rows with visible keyboard and pointer controls: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
       && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
@@ -2580,8 +2589,8 @@ async function run() {
     assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '0px' && screenOrderShellStyle?.rowBorder === '0px', `screen order rows must remain a simple list: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.addBackground === 'rgb(17, 24, 39)', `block add trigger must keep the original dark style: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '9px' && screenOrderShellStyle?.rowBorder === '1px', `block studio rows must be distinct, compact cards: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.addBackground === 'rgb(37, 99, 235)', `block add action should be clearly visible: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 1180) {
         await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
