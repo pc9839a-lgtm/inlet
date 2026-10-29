@@ -20,8 +20,9 @@ assert(guide.includes('<meta name="robots" content="index,follow'), 'Guide hub m
 assert(/<meta name="description" content="[^"]{65,}"/.test(guide),'Nontrivial description needed');
 assert((guide.match(/<tr>/g)||[]).length>=4,'Diagnostic comparison must offer actual decision steps');
 assert(guide.includes('증상부터 찾는 빠른 진단표'));
+assert((guide.match(/class="card manual-card"/g)||[]).length>=15, 'Official hub must list the 15 product manuals');
 assert(guide.includes('adsense-account') && !guide.includes('개별 광고 계정의 성과를 보장합니다'));
-assert(sitemap.includes('<loc>https://pagero.kr/guide/</loc><lastmod>2026-10-26</lastmod>'));
+assert(sitemap.includes('<loc>https://pagero.kr/guide/</loc><lastmod>2026-10-29</lastmod>'));
 for(const resource of referencePaths){
   assert(guide.includes('href="/'+resource+'"'), 'Hub must link existing resource: '+resource);
   const file='public/'+resource+'index.html';
