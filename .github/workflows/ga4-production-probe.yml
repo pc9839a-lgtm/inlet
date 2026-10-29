@@ -47,9 +47,18 @@ jobs:
           PY
 
   browser:
-    name: GA4 Chrome network collection
+    name: GA4 Chrome - ${{ matrix.site.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        site:
+          - { name: pagero, url: 'https://pagero.kr/' }
+          - { name: peopleent, url: 'https://peopleent.pagero.kr/' }
+          - { name: calltag, url: 'https://calltag.pagero.kr/' }
+          - { name: boheomplay, url: 'https://boheomplay.pagero.kr/' }
+          - { name: vowday, url: 'https://vowday.pagero.kr/' }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -57,5 +66,5 @@ jobs:
           node-version: 24
       - name: Check live PageRo browser GA4 collection
         env:
-          PROBE_URL: https://pagero.kr/
+          PROBE_URL: ${{ matrix.site.url }}
         run: node scripts/ga4-live-browser-probe.mjs
