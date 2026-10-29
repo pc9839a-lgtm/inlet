@@ -32,6 +32,7 @@ export default function BottomBarBasicSection({ count, buttons, page, onCountCha
           />
         )}
         canRemove={() => false}
+        defaultOpenFirst
       />
     </>
   );
