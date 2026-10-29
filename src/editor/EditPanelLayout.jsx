@@ -53,6 +53,10 @@ export function EditPanelLayout({
   return (
     <div className="edit-layout" data-editor-layout="left-persistent">
       <aside className="editor-composition-panel" aria-label="구성">
+        <div className="editor-composition-heading">
+          <h2>블록 구성</h2>
+          <span>{screenOrderListProps?.normalBlocks?.length || 0}개</span>
+        </div>
         <button
           className="editor-page-settings-button"
           type="button"
