@@ -1641,8 +1641,52 @@ async function run() {
     assert(fixedAdvancedState && !fixedAdvancedState.open
       && fixedAdvancedState.last && fixedAdvancedState.hidden,
       `D02 fixed editor anchor must be hidden after its content: ${JSON.stringify(fixedAdvancedState)}`);
-    await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-topnav .editor-tabs-v2-list')`, 'stage4 fixed-block lazy controls loaded');
-    await clickButtonByText(client, '#editor-block-settings-editor-topnav .editor-tabs-v2-list', '스타일');
+    // D08 top navigation: logo and menu names are editable at the same time,
+    // while appearance stays collapsed until intentionally requested.
+    await waitForBrowser(client,
+      `!!document.querySelector('#editor-block-settings-editor-topnav .topnav-editor-flow')`,
+      'D08 top navigation direct editor lazy-loaded');
+    const topnavDirectState = await evaluate(client, `(() => {
+      const panel = document.querySelector('#editor-block-settings-editor-topnav');
+      const flow = panel?.querySelector('.topnav-editor-flow');
+      const design = flow?.querySelector('.topnav-editor-design');
+      const toggle = design?.querySelector('.editor-toggle-row-v2 [role="switch"]');
+      return {
+        direct: !!flow,
+        duplicateTabs: panel?.querySelectorAll('.editor-tabs-v2-list').length,
+        logoText: flow?.querySelector('.topnav-editor-logo .editor-field-v2 input')?.value,
+        menuRows: flow?.querySelectorAll('.topnav-editor-menus .topnav-menu-card').length,
+        menuTitle: flow?.querySelector('.topnav-editor-menus > h3')?.textContent,
+        designClosed: design?.open === false,
+        designHidden: toggle?.getClientRects().length === 0,
+      };
+    })()`);
+    assert(topnavDirectState.direct && topnavDirectState.duplicateTabs === 0
+      && topnavDirectState.logoText === 'QA' && topnavDirectState.menuRows === 2
+      && topnavDirectState.menuTitle === '메뉴' && topnavDirectState.designClosed
+      && topnavDirectState.designHidden,
+      'D08 top navigation must show logo/menu directly and hide design until requested: ' + JSON.stringify(topnavDirectState));
+    await clickSelector(client, '#editor-block-settings-editor-topnav .topnav-menu-card:first-child > summary');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-topnav .topnav-menu-card:first-child')?.open === true`,
+      'D08 first navigation menu expands in the direct flow');
+    const topnavFirstMenuName = '#editor-block-settings-editor-topnav .topnav-menu-card:first-child .editor-field-v2-control input';
+    await setInputValue(client, topnavFirstMenuName, '서비스 소개');
+    await waitForBrowser(client,
+      `document.querySelector('.phone-frame #block-editor-topnav .top-menu-label')?.textContent === '서비스 소개'`,
+      'D08 menu name live preview updates without entering another tab');
+    await setInputValue(client, topnavFirstMenuName, '소개');
+    await waitForBrowser(client,
+      `document.querySelector('.phone-frame #block-editor-topnav .top-menu-label')?.textContent === '소개'`,
+      'D08 existing menu name restores in preview');
+    await clickSelector(client, '#editor-block-settings-editor-topnav .topnav-menu-card:first-child > summary');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-topnav .topnav-menu-card:first-child')?.open === false`,
+      'D08 menu disclosure closes without losing the selected top navigation');
+    await clickSelector(client, '#editor-block-settings-editor-topnav .topnav-editor-design > summary');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-topnav .topnav-editor-design')?.open === true`,
+      'D08 optional top navigation design options expand');
     const stageFourToggle = '#editor-block-settings-editor-topnav .editor-toggle-row-v2 [role="switch"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourToggle)})`, 'stage4 fixed-block switch');
     const stageFourToggleBefore = await evaluate(client, `(() => {
