@@ -38,7 +38,7 @@
     (() => {
       const hostname = window.location.hostname.toLowerCase();
       const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
-      const platformRoute = pathname === '/' || /^\/(?:about|contact|guide|tools|login|signup|privacy|terms)(?:\/|$)/.test(pathname);
+      const platformRoute = pathname === '/' || /^\/(?:about|contact|guide|tools|life|login|signup|privacy|terms)(?:\/|$)/.test(pathname);
       if (!['pagero.kr', 'www.pagero.kr'].includes(hostname) || !platformRoute) return;
       const measurementId = 'G-501Z526B8H';
       window.dataLayer = window.dataLayer || [];
