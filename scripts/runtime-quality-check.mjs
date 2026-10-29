@@ -506,8 +506,17 @@ assert(widgetStyleEditors.filter((source) => !source.includes('export default fu
                     && source.includes('className="bottom-bar-editor-design"')
                     && source.includes('<BottomBarStylePanel')
                     && !source.includes('<EditorTabs')
-                  : source.includes("label: '스타일'")),
-  'registered editors must expose reachable style controls; bottom bar and top navigation use direct flows too');
+                  : source.includes('export default function FooterEditor')
+                    ? source.includes('className="footer-editor-flow"')
+                      && source.includes('<FooterBusinessSection')
+                      && source.includes('className="footer-editor-contact"')
+                      && source.includes('<FooterContactSection')
+                      && source.includes('className="footer-editor-legal"')
+                      && source.includes('<FooterLegalSection')
+                      && source.includes('className="footer-editor-design"')
+                      && source.includes('<FooterStylePanel') && !source.includes('<EditorTabs')
+                    : source.includes("label: '스타일'")),
+  'registered editors must expose reachable style controls; bottom bar, footer and top navigation use direct flows');
 assert(widgetStylePanels.includes('function AlignmentControl') && !widgetStylePanels.includes('WidgetSurfaceControls') && !widgetStylePanels.includes('label="배경 직접 지정"') && !widgetStylePanels.includes('label="그림자 추가"') && !widgetStylePanels.includes('label="위아래 여백"') && !widgetStylePanels.includes('label="모서리"'), 'widget style panels must omit redundant shared surface controls');
 assert(!widgetStylePanels.includes('label="제목 굵게"') && !widgetStylePanels.includes('label="제목 밑줄"') && !widgetStylePanels.includes('<ToggleRow label="굵게"') && !widgetStylePanels.includes('<ToggleRow label="밑줄"'), 'hero and text style panels must omit emphasis controls duplicated by rich text editing');
 assert(widgetStylePanels.includes('label="직접 색상"') && widgetStylePanels.includes("buttonColorMode: value ? 'custom' : 'theme'"), 'bottom bar direct color mode must use one concise toggle');
