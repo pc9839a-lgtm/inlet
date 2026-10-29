@@ -1,0 +1,47 @@
+name: GA4 production presence check
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ga4-production-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    name: GA4 source - ${{ matrix.site.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        site:
+          - { name: pagero, url: 'https://pagero.kr/' }
+          - { name: life, url: 'https://pagero.kr/life/' }
+          - { name: peopleent, url: 'https://peopleent.pagero.kr/' }
+          - { name: calltag, url: 'https://calltag.pagero.kr/' }
+          - { name: boheomplay, url: 'https://boheomplay.pagero.kr/' }
+          - { name: vowday, url: 'https://vowday.pagero.kr/' }
+    steps:
+      - name: Check live production HTML for GA4 tracking ID
+        env:
+          URL: ${{ matrix.site.url }}
+        run: |
+          python3 - <<'PY'
+          import os,sys,urllib.request
+          u=os.environ['URL']
+          req=urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0 (GA4 Live Audit; +https://pagero.kr/)', 'Cache-Control':'no-cache'})
+          try:
+              with urllib.request.urlopen(req, timeout=24) as resp:
+                  b=resp.read().decode('utf-8','replace')
+                  print('URL:',resp.url)
+                  print('HTTP:',resp.status)
+                  print('Content bytes:',len(b))
+                  print('GA4 ID present:', 'G-501Z526B8H' in b)
+                  print('CSP:',resp.headers.get('content-security-policy','none')[:300])
+                  if 'G-501Z526B8H' not in b:
+                      print('::error::Live HTML lacks GA4 measurement ID G-501Z526B8H')
+                      sys.exit(1)
+          except Exception as e:
+              print('::error::HTTP probe failed: '+repr(e))
+              sys.exit(1)
+          PY
