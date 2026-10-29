@@ -42,6 +42,25 @@ for(const slug of detailedManuals){
   assert(article.includes('<link rel="canonical" href="https://pagero.kr/guide/'+slug+'/">'),'Canonical missing: '+slug);
 }
 
+
+const searchIndex=JSON.parse(read('public/guide/search-index.json'));
+assert.equal(searchIndex.documents.length,15,'Full-text index must cover 15 official guides');
+assert.equal(new Set(searchIndex.documents.map(doc=>doc.path)).size,15,'Index URLs must be unique');
+for(const doc of searchIndex.documents){
+  assert(doc.body.length>500, 'Missing substantive text: '+doc.slug);
+  const article=read('public/guide/'+doc.slug+'/index.html');
+  assert(article.includes('class="manual-faq"'), 'FAQ section missing: '+doc.slug);
+  assert((article.match(/<details>/g)||[]).length>=2,'Require 2+ concrete FAQ entries: '+doc.slug);
+}
+assert(guide.includes('src="/guide/help-center.js"'),'Search script missing');
+assert(guide.includes('id="manual-results"'),'Result region missing');
+assert((guide.match(/data-guide-doc/g)||[]).length===15,'Avoid duplicate manual cards');
+assert((guide.match(/data-guide-filter/g)||[]).length===6,'All six topic filters are required');
+const {rankManuals}=await import('../public/guide/search-core.mjs');
+assert(rankManuals(searchIndex.documents,'중복 접수').some(d=>d.slug==='contact-form'),'Must find settings inside text');
+assert(rankManuals(searchIndex.documents,'엑셀').some(d=>d.slug==='inbox-management'),'Must find CSV via common synonym');
+assert.equal(rankManuals(searchIndex.documents,'완전히없는검색문자열xyz').length,0);
+
 const structuredScripts=[...guide.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
 assert.equal(structuredScripts.length,1,'Use one valid JSON-LD graph');
 const data=JSON.parse(structuredScripts[0][1]);
