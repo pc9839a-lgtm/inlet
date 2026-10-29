@@ -1804,8 +1804,8 @@ async function run() {
         accessibleName: row.getAttribute('aria-label'),
       } : null;
     })()`);
-    assert(heroRowIdentity?.name === updatedHeroTitle
-      && heroRowIdentity.detail === '히어로'
+    assert(heroRowIdentity?.name === '히어로'
+      && heroRowIdentity.detail === updatedHeroTitle
       && heroRowIdentity.accessibleName.includes(updatedHeroTitle),
       `D03 hero row should identify its live title: ${JSON.stringify(heroRowIdentity)}`);
 
@@ -1969,15 +1969,15 @@ async function run() {
       accessibleName: row.querySelector('.screen-order-v2-title-wrap')?.getAttribute('aria-label'),
     })))()`);
     assert(repeatedText.length === 2 && repeatedText[0].id !== repeatedText[1].id
-      && repeatedText[0].detail === '텍스트 1' && repeatedText[1].detail === '텍스트 2'
-      && repeatedText.every((row) => row.label === '편집기 회귀 방지'
+      && repeatedText[0].label === '텍스트 1' && repeatedText[1].label === '텍스트 2'
+      && repeatedText.every((row) => row.detail === '편집기 회귀 방지'
         && row.accessibleName?.includes(row.label) && row.accessibleName?.includes(row.detail)),
       `D03 repeated block identity must remain distinct and accessible: ${JSON.stringify(repeatedText)}`);
     await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
     await waitForBrowser(client, `(() => {
       const rows = document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item[data-block-type="text"]');
-      return rows.length === 1 && rows[0].querySelector('.screen-order-v2-identity-copy strong')?.textContent === '편집기 회귀 방지'
-        && rows[0].querySelector('.screen-order-v2-identity-detail')?.textContent === '텍스트';
+      return rows.length === 1 && rows[0].querySelector('.screen-order-v2-identity-copy strong')?.textContent === '텍스트'
+        && rows[0].querySelector('.screen-order-v2-identity-detail')?.textContent === '편집기 회귀 방지';
     })()`, 'D03 undo duplicate restores singleton label');
     assert(apiState.saveCount === 0, 'D03 row identities must not trigger server saves');
 
