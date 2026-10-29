@@ -33,6 +33,24 @@
       }
     })();
   </script>
+  <!-- PAGERO_GA4_FIRST_PARTY_ONLY: platform marketing routes; exclude customer pages and other services -->
+  <script>
+    (() => {
+      const hostname = window.location.hostname.toLowerCase();
+      const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+      const platformRoute = pathname === '/' || /^\/(?:about|contact|guide|tools|login|signup|privacy|terms)(?:\/|$)/.test(pathname);
+      if (!['pagero.kr', 'www.pagero.kr'].includes(hostname) || !platformRoute) return;
+      const measurementId = 'G-501Z526B8H';
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', measurementId);
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(measurementId);
+      document.head.appendChild(script);
+    })();
+  </script>
 </head>
 <body>
   <div id="root"></div>
