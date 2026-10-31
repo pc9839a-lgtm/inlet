@@ -1253,7 +1253,7 @@ function App() {
 
     // Public root must show real, indexable product information to every visitor.
     // Login, signup, invitations and protected app routes retain their existing flows.
-    if ((routePath.replace(/\\/+$/, '') || '/') === '/') {
+    if ((routePath.replace(/\/+$/, '') || '/') === '/') {
       return <Suspense fallback={null}><PublicHomeScreen /></Suspense>;
     }
 
