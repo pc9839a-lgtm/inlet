@@ -103,16 +103,19 @@ assert(docsIndex.includes('PAGERO_EDITOR_PRODUCT_DIRECTION_KO.md'), 'docs index 
 assert(docsIndex.includes('PAGERO_INTERNAL_OPTIMIZATION_MASTER_KO.md'), 'docs index must point to current execution master');
 
 const productionRootSource = await readFile('functions/index.js', 'utf8');
+const actualHomeStyles = await readFile('public/home/marketing.css', 'utf8');
 assert(
   productionRootSource.includes('pretendardvariable-dynamic-subset.css')
-    && productionRootSource.includes('font-family: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic"'),
+    && actualHomeStyles.includes('font-family:"Pretendard Variable","Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic"'),
   'production PageRo root must load and explicitly use the Pretendard Korean webfont',
 );
 assert(
-  productionRootSource.includes('.pagero-exact-home .hero-title {')
-    && productionRootSource.includes('font-weight: 900 !important;')
-    && productionRootSource.includes('letter-spacing: -.055em !important;'),
-  'production PageRo hero typography must avoid synthetic 950 weight and over-compressed Korean tracking',
+  productionRootSource.includes('PUBLIC_HOME_MARKUP')
+    && !productionRootSource.includes('C63_HOME_HTML')
+    && actualHomeStyles.includes('.pagero-public-home h1{')
+    && actualHomeStyles.includes('font-weight:850;')
+    && actualHomeStyles.includes('letter-spacing:-.045em;'),
+  'production PageRo hero must use the current readable, non-synthetic Korean typography and real public markup',
 );
 
 console.log(JSON.stringify({

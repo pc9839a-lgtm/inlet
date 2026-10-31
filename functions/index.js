@@ -12,6 +12,8 @@ const HOME_HTML = `<!doctype html>
 <meta name="description" content="페이지로는 모바일 랜딩페이지 제작부터 상담 신청·방문 예약 접수, 접수함과 전환 통계까지 관리할 수 있는 웹 서비스입니다. 실제 사용 설명서와 광고 손익 계산기를 확인하세요.">
 <link rel="canonical" href="https://pagero.kr/">
 <link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css">
 <link rel="stylesheet" href="/home/marketing.css">
 <title>페이지로 | 모바일 랜딩페이지 제작·접수 관리</title>
 <script>
