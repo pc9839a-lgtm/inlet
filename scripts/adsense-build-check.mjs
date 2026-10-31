@@ -18,8 +18,11 @@ const head = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i)?.[1] || '';
 if (!new RegExp(`<meta\\s+name=["']google-adsense-account["']\\s+content=["']ca-pub-${publisher}["']`, 'i').test(head)) {
   throw new Error('AdSense check: publisher account meta missing from root <head>');
 }
-if (!head.includes('pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-' + publisher)) {
-  throw new Error('AdSense check: publisher verification script missing from root <head>');
+if (head.includes('pagead2.googlesyndication.com/pagead/js/adsbygoogle.js')) {
+  throw new Error('AdSense check: global automatic ad loader must not be present on login or editor SPA');
+}
+if (!html.includes('class="pagero-public-home"') || !html.includes('href="/guide/"')) {
+  throw new Error('AdSense check: public homepage must provide real, server-readable product content');
 }
 
 const ads = load('ads.txt');
@@ -36,4 +39,4 @@ if (!load('sitemap.xml').includes('https://pagero.kr/')) {
   throw new Error('AdSense check: root sitemap is missing pagero.kr');
 }
 
-console.log('AdSense build checks passed: root publisher metadata, script, ads.txt, robots and sitemap');
+console.log('AdSense build checks passed: root publisher metadata, public content, ad isolation, ads.txt, robots and sitemap');

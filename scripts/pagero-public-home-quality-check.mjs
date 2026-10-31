@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { PUBLIC_HOME_MARKUP } from '../src/screens/publicHomeMarkup.js';
+import { injectPageroRootSeo } from '../functions/lib/pageroRootSeo.js';
+
+const index=fs.readFileSync('index.html','utf8');
+const app=fs.readFileSync('src/App.jsx','utf8');
+const html=index.match(/<div id="root">([\\s\\S]*?)<\\/div>\\s*<script type="module"/)?.[1];
+assert(html,'Static public homepage fallback missing');
+assert.equal(html,PUBLIC_HOME_MARKUP,'Public marketing content must be byte-identical before and after JS');
+assert(html.includes('href="/signup"')&&html.includes('href="/login"'),'Login and signup must remain available');
+assert(html.includes('href="/guide/"')&&html.includes('href="/tools/lead-calculator/"'),'Public product guides and tools must be accessible');
+assert(html.includes('href="/privacy"')&&html.includes('href="/contact"'),'Trust and contact disclosures required');
+assert((html.match(/<h1\\b/g)||[]).length===1,'Only one visible public home H1');
+assert((html.match(/<h2\\b/g)||[]).length>=5,'Real sections needed, not a login gate');
+assert(!/pagead2\\.googlesyndication\\.com/.test(index),'Do not load auto ads globally in private app routes');
+assert(index.includes('google-adsense-account'),'AdSense ownership verification must remain');
+assert(app.includes('<PublicHomeScreen />'),'Unauthenticated root must render real public homepage');
+assert(app.includes('const requestedAuthView = authRouteMode || authView;'),'Explicit login/signup routes must be preserved');
+assert(app.includes('if (adminRoute)'),'Admin route protections must remain');
+assert(app.includes('if (!workspaceOpen && canUseBuilder && !mobileWorkspace)'),'Authenticated dashboard path must remain');
+const response=await injectPageroRootSeo(new URL('https://pagero.kr/'),new Response(index,{headers:{'content-type':'text/html; charset=utf-8'}}));
+const rendered=await response.text();
+assert(rendered.includes(PUBLIC_HOME_MARKUP),'Edge SEO enrichment must not hide or replace public homepage');
+assert(rendered.includes('<link rel="canonical" href="https://pagero.kr/">'),'Canonical must be correct');
+assert(rendered.includes('href="/guide/"'),'Crawler can discover actual documentation');
+console.log('PASS: visible public marketing, exact static/React parity, protected app, no global ads');
