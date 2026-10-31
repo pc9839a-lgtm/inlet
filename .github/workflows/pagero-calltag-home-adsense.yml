@@ -1,4 +1,4 @@
-name: PageRo CallTag footer and AdSense home integrity
+name: PageRo public home, CallTag and AdSense integrity
 on:
   push:
     branches: [main, fix/pagero-calltag-footer-adsense-home-20261022]
@@ -50,10 +50,10 @@ jobs:
                   request=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 PageRoEditorialNavigationQA','Cache-Control':'no-cache'})
                   with urllib.request.urlopen(request,timeout=13) as r:
                       status=r.status;html=r.read(190000).decode('utf-8','replace')
-                  ok=(status==200 and '콜태그(CallTag)' in html and
+                  ok=(status==200 and 'class="pagero-public-home"' in html and
                       'https://calltag.pagero.kr/' in html and
                       'href="/life/"' in html and
-                      '통화 후 상담 메모' in html and
+                      'href="/guide/"' in html and
                       'name="google-adsense-account"' in html)
                   print('PUBLISHER_NAV',attempt,'http',status,'ok',ok,flush=True)
                   if ok:
@@ -61,6 +61,6 @@ jobs:
                       break
               except Exception as exc:
                   print('RETRY',attempt,type(exc).__name__,str(exc)[:100],flush=True)
-              if attempt==26:raise SystemExit('FAIL: new root footer not deployed or Adsense verification missing')
+              if attempt==26:raise SystemExit('FAIL: public PageRo home not deployed or AdSense verification missing')
               time.sleep(15)
           PY
