@@ -308,7 +308,9 @@ assert(pagesMiddlewareSource.includes('staleJavaScriptRecoveryResponse') && page
 assert(main.includes('root.render(<AppErrorBoundary><MapEmbedApp /></AppErrorBoundary>)'), 'embed root render must stay wrapped in AppErrorBoundary');
 assert(!main.includes('PublicHomeEntry') && !main.includes("import PublicHomeRoute from './screens/PublicHomeRoute.jsx'"), 'root entry must not bypass App with the retired public marketing home');
 assert(!app.includes("import PublicHome from './screens/PublicHomeRoute.jsx'") && !app.includes('<PublicHome '), 'unauthenticated App fallback must not render the retired public marketing home');
-assert(app.includes('key="root-login"') && app.includes('initialMode="login"'), 'unauthenticated root must render the login surface');
+assert(app.includes('<PublicHomeScreen />') && app.includes('const PublicHomeScreen = lazy('), 'unauthenticated PageRo root must render the public content screen');
+assert(app.includes('const requestedAuthView = authRouteMode || authView;') && app.includes('initialMode={requestedAuthView}'), 'explicit login/signup routes must still render the authenticated entry');
+assert(app.includes('key="workspace-login"') && app.includes('initialMode="login"'), 'protected workspace unauthenticated route must retain login');
 assert(main.includes('root.render(<AppErrorBoundary><App /></AppErrorBoundary>)') || (main.includes('<AppErrorBoundary>') && main.includes('<App />')), 'app root render must stay wrapped in AppErrorBoundary');
 assert(app.includes("const InboxPanel = lazy(() => import('./panels/InboxPanel.jsx'))"), 'InboxPanel must stay lazy-loaded');
 assert(app.includes("const StatsPanel = lazy(() => import('./panels/StatsPanel.jsx'))"), 'StatsPanel must stay lazy-loaded');
