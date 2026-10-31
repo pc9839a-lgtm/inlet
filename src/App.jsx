@@ -104,6 +104,7 @@ const AdminPanel = lazy(() => import('./panels/MasterAdminPanel.jsx'));
 const TemplatesPanel = lazy(() => import('./panels/TemplatesPanel'));
 const InviteAcceptScreen = lazy(() => import('./screens/InviteAcceptScreen.jsx'));
 const AuthScreen = lazy(() => import('./screens/AuthScreen.jsx'));
+const PublicHomeScreen = lazy(() => import('./screens/PublicHomeScreen.jsx'));
 const Dashboard = lazy(() => import('./screens/DashboardScreen.jsx'));
 const INBOX_PAGE_SIZE = 10;
 const CHUNK_RELOAD_KEY = 'pagero-chunk-reload-v5';
@@ -1250,13 +1251,15 @@ function App() {
       );
     }
 
+    // Public root must show real, indexable product information to every visitor.
+    // Login, signup, invitations and protected app routes retain their existing flows.
+    if ((routePath.replace(/\/+$/, '') || '/') === '/') {
+      return <Suspense fallback={null}><PublicHomeScreen /></Suspense>;
+    }
+
     return withWayziFooter(
       <Suspense fallback={<LazyPanelFallback />}>
-        <AuthScreen
-          key="root-login"
-          initialMode="login"
-          onAuth={acceptAuth}
-        />
+        <AuthScreen key="workspace-login" initialMode="login" onAuth={acceptAuth} />
       </Suspense>
     );
   }

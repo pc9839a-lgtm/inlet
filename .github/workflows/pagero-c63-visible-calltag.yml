@@ -1,4 +1,4 @@
-name: Check CallTag on ACTUAL C63 public homepage
+name: Check CallTag and LIFE on actual PageRo public homepage
 on:
   pull_request:
     paths:
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check syntax of the frozen C63 bridge
-        run: node --check public/c63-life-bridge.js
-      - name: Verify actual homepage server response and visible-footer insertion
+      - name: Check syntax of real PageRo root function
+        run: node --check functions/index.js
+      - name: Verify actual homepage server response and real service navigation
         run: node scripts/pagero-c63-visible-calltag-quality-check.mjs

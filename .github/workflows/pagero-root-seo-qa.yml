@@ -4,6 +4,14 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'src/App.jsx'
+      - 'src/screens/PublicHomeScreen.jsx'
+      - 'src/screens/publicHomeMarkup.js'
+      - 'public/home/marketing.css'
+      - 'scripts/pagero-public-home-quality-check.mjs'
+      - 'scripts/adsense-build-check.mjs'
+      - 'functions/index.js'
       - 'functions/lib/pageroRootSeo.js'
       - 'functions/lib/publicPageMeta.js'
       - 'scripts/validate-pagero-root-seo.mjs'
@@ -11,6 +19,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'functions/index.js'
       - 'functions/lib/pageroRootSeo.js'
       - 'functions/lib/publicPageMeta.js'
       - 'scripts/validate-pagero-root-seo.mjs'
@@ -35,4 +44,6 @@ jobs:
           node --check functions/lib/pageroRootSeo.js
           node --check functions/lib/publicPageMeta.js
       - name: Validate root SEO transformer
-        run: node scripts/validate-pagero-root-seo.mjs
+        run: |
+          node scripts/validate-pagero-root-seo.mjs
+          node scripts/pagero-public-home-quality-check.mjs

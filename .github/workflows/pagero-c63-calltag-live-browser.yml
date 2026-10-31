@@ -1,4 +1,4 @@
-name: Verify ACTUAL visible CallTag on published C63 homepage
+name: Verify live PageRo public marketing and related service links
 on:
   workflow_run:
     workflows: ["Deploy Cloudflare Pages"]
@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
-      - name: Verify real C63 bundle and cache-busted bridge served to browsers
+      - name: Verify real public product homepage and secondary services
         shell: bash
         run: |
           python - <<'PY'
@@ -28,38 +28,36 @@ jobs:
           for trial in range(1,16):
               req=urllib.request.Request('https://pagero.kr/',headers={'User-Agent':'Mozilla/5.0','Cache-Control':'no-cache'})
               with urllib.request.urlopen(req,timeout=15) as r:html=r.read(250000).decode('utf-8','replace')
-              if 'c63-life-bridge.js?v=calltag-20261022' in html and 'c63-life-bridge.css?v=calltag-20261022' in html:
-                  print('PASS: root HTML serves new versioned bridge assets, trial',trial)
+              ok=('class="pagero-public-home"' in html and 'href="/guide/"' in html and
+                  'href="/life/"' in html and 'https://calltag.pagero.kr/' in html and
+                  'name="google-adsense-account"' in html and 'c63-assets/' not in html)
+              if ok:
+                  print('PASS: live root is new public marketing page, trial',trial)
                   break
-              if trial==15:raise SystemExit('FAIL: production has old C63 bridge')
+              if trial==15:raise SystemExit('FAIL: canonical public product homepage is not deployed')
               time.sleep(10)
-          req=urllib.request.Request('https://pagero.kr/c63-life-bridge.js?v=calltag-20261022',headers={'User-Agent':'Mozilla/5.0'})
-          with urllib.request.urlopen(req,timeout=15) as r:js=r.read(30000).decode('utf-8','replace')
-          assert "section.className = 'c63-calltag-bridge'" in js
-          assert "ensureLink(footerLinks, 'https://calltag.pagero.kr/', '콜태그')" in js
-          print('PASS: live JS contains actual C63 CallTag footer and section insertion')
           PY
       - name: Run real Chrome browser - desktop and mobile rendered DOM
         shell: bash
         env:
           INLET_BROWSER_QA_URL: https://pagero.kr/
           INLET_BROWSER_QA_REQUIRE: '1'
-          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='https://calltag.pagero.kr/']"
-          INLET_BROWSER_QA_EXPECT_TEXT: "문의가 오면,그다음 관리까지,신규 고객 알림,안내 문자 자동화"
-          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-calltag-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|visibility|visible"
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-public-home .ph-hero,.pagero-public-home .ph-footer a[href='https://calltag.pagero.kr/'],.pagero-public-home .ph-footer a[href='/life/']"
+          INLET_BROWSER_QA_EXPECT_TEXT: "페이지는 직접 만들고,문의는 한곳에서 확인하세요.,페이지로 공식 설명서 전체 보기"
+          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-public-home .ph-hero|display|block;.pagero-public-home .ph-footer|display|block"
         run: |
           export INLET_BROWSER_QA_CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
           if [ -z "$INLET_BROWSER_QA_CHROME_PATH" ]; then echo 'Chrome not found'; exit 1; fi
           for viewport in desktop mobile; do
             export INLET_BROWSER_QA_VIEWPORTS="$viewport"
-            export INLET_BROWSER_QA_SCREENSHOT_DIR=".tmp-c63-calltag-$viewport"
+            export INLET_BROWSER_QA_SCREENSHOT_DIR=".tmp-pagero-public-home-$viewport"
             node scripts/browser-visual-quality-check.mjs
           done
       - name: Preserve real browser screenshots and QA logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pagero-c63-calltag-live-browser
-          path: .tmp-c63-calltag-*/
+          name: pagero-public-home-live-browser
+          path: .tmp-pagero-public-home-*/
           if-no-files-found: ignore
           retention-days: 7
