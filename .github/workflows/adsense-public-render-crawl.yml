@@ -57,18 +57,18 @@ jobs:
           INLET_BROWSER_QA_URL: https://pagero.kr/
           INLET_BROWSER_QA_REQUIRE: '1'
           INLET_BROWSER_QA_VIEWPORTS: desktop
-          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-life-post,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='/life/']"
-          INLET_BROWSER_QA_EXPECT_TEXT: "생활에 필요한 정보,생활정보 전체보기,문의가 오면"
-          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-life-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|display|block"
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-public-home .ph-hero,.pagero-public-home .ph-link-list a,.pagero-public-home .ph-tool-row,.pagero-public-home .ph-footer a[href='/guide/']"
+          INLET_BROWSER_QA_EXPECT_TEXT: "페이지는 직접 만들고,문의는 한곳에서 확인하세요.,상담 폼 설정하기"
+          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-public-home .ph-hero|display|block;.pagero-public-home .ph-link-list|display|block"
         run: node scripts/browser-visual-quality-check.mjs
       - name: Verify hydrated, publicly visible home (mobile)
         env:
           INLET_BROWSER_QA_URL: https://pagero.kr/
           INLET_BROWSER_QA_REQUIRE: '1'
           INLET_BROWSER_QA_VIEWPORTS: mobile
-          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-life-post,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='/life/']"
-          INLET_BROWSER_QA_EXPECT_TEXT: "생활에 필요한 정보,생활정보 전체보기,문의가 오면"
-          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-life-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|display|block"
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-public-home .ph-hero,.pagero-public-home .ph-link-list a,.pagero-public-home .ph-tool-row,.pagero-public-home .ph-footer a[href='/guide/']"
+          INLET_BROWSER_QA_EXPECT_TEXT: "페이지는 직접 만들고,문의는 한곳에서 확인하세요.,상담 폼 설정하기"
+          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-public-home .ph-hero|display|block;.pagero-public-home .ph-link-list|display|block"
         run: node scripts/browser-visual-quality-check.mjs
       - name: Verify LIFE 45-guide editorial archive is visible after rendering
         env:

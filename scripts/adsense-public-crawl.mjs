@@ -91,7 +91,7 @@ got('phase3', 'Checked ads.txt, root publisher, privacy, editorial policy, legac
 
 if (root.status !== 200) warn('root_status', root.status);
 if (index.status !== 200) warn('life_index_status', index.status);
-if (!root.html.includes('c63-assets/index-pagero-main-fix-20260615.js')) warn('root_not_actual_c63', 'Frozen production bundle not loaded');
+if (!root.html.includes('class="pagero-public-home"') && root.html.includes('id="ph-home-title"')) warn('root_marketing_fallback', 'Real public PageRo marketing HTML is missing');
 if (!root.html.includes('name="google-adsense-account"')) warn('root_adsense_verification', 'Publisher verification missing');
 if (!root.html.includes('<link rel="canonical" href="https://pagero.kr/"')) warn('root_canonical', 'Main canonical is missing');
 if (!root.html.includes('href="/life/"')) warn('root_life_discovery', 'LIFE publisher hub not discoverable in initial HTML');
