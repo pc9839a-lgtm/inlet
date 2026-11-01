@@ -37,3 +37,10 @@ html body #root .canvas-editor-shell .text-editor-design-controls .color-main { 
 html body #root .canvas-editor-shell .text-editor-design-controls .color-main > input[type='text'] { min-width: 0 !important; width: 100% !important; }
 html body #root .canvas-editor-shell .text-editor-flow .widget-spacing-controls { display: grid; gap: 16px; border: 0; }
 html body #root .canvas-editor-shell .text-editor-flow .widget-spacing-controls > h3 { margin: 0 0 4px; color: #182236; font-size: 15px; font-weight: 650; }
+
+/* Keep editable text and property values legible at the reference viewport. */
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-label strong { color: #182236 !important; font-size: 14px !important; font-weight: 500 !important; }
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-control textarea { min-height: 78px !important; font-size: 16px !important; line-height: 1.6 !important; }
+html body #root .canvas-editor-shell .text-editor-design-controls :is(.editor-control-v2-copy strong,.editor-number-control > label,.color > span) { color: #273249 !important; font-size: 14px !important; font-weight: 500 !important; }
+html body #root .canvas-editor-shell .text-editor-flow .editor-number-value > input { font-size: 15px !important; }
+html body #root .canvas-editor-shell .text-editor-design-controls .color-main > input[type='text'] { font-size: 14px !important; }

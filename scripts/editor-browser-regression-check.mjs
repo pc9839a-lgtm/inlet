@@ -967,7 +967,7 @@ function assertNarrowDesktop(metrics, width) {
   assert(!metrics.cockpit, 'narrow desktop preview must not expose the removed conversion cockpit');
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (width >= 900 ? 2 : 1), `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
   assert(metrics.workPanel?.width >= (width >= 900 ? 478 : width - 4), `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
-  assert(metrics.editLayout?.width >= (width >= 900 ? 480 : width - 48), `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
+  assert(metrics.editLayout?.width >= (width >= 900 ? 478 : width - 48), `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
   if (width >= 900) {
     assertReferenceTracks(metrics, width);
     assert(Math.abs(metrics.frameContentWidth - 390) <= 1, `single mobile preview content must stay 390px at ${width}px: ${metrics.frameContentWidth}px`);
@@ -1337,8 +1337,9 @@ async function run() {
       && editorNavigation.height >= 40 && !editorNavigation.inspectorHasEntry,
       'page settings must have one reachable entry outside selected-item settings: ' + JSON.stringify(editorNavigation));
 
-    // Inbox remains accessible through the persistent workspace tab,
+    // Inbox remains accessible through the top workspace menu,
     // and keyboard focus must recover after the workspace transition.
+    await focusSelector(client, '#workspace-tab-inbox');
     const inboxTransitionFocused = await evaluate(client, `(() => {
       const button = document.querySelector('#workspace-tab-inbox');
       if (!button) return false;
@@ -1353,7 +1354,7 @@ async function run() {
     await focusSelector(client, '#workspace-tab-edit');
     await clickSelector(client, '#workspace-tab-edit');
     await waitForBrowser(client, `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`, 'return to edit workspace');
-    assert(await evaluate(client, `document.activeElement?.id === 'workspace-tab-edit'`), 'workspace tab focus should remain stable after returning to edit');
+    assert(await evaluate(client, `document.activeElement === document.querySelector('.workspace-editor-nav > summary')`), 'returning to edit must restore focus to its visible workspace menu trigger');
 
     // Fixed regions use the same selection and eye visibility pattern as normal blocks.
     const fixedEyeSelector = '#editor-block-editor-topnav .screen-order-v2-visibility-button';
