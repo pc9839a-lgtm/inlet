@@ -1,8 +1,9 @@
 /* Edit shell owner: left editing workspace and right page preview. */
 html body #root .builder-shell.canvas-editor-shell {
   display: grid;
-  /* One true 390px mobile output; remaining width goes to real editing controls. */
-  grid-template-columns: clamp(500px, calc(100vw - 460px), 1180px) minmax(0, 1fr) !important;
+  /* Compact editor: 180px block list + 320px settings. Remaining space
+     is the neutral stage for one 390px mobile page aligned to the right. */
+  grid-template-columns: 500px minmax(0, 1fr) !important;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
 }
