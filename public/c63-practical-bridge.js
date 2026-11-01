@@ -1,9 +1,9 @@
 /* Compact editorial section, preserving the original PageRo C63 hero and navigation. */
 (() => {
   const STEPS = [
-    ['01', '폼 구성', '필요한 질문과 완료 문구를 정합니다.', '/tools/form-planner/', '구성해 보기'],
-    ['02', '페이지 발행', '모바일 화면과 신청 동작을 확인합니다.', '/guide/preview-publish/', '발행 방법'],
-    ['03', '접수 확인', '접수함 기록과 전환 수치를 점검합니다.', '/guide/inbox-management/', '접수함 보기'],
+    ['01', '폼 구성', '필수 질문을 고릅니다.', '/tools/form-planner/', '구성해 보기'],
+    ['02', '페이지 발행', '신청폼을 공개합니다.', '/guide/preview-publish/', '발행 방법'],
+    ['03', '접수 확인', '제출 데이터를 검증합니다.', '/guide/inbox-management/', '접수함 보기'],
   ];
   const RESOURCES = [
     ['/guide/contact-form/', '상담 폼'],
