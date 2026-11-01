@@ -1,32 +1,38 @@
-/* Edit shell owner: left editing workspace and right page preview. */
+/* Editor geometry: persistent block list, selected settings, one live mobile page. */
 html body #root .builder-shell.canvas-editor-shell {
+  --editor-list-width: clamp(200px, 16.5vw, 276px);
+  --editor-settings-width: clamp(320px, 23.5vw, 394px);
+  --editor-edit-width: calc(var(--editor-list-width) + var(--editor-settings-width));
   display: grid;
-  /* Compact editor: 180px block list + 320px settings. Remaining space
-     is the neutral stage for one 390px mobile page aligned to the right. */
-  grid-template-columns: 500px minmax(0, 1fr) !important;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;
+  grid-template-rows: 64px minmax(0, 1fr);
+  height: 100dvh !important;
   min-height: 0;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
 }
 html body #root .canvas-editor-shell > .left-workspace { display: contents !important; }
 html body #root .canvas-editor-shell .work-panel {
   grid-column: 1;
   grid-row: 2;
+  width: 100%;
   max-width: none !important;
   min-height: 0;
   height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-  /* One scroll for composition, selected settings and the expanded add catalog. */
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  overscroll-behavior-y: contain;
-  border-right: 1px solid var(--product-line);
+  overflow: hidden !important;
+  border-right: 1px solid #e7eaf2;
   background: #fff;
+}
+@media (min-width: 900px) and (max-width: 950px) {
+  html body #root .builder-shell.canvas-editor-shell { --editor-list-width: 180px; --editor-settings-width: 300px; }
 }
 /* Desktop zoom keeps both surfaces reachable; phones retain operations mode. */
 @media (max-width: 899px) {
   body:has(.canvas-editor-shell), #root:has(.canvas-editor-shell) { height: auto !important; overflow: auto !important; }
   html body #root .builder-shell.canvas-editor-shell {
+    --editor-list-width: 180px;
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: auto auto auto !important;
     height: auto !important;
@@ -34,5 +40,5 @@ html body #root .canvas-editor-shell .work-panel {
     max-height: none !important;
     overflow: visible !important;
   }
-  html body #root .canvas-editor-shell .work-panel { grid-column: 1; grid-row: 2; height: auto !important; border-left: 0; overflow: visible !important; }
+  html body #root .canvas-editor-shell .work-panel { grid-column: 1; grid-row: 2; height: auto !important; min-height: 640px; overflow: auto !important; }
 }

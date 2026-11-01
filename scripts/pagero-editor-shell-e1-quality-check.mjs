@@ -31,7 +31,7 @@ assert(!layout.includes('CompositionDrawer') && layout.includes('editor-composit
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor') && !screenOrderItem.includes('data-inline-block-editor'), 'block list rows must no longer expand the selected settings inline');
 assert(layout.includes('listOnly selectBlock={chooseBlock}') && !layout.includes('compositionOpen'), 'composition selection must not hide the persistent list');
-assert(layout.includes('<AddBlockDock {...addBlockDockProps} />'), 'section add dock must remain in the left editor');
+assert(layout.includes('<AddBlockDock {...addBlockDockProps} compact />'), 'section add dock must remain in the left editor');
 assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page theme controls must remain available from page options');
 assert(!layout.includes('editor-structure-pane') && !layout.includes('className="editor-inspector-pane"'), 'three-pane editor DOM must not return');
 
@@ -49,9 +49,9 @@ assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-ro
   'fixed areas must use aligned compact rows under FixedBlocksSection.css ownership');
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('grid-template-columns: 500px minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'mobile-only editor must cap the combined block list and inspector at 500px');
-assert(layout.includes('editor-composition-heading') && editPanelLayoutCss.includes('grid-template-columns: 180px minmax(0, 1fr) !important;'), 'block list must stay 180px alongside the compact 320px inspector');
-assert(previewPaneCss.includes('width: 402px !important;') && previewPaneCss.includes('width: 392px !important;') && previewPaneCss.includes('--landing-runtime-width: 390px;') && previewPaneCss.includes('justify-content: flex-end !important;'), 'editor preview must show one 390px mobile page aligned to the right without promotional content');
+assert(css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'reference editor must allocate measured list and settings tracks beside the preview');
+assert(layout.includes('editor-composition-heading') && editPanelLayoutCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;'), 'reference list must use its responsive track alongside independently sized settings');
+assert(previewPaneCss.includes('width: 402px !important;') && previewPaneCss.includes('width: 392px !important;') && previewPaneCss.includes('--landing-runtime-width: 390px;') && previewPaneCss.includes('justify-content: center !important;'), 'editor preview must show one 390px mobile page centered in its own canvas without promotional content');
 assert(addDockCss.includes('/* Active editor dock geometry.')
   && addDockCss.includes('position: static !important;')
   && addDockCss.includes('max-height: none !important;')

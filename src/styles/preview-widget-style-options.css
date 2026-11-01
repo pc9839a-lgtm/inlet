@@ -132,3 +132,8 @@
 .activity-anim-none .activity-live-dot {
   box-shadow: none !important;
 }
+
+/* Explicit text overrides only apply after an owner edits these properties. */
+.landing-section.text[data-custom-title-size] > h2 { font-size: var(--text-title-size) !important; }
+.landing-section.text[data-custom-body-size] > p { font-size: var(--text-body-size) !important; }
+.landing-section.text[data-custom-text-color] > :is(h2,p) { color: var(--text-block-color) !important; }

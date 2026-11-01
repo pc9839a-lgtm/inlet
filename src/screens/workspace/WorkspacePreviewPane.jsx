@@ -1,6 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Maximize2, Smartphone } from 'lucide-react';
 import './WorkspacePreviewPane.css';
 import PreviewRenderer from '../../preview/LandingRenderer.jsx';
+import { PreviewSelectionToolbar } from './PreviewSelectionToolbar.jsx';
+import { notify } from '../../lib/uiFeedback.js';
 
 const PREVIEW_CONTENT_WIDTH = 390;
 
@@ -9,9 +12,15 @@ export function WorkspacePreviewPane({
   leads,
   selectedBlockId,
   onSelectPreviewBlock,
+  blockActions,
 }) {
   const previewRef = useRef(null);
   const frameRef = useRef(null);
+  const [zoom, setZoom] = useState(100);
+  const fullscreen = async () => {
+    try { await frameRef.current?.requestFullscreen(); }
+    catch { notify('전체 화면을 열지 못했습니다.', 'error'); }
+  };
 
   useEffect(() => {
     if (!selectedBlockId || typeof window === 'undefined') return undefined;
@@ -40,11 +49,16 @@ export function WorkspacePreviewPane({
       style={{ '--editor-preview-content-width': `${PREVIEW_CONTENT_WIDTH}px` }}
     >
       <div className="preview-sticky">
+        <div className="preview-stage-toolbar">
         <div className="preview-width-toolbar" aria-label="미리보기 화면 폭" data-preview-width={PREVIEW_CONTENT_WIDTH}>
-          <span>모바일</span>
-          <span className="preview-width-value">{PREVIEW_CONTENT_WIDTH}px</span>
+          <Smartphone size={18} aria-hidden="true" /><span>모바일 <span className="preview-width-value">{PREVIEW_CONTENT_WIDTH}px</span></span>
         </div>
-        <div className="phone-frame" ref={frameRef}>
+        <div className="preview-view-tools">
+          <button type="button" aria-label="미리보기 전체 화면" onClick={fullscreen}><Maximize2 size={18} aria-hidden="true" /></button>
+          <select aria-label="미리보기 배율" value={zoom} onChange={(event) => setZoom(Number(event.target.value))}>{[75, 100, 125].map(value => <option key={value} value={value}>{value}%</option>)}</select>
+        </div>
+        </div>
+        <div className="phone-frame" ref={frameRef} style={{ zoom: zoom / 100 }}>
           <PreviewRenderer
             page={previewPage}
             leads={leads}
@@ -53,6 +67,7 @@ export function WorkspacePreviewPane({
             onSelectBlock={onSelectPreviewBlock}
           />
         </div>
+        <PreviewSelectionToolbar frameRef={frameRef} page={previewPage} selectedBlockId={selectedBlockId} actions={blockActions} zoom={zoom} />
       </div>
     </main>
   );

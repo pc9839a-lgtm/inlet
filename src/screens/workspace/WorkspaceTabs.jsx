@@ -25,7 +25,9 @@ export function WorkspaceTabs({ allowedTabs, tab, changeTab }) {
       || !active.isConnected;
 
     if (focusLost) {
-      tabRefs.current.get(tab)?.focus?.({ preventScroll: true });
+      const menu = tabRefs.current.get(tab)?.closest('details.workspace-editor-nav');
+      if (menu && !menu.open) menu.querySelector('summary')?.focus({ preventScroll: true });
+      else tabRefs.current.get(tab)?.focus?.({ preventScroll: true });
     }
   }, [tab]);
 

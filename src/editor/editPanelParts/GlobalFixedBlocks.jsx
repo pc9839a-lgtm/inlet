@@ -8,7 +8,7 @@ export function GlobalFixedBlocks(props) {
 
   return (
     <>
-      {descriptors.map(({ key, ...cardProps }) => (
+      {descriptors.filter(item => !props.only || props.only.includes(item.key)).map(({ key, ...cardProps }) => (
         <FixedBlockCard key={key} {...cardProps} compositionRow={props.compositionRow} selected={props.selectedId === cardProps.block?.id} />
       ))}
     </>

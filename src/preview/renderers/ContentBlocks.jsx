@@ -83,13 +83,19 @@ export function RenderText({ block }) {
   const size = pickSafe(s.size, ['small','medium','large'], 'medium');
   const title = String(s.title || '').trim();
   const body = String(s.body || '').trim();
+  const customTitleSize = Number.isFinite(s.titleFontSizePx) ? Math.max(12, Math.min(72, s.titleFontSizePx)) : null;
+  const customBodySize = Number.isFinite(s.bodyFontSizePx) ? Math.max(10, Math.min(48, s.bodyFontSizePx)) : null;
+  const customTextColor = /^#[0-9a-f]{6}$/i.test(s.textColor || '') ? s.textColor : null;
 
   return (
     <section
       id={`block-${block.id}`}
       data-text-layout={layout}
+      data-custom-title-size={customTitleSize ? '' : undefined}
+      data-custom-body-size={customBodySize ? '' : undefined}
+      data-custom-text-color={customTextColor ? '' : undefined}
       className={`landing-section text text-${layout} align-${align} text-size-${size} ${s.bold ? 'is-bold' : ''} ${s.underline ? 'is-underline' : ''} ${widgetBoxClass(s)}`}
-      style={widgetBoxVars(s)}
+      style={{ ...widgetBoxVars(s), ...(customTitleSize ? { '--text-title-size': `${customTitleSize}px` } : {}), ...(customBodySize ? { '--text-body-size': `${customBodySize}px` } : {}), ...(customTextColor ? { '--text-block-color': customTextColor } : {}) }}
     >
       {title ? <h2>{rich(title)}</h2> : null}
       {body ? <p>{rich(body)}</p> : null}

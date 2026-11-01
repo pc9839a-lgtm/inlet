@@ -21,6 +21,7 @@ export function ScreenOrderRowActions({
   onMoveDown,
   onDuplicate,
   onRemove,
+  instance = '',
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState(null);
@@ -28,7 +29,7 @@ export function ScreenOrderRowActions({
   const menuRef = useRef(null);
   const previousSelectedRef = useRef(selected);
   const canDuplicate = canDuplicateScreenOrderBlock(block);
-  const menuId = `screen-order-actions-${block.id}`;
+  const menuId = `screen-order-actions-${block.id}${instance ? `-${instance}` : ''}`;
 
   const updateMenuPosition = useCallback(() => {
     const trigger = triggerRef.current;

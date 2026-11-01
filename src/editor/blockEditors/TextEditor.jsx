@@ -21,7 +21,7 @@ export default function TextEditor({ s, set }) {
         value={s.body}
         onChange={(value) => set({ body: value })}
       />
-      <details className="text-editor-design">
+      <details className="text-editor-design" open>
         <summary>디자인<ChevronDown size={16} aria-hidden="true" /></summary>
         <div className="text-editor-design-controls"><TextStylePanel s={s} set={set} /></div>
       </details>

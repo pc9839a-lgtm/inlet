@@ -18,7 +18,6 @@ const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSect
 const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const shareCard = await readFile('src/editor/editPanelParts/ShareOptionsCard.jsx', 'utf8');
 const shareCss = await readFile('src/editor/editPanelParts/ShareOptionsCard.css', 'utf8');
-const screenOrderHeader = await readFile('src/editor/editPanelParts/ScreenOrderListHeader.jsx', 'utf8');
 const screenOrderCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8');
 const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js', 'utf8');
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
@@ -73,8 +72,8 @@ assert(pageOptionsList.includes('AnimationOptionsCard') && pageOptionsList.inclu
 assert(!pageOptionsProps.includes('topNavBlock') && !pageOptionsProps.includes('bottomBlock') && !pageOptionsProps.includes('footerBlock'), 'page option props must stay global-only');
 assert(fixedBlocksProps.includes('topNavBlock: selection.topNavBlock') && fixedBlocksProps.includes('bottomBlock: selection.bottomBlock') && fixedBlocksProps.includes('footerBlock: selection.footerBlock'), 'fixed block props must own top, bottom, and footer editors');
 assert(sectionProps.includes('fixedBlocksProps: createFixedBlocksProps'), 'edit panel section props must expose fixed blocks separately');
-assert(editLayout.includes('<GlobalFixedBlocks {...fixedBlocksProps} compositionRow selectedId={fixedBlocksProps.openId} openId='), 'screen order mode must render fixed entries in the persistent composition');
-assert(editLayout.includes('aria-label="고정 영역"') && editLayout.includes('<h3>고정 영역</h3>'), 'fixed blocks must be clearly labeled outside page options');
+assert(editLayout.includes("only={['topnav']} compositionRow") && editLayout.includes("only={['bottom', 'footer']} compositionRow"), 'screen order mode must render fixed entries in the persistent composition');
+assert(editLayout.includes('aria-label="고정 영역"') && editLayout.includes('aria-label="헤더"'), 'fixed blocks must be clearly labeled outside page options');
 assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row') && fixedBlocksCss.includes('.fixed-composition-row .fixed-block-head'), 'fixed region section must own inline row geometry');
 assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px 30px !important') && fixedBlocksCss.includes('overflow-wrap: anywhere'), 'fixed block rows must align with normal block controls and wrap long Korean names');
@@ -85,7 +84,7 @@ assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.in
 assert(editLayout.includes('editor-page-settings-button') && !editLayout.includes('edit-section-tabs') && editLayout.includes('구성') && editLayout.includes('listOnly selectBlock={chooseBlock}'), 'screen order must live in the restored left editor flow without a redundant selected-settings shell');
 assert(editLayout.includes('페이지 설정') && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps}') && editLayout.includes('updateTheme={updatePageTheme}') && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page options and theme controls must live in the restored left editor mode');
 assert(!pageOptions.includes('PageGlobalOptionsHeader') && pageOptions.includes('aria-label="페이지 동작"'), 'page behavior must have an accessible group label without repeating a visible settings heading');
-assert(editorLabels.includes("normalBlocks: '\\uC77C\\uBC18 \\uBE14\\uB85D'") && screenOrderHeader.includes('T.normalBlocks'), 'screen order content heading must identify normal blocks instead of repeating the tab label');
+assert(editLayout.includes('<h2>블록</h2>') && !screenOrderList.includes('ScreenOrderListHeader'), 'composition must have one block heading instead of repeating the normal-block heading');
 assert(mobileScreenOrderCss.includes('grid-template-columns: 44px minmax(0,1fr) 44px 44px'), 'mobile screen order must reserve full touch columns without horizontal overflow');
 assert(/\.screen-order-v2-drag\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile drag handle must expose a 44px touch target');
 assert(/\.screen-order-v2-visibility-button,[\s\S]*?\.screen-order-v2-action\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile visibility and action controls must expose 44px touch targets');

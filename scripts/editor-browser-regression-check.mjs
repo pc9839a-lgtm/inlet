@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { checkReferenceEditor } from './editor-reference-browser-check.mjs';
 import { checkFormDirectFlow } from './editor-form-direct-flow-browser-check.mjs';
 
 const origin = String(process.env.INLET_EDITOR_BROWSER_QA_ORIGIN || 'http://127.0.0.1:4174').replace(/\/$/, '');
@@ -606,7 +607,12 @@ async function openBlockSettings(client, blockId) {
   }
 }
 
+async function revealWorkspaceNavigation(client, selector) {
+  await evaluate(client, `(() => { const el = document.querySelector(${JSON.stringify(selector)}); const menu = el?.closest('details.workspace-editor-nav'); if (menu && !menu.open) menu.querySelector('summary')?.click(); })()`);
+}
+
 async function clickSelector(client, selector) {
+  await revealWorkspaceNavigation(client, selector);
   if (/^#editor-block-(?!settings-)|^\.topnav-fixed-card|^\.fixed-add-dock|^\.add-toggle/.test(selector)) await showBlockList(client);
   const clicked = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
@@ -619,6 +625,7 @@ async function clickSelector(client, selector) {
 }
 
 async function clickButtonByText(client, scopeSelector, text) {
+  await revealWorkspaceNavigation(client, scopeSelector);
   if (scopeSelector.startsWith('.fixed-add-dock')) await showBlockList(client);
   const clicked = await evaluate(client, `(() => {
     const scope = document.querySelector(${JSON.stringify(scopeSelector)}) || document;
@@ -659,6 +666,7 @@ async function pressKeyboardKey(client, keyName, { shift = false } = {}) {
 }
 
 async function focusSelector(client, selector) {
+  await revealWorkspaceNavigation(client, selector);
   if (/^#editor-block-(?!settings-)/.test(selector)) await showBlockList(client);
   const focused = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
@@ -671,6 +679,7 @@ async function focusSelector(client, selector) {
 }
 
 async function clickPointer(client, selector) {
+  await revealWorkspaceNavigation(client, selector);
   if (/^#editor-block-(?!settings-)|^\.fixed-add-dock|^\.add-toggle/.test(selector)) await showBlockList(client);
   const point = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
@@ -821,7 +830,7 @@ async function collectDesktopMetrics(client) {
       frameContentWidth: frame?.clientWidth || 0,
       header: rect(header),
       workPanel: rect(workPanel),
-      topTabs: rect(topTabs),
+      topTabs: rect(topTabs?.getClientRects().length ? topTabs : document.querySelector('.workspace-editor-nav > summary')),
       pageSettings: rect(pageSettings),
       cockpit: rect(cockpit),
       shellGridColumns: shell ? getComputedStyle(shell).gridTemplateColumns : '',
@@ -923,17 +932,24 @@ function assertDesktop(metrics) {
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
-  assert(Math.abs(metrics.left?.width - 500) <= 2, `mobile-only editor must occupy just 500px: ${metrics.left?.width}px`);
-  assert(Math.abs(metrics.composition?.width - 180) <= 2 && Math.abs(metrics.inspector?.width - 320) <= 2,
-    `block list and inspector widths must be 180px and 320px: ${JSON.stringify({ composition: metrics.composition, inspector: metrics.inspector })}`);
-  assert(metrics.preview?.width >= metrics.innerWidth - 502, `remaining desktop area must be the preview stage: ${metrics.preview?.width}px`);
+  assertReferenceTracks(metrics, metrics.innerWidth);
   assert(metrics.previewDirectChildren === 1 && metrics.previewFrameCount === 1,
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
-  assert(metrics.innerWidth - metrics.frame.right <= 80 && metrics.innerWidth - metrics.frame.right >= 0,
-    `phone should sit near the right edge, not centered: ${JSON.stringify(metrics.frame)}`);
+  assert(Math.abs((metrics.preview.left + metrics.preview.right) / 2 - (metrics.frame.left + metrics.frame.right) / 2) < 4,
+    `phone must be centered within the content-only preview canvas: ${JSON.stringify(metrics.frame)}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
+}
+
+function assertReferenceTracks(metrics, width) {
+  const composition = metrics.composition?.width || 0;
+  const inspector = metrics.inspector?.width || 0;
+  const edit = metrics.workPanel?.width || metrics.left?.width || 0;
+  assert(composition >= 178 && composition <= 278, `reference block list must remain readable: ${composition}`);
+  assert(inspector >= 298 && inspector <= 396, `reference property pane must remain readable: ${inspector}`);
+  assert(Math.abs(edit - composition - inspector) <= 3, `list and properties must fill editing space without a third sidecar: ${JSON.stringify({edit,composition,inspector})}`);
+  if (width >= 1600) assert(composition >= 260 && inspector >= 380, 'wide reference viewport must use its full-size list and settings tracks');
 }
 
 function assertNarrowDesktop(metrics, width) {
@@ -950,15 +966,13 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.pageSettings, width, 'narrow desktop page settings entry');
   assert(!metrics.cockpit, 'narrow desktop preview must not expose the removed conversion cockpit');
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (width >= 900 ? 2 : 1), `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
-  assert(metrics.workPanel?.width >= (width >= 900 ? 500 : width - 4), `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
+  assert(metrics.workPanel?.width >= (width >= 900 ? 478 : width - 4), `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
   assert(metrics.editLayout?.width >= (width >= 900 ? 480 : width - 48), `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
   if (width >= 900) {
-    assert(Math.abs(metrics.workPanel.width - 500) <= 2, `editing workspace must remain 500px at ${width}px: ${metrics.workPanel.width}px`);
-    assert(Math.abs(metrics.inspector?.width - 320) <= 2, `inspector must be 320px at ${width}px: ${JSON.stringify(metrics.inspector)}`);
-    assert(Math.abs(metrics.composition?.width - 180) <= 2, `composition must be 180px at ${width}px: ${JSON.stringify(metrics.composition)}`);
+    assertReferenceTracks(metrics, width);
     assert(Math.abs(metrics.frameContentWidth - 390) <= 1, `single mobile preview content must stay 390px at ${width}px: ${metrics.frameContentWidth}px`);
-    assert(width - metrics.frame?.right >= 0 && width - metrics.frame?.right <= 80,
-      `mobile preview must sit toward right at ${width}px: ${JSON.stringify(metrics.frame)}`);
+    assert(metrics.frame.left >= metrics.preview.left && metrics.frame.right <= width + 1,
+      `mobile preview must remain within its own canvas at ${width}px: ${JSON.stringify(metrics.frame)}`);
   }
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
 }
@@ -1184,6 +1198,7 @@ async function run() {
       'F04 consultation preview reset without persisting');
 
 
+    await checkReferenceEditor({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState });
     await checkFormDirectFlow({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState });
 
     // ED-R08 integrated Chrome QA: download an actual JSON backup, attempt a
@@ -1549,8 +1564,7 @@ async function run() {
     assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
     await capture(client, 'desktop-hero-background-stage6');
     assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'content must stay available alongside background-image settings');
-    // D01: composition, inspector and add catalog share one scroll owner.
-    // A taller editor must scroll through the work-panel, not a nested panel.
+    // Reference columns scroll independently; settings cannot displace the block list.
     const inspectorScroll = await evaluate(client, `(() => {
       const settings = document.querySelector('#editor-block-settings-editor-hero');
       const panel = settings?.closest('.editor-inspector-panel');
@@ -1562,7 +1576,7 @@ async function run() {
       let result;
       try {
         content.style.minHeight = '1600px';
-        workPanel.scrollTop = 320;
+        panel.scrollTop = 320;
         result = {
           role: panel.getAttribute('role'),
           label: panel.getAttribute('aria-label'),
@@ -1570,26 +1584,26 @@ async function run() {
           inspectorOverflowY: getComputedStyle(panel).overflowY,
           compositionOverflowY: getComputedStyle(composition).overflowY,
           workOverflowY: getComputedStyle(workPanel).overflowY,
-          workHeight: workPanel.clientHeight,
-          workContentHeight: workPanel.scrollHeight,
-          workScrollTop: workPanel.scrollTop,
+          workHeight: panel.clientHeight,
+          workContentHeight: panel.scrollHeight,
+          workScrollTop: panel.scrollTop,
           innerOverflowY: getComputedStyle(settings).overflowY,
         };
       } finally {
         content.style.minHeight = original;
-        workPanel.scrollTop = 0;
+        panel.scrollTop = 0;
       }
       return result;
     })()`);
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
       && inspectorScroll.label?.includes('선택 항목 편집'), `D01 keyboard-scroll region must remain accessible: ${JSON.stringify(inspectorScroll)}`);
-    assert(inspectorScroll.inspectorOverflowY === 'visible'
-      && inspectorScroll.compositionOverflowY === 'visible'
-      && inspectorScroll.workOverflowY === 'auto'
+    assert(inspectorScroll.inspectorOverflowY === 'auto'
+      && inspectorScroll.compositionOverflowY === 'auto'
+      && inspectorScroll.workOverflowY === 'hidden'
       && inspectorScroll.workContentHeight > inspectorScroll.workHeight
       && inspectorScroll.workScrollTop > 0
       && inspectorScroll.innerOverflowY === 'visible',
-      `D01 long settings must use one work-panel scrollbar: ${JSON.stringify(inspectorScroll)}`);
+      `D01 long settings must scroll the inspector while keeping the block list persistent: ${JSON.stringify(inspectorScroll)}`);
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
@@ -1927,10 +1941,10 @@ async function run() {
         spacingInputs: panel.querySelectorAll('.widget-spacing-controls input[type="number"]').length,
         spacingRanges: panel.querySelectorAll('.widget-spacing-controls input[type="range"]').length,
         spacingPresets: panel.querySelectorAll('.widget-spacing-controls .editor-number-presets').length,
-        designClosed: !panel.querySelector('.text-editor-design').open };
+        designOpen: panel.querySelector('.text-editor-design').open };
     })()`);
     assert(textFlow.tabs === 0 && textFlow.textareas === 2 && textFlow.spacingInputs === 2
-      && textFlow.spacingRanges === 0 && textFlow.spacingPresets === 0 && textFlow.designClosed,
+      && textFlow.spacingRanges === 0 && textFlow.spacingPresets === 0 && textFlow.designOpen,
       'text settings must open content and exact spacing directly without duplicate controls: ' + JSON.stringify(textFlow));
     const innerSpacing = '#editor-block-settings-editor-text input[aria-label="내용 안쪽 (px)"]';
     const outerSpacing = '#editor-block-settings-editor-text input[aria-label="블록 사이 (px)"]';
@@ -1946,6 +1960,8 @@ async function run() {
     const textDesignSummary = '#editor-block-settings-editor-text .text-editor-design > summary';
     const textValues = await evaluate(client, `[...document.querySelectorAll('#editor-block-settings-editor-text textarea')].map((el) => el.value)`);
     await focusSelector(client, textDesignSummary);
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === false`, 'text design first closes with keyboard');
     await pressKeyboardKey(client, 'Space');
     await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`, 'text design opens with keyboard');
     assert(await evaluate(client, `[...document.querySelectorAll('#editor-block-settings-editor-text textarea')].every((el, index) => el.getClientRects().length > 0 && el.value === ${JSON.stringify(textValues)}[index])`),
