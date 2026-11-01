@@ -20,32 +20,51 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
-      - name: Verify real C63 bundle and cache-busted bridge served to browsers
+      - name: Verify root render contract / cache isolation
+        run: node scripts/pagero-guide-practical-content-quality-check.mjs
+      - name: Verify current live HTML and exact JS/CSS bytes
         shell: bash
         run: |
           python - <<'PY'
-          import time,urllib.request
-          for trial in range(1,16):
-              req=urllib.request.Request('https://pagero.kr/',headers={'User-Agent':'Mozilla/5.0','Cache-Control':'no-cache'})
-              with urllib.request.urlopen(req,timeout=15) as r:html=r.read(250000).decode('utf-8','replace')
-              if 'c63-life-bridge.js?v=calltag-20261022' in html and 'c63-life-bridge.css?v=calltag-20261022' in html:
-                  print('PASS: root HTML serves new versioned bridge assets, trial',trial)
+          import urllib.request,time
+          target="https://pagero.kr/"
+          def fetch(path):
+              req=urllib.request.Request(target+path.lstrip('/'),headers={'User-Agent':'Mozilla/5.0 (PageRo live release QA)','Cache-Control':'no-cache'})
+              with urllib.request.urlopen(req,timeout=22) as r:
+                  return r.read(350000).decode('utf-8','replace')
+          for attempt in range(20):
+              html=fetch('')
+              if all(v in html for v in (
+                'c63-practical-bridge.js?v=20261101-1600-b',
+                'c63-practical-bridge.css?v=20261101-1600-b',
+                'c63-life-bridge.js?v=20261101-1600-b',
+                'id="pagero-workflows"',
+                '만들고, 받고, 확인하세요.'
+              )) and "가입 없이 볼 수 있는 설명서와 무료 도구입니다." not in html:
                   break
-              if trial==15:raise SystemExit('FAIL: production has old C63 bridge')
-              time.sleep(10)
-          req=urllib.request.Request('https://pagero.kr/c63-life-bridge.js?v=calltag-20261022',headers={'User-Agent':'Mozilla/5.0'})
-          with urllib.request.urlopen(req,timeout=15) as r:js=r.read(30000).decode('utf-8','replace')
-          assert "section.className = 'c63-calltag-bridge'" in js
-          assert "ensureLink(footerLinks, 'https://calltag.pagero.kr/', '콜태그')" in js
-          print('PASS: live JS contains actual C63 CallTag footer and section insertion')
+              if attempt==19:raise SystemExit('FAIL: live root HTML does not contain current compact page')
+              time.sleep(8)
+          expected=[
+            ('/c63-practical-bridge.js?v=20261101-1600-b',"title.id = 'c63-guide-title'", 'c63-guide-card'),
+            ('/c63-practical-bridge.css?v=20261101-1600-b','grid-template-columns:repeat(3,minmax(0,1fr))','c63-guide-resources'),
+            ('/c63-life-bridge.js?v=20261101-1600-b','고객별 상담 내용을 기록합니다.','createCallTagSection'),
+            ('/c63-life-bridge.css?v=20261101-1600-b','c63-calltag-bridge','c63-life-bridge'),
+          ]
+          for path,*needles in expected:
+              content=fetch(path)
+              if not all(n in content for n in needles):
+                  raise SystemExit('FAIL: expected NEW live asset content absent: '+path)
+          print('PASS: live HTML + all four versioned assets contain current PageRo text/styles')
           PY
       - name: Run real Chrome browser - desktop and mobile rendered DOM
         shell: bash
         env:
           INLET_BROWSER_QA_URL: https://pagero.kr/
           INLET_BROWSER_QA_REQUIRE: '1'
-          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='https://calltag.pagero.kr/']"
-          INLET_BROWSER_QA_EXPECT_TEXT: "문의가 오면,그다음 관리까지,신규 고객 알림,안내 문자 자동화"
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-guide-bridge,.pagero-exact-home .c63-guide-card:nth-child(3),.pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='https://calltag.pagero.kr/'],#root:not(:has(> .pagero-ssr-fallback))"
+          INLET_BROWSER_QA_EXPECT_TEXT: "만들고, 받고, 확인하세요.,폼 구성,페이지 발행,접수 확인,문의가 오면,그다음 관리까지,신규 고객 알림,안내 문자 자동화"
+          INLET_BROWSER_QA_FORBID_TEXT: "가입 없이 볼 수 있는 설명서와 무료 도구입니다."
+          INLET_BROWSER_QA_EXPECT_COUNT: ".pagero-exact-home .c63-guide-card|3;.pagero-exact-home .c63-guide-bridge|1;.pagero-exact-home .c63-life-bridge|1;.pagero-exact-home .c63-calltag-bridge|1;.pagero-exact-home .footer-links|1;#root > .pagero-ssr-fallback|0"
           INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-calltag-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|visibility|visible"
         run: |
           export INLET_BROWSER_QA_CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"

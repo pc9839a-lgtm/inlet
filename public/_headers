@@ -129,3 +129,27 @@
 /embed/*
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
   X-Robots-Tag: noindex, nofollow, noarchive
+
+/c63-life-bridge.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+  X-Content-Type-Options: nosniff
+
+/c63-life-bridge.css
+  Cache-Control: no-cache, no-store, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+  X-Content-Type-Options: nosniff
+
+/c63-practical-bridge.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+  X-Content-Type-Options: nosniff
+
+/c63-practical-bridge.css
+  Cache-Control: no-cache, no-store, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+  X-Content-Type-Options: nosniff
