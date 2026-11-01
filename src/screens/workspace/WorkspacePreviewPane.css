@@ -15,8 +15,8 @@
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block { outline: 2px solid #2454ff !important; outline-offset: -2px !important; box-shadow: none !important; }
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block::after { content: none !important; display: none !important; }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 2; grid-row: 2; min-width: 0 !important; height: 100% !important; min-height: 0 !important; padding: 18px 24px 24px !important; justify-content: center !important; align-items: flex-start !important; background: #f5f7ff !important; overflow: auto !important; }
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-sticky { flex: 0 0 auto; width: min(100%, 560px); max-width: 100%; margin: 0 auto; }
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 402px !important; max-width: none !important; margin: 0 auto !important; height: calc(100dvh - 176px) !important; border: 6px solid #242934 !important; border-radius: 46px !important; background: #fff; }
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-sticky { position: relative !important; top: auto !important; flex: 0 0 auto; width: min(100%, 560px) !important; min-width: 0 !important; max-width: 100% !important; height: auto !important; max-height: none !important; overflow: visible !important; gap: 0 !important; margin: 0 auto; }
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 402px !important; max-width: none !important; margin: 0 auto !important; height: calc(100dvh - 176px) !important; min-height: 0 !important; max-height: 820px !important; flex: 0 0 auto !important; border: 6px solid #242934 !important; border-radius: 46px !important; background: #fff; }
 .preview-selection-toolbar { position: absolute; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 2px; width: max-content; max-width: 100%; min-height: 40px; padding: 4px 8px; border: 1px solid #ffffff16; border-radius: 10px; background: #25282e; box-shadow: 0 6px 18px #17203933; }
 .preview-selection-toolbar > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 30px; min-height: 30px; padding: 4px 7px; border: 0; border-radius: 5px; background: transparent; color: #fff; font-size: 11px; font-weight: 500; cursor: pointer; white-space: nowrap; }
 .preview-selection-toolbar > button:hover { background: #ffffff1a; }
@@ -205,3 +205,5 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .
   .editor-draft-preview-dialog { height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); }
   .editor-draft-preview-stage { padding: 6px; }
 }
+
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame:fullscreen { height: 100dvh !important; max-height: none !important; margin: 0 auto !important; }

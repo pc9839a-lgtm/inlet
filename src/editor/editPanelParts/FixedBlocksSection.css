@@ -192,9 +192,9 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fi
 
 /* Fixed blocks share the flat reference navigation, with their position pinned. */
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks { margin: 0; padding: 0; border: 0; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row { margin: 2px 0; border: 0; border-radius: 9px; background: transparent; box-shadow: none; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row:hover { background: #f4f6fc; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true'] { background: #e5ebff; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row { margin: 2px 0 !important; border: 0 !important; border-radius: 9px !important; background: transparent !important; box-shadow: none !important; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row:hover { background: #f4f6fc !important; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true'] { background: #e5ebff !important; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true']::before { display: none; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row .fixed-block-head { min-height: 48px !important; padding: 7px 8px !important; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .screen-order-v2-identity-copy strong { font-size: 14px; font-weight: 500; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .screen-order-v2-identity-copy strong { font-size: 14px !important; font-weight: 500 !important; }

@@ -21,6 +21,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await setInputValue(client, 'input[aria-label="글자색 HEX"]', '#175CD3');
   await focusSelector(client, 'input[aria-label="제목 크기 (px)"]');
   await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-editor-text h2')).color === 'rgb(23, 92, 211)'`, 'text color changes the actual page');
+  await focusSelector(client, 'input[aria-label="글자색 HEX"]');
   await setInputValue(client, 'input[aria-label="글자색 HEX"]', '#111827');
   await focusSelector(client, 'input[aria-label="제목 크기 (px)"]');
   await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-editor-text h2')).color === 'rgb(17, 24, 39)'`, 'text color reset');
@@ -35,9 +36,10 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-width-option').length, documentWidth:document.documentElement.scrollWidth,
       listScroll:getComputedStyle(list).overflowY, inspectorScroll:getComputedStyle(inspector).overflowY, redundantNav:!!document.querySelector('.workspace-persistent-header > .workspace-editor-nav') };
   })()`);
+  console.log('reference geometry:', JSON.stringify(geometry));
+  await capture(client, 'desktop-reference-editor-1672');
   assert(Math.abs(geometry.header.height - 64) <= 1 && geometry.list.width >= 270 && geometry.list.width <= 278 && geometry.inspector.width >= 388 && geometry.inspector.width <= 398, 'reference viewport must reproduce its three working regions: ' + JSON.stringify(geometry));
   assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0 && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'auto' && geometry.inspectorScroll === 'auto', 'reference editor must keep actual page only, no marketing panel, and independent reachable columns: ' + JSON.stringify(geometry));
-  await capture(client, 'desktop-reference-editor-1672');
 
   // Zoom changes only the viewing scale; the page's layout width stays 390px.
   await evaluate(client, `(() => { const el = document.querySelector('select[aria-label="미리보기 배율"]'); el.value='75'; el.dispatchEvent(new Event('change',{bubbles:true})); })()`);
@@ -67,7 +69,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `document.querySelector('.screen-order-v2-list .screen-order-v2-item')?.id === 'editor-block-editor-hero'`, 'preview action restores the actual block order');
 
   await setInputValue(client, title, before[0]);
+  await focusSelector(client, 'input[aria-label="제목 크기 (px)"]');
   await setInputValue(client, 'input[aria-label="제목 크기 (px)"]', '24');
+  await focusSelector(client, 'input[aria-label="본문 크기 (px)"]');
   await setInputValue(client, 'input[aria-label="본문 크기 (px)"]', '15');
   await focusSelector(client, title);
   assert(apiState.saveCount === 0, 'reference editor actions must stay local until explicit publish');

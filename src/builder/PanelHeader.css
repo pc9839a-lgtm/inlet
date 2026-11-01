@@ -145,7 +145,7 @@ html body #root .canvas-editor-shell .panel-header.editor-panel-header { height:
 html body #root .canvas-editor-shell .editor-panel-header .panel-title { align-self: stretch; gap: 0 !important; }
 html body #root .canvas-editor-shell .editor-panel-header .panel-dashboard-button { flex: 0 0 var(--editor-list-width); width: var(--editor-list-width) !important; min-width: var(--editor-list-width) !important; height: 32px !important; margin: auto 24px auto 0; padding: 0 28px !important; gap: 10px; justify-content: flex-start; border: 0 !important; border-right: 1px solid #e2e7f1 !important; border-radius: 0 !important; color: #111827 !important; }
 html body #root .canvas-editor-shell .panel-dashboard-button > svg { flex: 0 0 auto; color: #2855ff; }
-html body #root .canvas-editor-shell .panel-dashboard-button > span { font-size: 23px; font-weight: 750; letter-spacing: -.065em; white-space: nowrap; }
+html body #root .canvas-editor-shell .panel-dashboard-button > span { font-size: 23px !important; font-weight: 750 !important; letter-spacing: -.065em; white-space: nowrap; }
 html body #root .canvas-editor-shell .panel-editor-heading { display: flex; align-items: center; gap: 24px; min-width: 0; }
 html body #root .canvas-editor-shell .panel-page-name { display: flex; align-items: center; min-width: 0; gap: 6px; }
 html body #root .canvas-editor-shell .panel-page-name > h1 { max-width: 340px; margin: 0; color: #101828; font-size: 15px !important; font-weight: 650 !important; line-height: 1.4 !important; letter-spacing: -.025em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
