@@ -865,7 +865,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-title { display: none !important; }
 
 /* Compact desktop keeps text readable before shrinking its action targets. */
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head { grid-template-columns: 10px minmax(0,1fr) 24px 24px !important; padding-inline: 4px !important; gap: 0 !important; }
   html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag { width: 10px !important; min-width: 10px !important; }
   html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is(.screen-order-v2-visibility-button,.screen-order-v2-action) { width: 24px !important; min-width: 24px !important; }
