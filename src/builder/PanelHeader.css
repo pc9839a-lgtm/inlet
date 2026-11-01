@@ -148,10 +148,10 @@ html body #root .canvas-editor-shell .panel-dashboard-button > .editor-wordmark 
 html body #root .canvas-editor-shell .panel-editor-heading { display: flex; align-items: center; gap: 24px; min-width: 0; }
 html body #root .canvas-editor-shell .panel-page-name { display: flex; align-items: center; min-width: 0; gap: 6px; }
 html body #root .canvas-editor-shell .panel-page-name > h1 { max-width: 340px; margin: 0; color: #101828; font-size: 15px !important; font-weight: 650 !important; line-height: 1.4 !important; letter-spacing: -.025em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-html body #root .canvas-editor-shell .panel-save-status { flex: 0 1 auto; max-width: 235px; min-height: 28px; padding: 5px 10px !important; border: 1px solid #e6eaf1; border-radius: 18px !important; background: #f8f9fc !important; }
+html body #root .canvas-editor-shell .panel-save-status { flex: 0 0 auto; max-width: 235px; min-height: 28px; padding: 5px 10px !important; border: 1px solid #e6eaf1; border-radius: 18px !important; background: #f8f9fc !important; }
 html body #root .canvas-editor-shell .panel-save-status[data-tone='ok'] { border-color: #dcf3eb; background: #edf9f5 !important; }
 html body #root .canvas-editor-shell .panel-save-status[data-tone='ok'] > strong { color: #087a5b !important; }
-html body #root .canvas-editor-shell .panel-save-status > strong { display: block; min-width: 0; font-size: 11px !important; line-height: 1.3 !important; overflow: hidden; text-overflow: ellipsis; }
+html body #root .canvas-editor-shell .panel-save-status > strong { display: block; min-width: 0; font-size: 11px !important; line-height: 1.3 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 html body #root .canvas-editor-shell .panel-save-status > time { display: none; }
 html body #root .canvas-editor-shell .panel-actions { gap: 10px !important; }
 html body #root .canvas-editor-shell .panel-actions > .panel-preview-button,

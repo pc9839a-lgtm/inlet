@@ -61,6 +61,8 @@ html body #root .canvas-editor-shell .screen-order-v2-settings .block-editor-v2.
 html body #root .canvas-editor-shell .inspector-navigation > button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 36px; padding: 6px 8px; border: 0; border-radius: 7px; background: transparent; color: #475467; font-size: 14px; font-weight: 550; cursor: pointer; }
 html body #root .canvas-editor-shell .inspector-navigation > button[aria-pressed='true'] { color: #2454ff; background: #e7edff; }
 .inspector-navigation > button:focus-visible { outline: 2px solid #2454ff; outline-offset: 1px; }
+.inspector-navigation > button > span { white-space: nowrap; }
+@media (max-width: 1100px) { html body #root .canvas-editor-shell .inspector-navigation > button { gap: 4px; padding-inline: 4px; font-size: 13px; } }
 body .builder-shell.edit-mode-shell .editor-page-options-stack { width: 100%; min-width: 0; display: grid; gap: 14px; }
 body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
 @media (min-width: 900px) and (max-width: 1100px) { html body #root .canvas-editor-shell .editor-inspector-panel { padding-inline: 16px; } html body #root .canvas-editor-shell .editor-composition-panel { padding-inline: 8px; } }

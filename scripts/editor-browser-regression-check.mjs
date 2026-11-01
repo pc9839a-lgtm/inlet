@@ -860,6 +860,8 @@ async function collectNarrowDesktopMetrics(client) {
       composition: rect(document.querySelector('.editor-composition-panel')),
       inspector: rect(document.querySelector('.editor-inspector-panel')),
       frameContentWidth: document.querySelector('.preview-workspace .phone-frame')?.clientWidth || 0,
+      minIdentityWidth: Math.min(...[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy')].map(el => el.getBoundingClientRect().width)),
+      inspectorNavigationLabelHeights: [...document.querySelectorAll('.inspector-navigation button > span')].map(el => el.getBoundingClientRect().height),
       frame: rect(document.querySelector('.preview-workspace .phone-frame')),
       preview: rect(document.querySelector('.preview-workspace')),
       topTabs: rect(document.querySelector('.top-tabs')),
@@ -964,6 +966,8 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.editLayout, width, 'narrow desktop edit layout');
   assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
   assertInsideViewport(metrics.pageSettings, width, 'narrow desktop page settings entry');
+  assert(metrics.minIdentityWidth >= 60, `compact block names must have readable horizontal space at ${width}px: ${metrics.minIdentityWidth}`);
+  assert(metrics.inspectorNavigationLabelHeights.every(height => height <= 24), `inspector navigation must not split labels vertically: ${JSON.stringify(metrics.inspectorNavigationLabelHeights)}`);
   assert(!metrics.cockpit, 'narrow desktop preview must not expose the removed conversion cockpit');
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (width >= 900 ? 2 : 1), `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
   assert(metrics.workPanel?.width >= (width >= 900 ? 478 : width - 4), `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
