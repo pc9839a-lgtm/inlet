@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, Eye, MoreHorizontal, PanelsTopLeft, Redo2, Save, Undo2, Upload } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Eye, MoreHorizontal, Redo2, Save, Undo2, Upload } from 'lucide-react';
 import './PanelHeader.css';
+import editorWordmark from './pagero-editor-wordmark.png';
 import { visibleEditorPublishState } from '../runtime/saveStatusActions.js';
 import {
   getPageEditHistoryState,
@@ -98,7 +99,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
         {editorHeader ? (
           <>
             <button className="panel-dashboard-button" type="button" onClick={onDashboard} aria-label="페이지 목록으로" title="페이지 목록">
-              {navigation ? <><PanelsTopLeft size={25} aria-hidden="true" /><span>페이지로</span></> : <ArrowLeft size={18} aria-hidden="true" />}
+              {navigation ? <img className="editor-wordmark" src={editorWordmark} alt="" width="129" height="35" /> : <ArrowLeft size={18} aria-hidden="true" />}
             </button>
             <div className="panel-editor-heading">
               <div className="panel-page-name">

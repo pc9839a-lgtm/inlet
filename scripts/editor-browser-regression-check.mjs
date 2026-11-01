@@ -2626,8 +2626,8 @@ async function run() {
     assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '9px' && screenOrderShellStyle?.rowBorder === '1px', `block studio rows must be distinct, compact cards: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.addBackground === 'rgb(37, 99, 235)', `block add action should be clearly visible: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '9px' && screenOrderShellStyle?.rowBorder === '0px', `reference list must keep flat rows at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.addBackground === 'rgb(255, 255, 255)', `compact add action must keep its reference neutral surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 1180) {
         await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
