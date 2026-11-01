@@ -1,0 +1,39 @@
+name: PageRo public practical content QA
+on:
+  pull_request:
+    paths:
+      - 'functions/index.js'
+      - 'public/c63-practical-bridge.*'
+      - 'public/tools/form-planner/**'
+      - 'public/sitemap.xml'
+      - 'scripts/pagero-guide-practical-content-quality-check.mjs'
+      - '.github/workflows/pagero-practical-content.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/index.js'
+      - 'public/c63-practical-bridge.*'
+      - 'public/tools/form-planner/**'
+      - 'public/sitemap.xml'
+      - 'scripts/pagero-guide-practical-content-quality-check.mjs'
+      - '.github/workflows/pagero-practical-content.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate public interactive planner and C63 bridge syntax
+        run: |
+          node --check public/c63-practical-bridge.js
+          node --check public/tools/form-planner/app.mjs
+          node --check public/tools/form-planner/logic.mjs
+          node --check functions/index.js
+          node --check scripts/pagero-guide-practical-content-quality-check.mjs
+      - name: Verify unchanged original homepage and truly useful public resources
+        run: node scripts/pagero-guide-practical-content-quality-check.mjs
