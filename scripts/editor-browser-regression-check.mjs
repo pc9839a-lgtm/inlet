@@ -608,7 +608,7 @@ async function openBlockSettings(client, blockId) {
 }
 
 async function revealWorkspaceNavigation(client, selector) {
-  await evaluate(client, `(() => { const el = document.querySelector(${JSON.stringify(selector)}); const menu = el?.closest('details.workspace-editor-nav'); if (menu && !menu.open) menu.querySelector('summary')?.click(); })()`);
+  await evaluate(client, `(() => { const el = document.querySelector(${JSON.stringify(selector)}); const menu = el?.closest('details.workspace-editor-nav'); if (menu && el !== menu.querySelector('summary') && !menu.open) menu.querySelector('summary')?.click(); })()`);
 }
 
 async function clickSelector(client, selector) {
@@ -1599,7 +1599,7 @@ async function run() {
       && inspectorScroll.label?.includes('선택 항목 편집'), `D01 keyboard-scroll region must remain accessible: ${JSON.stringify(inspectorScroll)}`);
     assert(inspectorScroll.inspectorOverflowY === 'auto'
       && inspectorScroll.compositionOverflowY === 'auto'
-      && inspectorScroll.workOverflowY === 'hidden'
+      && inspectorScroll.workOverflowY === 'clip'
       && inspectorScroll.workContentHeight > inspectorScroll.workHeight
       && inspectorScroll.workScrollTop > 0
       && inspectorScroll.innerOverflowY === 'visible',
@@ -1907,15 +1907,20 @@ async function run() {
         catalogOverflowY: getComputedStyle(catalog).overflowY,
         catalogMaxHeight: getComputedStyle(catalog).maxHeight,
         workOverflowY: getComputedStyle(workspace).overflowY,
+        catalogHeight: catalog.getBoundingClientRect().height,
+        catalogBottom: catalog.getBoundingClientRect().bottom,
+        viewportHeight: innerHeight,
         catalogInComposition: !!catalog.closest('.editor-composition-panel'),
       };
     })()`);
     assert(addCatalogScroll?.dockPosition === 'static'
-      && addCatalogScroll.catalogOverflowY === 'visible'
-      && addCatalogScroll.catalogMaxHeight === 'none'
-      && addCatalogScroll.workOverflowY === 'auto'
+      && addCatalogScroll.catalogOverflowY === 'auto'
+      && addCatalogScroll.catalogMaxHeight !== 'none'
+      && addCatalogScroll.workOverflowY === 'clip'
+      && addCatalogScroll.catalogHeight > 0
+      && addCatalogScroll.catalogBottom <= addCatalogScroll.viewportHeight
       && addCatalogScroll.catalogInComposition,
-      'expanded block picker must share one editor scroll owner: ' + JSON.stringify(addCatalogScroll));
+      'compact block picker must stay bounded and scroll internally without moving the workspace: ' + JSON.stringify(addCatalogScroll));
     await clickPointer(client, '.phone-frame #block-editor-hero');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview click opens focused settings with the existing content');
     await clickPointer(client, '.phone-frame #block-editor-hero');

@@ -12,7 +12,7 @@ export function PreviewSelectionToolbar({ frameRef, page, selectedBlockId, actio
     const frame = frameRef.current;
     if (!frame || !block || block.visible === false) { setPosition(null); return undefined; }
     const measure = () => {
-      const target = frame.querySelector('[data-preview-selected="true"]');
+      const target = frame.querySelector('.preview-selected-block') || frame.querySelector(`#block-${CSS.escape(selectedBlockId)}`);
       if (!target || !ref.current?.parentElement) { setPosition(null); return; }
       const parentBox = ref.current.parentElement.getBoundingClientRect();
       const targetBox = target.getBoundingClientRect();
@@ -23,7 +23,7 @@ export function PreviewSelectionToolbar({ frameRef, page, selectedBlockId, actio
     const tick = requestAnimationFrame(measure);
     const observer = new ResizeObserver(measure);
     observer.observe(frame);
-    const target = frame.querySelector('[data-preview-selected="true"]');
+    const target = frame.querySelector('.preview-selected-block') || frame.querySelector(`#block-${CSS.escape(selectedBlockId)}`);
     if (target) observer.observe(target);
     frame.addEventListener('scroll', measure, true);
     window.addEventListener('resize', measure);

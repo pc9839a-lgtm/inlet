@@ -8,10 +8,11 @@ body .builder-shell .edit-section-panel { width: 100%; min-width: 0; max-width: 
 .editor-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout {
   grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
   gap: 0 !important;
   min-height: 0;
-  height: 100%;
+  height: 100% !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel,
 html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
