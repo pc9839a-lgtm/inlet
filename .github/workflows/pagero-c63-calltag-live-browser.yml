@@ -35,9 +35,9 @@ jobs:
           for attempt in range(20):
               html=fetch('')
               if all(v in html for v in (
-                'c63-practical-bridge.js?v=20261101-1600-b',
-                'c63-practical-bridge.css?v=20261101-1600-b',
-                'c63-life-bridge.js?v=20261101-1600-b',
+                'c63-practical-bridge.js?v=20261101-2240-c',
+                'c63-practical-bridge.css?v=20261101-2240-c',
+                'c63-life-bridge.js?v=20261101-2240-c',
                 'id="pagero-workflows"',
                 '만들고, 받고, 확인하세요.'
               )) and "가입 없이 볼 수 있는 설명서와 무료 도구입니다." not in html:
@@ -45,9 +45,9 @@ jobs:
               if attempt==19:raise SystemExit('FAIL: live root HTML does not contain current compact page')
               time.sleep(8)
           expected=[
-            ('/c63-practical-bridge.js?v=20261101-1600-b',"title.id = 'c63-guide-title'", 'c63-guide-card'),
-            ('/c63-practical-bridge.css?v=20261101-1600-b','grid-template-columns:repeat(3,minmax(0,1fr))','c63-guide-resources'),
-            ('/c63-life-bridge.js?v=20261101-1600-b','고객별 상담 내용을 기록합니다.','createCallTagSection'),
+            ('/c63-practical-bridge.js?v=20261101-2240-c',"title.id = 'c63-guide-title'", 'c63-guide-card'),
+            ('/c63-practical-bridge.css?v=20261101-2240-c','c63-guide-card:not(:last-child)','c63-guide-resources'),
+            ('/c63-life-bridge.js?v=20261101-2240-c','전화가 끝나면 태그만 하세요.','createCallTagSection'),
             ('/c63-life-bridge.css?v=20261101-1600-b','c63-calltag-bridge','c63-life-bridge'),
           ]
           for path,*needles in expected:
@@ -61,11 +61,11 @@ jobs:
         env:
           INLET_BROWSER_QA_URL: https://pagero.kr/
           INLET_BROWSER_QA_REQUIRE: '1'
-          INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-guide-bridge,.pagero-exact-home .c63-guide-card:nth-child(3),.pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='https://calltag.pagero.kr/'],#root:not(:has(> .pagero-ssr-fallback))"
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".wayzi-global-footer,.pagero-exact-home .pagero-publisher-detail,.pagero-exact-home .c63-calltag-strip,.pagero-exact-home .c63-guide-bridge,.pagero-exact-home .c63-guide-card:nth-child(3),.pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='https://calltag.pagero.kr/'],#root:not(:has(> .pagero-ssr-fallback))"
           INLET_BROWSER_QA_EXPECT_TEXT: "만들고, 받고, 확인하세요.,폼 구성,페이지 발행,접수 확인,문의가 오면,그다음 관리까지,신규 고객 알림,안내 문자 자동화"
           INLET_BROWSER_QA_FORBID_TEXT: "가입 없이 볼 수 있는 설명서와 무료 도구입니다."
           INLET_BROWSER_QA_EXPECT_COUNT: ".pagero-exact-home .c63-guide-card|3;.pagero-exact-home .c63-guide-bridge|1;.pagero-exact-home .c63-life-bridge|1;.pagero-exact-home .c63-calltag-bridge|1;.pagero-exact-home .footer-links|1;#root > .pagero-ssr-fallback|0"
-          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-calltag-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|visibility|visible"
+          INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-calltag-bridge|display|block;.pagero-exact-home .c63-calltag-strip|display|flex;.wayzi-global-footer|display|none"
         run: |
           export INLET_BROWSER_QA_CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
           if [ -z "$INLET_BROWSER_QA_CHROME_PATH" ]; then echo 'Chrome not found'; exit 1; fi
