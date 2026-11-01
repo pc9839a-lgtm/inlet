@@ -46,10 +46,8 @@
     eyebrow.textContent = 'PAGERO LIFE';
     const title = document.createElement('h2');
     title.id = 'c63-life-title';
-    title.textContent = '\uC0DD\uD65C\uC5D0 \uD544\uC694\uD55C \uC815\uBCF4\uB97C \uD55C \uACF3\uC5D0';
-    const description = document.createElement('p');
-    description.textContent = '\uC790\uB3D9\uCC28 \uD589\uC815\uACFC \uC815\uBD80 \uC9C0\uC6D0\uC815\uCC45\uC744 \uC27D\uAC8C \uD655\uC778\uD558\uC138\uC694.';
-    copy.append(eyebrow, title, description);
+    title.textContent = '자동차·지원금, 필요한 정보만';
+    copy.append(eyebrow, title);
 
     const more = document.createElement('a');
     more.className = 'c63-life-more';
@@ -99,9 +97,7 @@
     const title = document.createElement('h2');
     title.id = 'c63-calltag-title';
     title.textContent = '문의가 오면, 그다음 관리까지';
-    const description = document.createElement('p');
-    description.textContent = '통화 후 메모·안내 문자·재연락 일정까지 한곳에서 관리합니다.';
-    copy.append(eyebrow, title, description);
+    copy.append(eyebrow, title);
 
     const more = document.createElement('a');
     more.className = 'c63-life-more';
@@ -109,12 +105,26 @@
     more.textContent = '콜태그 알아보기';
     head.append(copy, more);
 
-    const features = document.createElement('div');
+    const strip = document.createElement('div');
+    strip.className = 'c63-calltag-strip';
+    const stripMark = document.createElement('span');
+    stripMark.className = 'c63-calltag-strip-icon';
+    stripMark.setAttribute('aria-hidden', 'true');
+    stripMark.textContent = '✓';
+    const stripCopy = document.createElement('div');
+    stripCopy.className = 'c63-calltag-summary';
+    const stripTitle = document.createElement('strong');
+    stripTitle.textContent = '전화가 끝나면 태그만 하세요.';
+    const stripDetails = document.createElement('p');
+    stripDetails.textContent = '통화 직후 상담 이력을 정리하고, 후속 응대를 이어갑니다.';
+    stripCopy.append(stripTitle, stripDetails);
+    strip.append(stripMark, stripCopy);
+        const features = document.createElement('div');
     features.className = 'c63-calltag-features';
     const points = [
-      ['신규 고객 알림', '새로운 문의를 바로 확인합니다.'],
-      ['통화 메모', '고객별 상담 내용을 기록합니다.'],
-      ['안내 문자 자동화', '설정한 문자를 후속 안내에 활용합니다.'],
+      ['신규 고객 알림', '문의 확인'],
+      ['통화 메모', '상담 기록'],
+      ['안내 문자 자동화', '후속 안내'],
     ];
     for (const [name, explanation] of points) {
       const article = document.createElement('article');
@@ -127,7 +137,7 @@
       features.appendChild(article);
     }
 
-    inner.append(head, features);
+    inner.append(head, strip, features);
     section.appendChild(inner);
     return section;
   };

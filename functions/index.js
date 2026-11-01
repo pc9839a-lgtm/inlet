@@ -39,12 +39,19 @@ const C63_HOME_HTML = `<!doctype html>
   <link rel="modulepreload" crossorigin href="/c63-assets/monthRange-D959kZuv.js">
   <link rel="stylesheet" crossorigin href="/c63-assets/index-B0Q5rFVf.css?v=20260928-mobile-root-v3-static-stack">
   <link rel="stylesheet" href="/c63-life-bridge.css?v=20261101-1600-b">
-  <script defer src="/c63-life-bridge.js?v=20261101-1600-b"></script>
-  <link rel="stylesheet" href="/c63-practical-bridge.css?v=20261101-1600-b">
-  <script defer src="/c63-practical-bridge.js?v=20261101-1600-b"></script>
+  <script defer src="/c63-life-bridge.js?v=20261101-2240-c"></script>
+  <link rel="stylesheet" href="/c63-practical-bridge.css?v=20261101-2240-c">
+  <script defer src="/c63-practical-bridge.js?v=20261101-2240-c"></script>
   <style>
     /* Keep SSR readable before hydration; never show its second footer after C63 mounts. */
     #root:has(> .pagero-exact-home) > .pagero-ssr-fallback { display: none !important; }
+    /* WAYZI is rendered by frozen C63 OUTSIDE the PAGE RO homepage footer. */
+    body:has(#root .pagero-exact-home) .wayzi-global-footer { display: none !important; }
+    .pagero-exact-home .pagero-publisher-detail {
+      display: block; margin: 16px 0 0; padding-top: 13px; width: 100%;
+      border-top: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.58);
+      font-size: 11px; line-height: 1.6; font-weight: 500; text-align: left;
+    }
     #root > .pagero-exact-home ~ .pagero-exact-home {
       display: none !important;
     }
@@ -505,7 +512,18 @@ const C63_HOME_HTML = `<!doctype html>
           || topLevel[topLevel.length - 1];
         topLevel.filter((node) => node !== primary).forEach((node) => node.remove());
       };
-      const goLogin = () => {
+      const mergePublisherDetailsIntoPageroFooter = () => {
+        const root = document.getElementById('root');
+        const home = root?.querySelector('.pagero-exact-home');
+        const wayzi = root?.querySelector('.wayzi-global-footer .wayzi-footer-brand');
+        const footer = home?.querySelector('.footer') || home?.querySelector('footer');
+        if (!wayzi || !footer || footer.querySelector('.pagero-publisher-detail')) return;
+        const detail = document.createElement('small');
+        detail.className = 'pagero-publisher-detail';
+        detail.textContent = '운영사 · ' + wayzi.textContent.replace(/\\s+/g, ' ').trim();
+        footer.appendChild(detail);
+      };
+            const goLogin = () => {
         window.location.replace('/login');
       };
       const isLoginTarget = (node) => {
@@ -552,10 +570,12 @@ const C63_HOME_HTML = `<!doctype html>
         new MutationObserver(() => {
           removeDuplicateHomes();
           removeDuplicateFooters();
+          mergePublisherDetailsIntoPageroFooter();
           installLoginBridge();
         }).observe(root, { childList: true, subtree: true });
         removeDuplicateHomes();
         removeDuplicateFooters();
+        mergePublisherDetailsIntoPageroFooter();
         installLoginBridge();
       };
       if (document.readyState === 'loading') {
