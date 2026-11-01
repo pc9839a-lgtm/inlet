@@ -38,3 +38,170 @@ html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame .
   overflow-x: hidden !important;
   overflow-y: auto !important;
 }
+
+/* Embedded code remains selectable through its containing block. */
+.canvas-editor-shell .editor-preview .custom-code-frame { pointer-events: none; }
+
+/* Non-edit preview geometry formerly carried by editor-final-clean.css.
+   WorkspacePreviewPane owns preview presentation in every workspace mode. */
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
+  --pg-preview-width: min(540px, calc(100vw - var(--pg-left-width) - 72px));
+}
+
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-workspace {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  padding: 28px clamp(20px, 3vw, 56px) !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+}
+
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-sticky {
+  position: sticky !important;
+  top: 28px !important;
+  width: var(--pg-preview-width) !important;
+  max-width: 100% !important;
+  height: calc(100dvh - 56px) !important;
+  max-height: calc(100dvh - 56px) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 12px !important;
+}
+
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame {
+  width: min(460px, 100%) !important;
+  max-width: 460px !important;
+  height: calc(100dvh - 56px) !important;
+  min-height: 0 !important;
+  max-height: 820px !important;
+  margin: 0 auto !important;
+  flex: 1 1 auto !important;
+}
+
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame,
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame * {
+  box-sizing: border-box !important;
+}
+
+body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .landing-page {
+  width: 100% !important;
+  height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+@media (max-width: 1440px) {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
+    --pg-preview-width: min(500px, calc(100vw - 728px));
+  }
+}
+
+@media (max-width: 1280px) {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) {
+    --pg-preview-width: min(460px, calc(100vw - 684px));
+  }
+
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame {
+    width: min(430px, 100%) !important;
+    max-width: 430px !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) :is(.preview-workspace, .preview-sticky) {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-workspace {
+    padding: 0 14px 28px !important;
+  }
+
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .preview-sticky {
+    width: min(460px, 100%) !important;
+    margin: 0 auto !important;
+  }
+
+  body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame {
+    width: min(430px, 100%) !important;
+    max-width: 430px !important;
+    height: 760px !important;
+    min-height: 620px !important;
+    max-height: none !important;
+  }
+}
+
+
+/* Top-bar draft preview is an isolated, unsaved, interactive editor canvas. */
+.editor-draft-preview-backdrop { z-index: 10000; }
+.editor-draft-preview-dialog {
+  width: min(620px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  height: min(940px, calc(100dvh - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.editor-draft-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.editor-draft-preview-header h2 { margin: 0; font-size: 16px; }
+.editor-draft-preview-header p { margin: 4px 0 0; font-size: 12px; color: #596170; }
+.editor-draft-preview-actions { display: flex; align-items: center; gap: 10px; }
+.editor-draft-preview-actions a, .editor-draft-preview-actions button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 9px 11px;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+  cursor: pointer;
+}
+.editor-draft-preview-stage {
+  display: flex;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px;
+  background: #e9edf2;
+  overflow: hidden;
+}
+.editor-draft-preview-dialog .editor-draft-preview-phone {
+  width: min(430px, 100%);
+  height: 100%;
+  max-height: none;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  background: #fff;
+  border: 8px solid #111827;
+  border-radius: 26px;
+}
+.editor-draft-preview-phone > .landing-page {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+@media (max-width: 520px) {
+  .editor-draft-preview-header { align-items: flex-start; padding: 12px; }
+  .editor-draft-preview-dialog { height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); }
+  .editor-draft-preview-stage { padding: 6px; }
+}

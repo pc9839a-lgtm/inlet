@@ -3032,6 +3032,9 @@ async function run() {
       mobileKeyboardP96: ['360', '390', '430', 'focused-input-visible', 'modal-actions-visible', 'no-fixed-overlap'],
       realUseFlows: ['focus-recovery-workspace-transition', 'modal-focus-trap-return', 'keyboard-row-activation', 'keyboard-dropdown', 'add-block', 'undo-redo', 'visibility', 'menu-reorder', 'pointer-drag-reorder', 'style-apply', 'preview-continue', 'publish-race', 'revision-restore-undo-redo', 'post-restore-publish-readback', 'narrow-desktop'],
     }, null, 2));
+  } catch (error) {
+    if (client) await capture(client, 'failure-last-editor-state').catch(() => {});
+    throw error;
   } finally {
     console.log('[editor-qa] cleanup at:', activeQaStep);
     await secondClient?.close().catch(() => {});

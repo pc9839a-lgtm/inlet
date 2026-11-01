@@ -24,6 +24,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await setInputValue(client, 'input[aria-label="글자색 HEX"]', '#111827');
   await focusSelector(client, 'input[aria-label="제목 크기 (px)"]');
   await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-editor-text h2')).color === 'rgb(17, 24, 39)'`, 'text color reset');
+  await evaluate(client, `document.querySelector('.editor-inspector-panel').scrollTop = 0`);
 
   const geometry = await evaluate(client, `(() => {
     const rect = el => { const r = el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width,top:r.top,height:r.height}; };
