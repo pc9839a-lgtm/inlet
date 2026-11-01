@@ -375,3 +375,39 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-work
     border-radius: 10px !important;
   }
 }
+
+/* Mobile-only preview stage: no promotional sidebar. The stage is intentionally
+   spacious and the exact 390px phone hugs the right edge. */
+@media (min-width: 900px) {
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace {
+    justify-content: flex-end !important;
+    align-items: flex-start !important;
+    padding: 20px clamp(12px, 3vw, 64px) !important;
+    background: #f4f6fa !important;
+  }
+
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-sticky {
+    flex: 0 0 auto !important;
+    width: min(402px, 100%) !important;
+    max-width: 402px !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    align-items: stretch !important;
+  }
+
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-width-toolbar {
+    align-self: stretch !important;
+    width: 100% !important;
+    max-width: 402px !important;
+  }
+
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame {
+    margin: 0 !important;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1050px) {
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace {
+    padding-inline: 4px !important;
+  }
+}
