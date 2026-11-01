@@ -5,6 +5,7 @@ import { ScreenOrderSettings } from './ScreenOrderSettings.jsx';
 import { createScreenOrderIdentities } from './screenOrderIdentityModel.js';
 import { ScreenOrderRowActions } from './ScreenOrderRowActions.jsx';
 import { META } from '../../config/blockMeta.jsx';
+import { createScreenOrderMovement } from './screenOrderMovement.js';
 
 export function ScreenOrderList(props) {
   if (props.listOnly) return (
@@ -14,6 +15,7 @@ export function ScreenOrderList(props) {
   );
   const selectedIndex = props.normalBlocks.findIndex((block) => block.id === props.selectedId);
   const selectedBlock = props.normalBlocks[selectedIndex];
+  const movement = selectedBlock ? createScreenOrderMovement({ block: selectedBlock, index: selectedIndex, total: props.normalBlocks.length, reorderToIndex: props.reorderToIndex }) : null;
   const selectedIdentity = selectedBlock ? createScreenOrderIdentities(props.normalBlocks)[selectedIndex] : null;
 
   return (
@@ -26,8 +28,8 @@ export function ScreenOrderList(props) {
           renderBlockEditor={props.renderBlockEditor}
           actions={<ScreenOrderRowActions block={selectedBlock} meta={META[selectedBlock.type] || META.text} selected instance="inspector"
             canMoveUp={selectedIndex > 0} canMoveDown={selectedIndex < props.normalBlocks.length - 1}
-            onMoveUp={() => props.reorderToIndex(selectedBlock.id, selectedIndex - 1)}
-            onMoveDown={() => props.reorderToIndex(selectedBlock.id, selectedIndex + 1)}
+            onMoveUp={movement.moveUp}
+            onMoveDown={movement.moveDown}
             onDuplicate={() => props.duplicateBlock(selectedBlock.id)} onRemove={() => props.removeBlock(selectedBlock.id)} />}
         />
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Copy, EyeOff, Trash2 } from 'lucide-react';
 import { canDuplicateScreenOrderBlock } from '../../editor/editPanelParts/screenOrderActionPolicy.js';
+import { createScreenOrderMovement } from '../../editor/editPanelParts/screenOrderMovement.js';
 
 export function PreviewSelectionToolbar({ frameRef, page, selectedBlockId, actions, zoom }) {
   const ref = useRef(null);
@@ -8,6 +9,7 @@ export function PreviewSelectionToolbar({ frameRef, page, selectedBlockId, actio
   const block = page.blocks?.find(item => item.id === selectedBlockId);
   const normal = page.blocks?.filter(item => !['topnav', 'bottombar', 'footer'].includes(item.type)) || [];
   const index = normal.findIndex(item => item.id === selectedBlockId);
+  const movement = block ? createScreenOrderMovement({ block, index, total: normal.length, reorderToIndex: actions?.reorderToIndex }) : null;
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame || !block || block.visible === false) { setPosition(null); return undefined; }
@@ -28,14 +30,14 @@ export function PreviewSelectionToolbar({ frameRef, page, selectedBlockId, actio
     frame.addEventListener('scroll', measure, true);
     window.addEventListener('resize', measure);
     return () => { cancelAnimationFrame(tick); observer.disconnect(); frame.removeEventListener('scroll', measure, true); window.removeEventListener('resize', measure); };
-  }, [frameRef, selectedBlockId, block, zoom]);
+  }, [frameRef, selectedBlockId, block, page.blocks, zoom]);
   if (!block || !actions?.toggleVisible) return null;
   return <div className="preview-selection-toolbar" ref={ref} role="toolbar" aria-label="선택 블록 작업" style={{ top: position?.top || 0, visibility: position?.visible ? 'visible' : 'hidden' }}>
     {index >= 0 && canDuplicateScreenOrderBlock(block) && <button type="button" onClick={() => actions.duplicateBlock(block.id)}><Copy size={15} aria-hidden="true" /><span>복제</span></button>}
     <button type="button" onClick={() => actions.toggleVisible(block.id)}><EyeOff size={15} aria-hidden="true" /><span>숨기기</span></button>
     {index >= 0 && <>
-      <button type="button" aria-label="블록 위로 이동" disabled={index === 0} onClick={() => actions.reorderToIndex(block.id, index - 1)}><ArrowUp size={16} aria-hidden="true" /></button>
-      <button type="button" aria-label="블록 아래로 이동" disabled={index === normal.length - 1} onClick={() => actions.reorderToIndex(block.id, index + 1)}><ArrowDown size={16} aria-hidden="true" /></button>
+      <button type="button" aria-label="블록 위로 이동" disabled={!movement.canMoveUp} onClick={movement.moveUp}><ArrowUp size={16} aria-hidden="true" /></button>
+      <button type="button" aria-label="블록 아래로 이동" disabled={!movement.canMoveDown} onClick={movement.moveDown}><ArrowDown size={16} aria-hidden="true" /></button>
       <button type="button" aria-label="블록 삭제" onClick={() => actions.removeBlock(block.id)}><Trash2 size={16} aria-hidden="true" /></button>
     </>}
   </div>;
