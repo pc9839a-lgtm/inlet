@@ -38,10 +38,10 @@ const C63_HOME_HTML = `<!doctype html>
   <link rel="modulepreload" crossorigin href="/c63-assets/pageModel-DiUX99-Q.js">
   <link rel="modulepreload" crossorigin href="/c63-assets/monthRange-D959kZuv.js">
   <link rel="stylesheet" crossorigin href="/c63-assets/index-B0Q5rFVf.css?v=20260928-mobile-root-v3-static-stack">
-  <link rel="stylesheet" href="/c63-life-bridge.css?v=calltag-20261022">
-  <script defer src="/c63-life-bridge.js?v=calltag-20261022"></script>
-  <link rel="stylesheet" href="/c63-practical-bridge.css?v=20261101">
-  <script defer src="/c63-practical-bridge.js?v=20261101"></script>
+  <link rel="stylesheet" href="/c63-life-bridge.css?v=20261101-1600-b">
+  <script defer src="/c63-life-bridge.js?v=20261101-1600-b"></script>
+  <link rel="stylesheet" href="/c63-practical-bridge.css?v=20261101-1600-b">
+  <script defer src="/c63-practical-bridge.js?v=20261101-1600-b"></script>
   <style>
     /* Keep SSR readable before hydration; never show its second footer after C63 mounts. */
     #root:has(> .pagero-exact-home) > .pagero-ssr-fallback { display: none !important; }
