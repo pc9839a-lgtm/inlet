@@ -43,3 +43,54 @@
 .pagero-exact-home .c63-calltag-feature{padding:16px 18px}
 .pagero-exact-home .c63-calltag-feature::before{margin-bottom:5px}
 }
+
+/* Three different layouts instead of three repeated text-card sections. */
+.pagero-exact-home .c63-guide-bridge{padding:57px 24px 62px;background:#fff}
+.pagero-exact-home .c63-guide-grid{gap:0;border:1px solid #dfe7f1;border-radius:16px;background:#f7faff;overflow:hidden}
+.pagero-exact-home .c63-guide-card{background:transparent;border:0;border-radius:0;padding:23px 24px 20px;gap:6px}
+.pagero-exact-home .c63-guide-card:not(:last-child){border-right:1px solid #e1e8f0}
+.pagero-exact-home .c63-guide-card-top{gap:11px}
+.pagero-exact-home .c63-guide-number{display:grid;place-items:center;min-width:35px;height:35px;padding:0;border-radius:50%}
+.pagero-exact-home .c63-guide-card p{min-height:0;margin:0 0 5px}
+.pagero-exact-home .c63-guide-resources a{background:#f1f5fa;border:0}
+.pagero-exact-home .c63-life-bridge{padding-top:58px;padding-bottom:64px}
+.pagero-exact-home .c63-life-bridge .c63-life-posts{gap:0;border:1px solid #dee6f1;border-radius:16px;background:#fff;overflow:hidden}
+.pagero-exact-home .c63-life-bridge .c63-life-post{display:flex;align-items:center;gap:12px;border:0;border-radius:0;min-height:65px;background:#fff;padding:13px 17px}
+.pagero-exact-home .c63-life-bridge .c63-life-post:nth-child(odd){border-right:1px solid #e7edf4}
+.pagero-exact-home .c63-life-bridge .c63-life-post:nth-child(-n+2){border-bottom:1px solid #e7edf4}
+.pagero-exact-home .c63-life-bridge .c63-life-post span{flex:0 0 auto;font-size:10px;min-height:24px;padding:4px 7px}
+.pagero-exact-home .c63-life-bridge .c63-life-post strong{flex:1 1 auto;font-size:13px;line-height:1.45}
+.pagero-exact-home .c63-life-bridge .c63-life-post b{flex:0 0 auto}
+.pagero-exact-home .c63-calltag-bridge{padding-top:54px;padding-bottom:65px}
+.pagero-exact-home .c63-calltag-bridge .c63-life-head{margin-bottom:16px}
+.pagero-exact-home .c63-calltag-strip{display:flex;align-items:center;gap:14px;padding:18px 20px 10px;background:#f5f8fe;border:1px solid #e1e8f0;border-bottom:0;border-radius:16px 16px 0 0}
+.pagero-exact-home .c63-calltag-strip-icon{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border-radius:13px;background:#2464c7;color:#fff;font-size:20px;font-weight:900}
+.pagero-exact-home .c63-calltag-summary strong{display:block;color:#111827;font-size:18px;letter-spacing:-.04em}
+.pagero-exact-home .c63-calltag-summary p{margin:3px 0 0;color:#667085;font-size:13px;line-height:1.5}
+.pagero-exact-home .c63-calltag-features{display:flex;flex-wrap:wrap;gap:8px;background:#f5f8fe;border:1px solid #e1e8f0;border-top:0;border-radius:0 0 16px 16px;padding:10px 20px 20px}
+.pagero-exact-home .c63-calltag-feature{display:inline-flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid #d9e5f3;border-radius:9px;background:#fff;min-height:0}
+.pagero-exact-home .c63-calltag-feature::before{margin:0;font-size:11px}
+.pagero-exact-home .c63-calltag-feature h3{font-size:14px;line-height:1.4;margin:0}
+.pagero-exact-home .c63-calltag-feature p{display:none}
+@media(max-width:760px){
+  .pagero-exact-home .c63-guide-bridge{padding:44px 20px 46px}
+  .pagero-exact-home .c63-guide-grid{display:block}
+  .pagero-exact-home .c63-guide-card{padding:15px 17px 16px}
+  .pagero-exact-home .c63-guide-card:not(:last-child){border-right:0;border-bottom:1px solid #e1e8f0}
+  .pagero-exact-home .c63-guide-number{min-width:32px;height:32px}
+  .pagero-exact-home .c63-guide-card p,.pagero-exact-home .c63-guide-card .c63-guide-action{margin-left:43px}
+  .pagero-exact-home .c63-guide-card p{font-size:12px}
+  .pagero-exact-home .c63-life-bridge{padding:44px 20px 48px}
+  .pagero-exact-home .c63-life-bridge .c63-life-posts{display:block}
+  .pagero-exact-home .c63-life-bridge .c63-life-post{display:flex;min-height:66px;padding:12px 13px;border:0!important;border-bottom:1px solid #e7edf4!important}
+  .pagero-exact-home .c63-life-bridge .c63-life-post:last-child{border-bottom:0!important}
+  .pagero-exact-home .c63-life-bridge .c63-life-post span{grid-column:auto!important}
+  .pagero-exact-home .c63-life-bridge .c63-life-post strong{font-size:12px}
+  .pagero-exact-home .c63-calltag-bridge{padding:43px 20px 52px}
+  .pagero-exact-home .c63-calltag-strip{padding:16px 15px 9px}
+  .pagero-exact-home .c63-calltag-summary strong{font-size:16px}
+  .pagero-exact-home .c63-calltag-summary p{font-size:12px}
+  .pagero-exact-home .c63-calltag-features{padding:7px 15px 16px}
+  .pagero-exact-home .c63-calltag-feature{padding:8px 10px}
+  .pagero-exact-home .c63-calltag-feature h3{font-size:12px}
+}

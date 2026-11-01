@@ -10,7 +10,7 @@ const html=await response.text();
 assert.equal(response.status,200);
 assert(html.includes('/c63-assets/index-pagero-main-fix-20260615.js'),
   'Live home must still use existing frozen C63 JS entry');
-assert(html.includes('c63-life-bridge.js?v=20261101-1600-b'),
+assert(html.includes('c63-life-bridge.js?v=20261101-2240-c'),
   'CallTag bridge script must load on real C63 home with cache-busting');
 assert(html.includes('c63-life-bridge.css?v=20261101-1600-b'),
   'CallTag mobile CSS must be cache-busted');
