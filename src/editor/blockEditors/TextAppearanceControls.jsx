@@ -14,4 +14,3 @@ export function TextStylePanel({ s, set }) {
     {s.bgEnabled && <Color label="배경색" value={s.bgColor || '#ffffff'} onChange={(bgColor) => set({ bgColor })} />}
   </>;
 }
-
