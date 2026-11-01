@@ -203,4 +203,6 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-compositi
   html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row .fixed-block-head { grid-template-columns: 10px minmax(0,1fr) 24px 24px !important; padding-inline: 4px !important; gap: 0 !important; }
   html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row :is(.screen-order-v2-visibility-button,.fixed-open-button) { width: 24px !important; min-width: 24px !important; }
   html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .screen-order-v2-identity-copy strong { font-size: 14px !important; }
+  html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .fixed-composition-anchor { width: 10px; min-width: 10px; }
+  html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .fixed-composition-anchor > svg { width: 10px; }
 }

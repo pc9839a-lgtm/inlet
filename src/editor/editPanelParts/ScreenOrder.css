@@ -851,8 +851,9 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
 }
 
 /* Reference navigation: flat rows, one restrained selection surface. */
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-card { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-list { display: grid !important; gap: 2px !important; border: 0 !important; background: transparent !important; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item { margin: 0 !important; border: 0 !important; border-radius: 9px !important; background: transparent !important; box-shadow: none !important; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 9px !important; background: transparent !important; box-shadow: none !important; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item:is(:hover,:focus-within) { background: #f4f6fc !important; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true'] { background: #e5ebff !important; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true']::before { display: none !important; }
@@ -868,6 +869,7 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2
 @media (max-width: 1200px) {
   html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head { grid-template-columns: 10px minmax(0,1fr) 24px 24px !important; padding-inline: 4px !important; gap: 0 !important; }
   html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag { width: 10px !important; min-width: 10px !important; }
+  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag > svg { width: 8px; }
   html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is(.screen-order-v2-visibility-button,.screen-order-v2-action) { width: 24px !important; min-width: 24px !important; }
   html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-title-wrap { grid-template-columns: 16px minmax(0,1fr) !important; gap: 4px !important; }
   html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon { width: 16px !important; min-width: 16px !important; }
