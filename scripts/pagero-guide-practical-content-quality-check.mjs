@@ -9,13 +9,15 @@ assert(landing.includes('<section class="pagero-ssr-life" id="pagero-workflows"'
 for(const url of ['/tools/form-planner/','/guide/contact-form/','/guide/reservation-form/','/guide/analytics/','/guide/troubleshooting/']){
  assert(landing.includes('href="'+url+'"'),'Public homepage must link real resource '+url);
 }
-const bridge=fs.readFileSync('public/c63-life-bridge.js','utf8');
+const bridge=fs.readFileSync('public/c63-practical-bridge.js','utf8');
 assert(bridge.includes("createGuideSection"),'Visible hydrated C63 home must have the guide section');
-assert(bridge.includes("home.insertBefore(createGuideSection(), footer || null)"),'Guide must appear alongside existing footer bridges');
-assert(bridge.includes("if (!home.querySelector('.c63-guide-bridge'))"),'Guide insert must be idempotent during C63 hydration');
-const css=fs.readFileSync('public/c63-life-bridge.css','utf8');
+assert(bridge.includes("home.insertBefore(createGuideSection(),home.querySelector('.c63-life-bridge') || footer || null)"),'Guide must precede LIFE/footer without replacing existing sections');
+assert(bridge.includes("if(!home.querySelector('.c63-guide-bridge'))"),'Guide insert must be idempotent during C63 hydration');
+const css=fs.readFileSync('public/c63-practical-bridge.css','utf8');
 assert(css.includes('.pagero-exact-home .c63-guide-bridge'),'Guide section must match existing C63 design');
-assert(bridge.includes("createCallTagSection")&&bridge.includes("createLifeSection"),'Existing service bridges must remain');
+const legacy=fs.readFileSync('public/c63-life-bridge.js','utf8');
+assert(legacy.includes('createCallTagSection')&&legacy.includes('createLifeSection'),'Existing service bridges must remain');
+assert(landing.includes('c63-practical-bridge.js?v=20261101'),'Actual homepage must load practical guide hydration script');
 const html=fs.readFileSync('public/tools/form-planner/index.html','utf8');
 assert(html.includes('href="/guide/contact-form/"')&&html.includes('href="/guide/reservation-form/"'),'Tool must link actual product manuals');
 assert(html.includes('id="planner"')&&html.includes('id="fields"')&&html.includes('app.mjs'),'Planner must be actually interactive');

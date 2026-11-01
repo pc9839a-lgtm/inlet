@@ -1,0 +1,11 @@
+/* Only the new practical guidance block; all original C63 styles remain unchanged. */
+.pagero-exact-home .c63-guide-bridge{background:#fff;border-top:1px solid #e1e8f0;border-bottom:1px solid #e1e8f0;padding:76px 24px}
+.pagero-exact-home .c63-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pagero-exact-home .c63-guide-card{border:1px solid #e1e8f0;border-radius:18px;background:#f8fafc;padding:22px 25px;min-width:0}
+.pagero-exact-home .c63-guide-number{font-size:12px;color:#1677ff;font-weight:900}
+.pagero-exact-home .c63-guide-card h3{font-size:19px;color:#111827;font-weight:900;letter-spacing:-.03em;line-height:1.35;margin:8px 0 10px}
+.pagero-exact-home .c63-guide-card p{font-size:14px;font-weight:650;color:#596579;line-height:1.7;margin:0 0 16px;word-break:keep-all}
+.pagero-exact-home .c63-guide-card a{color:#165ec8;font-size:14px;font-weight:850;text-decoration:underline;text-underline-offset:3px}
+.pagero-exact-home .c63-guide-note{margin:21px 0 0!important;font-size:13px!important;line-height:1.8!important;color:#596579!important}
+.pagero-exact-home .c63-guide-note a{color:#165ec8;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:760px){.pagero-exact-home .c63-guide-bridge{padding:56px 20px}.pagero-exact-home .c63-guide-grid{grid-template-columns:1fr}.pagero-exact-home .c63-guide-card{padding:20px}.pagero-exact-home .c63-guide-card h3{font-size:17px}}
