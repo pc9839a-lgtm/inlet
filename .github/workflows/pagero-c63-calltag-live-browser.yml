@@ -71,14 +71,14 @@ jobs:
           if [ -z "$INLET_BROWSER_QA_CHROME_PATH" ]; then echo 'Chrome not found'; exit 1; fi
           for viewport in desktop mobile; do
             export INLET_BROWSER_QA_VIEWPORTS="$viewport"
-            export INLET_BROWSER_QA_SCREENSHOT_DIR=".tmp-c63-calltag-$viewport"
+            export INLET_BROWSER_QA_SCREENSHOT_DIR="evidence-pagero-live-$viewport"
             node scripts/browser-visual-quality-check.mjs
           done
       - name: Preserve real browser screenshots and QA logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pagero-c63-calltag-live-browser
-          path: .tmp-c63-calltag-*/
-          if-no-files-found: ignore
+          name: pagero-live-layout-desktop-mobile-proof
+          path: evidence-pagero-live-*/
+          if-no-files-found: error
           retention-days: 7
