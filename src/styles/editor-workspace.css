@@ -12,6 +12,7 @@ html body #root .builder-shell.canvas-editor-shell {
   overflow: clip !important;
 }
 html body #root .canvas-editor-shell > .left-workspace { display: contents !important; }
+html body #root .canvas-editor-shell #workspace-panel-edit { height: 100% !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; overflow: clip; }
 html body #root .canvas-editor-shell .work-panel {
   grid-column: 1;
   grid-row: 2;
@@ -41,4 +42,5 @@ html body #root .canvas-editor-shell .work-panel {
     overflow: visible !important;
   }
   html body #root .canvas-editor-shell .work-panel { grid-column: 1; grid-row: 2; height: auto !important; min-height: 640px; overflow: auto !important; }
+  html body #root .canvas-editor-shell #workspace-panel-edit { height: auto !important; overflow: visible; }
 }
