@@ -29,7 +29,7 @@ html body #root .canvas-editor-shell .text-editor-flow .text-editor-design { pad
 html body #root .canvas-editor-shell .text-editor-flow .text-editor-design > summary { min-height: 32px; color: #182236; font-size: 13px; font-weight: 600; }
 html body #root .canvas-editor-shell .text-editor-flow .text-editor-design-controls { gap: 20px; }
 html body #root .canvas-editor-shell .text-editor-design-controls > .editor-segmented-v2 { display: grid !important; grid-template-columns: 86px minmax(0,1fr) !important; align-items: center; gap: 12px !important; }
-html body #root .canvas-editor-shell .text-editor-design-controls .editor-segmented-v2-options { display: grid !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0,1fr) !important; grid-template-columns: none !important; min-height: 36px; padding: 2px; border: 1px solid #dce3ef; border-radius: 8px; background: #fff; }
+html body #root .canvas-editor-shell .text-editor-design-controls .editor-segmented-v2-options { min-height: 36px; padding: 2px; border: 1px solid #dce3ef; border-radius: 8px; background: #fff; }
 html body #root .canvas-editor-shell .text-editor-design-controls .editor-segmented-v2-options button { min-height: 32px !important; padding: 4px 7px !important; border: 0 !important; border-radius: 6px !important; color: #526078 !important; background: transparent !important; }
 html body #root .canvas-editor-shell .text-editor-design-controls .editor-segmented-v2-options button[aria-pressed='true'] { color: #2454ff !important; background: #e8eeff !important; }
 html body #root .canvas-editor-shell .text-editor-design-controls .color { display: grid !important; grid-template-columns: 86px minmax(0,1fr) !important; align-items: center; gap: 12px !important; }
