@@ -1,8 +1,11 @@
 // The owner reference defines the chrome. Content below is a disposable QA page.
 export async function checkReferenceEditor({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState }) {
   await setViewport(client, 1672, 941, false);
-  // An existing multi-block page initially has no selected block.
-  // Do not reserve a blank inspector beside a compressed block list.
+  // Prior QA scenarios may leave a block selected. Explicitly enter page-level
+  // editing to verify that clearing the selected block never hides the inspector.
+  await clickPointer(client, '.editor-page-settings-button');
+  await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack')`,
+    'unselected page shows real design controls in the permanent inspector');
   const unselected = await evaluate(client, `(() => {
     const pageOptions = document.querySelector('.editor-page-options-stack');
     const inspector = document.querySelector('.editor-inspector-panel');
