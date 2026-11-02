@@ -17,6 +17,48 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     assert(unselected.inspectorDisplay === 'none' && Math.abs(unselected.editorWidth - unselected.listWidth) <= 2,
       'real page must not open with a huge empty inspector: ' + JSON.stringify(unselected));
   }
+  // Stress-test the block composition with 30+ rows. Clones are DOM-only
+  // and removed in the same task; no app data, draft or publishing state changes.
+  const longPage = await evaluate(client, `(() => {
+    const list = document.querySelector('.screen-order-v2-list');
+    const owner = document.querySelector('.work-panel');
+    const originalRows = [...list.querySelectorAll('.screen-order-v2-slot')];
+    const seed = originalRows[0];
+    if (!seed || !owner) return null;
+    const clones = [];
+    try {
+      for (let i = 0; i < 28; i++) {
+        const clone = seed.cloneNode(true);
+        clone.dataset.qaClone = String(i);
+        clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+        list.appendChild(clone);
+        clones.push(clone);
+      }
+      const rows = [...list.querySelectorAll('.screen-order-v2-slot')];
+      const overlapping = rows.some((row) => {
+        const identity = row.querySelector('.screen-order-v2-identity-copy strong');
+        const buttons = row.querySelectorAll('.screen-order-v2-visibility-button, .screen-order-v2-action');
+        if (!identity || !buttons.length) return false;
+        const t = identity.getBoundingClientRect();
+        return [...buttons].some(button => {
+          const b = button.getBoundingClientRect();
+          return t.left < b.right && t.right > b.left && t.top < b.bottom && t.bottom > b.top;
+        });
+      });
+      const scrollMax = Math.max(0, owner.scrollHeight - owner.clientHeight);
+      owner.scrollTop = scrollMax;
+      return {rows:rows.length,overlapping,scrollMax,scrollTop:owner.scrollTop,
+        ownerOverflow:getComputedStyle(owner).overflowY,
+        listWidth:document.querySelector('.editor-composition-panel').getBoundingClientRect().width };
+    } finally {
+      clones.forEach(el => el.remove());
+      owner.scrollTop = 0;
+    }
+  })()`);
+  assert(longPage?.rows >= 30 && !longPage.overlapping && longPage.scrollMax > 250
+    && longPage.scrollTop > 0 && longPage.ownerOverflow === 'auto'
+    && longPage.listWidth >= 200,
+    'a wedding invitation with 30+ blocks must scroll without label/action overlap: ' + JSON.stringify(longPage));
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && document.querySelector('.inspector-navigation')?.querySelectorAll('button').length >= 3`, 'reference text inspector');
   const before = await evaluate(client, `[...document.querySelectorAll('.text-editor-flow textarea')].map(el => el.value)`);
