@@ -196,9 +196,25 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fi
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row:hover { background: #f4f6fc !important; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true'] { background: #e5ebff !important; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true']::before { display: none; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row .fixed-block-head { min-height: 48px !important; padding: 7px 8px !important; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .screen-order-v2-identity-copy strong { font-size: 15px !important; font-weight: 500 !important; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row .fixed-block-head { grid-template-columns: 10px minmax(0,1fr) 24px 24px !important; gap: 0 !important; min-height: 48px !important; padding: 6px 3px !important; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .screen-order-v2-identity-copy strong { font-size: 13px !important; font-weight: 500 !important; }
 
+/* One-line fixed labels match regular blocks in the 180px list. */
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .fixed-composition-select {
+  grid-template-columns: 16px minmax(0,1fr);
+  gap: 4px;
+  overflow: hidden;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .fixed-composition-select :is(strong, .screen-order-v2-identity-detail) {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .fixed-composition-anchor { width: 10px; min-width: 10px; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row :is(.screen-order-v2-visibility,.screen-order-v2-visibility-button,.fixed-open-button) {
+  width: 24px !important; min-width: 24px !important;
+}
 @media (max-width: 1200px) {
   html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row .fixed-block-head { grid-template-columns: 10px minmax(0,1fr) 24px 24px !important; padding-inline: 4px !important; gap: 0 !important; }
   html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row :is(.screen-order-v2-visibility-button,.fixed-open-button) { width: 24px !important; min-width: 24px !important; }
