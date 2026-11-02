@@ -939,8 +939,8 @@ function assertDesktop(metrics) {
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
-  assert(metrics.innerWidth - metrics.frame.right >= 0 && metrics.innerWidth - metrics.frame.right <= 40,
-    `phone must sit toward right edge of the preview stage: ${JSON.stringify(metrics.frame)}`);
+  assert(Math.abs((metrics.preview.left + metrics.preview.right) / 2 - (metrics.frame.left + metrics.frame.right) / 2) < 4,
+    `phone must sit inside the right-hand stage without an enormous blank gap: ${JSON.stringify(metrics.frame)}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
@@ -948,10 +948,12 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  assert(Math.abs(composition - 180) <= 2, `the always-visible block list must be 180px: ${composition}`);
-  assert(Math.abs(inspector - 320) <= 2, `selected properties must be 320px: ${inspector}`);
-  assert(Math.abs(edit - 500) <= 3 && Math.abs(edit - composition - inspector) <= 3,
-    `combined editor must stay 500px with no third pane: ${JSON.stringify({edit,composition,inspector,width})}`);
+  const expectedComposition = width <= 950 ? 200 : Math.min(232, Math.max(200, width * 0.21));
+  const expectedInspector = width <= 950 ? 290 : 320;
+  assert(Math.abs(composition - expectedComposition) <= 2, `block titles need a real readable navigation width: ${JSON.stringify({width,composition,expectedComposition})}`);
+  assert(Math.abs(inspector - expectedInspector) <= 2, `selected properties must remain usable: ${JSON.stringify({width,inspector,expectedInspector})}`);
+  assert(Math.abs(edit - composition - inspector) <= 3 && edit <= 555,
+    `left editor must remain compact without illegible labels: ${JSON.stringify({edit,composition,inspector,width})}`);
 }
 
 function assertNarrowDesktop(metrics, width) {
@@ -977,8 +979,8 @@ function assertNarrowDesktop(metrics, width) {
     assert(Math.abs(metrics.frameContentWidth - 390) <= 1, `single mobile preview content must stay 390px at ${width}px: ${metrics.frameContentWidth}px`);
     assert(metrics.frame.left >= metrics.preview.left && metrics.frame.right <= width + 1,
       `mobile preview must remain within its own canvas at ${width}px: ${JSON.stringify(metrics.frame)}`);
-    assert(width - metrics.frame.right >= -1 && width - metrics.frame.right <= 40,
-      `narrow desktop mobile preview must sit at right edge at ${width}px: ${JSON.stringify(metrics.frame)}`);
+    assert(Math.abs((metrics.preview.left + metrics.preview.right) / 2 - (metrics.frame.left + metrics.frame.right) / 2) <= 5,
+      `narrow desktop phone must be centered within the remaining stage at ${width}px: ${JSON.stringify(metrics.frame)}`);
   }
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
 }
