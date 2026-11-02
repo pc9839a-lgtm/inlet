@@ -110,7 +110,7 @@
 }
 
 .screen-order-v2-item.is-hidden .screen-order-v2-title-wrap {
-  opacity: .52;
+  opacity: .8;
 }
 
 .screen-order-v2-item.is-dragging { opacity: .45; }

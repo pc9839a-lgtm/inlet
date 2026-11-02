@@ -113,11 +113,11 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-segmented-v2-options[d
   grid-auto-columns: minmax(0, 1fr) !important;
 }
 
-@container editor-inspector (min-width: 240px) {
+@container editor-inspector (min-width: 200px) {
   body .builder-shell .edit-layout .block-editor-v2 .editor-segmented-v2[data-single-row='true'] {
-    grid-template-columns: 80px minmax(0, 1fr) !important;
+    grid-template-columns: 64px minmax(0, 1fr) !important;
     align-items: center !important;
-    gap: 8px !important;
+    gap: 6px !important;
   }
 }
 

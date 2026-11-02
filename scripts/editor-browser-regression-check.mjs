@@ -948,12 +948,15 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  const expectedComposition = width <= 950 ? 200 : Math.min(232, Math.max(200, width * 0.21));
-  const expectedInspector = width <= 950 ? 290 : 320;
-  assert(Math.abs(composition - expectedComposition) <= 2, `block titles need a real readable navigation width: ${JSON.stringify({width,composition,expectedComposition})}`);
-  assert(Math.abs(inspector - expectedInspector) <= 2, `selected properties must remain usable: ${JSON.stringify({width,inspector,expectedInspector})}`);
-  assert(Math.abs(edit - composition - inspector) <= 3 && edit <= 555,
-    `left editor must remain compact without illegible labels: ${JSON.stringify({edit,composition,inspector,width})}`);
+  const expectedEdit = Math.min(700, Math.max(490, width - 418));
+  const expectedComposition = Math.min(260, Math.max(220, width * 0.18));
+  const expectedInspector = expectedEdit - expectedComposition;
+  assert(Math.abs(edit - expectedEdit) <= 2,
+    `left editor must be wide enough for editing at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
+  assert(Math.abs(composition - expectedComposition) <= 2,
+    `block list must fit real Korean names at ${width}px: ${JSON.stringify({composition,expectedComposition})}`);
+  assert(Math.abs(inspector - expectedInspector) <= 2 && Math.abs(edit - composition - inspector) <= 3,
+    `properties must use the remaining editing space, not disappear: ${JSON.stringify({edit,composition,inspector,expectedInspector})}`);
 }
 
 function assertNarrowDesktop(metrics, width) {

@@ -1,22 +1,24 @@
 // The owner reference defines the chrome. Content below is a disposable QA page.
 export async function checkReferenceEditor({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState }) {
   await setViewport(client, 1672, 941, false);
-  // An existing multi-block page initially has no selected block.
-  // Do not reserve a blank inspector beside a compressed block list.
+  // Prior QA scenarios may leave a block selected. Explicitly enter page-level
+  // editing to verify that clearing the selected block never hides the inspector.
+  await clickPointer(client, '.editor-page-settings-button');
+  await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack')`,
+    'unselected page shows real design controls in the permanent inspector');
   const unselected = await evaluate(client, `(() => {
-    const empty = document.querySelector('.editor-selection-empty');
+    const pageOptions = document.querySelector('.editor-page-options-stack');
     const inspector = document.querySelector('.editor-inspector-panel');
     const composition = document.querySelector('.editor-composition-panel');
     const work = document.querySelector('.work-panel');
     const preview = document.querySelector('.preview-workspace');
-    return { empty:!!empty, inspectorDisplay:getComputedStyle(inspector).display,
-      listWidth:composition.getBoundingClientRect().width, editorWidth:work.getBoundingClientRect().width,
-      previewWidth:preview.getBoundingClientRect().width };
+    return { hasPageOptions:!!pageOptions, inspectorDisplay:getComputedStyle(inspector).display,
+      listWidth:composition.getBoundingClientRect().width, inspectorWidth:inspector.getBoundingClientRect().width,
+      editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
-  if (unselected.empty) {
-    assert(unselected.inspectorDisplay === 'none' && Math.abs(unselected.editorWidth - unselected.listWidth) <= 2,
-      'real page must not open with a huge empty inspector: ' + JSON.stringify(unselected));
-  }
+  assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
+    && unselected.editorWidth >= 698 && unselected.listWidth >= 258 && unselected.inspectorWidth >= 438,
+    'no-selection must show actual page controls in the wide left editor: ' + JSON.stringify(unselected));
   // Stress-test the block composition with 30+ rows. Clones are DOM-only
   // and removed in the same task; no app data, draft or publishing state changes.
   const longPage = await evaluate(client, `(() => {
@@ -57,7 +59,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   assert(longPage?.rows >= 30 && !longPage.overlapping && longPage.scrollMax > 250
     && longPage.scrollTop > 0 && longPage.ownerOverflow === 'auto'
-    && longPage.listWidth >= 200,
+    && longPage.listWidth >= 220,
     'a wedding invitation with 30+ blocks must scroll without label/action overlap: ' + JSON.stringify(longPage));
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && document.querySelector('.inspector-navigation')?.querySelectorAll('button').length >= 3`, 'reference text inspector');
@@ -102,8 +104,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 232) <= 1 && geometry.inspector.width >= 318 && geometry.inspector.width <= 321,
-    'real-page reference viewport must have a readable 232px list and compact 320px properties: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 260) <= 1 && geometry.inspector.width >= 438 && geometry.inspector.width <= 441,
+    'reference viewport must have 260px block navigator and 440px property editing: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'auto'
