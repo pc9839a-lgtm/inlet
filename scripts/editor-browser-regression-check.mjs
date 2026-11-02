@@ -1951,11 +1951,11 @@ async function run() {
     assert(addCatalogScroll?.dockPosition === 'static'
       && addCatalogScroll.catalogOverflowY === 'auto'
       && addCatalogScroll.catalogMaxHeight !== 'none'
-      && addCatalogScroll.workOverflowY === 'clip'
+      && addCatalogScroll.workOverflowY === 'auto'
       && addCatalogScroll.catalogHeight > 0
       && addCatalogScroll.catalogBottom <= addCatalogScroll.viewportHeight
       && addCatalogScroll.catalogInComposition,
-      'compact block picker must stay bounded and scroll internally without moving the workspace: ' + JSON.stringify(addCatalogScroll));
+      'compact block picker stays bounded; only the open popover scrolls inside the shared editor workspace: ' + JSON.stringify(addCatalogScroll));
     await clickPointer(client, '.phone-frame #block-editor-hero');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview click opens focused settings with the existing content');
     await clickPointer(client, '.phone-frame #block-editor-hero');
