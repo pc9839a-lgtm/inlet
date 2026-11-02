@@ -31,6 +31,7 @@ export function FixedBlockCard({
             onClick={onToggleOpen}
             aria-pressed={selected}
             aria-label={`${title} 설정 선택`}
+            title={title}
           >
             <span className="screen-order-v2-type-icon" aria-hidden="true">{Icon && <Icon size={16} />}</span>
             <span className="screen-order-v2-identity-copy">
