@@ -1388,8 +1388,8 @@ async function run() {
     })()`);
     assert(fixedRows.length === 3
       && fixedRows.every((row) => row.fixed === 'true' && !row.draggable
-        && row.headHeight >= 44 && row.labelOverflow === 'clip'
-        && row.labelWhiteSpace === 'normal' && row.selectionIsButton === 'BUTTON'
+        && row.headHeight >= 44 && row.labelOverflow === 'ellipsis'
+        && row.labelWhiteSpace === 'nowrap' && row.selectionIsButton === 'BUTTON'
         && row.visibleIsSwitch === 'switch'),
       'fixed list entries must show plain readable rows without false drag affordances: ' + JSON.stringify(fixedRows));
     const fixedEyeChecked = await evaluate(client, `document.querySelector(${JSON.stringify(fixedEyeSelector)})?.getAttribute('aria-checked')`);
