@@ -1,6 +1,22 @@
 // The owner reference defines the chrome. Content below is a disposable QA page.
 export async function checkReferenceEditor({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState }) {
   await setViewport(client, 1672, 941, false);
+  // An existing multi-block page initially has no selected block.
+  // Do not reserve a blank inspector beside a compressed block list.
+  const unselected = await evaluate(client, `(() => {
+    const empty = document.querySelector('.editor-selection-empty');
+    const inspector = document.querySelector('.editor-inspector-panel');
+    const composition = document.querySelector('.editor-composition-panel');
+    const work = document.querySelector('.work-panel');
+    const preview = document.querySelector('.preview-workspace');
+    return { empty:!!empty, inspectorDisplay:getComputedStyle(inspector).display,
+      listWidth:composition.getBoundingClientRect().width, editorWidth:work.getBoundingClientRect().width,
+      previewWidth:preview.getBoundingClientRect().width };
+  })()`);
+  if (unselected.empty) {
+    assert(unselected.inspectorDisplay === 'none' && Math.abs(unselected.editorWidth - unselected.listWidth) <= 2,
+      'real page must not open with a huge empty inspector: ' + JSON.stringify(unselected));
+  }
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && document.querySelector('.inspector-navigation')?.querySelectorAll('button').length >= 3`, 'reference text inspector');
   const before = await evaluate(client, `[...document.querySelectorAll('.text-editor-flow textarea')].map(el => el.value)`);
@@ -44,19 +60,19 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 180) <= 1 && geometry.inspector.width >= 318 && geometry.inspector.width <= 321,
-    'compact reference viewport must have 180px blocks and 320px properties: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 232) <= 1 && geometry.inspector.width >= 318 && geometry.inspector.width <= 321,
+    'real-page reference viewport must have a readable 232px list and compact 320px properties: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'auto'
     && geometry.ancestors[1].scrollHeight > geometry.ancestors[1].height.replace('px','') * 1,
     'only the outer work panel should scroll when selected properties are long: ' + JSON.stringify(geometry));
   assert(geometry.labels.length >= 4 && geometry.labels.every(label => label.whiteSpace === 'nowrap' && label.height <= label.lineHeight + 2),
-    '180px list must render every Korean block name in one horizontal line, with ellipsis for long labels: ' + JSON.stringify(geometry.labels));
+    'real-page list must keep every Korean block name in a horizontal line: ' + JSON.stringify(geometry.labels));
   assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0
     && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'visible' && geometry.inspectorScroll === 'visible'
-    && geometry.phone.right <= 1672 && 1672 - geometry.phone.right <= 40,
-    'reference editor must show an actual right-aligned phone and one shared editing scrollbar: ' + JSON.stringify(geometry));
+    && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
+    'reference editor must show a balanced right-stage phone and one shared editing scrollbar: ' + JSON.stringify(geometry));
 
   // Zoom changes only the viewing scale; the page's layout width stays 390px.
   await evaluate(client, `(() => { const el = document.querySelector('select[aria-label="미리보기 배율"]'); el.value='75'; el.dispatchEvent(new Event('change',{bubbles:true})); })()`);
