@@ -19,6 +19,9 @@ export function EditPanelLayout({
 }) {
   const [section, setSection] = React.useState('order');
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
+  // A blank selection is page-level context, not a reason to collapse the editor.
+  // Show the existing page design and options until a block is selected.
+  const showPageOptions = section === 'options' || !selectedBlockId;
   const fixedSelected = createFixedBlockDescriptors(fixedBlocksProps).find((item) => item.open);
   const chooseBlock = (id) => {
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
@@ -70,7 +73,7 @@ export function EditPanelLayout({
         <button
           className="editor-page-settings-button"
           type="button"
-          aria-pressed={section === 'options'}
+          aria-pressed={showPageOptions}
           aria-controls="editor-selection-panel"
           onClick={openPageOptions}
         >
@@ -78,8 +81,8 @@ export function EditPanelLayout({
         </button>
       </aside>
       <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>
-      <div id="editor-selection-panel" className="edit-section-panel" data-editor-section={section}>
-        {section === 'options' ? (
+      <div id="editor-selection-panel" className="edit-section-panel" data-editor-section={showPageOptions ? 'options' : section}>
+        {showPageOptions ? (
           <div className="editor-page-options-stack">
             {stylePanelProps && (
               <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
@@ -92,7 +95,6 @@ export function EditPanelLayout({
           <>
             {fixedSelected ? <ScreenOrderSettings block={fixedSelected.block} identity={{ customLabel: fixedSelected.title }} renderBlockEditor={fixedSelected.renderEditor} />
               : <ScreenOrderList {...screenOrderListProps} inspectorOnly />}
-            {!selectedBlockId && <div className="editor-selection-empty"><h2>블록을 선택하세요</h2></div>}
           </>
         )}
       </div>
