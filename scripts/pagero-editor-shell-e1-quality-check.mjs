@@ -51,7 +51,7 @@ assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includ
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
 assert(css.includes('--editor-list-width: 180px;') && css.includes('--editor-settings-width: 320px;') && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'compact editor must cap the left block list and inspector at 500px');
 assert(layout.includes('editor-composition-heading') && editPanelLayoutCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;'), 'block list and inspector must share compact editor space');
-assert(css.includes('overflow-y: auto !important;') && editPanelLayoutCss.includes('overflow: visible !important;'), 'edit workspace must have one scrollbar and no nested scrolling panels');
+assert(css.includes('overflow: hidden auto !important;') && editPanelLayoutCss.includes('overflow: visible !important;'), 'edit workspace must have one scrollbar and no nested scrolling panels');
 assert(previewPaneCss.includes('width: 402px !important;') && previewPaneCss.includes('width: 392px !important;') && previewPaneCss.includes('--landing-runtime-width: 390px;') && previewPaneCss.includes('justify-content: flex-end !important;'), 'editor preview must show one 390px mobile page right-aligned without promotional content');
 assert(addDockCss.includes('/* Active editor dock geometry.')
   && addDockCss.includes('position: static !important;')
