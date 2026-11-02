@@ -1,7 +1,7 @@
 /* Editor geometry: persistent block list, selected settings, one live mobile page. */
 html body #root .builder-shell.canvas-editor-shell {
-  --editor-list-width: clamp(200px, 16.5vw, 276px);
-  --editor-settings-width: clamp(320px, 23.5vw, 394px);
+  --editor-list-width: 180px;
+  --editor-settings-width: 320px;
   --editor-edit-width: calc(var(--editor-list-width) + var(--editor-settings-width));
   display: grid;
   grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;
@@ -12,7 +12,7 @@ html body #root .builder-shell.canvas-editor-shell {
   overflow: clip !important;
 }
 html body #root .canvas-editor-shell > .left-workspace { display: contents !important; }
-html body #root .canvas-editor-shell #workspace-panel-edit { height: 100%; min-height: 0; padding: 0; margin: 0; overflow: clip; }
+html body #root .canvas-editor-shell #workspace-panel-edit { height: auto; min-height: 100%; padding: 0; margin: 0; overflow: visible; }
 html body #root .canvas-editor-shell .work-panel {
   grid-column: 1;
   grid-row: 2;
@@ -22,12 +22,11 @@ html body #root .canvas-editor-shell .work-panel {
   height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-  overflow: clip !important;
+  /* Only this outer editing workspace owns a vertical scrollbar. */
+  overflow: hidden auto !important;
+  overscroll-behavior-y: contain;
   border-right: 1px solid #e7eaf2;
   background: #fff;
-}
-@media (min-width: 900px) and (max-width: 950px) {
-  html body #root .builder-shell.canvas-editor-shell { --editor-list-width: 180px; --editor-settings-width: 300px; }
 }
 /* Desktop zoom keeps both surfaces reachable; phones retain operations mode. */
 @media (max-width: 899px) {

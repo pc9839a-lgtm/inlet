@@ -939,8 +939,8 @@ function assertDesktop(metrics) {
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
-  assert(Math.abs((metrics.preview.left + metrics.preview.right) / 2 - (metrics.frame.left + metrics.frame.right) / 2) < 4,
-    `phone must be centered within the content-only preview canvas: ${JSON.stringify(metrics.frame)}`);
+  assert(metrics.innerWidth - metrics.frame.right >= 0 && metrics.innerWidth - metrics.frame.right <= 40,
+    `phone must sit toward right edge of the preview stage: ${JSON.stringify(metrics.frame)}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
@@ -948,10 +948,10 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  assert(composition >= 178 && composition <= 278, `reference block list must remain readable: ${composition}`);
-  assert(inspector >= 298 && inspector <= 396, `reference property pane must remain readable: ${inspector}`);
-  assert(Math.abs(edit - composition - inspector) <= 3, `list and properties must fill editing space without a third sidecar: ${JSON.stringify({edit,composition,inspector})}`);
-  if (width >= 1600) assert(composition >= 260 && inspector >= 380, 'wide reference viewport must use its full-size list and settings tracks');
+  assert(Math.abs(composition - 180) <= 2, `the always-visible block list must be 180px: ${composition}`);
+  assert(Math.abs(inspector - 320) <= 2, `selected properties must be 320px: ${inspector}`);
+  assert(Math.abs(edit - 500) <= 3 && Math.abs(edit - composition - inspector) <= 3,
+    `combined editor must stay 500px with no third pane: ${JSON.stringify({edit,composition,inspector,width})}`);
 }
 
 function assertNarrowDesktop(metrics, width) {
@@ -977,6 +977,8 @@ function assertNarrowDesktop(metrics, width) {
     assert(Math.abs(metrics.frameContentWidth - 390) <= 1, `single mobile preview content must stay 390px at ${width}px: ${metrics.frameContentWidth}px`);
     assert(metrics.frame.left >= metrics.preview.left && metrics.frame.right <= width + 1,
       `mobile preview must remain within its own canvas at ${width}px: ${JSON.stringify(metrics.frame)}`);
+    assert(width - metrics.frame.right >= -1 && width - metrics.frame.right <= 40,
+      `narrow desktop mobile preview must sit at right edge at ${width}px: ${JSON.stringify(metrics.frame)}`);
   }
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
 }
@@ -1386,8 +1388,8 @@ async function run() {
     })()`);
     assert(fixedRows.length === 3
       && fixedRows.every((row) => row.fixed === 'true' && !row.draggable
-        && row.headHeight >= 44 && row.labelOverflow === 'clip'
-        && row.labelWhiteSpace === 'normal' && row.selectionIsButton === 'BUTTON'
+        && row.headHeight >= 44 && row.labelOverflow === 'ellipsis'
+        && row.labelWhiteSpace === 'nowrap' && row.selectionIsButton === 'BUTTON'
         && row.visibleIsSwitch === 'switch'),
       'fixed list entries must show plain readable rows without false drag affordances: ' + JSON.stringify(fixedRows));
     const fixedEyeChecked = await evaluate(client, `document.querySelector(${JSON.stringify(fixedEyeSelector)})?.getAttribute('aria-checked')`);
@@ -1592,7 +1594,8 @@ async function run() {
     assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
     await capture(client, 'desktop-hero-background-stage6');
     assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'content must stay available alongside background-image settings');
-    // Reference columns scroll independently; settings cannot displace the block list.
+    // Single shared scrollbar: block list and selected inspector stay in the
+    // same editor workspace, without two competing vertical scroll tracks.
     const inspectorScroll = await evaluate(client, `(() => {
       const settings = document.querySelector('#editor-block-settings-editor-hero');
       const panel = settings?.closest('.editor-inspector-panel');
@@ -1604,7 +1607,7 @@ async function run() {
       let result;
       try {
         content.style.minHeight = '1600px';
-        panel.scrollTop = 320;
+        workPanel.scrollTop = 320;
         result = {
           role: panel.getAttribute('role'),
           label: panel.getAttribute('aria-label'),
@@ -1612,26 +1615,30 @@ async function run() {
           inspectorOverflowY: getComputedStyle(panel).overflowY,
           compositionOverflowY: getComputedStyle(composition).overflowY,
           workOverflowY: getComputedStyle(workPanel).overflowY,
-          workHeight: panel.clientHeight,
-          workContentHeight: panel.scrollHeight,
-          workScrollTop: panel.scrollTop,
+          workHeight: workPanel.clientHeight,
+          workContentHeight: workPanel.scrollHeight,
+          workScrollTop: workPanel.scrollTop,
+          inspectorScrollTop: panel.scrollTop,
+          compositionScrollTop: composition.scrollTop,
           innerOverflowY: getComputedStyle(settings).overflowY,
         };
       } finally {
+        workPanel.scrollTop = 0;
         content.style.minHeight = original;
-        panel.scrollTop = 0;
       }
       return result;
     })()`);
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
-      && inspectorScroll.label?.includes('선택 항목 편집'), `D01 keyboard-scroll region must remain accessible: ${JSON.stringify(inspectorScroll)}`);
-    assert(inspectorScroll.inspectorOverflowY === 'auto'
-      && inspectorScroll.compositionOverflowY === 'auto'
-      && inspectorScroll.workOverflowY === 'clip'
+      && inspectorScroll.label?.includes('선택 항목 편집'), `D01 selected property region must stay keyboard accessible: ${JSON.stringify(inspectorScroll)}`);
+    assert(inspectorScroll.inspectorOverflowY === 'visible'
+      && inspectorScroll.compositionOverflowY === 'visible'
+      && inspectorScroll.workOverflowY === 'auto'
       && inspectorScroll.workContentHeight > inspectorScroll.workHeight
       && inspectorScroll.workScrollTop > 0
+      && inspectorScroll.inspectorScrollTop === 0
+      && inspectorScroll.compositionScrollTop === 0
       && inspectorScroll.innerOverflowY === 'visible',
-      `D01 long settings must scroll the inspector while keeping the block list persistent: ${JSON.stringify(inspectorScroll)}`);
+      `D01 long settings must scroll the one shared editor workspace: ${JSON.stringify(inspectorScroll)}`);
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
@@ -1917,9 +1924,9 @@ async function run() {
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '2px' && stageOneList.rowBorder === '0px'
       && stageOneList.rowRadius === '9px' && stageOneList.height >= 48
-      && stageOneList.titleWhiteSpace === 'normal'
+      && stageOneList.titleWhiteSpace === 'nowrap'
       && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
-      'reference block list must show flat rows with visible keyboard and pointer controls: ' + JSON.stringify(stageOneList));
+      'compact block list must show single-line names and reachable controls: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
       && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
@@ -1944,11 +1951,11 @@ async function run() {
     assert(addCatalogScroll?.dockPosition === 'static'
       && addCatalogScroll.catalogOverflowY === 'auto'
       && addCatalogScroll.catalogMaxHeight !== 'none'
-      && addCatalogScroll.workOverflowY === 'clip'
+      && addCatalogScroll.workOverflowY === 'auto'
       && addCatalogScroll.catalogHeight > 0
       && addCatalogScroll.catalogBottom <= addCatalogScroll.viewportHeight
       && addCatalogScroll.catalogInComposition,
-      'compact block picker must stay bounded and scroll internally without moving the workspace: ' + JSON.stringify(addCatalogScroll));
+      'compact block picker stays bounded; only the open popover scrolls inside the shared editor workspace: ' + JSON.stringify(addCatalogScroll));
     await clickPointer(client, '.phone-frame #block-editor-hero');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview click opens focused settings with the existing content');
     await clickPointer(client, '.phone-frame #block-editor-hero');

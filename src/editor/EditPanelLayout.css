@@ -8,26 +8,23 @@ body .builder-shell .edit-section-panel { width: 100%; min-width: 0; max-width: 
 .editor-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout {
   grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: auto;
   align-items: stretch;
   gap: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
-  min-height: 0;
-  height: 100% !important;
+  min-height: 100%;
+  height: auto !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel,
 html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
   min-width: 0;
   min-height: 0;
-  height: 100%;
-  max-height: 100%;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  overscroll-behavior-y: contain;
+  height: auto;
+  max-height: none;
+  /* One shared scroll in .work-panel; nested scrollbars caused duplicate UI. */
+  overflow: visible !important;
   background: #fff;
-  scrollbar-width: thin;
-  scrollbar-color: #d9deeb transparent;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel { padding: 0 12px 24px; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-heading {

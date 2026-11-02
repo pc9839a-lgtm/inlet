@@ -25,7 +25,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await setInputValue(client, 'input[aria-label="글자색 HEX"]', '#111827');
   await focusSelector(client, 'input[aria-label="제목 크기 (px)"]');
   await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-editor-text h2')).color === 'rgb(17, 24, 39)'`, 'text color reset');
-  await evaluate(client, `document.querySelector('.editor-inspector-panel').scrollTop = 0`);
+  await evaluate(client, `document.querySelector('.work-panel').scrollTop = 0`);
 
   const geometry = await evaluate(client, `(() => {
     const rect = el => { const r = el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width,top:r.top,height:r.height}; };
@@ -34,14 +34,29 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const inspector = document.querySelector('.editor-inspector-panel');
     return { header: rect(document.querySelector('.workspace-persistent-header')), list:rect(list), inspector:rect(inspector), stage:rect(stage), phone:rect(document.querySelector('.phone-frame')), pageWidth:document.querySelector('.phone-frame .landing-page').clientWidth,
       phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-width-option').length, documentWidth:document.documentElement.scrollWidth,
-      listScroll:getComputedStyle(list).overflowY, inspectorScroll:getComputedStyle(inspector).overflowY, redundantNav:!!document.querySelector('.workspace-persistent-header > .workspace-editor-nav'),
+      listScroll:getComputedStyle(list).overflowY, inspectorScroll:getComputedStyle(inspector).overflowY,
+      labels:[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy strong')].map(el => ({
+        label: el.textContent, whiteSpace:getComputedStyle(el).whiteSpace, height:el.getBoundingClientRect().height,
+        lineHeight:parseFloat(getComputedStyle(el).lineHeight), clipped:el.scrollWidth>el.clientWidth
+      })),
+      redundantNav:!!document.querySelector('.workspace-persistent-header > .workspace-editor-nav'),
       ancestors:['.builder-shell','.work-panel','.edit-layout'].map(selector => { const el=document.querySelector(selector), css=getComputedStyle(el);return {selector,...rect(el),scrollTop:el.scrollTop,scrollHeight:el.scrollHeight,height:css.height,minHeight:css.minHeight,rows:css.gridTemplateRows,overflow:css.overflowY}; }) };
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && geometry.list.width >= 270 && geometry.list.width <= 278 && geometry.inspector.width >= 388 && geometry.inspector.width <= 398, 'reference viewport must reproduce its three working regions: ' + JSON.stringify(geometry));
-  assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1 && geometry.list.height <= 877 && geometry.inspector.height <= 877, 'reference settings and list must remain inside the viewport after editing and keyboard focus: ' + JSON.stringify(geometry));
-  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0 && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'auto' && geometry.inspectorScroll === 'auto', 'reference editor must keep actual page only, no marketing panel, and independent reachable columns: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 180) <= 1 && geometry.inspector.width >= 318 && geometry.inspector.width <= 321,
+    'compact reference viewport must have 180px blocks and 320px properties: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
+    'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
+  assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'auto'
+    && geometry.ancestors[1].scrollHeight > geometry.ancestors[1].height.replace('px','') * 1,
+    'only the outer work panel should scroll when selected properties are long: ' + JSON.stringify(geometry));
+  assert(geometry.labels.length >= 4 && geometry.labels.every(label => label.whiteSpace === 'nowrap' && label.height <= label.lineHeight + 2),
+    '180px list must render every Korean block name in one horizontal line, with ellipsis for long labels: ' + JSON.stringify(geometry.labels));
+  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0
+    && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'visible' && geometry.inspectorScroll === 'visible'
+    && geometry.phone.right <= 1672 && 1672 - geometry.phone.right <= 40,
+    'reference editor must show an actual right-aligned phone and one shared editing scrollbar: ' + JSON.stringify(geometry));
 
   // Zoom changes only the viewing scale; the page's layout width stays 390px.
   await evaluate(client, `(() => { const el = document.querySelector('select[aria-label="미리보기 배율"]'); el.value='75'; el.dispatchEvent(new Event('change',{bubbles:true})); })()`);
@@ -62,7 +77,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await clickPointer(client, '.inspector-navigation button:last-child');
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .block-editor-advanced-settings').open`, 'inspector advanced navigation opens the real anchor control');
   await clickPointer(client, '.inspector-navigation button:first-child');
-  await waitForBrowser(client, `document.querySelector('.editor-inspector-panel').scrollTop === 0`, 'inspector content navigation returns to its own top');
+  await waitForBrowser(client, `document.querySelector('.work-panel').scrollTop === 0`, 'content navigation returns to shared editor top');
 
   await waitForBrowser(client, `getComputedStyle(document.querySelector('.preview-selection-toolbar')).visibility === 'visible'`, 'selected preview action bar');
   await clickPointer(client, '.preview-selection-toolbar button[aria-label="블록 위로 이동"]');

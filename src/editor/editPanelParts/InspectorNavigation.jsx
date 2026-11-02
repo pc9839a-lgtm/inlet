@@ -23,7 +23,7 @@ export function InspectorNavigation({ blockType }) {
 
   const go = (id) => {
     const root = ref.current.closest('.screen-order-v2-settings-view');
-    const scroller = root.closest('.editor-inspector-panel');
+    const scroller = root.closest('.work-panel');
     let target = root.querySelector('.block-editor-v2');
     if (id === 'style') {
       target = root.querySelector(STYLE);
