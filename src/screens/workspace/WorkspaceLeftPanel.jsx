@@ -152,12 +152,13 @@ export function WorkspaceLeftPanel({
       backupEnabled={canBackup}
       onBackup={downloadPageBackup}
       onImportBackup={importPageBackup}
+      navigation={tab === 'edit' && !mobileOperationsOnly ? <WorkspaceTabs allowedTabs={allowedTabs} tab={tab} changeTab={changeTab} /> : null}
     />
   );
 
   return (
     <aside className="left-workspace">
-      {!showTemplateIntro && <div className="workspace-persistent-header">{header}{tab === 'edit' && !mobileOperationsOnly && <div className="workspace-editor-nav"><WorkspaceTabs allowedTabs={allowedTabs} tab={tab} changeTab={changeTab} /></div>}</div>}
+      {!showTemplateIntro && <div className="workspace-persistent-header">{header}</div>}
 
       <section className="work-panel">
         {showTemplateIntro ? (

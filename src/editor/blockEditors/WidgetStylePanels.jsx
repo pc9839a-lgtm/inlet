@@ -1,11 +1,12 @@
 import { Color } from '../controls.jsx';
 import { SegmentedControl, ToggleRow } from '../ui/index.js';
 import { WidgetSpacingControls } from './WidgetSpacingControls.jsx';
+import { AlignCenter, AlignLeft, AlignRight } from 'lucide-react';
 
 const ALIGN = [
-  { value: 'left', label: '왼쪽' },
-  { value: 'center', label: '가운데' },
-  { value: 'right', label: '오른쪽' },
+  { value: 'left', label: '왼쪽', icon: AlignLeft },
+  { value: 'center', label: '가운데', icon: AlignCenter },
+  { value: 'right', label: '오른쪽', icon: AlignRight },
 ];
 const ALIGN_NO_RIGHT = ALIGN.slice(0, 2);
 const SIZES = [
@@ -15,24 +16,18 @@ const SIZES = [
 ];
 
 function AlignmentControl({ s, set, options = ALIGN, defaultValue = 'left' }) {
-  return <SegmentedControl label="정렬" value={s.align || defaultValue} onChange={(value) => set({ align: value })} options={options} />;
+  return <SegmentedControl label="정렬" iconOnly value={s.align || defaultValue} onChange={(value) => set({ align: value })} options={options} />;
 }
 
 export function HeroStylePanel({ s, set }) {
   return <div className="editor-v2-control-list">
-    <SegmentedControl label="정렬" value={s.align || 'left'} onChange={(value) => set({ align: value })} options={ALIGN} />
+    <SegmentedControl label="정렬" iconOnly value={s.align || 'left'} onChange={(value) => set({ align: value })} options={ALIGN} />
     <SegmentedControl label="제목 크기" value={s.titleSize || 'large'} onChange={(value) => set({ titleSize: value })} options={SIZES} />
     <SegmentedControl label="설명 크기" value={s.bodySize || 'medium'} onChange={(value) => set({ bodySize: value })} options={SIZES} />
   </div>;
 }
 
-export function TextStylePanel({ s, set }) {
-  return <>
-    <SegmentedControl label="형태" value={s.layout || 'plain'} onChange={(value) => set({ layout: value })} options={[{ value: 'plain', label: '기본' }, { value: 'card', label: '카드' }, { value: 'notice', label: '강조' }]} />
-    <SegmentedControl label="글자 크기" value={s.size || 'medium'} onChange={(value) => set({ size: value })} options={SIZES} />
-    <AlignmentControl s={s} set={set} />
-  </>;
-}
+export { TextStylePanel } from './TextAppearanceControls.jsx';
 
 export function CardsStylePanel({ s, set }) {
   return <>

@@ -248,32 +248,13 @@ body .builder-shell .workspace-active-panel:focus {
   }
 }
 
-/* Canvas editor */
-html body #root .canvas-editor-shell .workspace-persistent-header {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  border-bottom: 1px solid var(--product-line);
-}
+/* Canvas editor: one persistent top bar. Operations tabs remain in its page menu. */
+html body #root .canvas-editor-shell .workspace-persistent-header { grid-column: 1 / -1; grid-row: 1; display: block; height: 64px; border-bottom: 1px solid #e5e9f2; }
 html body #root .canvas-editor-shell .panel-header { border-bottom: 0 !important; }
-html body #root .canvas-editor-shell .workspace-editor-nav { padding: 0 12px; }
-html body #root .canvas-editor-shell .workspace-editor-nav .top-tabs {
-  width: auto !important;
-  min-height: 36px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  gap: 2px !important;
-}
-html body #root .canvas-editor-shell .workspace-editor-nav .top-tabs button {
-  width: auto !important;
-  padding: 0 10px !important;
-  font-weight: 500 !important;
-}
-@media (max-width: 1050px) {
-  html body #root .canvas-editor-shell .workspace-persistent-header { grid-template-columns: minmax(0, 1fr); }
-  html body #root .canvas-editor-shell .workspace-editor-nav { padding: 0 12px 6px; }
-  html body #root .canvas-editor-shell .workspace-editor-nav .top-tabs { justify-content: start; grid-template-columns: repeat(4, auto) !important; }
-}
+html body #root .canvas-editor-shell .workspace-editor-nav { position: relative; flex: 0 0 auto; padding: 0; }
+html body #root .canvas-editor-shell .workspace-editor-nav > summary { display: grid; place-items: center; width: 28px; height: 32px; border-radius: 6px; cursor: pointer; list-style: none; color: #172039; }
+html body #root .canvas-editor-shell .workspace-editor-nav > summary::-webkit-details-marker { display: none; }
+html body #root .canvas-editor-shell .workspace-editor-nav:not([open]) > .top-tabs { display: none !important; }
+html body #root .canvas-editor-shell .workspace-editor-nav > .top-tabs { position: absolute; top: 42px; left: 0; z-index: 50; display: grid !important; grid-template-columns: 1fr !important; width: 190px !important; min-height: 0 !important; margin: 0 !important; padding: 6px !important; border: 1px solid #e1e6f0 !important; border-radius: 10px !important; background: #fff !important; box-shadow: 0 12px 32px #17203918 !important; gap: 2px !important; }
+html body #root .canvas-editor-shell .workspace-editor-nav .top-tabs button { width: 100% !important; justify-content: flex-start; min-height: 38px !important; padding: 0 12px !important; font-weight: 500 !important; }
+@media (max-width: 899px) { html body #root .canvas-editor-shell .workspace-persistent-header { height: auto !important; } }

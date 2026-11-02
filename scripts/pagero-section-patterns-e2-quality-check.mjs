@@ -27,7 +27,7 @@ assert(panel.includes('<AddBlockGroupGrid') && !panel.includes('<AddSectionPatte
 assert(!panel.includes('추천 섹션') && !panel.includes('업종별') && !panel.includes('최근 사용') && !panel.includes('pagero-widget-search'), 'primary add surface must not expose recommendation tabs, recent mode, or search');
 assert(picker.includes('section-pattern-card') && picker.includes('업종에 맞는 기본 전환 흐름'), 'section pattern component may remain available internally even when removed from the primary add surface');
 assert(dock.includes('embedded = false') && dock.includes('const panelOpen = embedded || addOpen'), 'embedded add surface must stay open independently of the old floating dock state');
-assert(layout.includes('<AddBlockDock {...addBlockDockProps} />'), 'restored left editor must keep E2 patterns in the existing add dock');
+assert(layout.includes('<AddBlockDock {...addBlockDockProps} compact />'), 'reference editor must keep existing insertion callbacks in its compact add dock');
 
 assert(actions.includes('createSectionPatternBlocks') && actions.includes('const addSectionPattern = (patternId)'), 'runtime must expose section pattern insertion');
 assert(actions.includes("['bottombar', 'footer'].includes(item.type)"), 'section bundle must insert before trailing fixed blocks');

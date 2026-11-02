@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, MoreHorizontal, Redo2, Save, Undo2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Eye, MoreHorizontal, Redo2, Save, Undo2, Upload } from 'lucide-react';
 import './PanelHeader.css';
+import editorWordmark from './pagero-editor-wordmark.png';
 import { visibleEditorPublishState } from '../runtime/saveStatusActions.js';
 import {
   getPageEditHistoryState,
@@ -15,10 +16,11 @@ const saveStateColors = {
   error: '#b42318',
 };
 
-export default function PanelHeader({ page, tab, saved, saveStatus, hasUnappliedDrafts = false, onSave, onPreview, onDashboard, previewUrl, backupEnabled = false, onBackup, onImportBackup }) {
+export default function PanelHeader({ page, tab, saved, saveStatus, hasUnappliedDrafts = false, onSave, onPreview, onDashboard, previewUrl, backupEnabled = false, onBackup, onImportBackup, navigation }) {
   const [historyState, setHistoryState] = useState(() => getPageEditHistoryState());
   const backupFileInputRef = useRef(null);
   const backupMenuRef = useRef(null);
+  const pageMenuRef = useRef(null);
 
   const closeBackupMenu = () => {
     if (backupMenuRef.current) backupMenuRef.current.open = false;
@@ -51,6 +53,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
     if (!editorHeader) return undefined;
     const closeOutside = (event) => {
       if (!backupMenuRef.current?.contains(event.target)) closeBackupMenu();
+      if (pageMenuRef.current && !pageMenuRef.current.contains(event.target)) pageMenuRef.current.open = false;
     };
     document.addEventListener('pointerdown', closeOutside);
     return () => document.removeEventListener('pointerdown', closeOutside);
@@ -84,7 +87,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
   }, [historyEnabled]);
 
   const status = (
-    <div className="panel-save-status operations-save-status" role="status" aria-atomic="true" title={publishState.detail || publishState.label} aria-live="polite">
+    <div className="panel-save-status operations-save-status" data-tone={publishState.tone} role="status" aria-atomic="true" title={publishState.detail || publishState.label} aria-live="polite">
       <strong style={{ color: saveStateColors[publishState.tone] || 'var(--product-muted)' }}>{publishState.label}</strong>
       {publishState.at && <time dateTime={publishState.at} title={publishState.at} style={{ marginLeft: 6, fontSize: 10 }}>{new Date(publishState.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</time>}
     </div>
@@ -96,10 +99,23 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
         {editorHeader ? (
           <>
             <button className="panel-dashboard-button" type="button" onClick={onDashboard} aria-label="페이지 목록으로" title="페이지 목록">
-              <ArrowLeft size={18} aria-hidden="true" />
+              {navigation ? <img className="editor-wordmark" src={editorWordmark} alt="" width="129" height="35" /> : <ArrowLeft size={18} aria-hidden="true" />}
             </button>
             <div className="panel-editor-heading">
-              <h1 title={page.title}>{page.title || '제목 없는 페이지'}</h1>
+              <div className="panel-page-name">
+                <h1 title={page.title}>{page.title || '제목 없는 페이지'}</h1>
+                {navigation && <details className="workspace-editor-nav" ref={pageMenuRef} onKeyDown={(event) => {
+                  if (event.key !== 'Escape') return;
+                  event.preventDefault();
+                  event.currentTarget.open = false;
+                  event.currentTarget.querySelector('summary')?.focus();
+                }} onClick={(event) => {
+                  if (event.target.closest('[role="tab"]')) event.currentTarget.open = false;
+                }}>
+                  <summary aria-label="작업 메뉴" title="편집·접수함·통계·설정"><ChevronDown size={17} aria-hidden="true" /></summary>
+                  {navigation}
+                </details>}
+              </div>
               {status}
             </div>
           </>
@@ -155,7 +171,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
           />
         )}
         {!editorHeader && <button className="ghost-btn" type="button" onClick={onDashboard}>메인</button>}
-        <button className="ghost-btn" type="button" onClick={onPreview} title={previewUrl}>미리보기</button>
+        <button className="ghost-btn panel-preview-button" type="button" onClick={onPreview} title={previewUrl}>{editorHeader && <Eye size={18} aria-hidden="true" />}미리보기</button>
         <button
           className="primary-btn"
           type="button"
@@ -163,7 +179,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
           title="편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다."
           aria-busy={publishing}
         >
-          <Save size={14} aria-hidden="true" />{publishing ? '발행 중' : publishState.tone === 'ok' && publishState.label === '발행됨' ? '발행됨' : '발행'}
+          {editorHeader ? <Upload size={18} aria-hidden="true" /> : <Save size={14} aria-hidden="true" />}{publishing ? '발행 중' : publishState.tone === 'ok' && publishState.label === '발행됨' ? '발행됨' : editorHeader ? '게시하기' : '발행'}
         </button>
       </div>
     </header>

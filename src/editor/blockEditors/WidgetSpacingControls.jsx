@@ -5,8 +5,8 @@ export function WidgetSpacingControls({ s, set, padding = true, defaultMargin = 
   return (
     <section className="widget-spacing-controls" aria-label="상하 간격">
       <h3>상하 간격</h3>
-      {padding && <NumberControl label="내용 안쪽" unit="px" value={s.paddingY ?? 22} min={0} max={44} slider={false} onChange={(paddingY) => set({ paddingY })} />}
-      <NumberControl label="블록 사이" unit="px" value={s.marginY ?? defaultMargin} min={0} max={48} slider={false} onChange={(marginY) => set({ marginY })} />
+      {padding && <NumberControl label="내용 안쪽" unit="px" value={s.paddingY ?? 22} min={0} max={44} slider={false} steppers onChange={(paddingY) => set({ paddingY })} />}
+      <NumberControl label="블록 사이" unit="px" value={s.marginY ?? defaultMargin} min={0} max={48} slider={false} steppers onChange={(marginY) => set({ marginY })} />
     </section>
   );
 }

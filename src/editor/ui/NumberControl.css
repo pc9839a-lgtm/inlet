@@ -38,3 +38,14 @@ html body #root .builder-shell .editor-number-control[data-slider='false'] {
   gap: 12px !important;
 }
 .builder-shell .editor-number-control[data-slider='false'] > .editor-number-inputs { display: block; }
+
+/* Optional unit field with real, bounded step buttons. */
+html body #root .builder-shell .editor-number-control[data-steppers='true'][data-slider='false'] { grid-template-columns: minmax(72px,1fr) minmax(0,1.65fr) !important; gap: 12px !important; }
+html body #root .builder-shell .editor-number-control[data-steppers='true'] > .editor-number-inputs { display: grid; grid-template-columns: minmax(48px,1fr) 64px; gap: 8px; }
+.editor-number-steppers { display: flex; height: 36px; border: 1px solid #dce3ef; border-radius: 7px; overflow: hidden; background: #fff; }
+html body #root .builder-shell .editor-number-steppers > button { display: grid; place-items: center; flex: 1; min-width: 0; min-height: 34px !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; color: #475467 !important; box-shadow: none !important; cursor: pointer; }
+html body #root .builder-shell .editor-number-steppers > button + button { border-left: 1px solid #e5eaf2 !important; }
+html body #root .builder-shell .editor-number-steppers > button:disabled { opacity: .35; cursor: default; }
+html body #root .builder-shell .editor-number-steppers > button:not(:disabled):hover { background: #edf1ff !important; color: #2454ff !important; }
+.editor-number-control[data-steppers='true'] input[type='number'] { appearance: textfield; }
+.editor-number-control[data-steppers='true'] input[type='number']::-webkit-inner-spin-button { appearance: none; }

@@ -1,7 +1,8 @@
 import { useEffect, useId, useState } from 'react';
+import { Minus, Plus } from 'lucide-react';
 import './NumberControl.css';
 
-export function NumberControl({ label, value, min = 0, max = 100, step = 1, unit = '', onChange, presets = [], slider = true, className = '', valueClassName = '' }) {
+export function NumberControl({ label, value, min = 0, max = 100, step = 1, unit = '', onChange, presets = [], slider = true, steppers = false, className = '', valueClassName = '' }) {
   const id = useId();
   const clamp = (number) => Math.max(min, Math.min(max, number));
   const current = Number.isFinite(Number(value)) ? clamp(Number(value)) : min;
@@ -16,7 +17,7 @@ export function NumberControl({ label, value, min = 0, max = 100, step = 1, unit
   };
 
   return (
-    <div className={`editor-number-control ${className}`.trim()} data-slider={slider}>
+    <div className={`editor-number-control ${className}`.trim()} data-slider={slider} data-steppers={steppers}>
       <label htmlFor={`editor-number-${id}`}>{label}</label>
       <div className="editor-number-inputs">
         {slider && <input type="range" aria-label={`${label} 슬라이더`} min={min} max={max} step={step} value={current} onChange={(event) => onChange(Number(event.target.value))} />}
@@ -35,6 +36,10 @@ export function NumberControl({ label, value, min = 0, max = 100, step = 1, unit
             }} />
           {unit && <span aria-hidden="true">{unit}</span>}
         </span>
+        {steppers && <span className="editor-number-steppers">
+          <button type="button" aria-label={`${label} 줄이기`} disabled={current <= min} onClick={() => { const next = clamp(current - step); setDraft(String(next)); onChange(next); }}><Minus size={16} aria-hidden="true" /></button>
+          <button type="button" aria-label={`${label} 늘리기`} disabled={current >= max} onClick={() => { const next = clamp(current + step); setDraft(String(next)); onChange(next); }}><Plus size={16} aria-hidden="true" /></button>
+        </span>}
       </div>
       {presets.length > 0 && <div className="editor-number-presets" role="group" aria-label={`${label} 빠른 선택`}>
         {presets.filter((preset) => preset >= min && preset <= max).map((preset) => <button type="button" key={preset} aria-pressed={current === preset} onClick={() => { setDraft(String(preset)); onChange(preset); }}>{preset}{unit}</button>)}

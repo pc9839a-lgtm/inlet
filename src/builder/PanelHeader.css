@@ -22,7 +22,7 @@ body .builder-shell .editor-panel-header .panel-editor-heading {
   gap: 3px;
 }
 
-body .builder-shell .editor-panel-header .panel-editor-heading > h1 {
+body .builder-shell .editor-panel-header .panel-page-name > h1 {
   min-width: 0;
   margin: 0;
   overflow: hidden;
@@ -139,3 +139,25 @@ body .builder-shell .editor-panel-header :is(button, summary):focus-visible {
     justify-self: end;
   }
 }
+
+/* Source-reference editor header; page state stays truthful to the publish flow. */
+html body #root .canvas-editor-shell .panel-header.editor-panel-header { height: 64px !important; min-height: 64px !important; max-height: 64px !important; padding: 0 22px 0 0 !important; gap: 20px !important; }
+html body #root .canvas-editor-shell .editor-panel-header .panel-title { align-self: stretch; gap: 0 !important; }
+html body #root .canvas-editor-shell .editor-panel-header .panel-dashboard-button { flex: 0 0 var(--editor-list-width); width: var(--editor-list-width) !important; min-width: var(--editor-list-width) !important; height: 32px !important; margin: auto 24px auto 0; padding: 0 28px !important; gap: 10px; justify-content: flex-start; border: 0 !important; border-right: 1px solid #e2e7f1 !important; border-radius: 0 !important; color: #111827 !important; }
+html body #root .canvas-editor-shell .panel-dashboard-button > .editor-wordmark { display: block; flex: 0 0 auto; width: 129px !important; height: 35px !important; max-width: none; object-fit: contain; }
+html body #root .canvas-editor-shell .panel-editor-heading { display: flex; align-items: center; gap: 24px; min-width: 0; }
+html body #root .canvas-editor-shell .panel-page-name { display: flex; align-items: center; min-width: 0; gap: 6px; }
+html body #root .canvas-editor-shell .panel-page-name > h1 { max-width: 340px; margin: 0; color: #101828; font-size: 15px !important; font-weight: 650 !important; line-height: 1.4 !important; letter-spacing: -.025em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #root .canvas-editor-shell .panel-save-status { flex: 0 0 auto; max-width: 235px; min-height: 28px; padding: 5px 10px !important; border: 1px solid #e6eaf1; border-radius: 18px !important; background: #f8f9fc !important; }
+html body #root .canvas-editor-shell .panel-save-status[data-tone='ok'] { border-color: #dcf3eb; background: #edf9f5 !important; }
+html body #root .canvas-editor-shell .panel-save-status[data-tone='ok'] > strong { color: #087a5b !important; }
+html body #root .canvas-editor-shell .panel-save-status > strong { display: block; min-width: 0; font-size: 11px !important; line-height: 1.3 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #root .canvas-editor-shell .panel-save-status > time { display: none; }
+html body #root .canvas-editor-shell .panel-actions { gap: 10px !important; }
+html body #root .canvas-editor-shell .panel-actions > .panel-preview-button,
+html body #root .canvas-editor-shell .panel-actions > .primary-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px !important; min-height: 40px !important; padding: 0 16px !important; border-radius: 9px !important; font-size: 14px !important; font-weight: 600 !important; }
+html body #root .canvas-editor-shell .panel-actions > .primary-btn { border-color: #2454ff !important; background: #2454ff !important; color: #fff !important; }
+html body #root .canvas-editor-shell .panel-actions > .panel-history-btn { width: 32px !important; border: 0 !important; color: #283549 !important; }
+html body #root .canvas-editor-shell .panel-actions > .panel-history-btn:disabled { color: #a8b0c0 !important; opacity: .7; }
+@media (min-width:900px) and (max-width:1100px) { html body #root .canvas-editor-shell .panel-editor-heading { gap: 10px; } html body #root .canvas-editor-shell .panel-save-status { max-width: 150px; } html body #root .canvas-editor-shell .panel-dashboard-button { margin-right: 16px; padding-inline: 16px !important; } html body #root .canvas-editor-shell .panel-actions { gap: 4px !important; } html body #root .canvas-editor-shell .panel-actions > .panel-preview-button, html body #root .canvas-editor-shell .panel-actions > .primary-btn { padding-inline: 10px !important; } }
+@media (max-width:899px) { html body #root .canvas-editor-shell .panel-header.editor-panel-header { height: auto !important; max-height: none !important; padding: 8px 12px !important; flex-wrap: wrap; } html body #root .canvas-editor-shell .workspace-persistent-header { height: auto; } html body #root .canvas-editor-shell .panel-dashboard-button { flex-basis: auto; width: auto !important; min-width: 0 !important; padding-inline: 4px !important; } html body #root .canvas-editor-shell .panel-editor-heading { flex-wrap: wrap; gap: 4px 12px; } }

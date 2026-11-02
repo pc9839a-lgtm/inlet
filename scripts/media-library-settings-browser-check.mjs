@@ -281,6 +281,11 @@ async function clickSelector(client, selector) {
   assert(clicked, `Unable to click ${selector}`);
 }
 async function clickButtonByText(client, scopeSelector, text) {
+  await evaluate(client, `(() => {
+    const scope = document.querySelector(${JSON.stringify(scopeSelector)});
+    const menu = scope?.closest('details.workspace-editor-nav');
+    if (menu && !menu.open) menu.querySelector('summary').click();
+  })()`);
   const clicked = await evaluate(client, `(() => {
     const scope = document.querySelector(${JSON.stringify(scopeSelector)}) || document;
     const button = [...scope.querySelectorAll('button')].find((item) => item.textContent.trim() === ${JSON.stringify(text)});

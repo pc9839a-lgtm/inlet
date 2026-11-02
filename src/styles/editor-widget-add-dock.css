@@ -456,3 +456,9 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-add-dock.
   overflow-y: visible !important;
   max-height: none !important;
 }
+
+/* Reference heading add button and bounded catalog. */
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact { position: static !important; flex: 0 0 36px !important; padding: 0 !important; border: 0 !important; background: transparent !important; inset: auto !important; transform: none !important; width: 36px !important; max-width: 36px !important; margin: 0 !important; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle { display: inline-flex !important; justify-content: center !important; width: 36px !important; min-width: 36px !important; height: 36px !important; min-height: 36px !important; padding: 0 !important; border: 1px solid #e2e7f2 !important; border-radius: 9px !important; background: #fff !important; color: #172039 !important; box-shadow: none !important; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .add-dock-compact.open .add-panel { position: absolute !important; top: 66px !important; left: 0 !important; right: 0 !important; width: 100% !important; min-width: 0 !important; max-height: calc(100dvh - 150px) !important; overflow-y: auto !important; border: 1px solid #e2e7f2 !important; border-radius: 10px !important; background: #fff !important; box-shadow: 0 12px 32px #17203918 !important; z-index: 10; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .add-dock-compact .widget-group-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
