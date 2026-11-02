@@ -1,6 +1,6 @@
 /* Editor geometry: persistent block list, selected settings, one live mobile page. */
 html body #root .builder-shell.canvas-editor-shell {
-  --editor-list-width: 180px;
+  --editor-list-width: clamp(200px, 21vw, 232px);
   --editor-settings-width: 320px;
   --editor-edit-width: calc(var(--editor-list-width) + var(--editor-settings-width));
   display: grid;
@@ -27,6 +27,22 @@ html body #root .canvas-editor-shell .work-panel {
   overscroll-behavior-y: contain;
   border-right: 1px solid #e7eaf2;
   background: #fff;
+}
+/* Do not reserve an empty inspector when nothing is selected.
+   Selecting a block opens its settings without filling the blank stage. */
+@media (min-width: 900px) {
+  html body #root .builder-shell.canvas-editor-shell:has(.editor-selection-empty) {
+    --editor-edit-width: var(--editor-list-width);
+  }
+  html body #root .builder-shell.canvas-editor-shell .edit-layout:has(.editor-selection-empty) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel:has(.editor-selection-empty) {
+    display: none !important;
+  }
+}
+@media (min-width:900px) and (max-width:950px) {
+  html body #root .builder-shell.canvas-editor-shell { --editor-list-width: 200px; --editor-settings-width: 290px; }
 }
 /* Desktop zoom keeps both surfaces reachable; phones retain operations mode. */
 @media (max-width: 899px) {
