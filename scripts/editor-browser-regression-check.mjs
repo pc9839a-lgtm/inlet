@@ -1924,9 +1924,9 @@ async function run() {
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '2px' && stageOneList.rowBorder === '0px'
       && stageOneList.rowRadius === '9px' && stageOneList.height >= 48
-      && stageOneList.titleWhiteSpace === 'normal'
+      && stageOneList.titleWhiteSpace === 'nowrap'
       && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
-      'reference block list must show flat rows with visible keyboard and pointer controls: ' + JSON.stringify(stageOneList));
+      'compact block list must show single-line names and reachable controls: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
       && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
