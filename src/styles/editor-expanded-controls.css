@@ -113,6 +113,14 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-segmented-v2-options[d
   grid-auto-columns: minmax(0, 1fr) !important;
 }
 
+@container editor-inspector (min-width: 240px) {
+  body .builder-shell .edit-layout .block-editor-v2 .editor-segmented-v2[data-single-row='true'] {
+    grid-template-columns: 80px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+}
+
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-options, .choice > div, .weekday > div, .image-mode-toolbar) button {
   display: inline-flex !important;
   align-items: center !important;
