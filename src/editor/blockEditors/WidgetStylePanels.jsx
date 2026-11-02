@@ -16,12 +16,12 @@ const SIZES = [
 ];
 
 function AlignmentControl({ s, set, options = ALIGN, defaultValue = 'left' }) {
-  return <SegmentedControl label="정렬" value={s.align || defaultValue} onChange={(value) => set({ align: value })} options={options} />;
+  return <SegmentedControl label="정렬" iconOnly value={s.align || defaultValue} onChange={(value) => set({ align: value })} options={options} />;
 }
 
 export function HeroStylePanel({ s, set }) {
   return <div className="editor-v2-control-list">
-    <SegmentedControl label="정렬" value={s.align || 'left'} onChange={(value) => set({ align: value })} options={ALIGN} />
+    <SegmentedControl label="정렬" iconOnly value={s.align || 'left'} onChange={(value) => set({ align: value })} options={ALIGN} />
     <SegmentedControl label="제목 크기" value={s.titleSize || 'large'} onChange={(value) => set({ titleSize: value })} options={SIZES} />
     <SegmentedControl label="설명 크기" value={s.bodySize || 'medium'} onChange={(value) => set({ bodySize: value })} options={SIZES} />
   </div>;
