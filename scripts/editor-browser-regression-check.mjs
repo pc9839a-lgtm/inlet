@@ -1510,6 +1510,26 @@ async function run() {
       && !stageFourChoiceStyle.overflow,
       'stage4 choices must have one rail, visible selection and keyboard focus: ' + JSON.stringify(stageFourChoiceStyle));
     await capture(client, 'desktop-shared-choices-stage4');
+    // Owner-reported regression: three hero choices must not become a 2+1 grid.
+    for (const width of [900, 1280]) {
+      await setViewport(client, width, 900, false);
+      const heroChoiceRails = await evaluate(client, `(() => {
+        const inspector = document.querySelector('.editor-inspector-panel');
+        const design = inspector.querySelector('.hero-editor-design');
+        const header = inspector.querySelector('.screen-order-v2-settings-header');
+        inspector.scrollTop += design.getBoundingClientRect().top - inspector.getBoundingClientRect().top - header.offsetHeight - 12;
+        return [...design.querySelectorAll('.editor-segmented-v2')].map(group => {
+          const buttons = [...group.querySelectorAll('button')];
+          const boxes = buttons.map(button => button.getBoundingClientRect());
+          return { label:group.getAttribute('aria-label'), count:buttons.length,
+            rowSpread:Math.max(...boxes.map(box=>box.top))-Math.min(...boxes.map(box=>box.top)),
+            overflow:buttons.some(button=>button.scrollWidth > button.clientWidth + 2) };
+        });
+      })()`);
+      assert(heroChoiceRails.length === 3 && heroChoiceRails.every(rail => rail.count === 3 && rail.rowSpread <= 1 && !rail.overflow),
+        'hero alignment/title/body options must each stay on one readable row at ' + width + 'px: ' + JSON.stringify(heroChoiceRails));
+      await capture(client, 'desktop-hero-design-single-row-' + width);
+    }
     await clickSelector(client, `${stageFourChoice} button:first-child`);
     await clickSelector(client, '#editor-block-settings-editor-hero .hero-image-adjustments > summary');
     const stageFourRange = await evaluate(client, `(() => {

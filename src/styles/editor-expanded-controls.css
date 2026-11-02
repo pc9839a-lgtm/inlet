@@ -106,6 +106,13 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-optio
   overflow: visible;
 }
 
+/* Two or three options share the available rail instead of wrapping at 88px. */
+body .builder-shell .edit-layout .block-editor-v2 .editor-segmented-v2-options[data-single-row='true'] {
+  grid-template-columns: none !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(0, 1fr) !important;
+}
+
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-options, .choice > div, .weekday > div, .image-mode-toolbar) button {
   display: inline-flex !important;
   align-items: center !important;
