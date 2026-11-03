@@ -21,7 +21,7 @@ html body #root .builder-shell .color-clean .color-hex-error {
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
-html body #root .builder-shell .color-clean :is(input,button):hover:not(:disabled) { border-color: #9facbd !important; }
+html body #root .builder-shell .color-clean :is(input,button):hover:not(:disabled):not([aria-invalid='true']) { border-color: #9facbd !important; }
 html body #root .builder-shell .color-clean :is(input,button):focus-visible { outline: 2px solid var(--editor-ui-accent, #2454ff) !important; outline-offset: 2px; }
 html body #root .builder-shell .color-clean :is(input,button):disabled { background: var(--editor-ui-disabled-bg, #f2f4f7) !important; color: var(--editor-ui-disabled-text, #667085) !important; opacity: .65; cursor: not-allowed; }
 @media (pointer:coarse) { html body #root .builder-shell .color-clean :is(input,button) { min-height: var(--editor-ui-touch-height, 44px) !important; } }
