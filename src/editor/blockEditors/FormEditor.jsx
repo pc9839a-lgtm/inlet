@@ -41,10 +41,10 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
         <FormPrivacySettings s={s} set={set} />
         <FormSuccessSettings s={s} set={set} />
         <FormSubmissionSection s={s} set={set} />
-        <InspectorDisclosure label="디자인" className="form-basic-detail form-design-detail">
-          <FormDesignSection s={s} set={set} direct />
-        </InspectorDisclosure>
       </div>
+      <InspectorDisclosure label="디자인" className="form-basic-detail form-design-detail">
+        <FormDesignSection s={s} set={set} direct />
+      </InspectorDisclosure>
       <FormExternalSection
         s={s}
         page={page}
