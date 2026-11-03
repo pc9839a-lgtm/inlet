@@ -152,11 +152,13 @@ console.log(JSON.stringify({ ok: true, checks: 40, resultValidation: true, trail
 
 
 // Exercise the current publish-state policy with distinct page identities.
-const { visibleEditorPublishState } = await import('../src/runtime/saveStatusActions.js');
+const { visibleEditorPublishState, visibleEditorDraftState } = await import('../src/runtime/saveStatusActions.js');
 const { pageOperationIdentity } = await import('../src/runtime/pageOperationIdentity.js');
 const examplePage = { id: 'qa-published-page', projectId: 'qa-project', ownerId: 'qa-owner', slug: 'qa-slug' };
 const pageIdentity = pageOperationIdentity(examplePage);
 assert(visibleEditorPublishState({ page: examplePage, saved: false, saveStatus: { phase: 'publishing' } }).label === '발행 중', 'in-progress publication must be distinguishable');
-assert(visibleEditorPublishState({ page: examplePage, saved: false, hasUnappliedDrafts: true }).label.includes('미적용'), 'staged changes must not look published');
+assert(visibleEditorPublishState({ page: examplePage, saved: false, hasUnappliedDrafts: true }).label === '미발행 변경'
+  && visibleEditorDraftState({ page: examplePage, hasUnappliedDrafts: true }).label === '미적용 변경',
+  'unapplied editor changes must remain separate from the public not-yet-published state');
 assert(visibleEditorPublishState({ page: examplePage, saved: true, saveStatus: { tone: 'ok', label: '발행됨', savedPageIdentity: pageIdentity } }).label === '발행됨', 'same-page publication should be visible');
 assert(visibleEditorPublishState({ page: { ...examplePage, id: 'another-page' }, saved: true, saveStatus: { tone: 'ok', label: '발행됨', savedPageIdentity: pageIdentity } }).label !== '발행됨', 'other page must not inherit saved state');
