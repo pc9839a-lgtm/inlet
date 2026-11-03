@@ -9,3 +9,24 @@
 /* V3: chapter navigation, task routes, detailed document search and actionable FAQ */
 .guide-category-filters{display:none;gap:8px;flex-wrap:wrap;margin-top:20px}.help-center-js .guide-category-filters{display:flex}.guide-category-filters button{font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:8px 14px;border:1px solid #d7e1ef;background:#fff;color:#34445c;border-radius:999px;min-height:36px}.guide-category-filters button[aria-pressed="true"]{background:#2157c6;border-color:#2157c6;color:white}.guide-category-filters button:focus-visible{outline:3px solid #7da3e9;outline-offset:2px}.guide-journeys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.guide-journeys a{display:flex;flex-direction:column;gap:5px;border:1px solid #e1e7f0;border-radius:12px;padding:20px 23px;text-decoration:none;color:#192943;min-height:126px}.guide-journeys a:hover{border-color:#8cacdf;background:#f8fbff}.guide-journeys span{font-size:12px;font-weight:800;color:#285bbb}.guide-journeys strong{font-size:18px;line-height:1.4;letter-spacing:-.03em}.guide-journeys small{font-size:13px;color:#5d6980}.manual-results{padding:32px 0 38px}.manual-result-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.manual-result-item{border:1px solid #e1e7f0;border-radius:11px;padding:19px 22px;display:flex;flex-direction:column;gap:5px;text-decoration:none;color:#16243a}.manual-result-item:hover{border-color:#90aee9;background:#fafcff}.manual-result-item strong{font-size:17px;line-height:1.45;letter-spacing:-.03em}.manual-result-item p{font-size:13px;line-height:1.7;margin:0;color:#59687d;overflow-wrap:anywhere}.result-category{color:#2759be;font-size:12px;font-weight:800}.manual-faq-list{display:grid;gap:10px}.manual-faq-list details{border:1px solid #e2e7ef;border-radius:10px;padding:0 17px}.manual-faq-list summary{cursor:pointer;padding:16px 6px;font-size:15px;font-weight:750;color:#223149;line-height:1.5}.manual-faq-list details[open] summary{color:#2257bf}.manual-faq-list details p{padding:0 6px 16px;margin:0!important;line-height:1.85}.manual-faq-list details:focus-within{outline:2px solid #8babef;outline-offset:2px}.empty:not([hidden]){display:block}
 @media(max-width:650px){.guide-journeys,.manual-result-list{grid-template-columns:1fr}.guide-journeys a{min-height:105px;padding:16px 18px}.guide-journeys strong{font-size:16px}.guide-category-filters{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px;margin-right:-16px;scrollbar-width:thin}.guide-category-filters button{flex:0 0 auto}.manual-result-item{padding:15px 17px}}
+
+
+/* Guide 7: source-verified product workflow diagrams; intentionally not screenshots. */
+.manual-lab{border-top:1px solid var(--line);padding-top:24px}
+.manual-lab h2{margin-bottom:15px}
+.manual-lab h3{font-size:18px;letter-spacing:-.025em;margin:25px 0 12px}
+.manual-lab p{line-height:1.8}
+.guide-process{margin:23px 0 26px}
+.guide-process-steps,.guide-editor-map{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.guide-process-steps>div,.guide-editor-map>div{min-width:0;border:1px solid #d6dfe9;border-radius:10px;padding:17px 15px;background:#fff;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.guide-process-steps small,.guide-editor-map small{font-size:12px;font-weight:750;color:var(--blue)}
+.guide-process-steps strong,.guide-editor-map strong{font-size:15px;line-height:1.5;color:var(--ink)}
+.guide-process-steps span,.guide-editor-map span,.guide-editor-map em{font-size:13px;line-height:1.6;color:#485b70;overflow-wrap:anywhere;font-style:normal}
+.guide-editor-map span{padding:8px 10px;border:1px solid #e7edf4;border-radius:6px;width:100%;background:#f8fafc}
+.guide-editor-map em{font-weight:700;color:var(--blue);margin-top:auto}
+.guide-process figcaption,.guide-source-note{font-size:12px;color:#5a6b80;line-height:1.7}
+.guide-process figcaption{margin-top:10px}
+.guide-lab-link{display:flex;flex-wrap:wrap;gap:9px;margin-top:21px!important}
+.guide-lab-link a{display:inline-flex;border:1px solid #ccd9ea;padding:9px 13px;border-radius:7px;font-weight:700;font-size:13px;text-decoration:none}
+.guide-lab-link a:hover{background:#f3f7fc}
+@media(max-width:700px){.guide-process-steps,.guide-editor-map{grid-template-columns:1fr}.guide-process-steps>div,.guide-editor-map>div{padding:13px 15px}.manual-lab h3{font-size:17px}}
