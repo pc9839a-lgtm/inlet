@@ -127,7 +127,7 @@ export function BottomBarStylePanel({ s, set, theme }) {
   return <div className="editor-v2-control-list">
     <SegmentedControl label="형태" value={s.style || 'pill'} onChange={(value) => set({ style: value })} options={[{ value: 'pill', label: '캡슐' }, { value: 'box', label: '박스' }]} />
     <ToggleRow label="직접 색상" checked={colorMode === 'custom'} onChange={(value) => set({ buttonColorMode: value ? 'custom' : 'theme' })} />
-    <ThemeInheritanceRow label="하단 버튼 배경색" inherited={colorSource.inherited} color={colorSource.color} inheritedFrom="전체 포인트색" onReset={() => set({ buttonColorMode: 'theme' })} />
+    <ThemeInheritanceRow label="하단 버튼 배경색" inherited={colorSource.inherited} source={colorSource.source} stateLabel={colorSource.label} color={colorSource.color} inheritedFrom="전체 포인트색" onReset={() => set({ buttonColorMode: 'theme', color: 'accent' })} />
     {colorMode === 'theme' ? (
       <SegmentedControl label="프리셋" value={s.color || 'dark'} onChange={(value) => set({ color: value })} options={[{ value: 'dark', label: '다크' }, { value: 'accent', label: '강조' }, { value: 'light', label: '라이트' }]} />
     ) : (
