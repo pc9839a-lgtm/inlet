@@ -43,8 +43,31 @@ for(const slug of detailedManuals){
 }
 
 
+const currentGuideEvidence = {
+ 'getting-started': ['첫 상담 페이지를 실제로 끝내는 순서','미리보기 → 발행','접수함'],
+ 'editor-overview': ['편집기 실제 구조와 선택에 따른 변화','선택 항목 편집','페이지 설정'],
+ 'contact-form': ['한 건의 상담 접수가 저장되기까지 확인할 것','연락처 중복','7일'],
+};
+for (const [slug, markers] of Object.entries(currentGuideEvidence)) {
+ const html=read('public/guide/'+slug+'/index.html');
+ assert(html.includes('<section id="field-workflow" class="manual-lab"'), 'First-party workflow evidence missing: '+slug);
+ assert(html.includes('role="img"') && html.includes('<figcaption>'), 'Accessible labeled workflow diagram missing: '+slug);
+ assert(html.includes('<a href="#field-workflow">'), 'Workflow section missing from table of contents: '+slug);
+ assert.equal((html.match(/rel="canonical"/g)||[]).length,1, 'Canonical duplication: '+slug);
+ assert(html.includes('"dateModified":"2026-11-03"') && html.includes('최종 확인 2026.11.03'),'Real update date missing: '+slug);
+ assert(sitemap.includes('<loc>https://pagero.kr/guide/'+slug+'/</loc><lastmod>2026-11-03</lastmod>'),'Updated sitemap lastmod missing: '+slug);
+ for(const marker of markers) assert(html.includes(marker), 'Verified product procedure missing: '+slug+' / '+marker);
+}
+const workStyles=read('public/guide/manual.css');
+assert(workStyles.includes('.guide-process-steps,.guide-editor-map') && workStyles.includes('@media(max-width:700px)'), 'Mobile workflow diagram styles missing');
+
 const searchIndex=JSON.parse(read('public/guide/search-index.json'));
 assert.equal(searchIndex.documents.length,15,'Full-text index must cover 15 official guides');
+for (const [slug, markers] of Object.entries(currentGuideEvidence)) {
+ const entry=searchIndex.documents.find(doc=>doc.slug===slug);
+ assert(entry && entry.headings.includes('실무 예제·화면 구조도'),'Search index missing new section: '+slug);
+ for(const marker of markers) assert(entry.body.includes(marker),'Search index missing workflow text: '+slug+' / '+marker);
+}
 assert.equal(new Set(searchIndex.documents.map(doc=>doc.path)).size,15,'Index URLs must be unique');
 for(const doc of searchIndex.documents){
   assert(doc.body.length>500, 'Missing substantive text: '+doc.slug);
