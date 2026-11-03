@@ -86,6 +86,7 @@ const themeStatusRow = await readFile('src/editor/ui/ThemeInheritanceRow.jsx', '
 const sharedControlsCss = await readFile('src/styles/editor-expanded-controls.css', 'utf8');
 const editorNumberCss = await readFile('src/editor/ui/NumberControl.css', 'utf8');
 const editorColorCss = await readFile('src/editor/ColorControl.css', 'utf8');
+const editorColorSource = await readFile('src/editor/ColorControl.jsx', 'utf8');
 const segmentedControl = await readFile('src/editor/ui/SegmentedControl.jsx', 'utf8');
 const toggleRow = await readFile('src/editor/ui/ToggleRow.jsx', 'utf8');
 const legacyToggle = await readFile('src/editor/ToggleControl.jsx', 'utf8');
@@ -191,6 +192,22 @@ assert(controlTokens.every(token => editPanelLayoutCss.includes(token))
   && !css.includes('--editor-ui-input-height')
   && !previewPaneCss.includes('--editor-ui-input-height'),
   'editable field/segment/number/color/toggle state tokens must stay in existing owners and out of public canvas');
+// UX-021: do not discard invalid HEX silently. Live feedback is scoped to
+// the existing field component, and the last valid page color is preserved.
+assert(editorColorSource.includes('export function normalizeEditorHex(value)')
+  && editorColorSource.includes("replace(/^#/, '')")
+  && editorColorSource.includes("raw.length === 3")
+  && editorColorSource.includes("setError('HEX 색상은")
+  && editorColorSource.includes('aria-invalid={Boolean(error)}')
+  && editorColorSource.includes('aria-describedby={error ? errorId : undefined}')
+  && editorColorSource.includes('role="alert"')
+  && editorColorSource.includes('event.key === \'Escape\'')
+  && editorColorSource.includes('onBlur={finish}')
+  && editorColorSource.includes('if (normalized.toLowerCase() !== color.toLowerCase()) onChange(normalized)')
+  && editorColorCss.includes(".color-clean input[type='text'][aria-invalid='true']")
+  && editorColorCss.includes('.color-clean .color-hex-error')
+  && !previewPaneCss.includes('.color-hex-error'),
+  'HEX paste, inline invalid explanation and recovery must stay in shared editor color control');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
 assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
