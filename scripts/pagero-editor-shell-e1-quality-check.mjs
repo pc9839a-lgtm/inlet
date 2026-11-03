@@ -64,9 +64,10 @@ assert(layout.includes('className="editor-page-settings-button"')
   && layout.includes('aria-controls="editor-selection-panel"')
   && !layout.includes('edit-section-tabs') && !editPanelLayoutCss.includes('edit-section-tabs'),
   'page settings must use one composition entry without a second inspector tab bar');
-assert(editPanelLayoutCss.includes('.editor-composition-panel > .editor-page-settings-button')
-  && editPanelLayoutCss.includes('min-height: 40px !important;'),
-  'the page-settings entry must remain visibly reachable in the composition owner');
+assert(editPanelLayoutCss.includes('.editor-composition-heading > .editor-page-settings-button')
+  && editPanelLayoutCss.includes('min-height: 40px;')
+  && layout.includes('<BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} onSelect={chooseBlock} />'),
+  'page settings and non-destructive block search must remain reachable in the composition header');
 assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
 assert(previewPaneCss.includes('WorkspacePreviewPane — owns editor preview presentation') && previewPaneCss.includes('.preview-workspace') && previewPaneCss.includes('.preview-sticky') && previewPaneCss.includes('.phone-frame') && previewPaneCss.includes('scroll-margin-block: 120px') && !css.includes('.preview-workspace') && !css.includes('.preview-sticky') && !css.includes('.phone-frame'), 'WorkspacePreviewPane.css must own preview presentation while editor-workspace.css stays geometry-only');
 assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') && pageOptionsCss.includes('padding: 0;') && pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('background: transparent;') && !css.includes('page-global-options'), 'page options base contract must live in PageGlobalOptions.css and stay out of editor-workspace.css');
