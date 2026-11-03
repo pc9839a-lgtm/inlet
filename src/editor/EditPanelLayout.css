@@ -211,7 +211,6 @@ html body #root .canvas-editor-shell .editor-block-switch-actions button:disable
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > .screen-order-v2-action { margin-left: auto; flex: 0 0 30px; }
 html body #root .canvas-editor-shell .screen-order-settings-hidden { flex: 0 0 auto; color: var(--editor-ui-muted); font-size: var(--editor-ui-helper-size); }
 html body #root .canvas-editor-shell .screen-order-v2-settings[data-scroll-region='block-settings'] { max-height: none !important; overflow: visible !important; scrollbar-gutter: auto; }
-html body #root .canvas-editor-shell .screen-order-v2-settings .block-editor-v2.block-editor { gap: var(--editor-ui-space-4) !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
 
 body .builder-shell.edit-mode-shell .editor-page-options-stack { width: 100%; min-width: 0; display: grid; gap: var(--editor-ui-space-3, 12px); }
 body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
