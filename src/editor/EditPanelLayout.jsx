@@ -1,5 +1,6 @@
 import React from 'react';
 import { Settings2 } from 'lucide-react';
+import { BlockNavigatorSearch } from './editPanelParts/BlockNavigatorSearch.jsx';
 import './EditPanelLayout.css';
 import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
 import { GlobalFixedBlocks } from './editPanelParts/GlobalFixedBlocks.jsx';
@@ -60,25 +61,36 @@ export function EditPanelLayout({
         <div className="editor-composition-heading">
           <h2>블록</h2>
           <AddBlockDock {...addBlockDockProps} compact />
+          <button
+            className="editor-page-settings-button"
+            type="button"
+            aria-pressed={showPageOptions}
+            aria-controls="editor-selection-panel"
+            onClick={openPageOptions}
+            title={stylePanelProps?.hasPendingStyle ? '페이지 설정 · 미적용' : '페이지 설정'}
+          >
+            <Settings2 size={15} aria-hidden="true" />
+            <span>페이지 설정</span>
+            {stylePanelProps?.hasPendingStyle && (
+              <>
+                <span className="editor-settings-pending" aria-hidden="true" />
+                <span className="editor-visually-hidden"> · 미적용</span>
+              </>
+            )}
+          </button>
         </div>
+        <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} onSelect={chooseBlock} />
         <div className="editor-composition-content">
-          <section className="screen-order-fixed-blocks" aria-label="헤더">
+          <section className="screen-order-fixed-blocks" aria-label="상단 고정 영역">
+            <h3>상단 고정</h3>
             <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
           </section>
           <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
-          <section className="screen-order-fixed-blocks" aria-label="고정 영역">
+          <section className="screen-order-fixed-blocks" aria-label="하단 고정 영역">
+            <h3>하단 고정</h3>
             <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
           </section>
         </div>
-        <button
-          className="editor-page-settings-button"
-          type="button"
-          aria-pressed={showPageOptions}
-          aria-controls="editor-selection-panel"
-          onClick={openPageOptions}
-        >
-          <Settings2 size={16} aria-hidden="true" />페이지 설정{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
-        </button>
       </aside>
       <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>
       <div id="editor-selection-panel" className="edit-section-panel" data-editor-section={showPageOptions ? 'options' : section}>

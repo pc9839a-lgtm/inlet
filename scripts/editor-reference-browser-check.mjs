@@ -63,6 +63,18 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'a wedding invitation with 30+ blocks must scroll without label/action overlap: ' + JSON.stringify(longPage));
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && document.querySelector('.inspector-navigation')?.querySelectorAll('button').length >= 3`, 'reference text inspector');
+
+  // UX-015: Search locates a block without filtering, renumbering, or changing
+  // the order of the user's original page blocks.
+  const beforeSearchOrder = await evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map(el => el.id)`);
+  await setInputValue(client, 'input[aria-label="블록 이름 검색"]', '텍스트');
+  await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.includes('/')`, 'matching blocks are counted');
+  await focusSelector(client, 'input[aria-label="블록 이름 검색"]');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`, 'search chooses the matching editor block');
+  const afterSearchOrder = await evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map(el => el.id)`);
+  assert(JSON.stringify(afterSearchOrder) === JSON.stringify(beforeSearchOrder), 'block search must not reorder or filter any original blocks');
+  await setInputValue(client, 'input[aria-label="블록 이름 검색"]', '');
   const before = await evaluate(client, `[...document.querySelectorAll('.text-editor-flow textarea')].map(el => el.value)`);
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
