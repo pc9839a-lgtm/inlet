@@ -74,6 +74,10 @@ const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf
 const stylePanelTypographyCss = await readFile('src/panels/StylePanel.css', 'utf8');
 const blockEditorShellCss = await readFile('src/styles/editor-expanded-shell.css', 'utf8');
 const textEditorTypographyCss = await readFile('src/editor/blockEditors/TextEditor.css', 'utf8');
+const heroImageSection = await readFile('src/editor/blockEditors/HeroImageSection.jsx', 'utf8');
+const heroGroupCss = await readFile('src/editor/blockEditors/HeroImageSection.css', 'utf8');
+const imageGroupCss = await readFile('src/editor/blockEditors/ImageEditor.css', 'utf8');
+const formGroupCss = await readFile('src/editor/blockEditors/FormEditor.css', 'utf8');
 const legacyStylePanelCss = await readFile('src/styles/panels-style-v17.css', 'utf8');
 const settingsView = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const inspectorSwitch = await readFile('src/editor/editPanelParts/InspectorBlockSwitch.jsx', 'utf8');
@@ -208,6 +212,23 @@ assert(editorColorSource.includes('export function normalizeEditorHex(value)')
   && editorColorCss.includes('.color-clean .color-hex-error')
   && !previewPaneCss.includes('.color-hex-error'),
   'HEX paste, inline invalid explanation and recovery must stay in shared editor color control');
+// UX-024: four block editors use the same native expandable group rhythm
+// without reintroducing per-editor dividers or extra nested scroll regions.
+assert(heroImageSection.includes('InspectorDisclosure label="이미지 배치·효과"')
+  && !heroImageSection.includes('<details className="hero-image-adjustments"')
+  && heroGroupCss.includes('gap: var(--editor-ui-space-4, 16px)')
+  && heroGroupCss.includes('gap: var(--editor-ui-space-3, 12px)')
+  && !heroGroupCss.includes('.hero-image-adjustments, .hero-editor-design) > summary')
+  && textEditorTypographyCss.includes('min-height: var(--editor-ui-touch-height, 44px)')
+  && textEditorTypographyCss.includes('border-bottom: 0;')
+  && imageGroupCss.includes('.image-editor-more-controls { display: grid; gap: var(--editor-ui-space-3, 12px)')
+  && imageGroupCss.includes('min-height: var(--editor-ui-touch-height, 44px)')
+  && formGroupCss.includes('.form-editor-flow { gap: var(--editor-ui-space-4, 16px); }')
+  && formGroupCss.includes('.form-basic-detail > summary')
+  && formGroupCss.includes('min-height: var(--editor-ui-touch-height, 44px)')
+  && formGroupCss.includes('padding: var(--editor-ui-space-1, 4px) 0 var(--editor-ui-space-3, 12px)')
+  && !previewPaneCss.includes('--editor-ui-space-4'),
+  'disclosures must keep native semantics, owner-level token spacing and no canvas-style leakage');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
 assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
