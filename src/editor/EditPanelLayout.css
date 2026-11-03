@@ -67,6 +67,9 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-heading >
 }
 .editor-settings-pending { width: 5px; height: 5px; border-radius: 50%; background: #d97706; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search {
+  position: sticky;
+  top: 76px;
+  z-index: 7;
   display: flex;
   align-items: center;
   gap: 4px;
