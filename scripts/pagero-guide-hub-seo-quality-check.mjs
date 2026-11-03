@@ -92,8 +92,45 @@ assert.equal(exampleStatuses.filter(s=>s==='신규').length,2);
 assert.equal(exampleStatuses.filter(s=>['확인중','보류'].includes(s)).length,2);
 assert.equal(exampleStatuses.filter(s=>['연락완료','예약완료','종료'].includes(s)).length,2);
 
+
+const guide9Cases={
+ 'reservation-form': ['방문 예약을 실제로 구성하고 검증하는 예제','평일 · 10:00~18:00','30분·1시간','방문 날짜·방문 시간','접수함'],
+ 'preview-publish': ['‘발행됨’ 표시보다 먼저 확인해야 할 여섯 가지','브랜드·핵심 문구·문의 행동·문의 항목·연락처/사업자·공개 URL','브라우저에 임시저장됨','공개 반영 확인 필요'],
+ 'settings-domain': ['도메인 DNS 연결: 서브도메인과 루트 도메인을 구분하세요','CNAME','네임서버','DNS 대기','SSL 확인 중'],
+};
+for(const [slug,markers] of Object.entries(guide9Cases)){
+ const html=read('public/guide/'+slug+'/index.html');
+ assert(html.includes('<section id="field-workflow" class="manual-lab"'), 'Missing source-verified hands-on setup: '+slug);
+ assert(html.includes('<a href="#field-workflow">'), 'Missing TOC link to practical setup: '+slug);
+ assert(html.includes('class="guide-process-steps" role="img"') && html.includes('<figcaption>'), 'Accessible workflow diagram missing: '+slug);
+ assert.equal((html.match(/rel="canonical"/g)||[]).length,1, 'Duplicate canonical: '+slug);
+ assert(html.includes('"dateModified":"2026-11-03"') && html.includes('최종 확인 2026.11.03'), 'Article review metadata inconsistent: '+slug);
+ assert(sitemap.includes('<loc>https://pagero.kr/guide/'+slug+'/</loc><lastmod>2026-11-03</lastmod>'), 'Sitemap lastmod not updated: '+slug);
+ for(const marker of markers) assert(html.includes(marker), 'Code-grounded setup content absent: '+slug+' / '+marker);
+}
+const rEditor=read('src/editor/blockEditors/ReservationEditor.jsx');
+const rTime=read('src/editor/blockEditors/ReservationTimeSection.jsx');
+const rFixed=read('src/editor/blockEditors/ReservationFixedFields.jsx');
+const rCustom=read('src/editor/blockEditors/reservationEditorOptions.js');
+assert(['예약 시간','입력 항목'].every(label=>rEditor.includes(label)), 'Reservation guide tabs diverged from editor');
+assert(rTime.includes("value: '30'") && rTime.includes("value: '60'"), 'Reservation editor duration presets diverged from guide');
+assert(rCustom.includes("['weekday'") && rCustom.includes("['everyday'") && rCustom.includes("['custom'"), 'Reservation weekday modes diverged from guide');
+assert(rFixed.includes('T.date') && rFixed.includes('T.visitTime') && rFixed.includes('is-fixed'), 'Reservation required visit fields diverged from guide');
+const checklist=read('src/editor/publishChecklist.js');
+for(const item of ["id: 'brand'","id: 'hero'","id: 'action'","id: 'fields'","id: 'footer'","id: 'url'"]){
+ assert(checklist.includes(item), 'Publish checklist item removed or renamed: '+item);
+}
+const domainUI=read('src/panels/settings/CustomDomainSettingsSection.jsx');
+assert(domainUI.includes("apexDomain ? '네임서버' : 'CNAME'"), 'Domain root/subdomain instructions no longer match UI');
+assert(domainUI.includes('refreshDomainStatus') && domainUI.includes('removeDomain') && domainUI.includes('sslLabel'), 'Domain verification / detach / SSL behavior changed');
 const searchIndex=JSON.parse(read('public/guide/search-index.json'));
 assert.equal(searchIndex.documents.length,15,'Full-text index must cover 15 official guides');
+for(const [slug,markers] of Object.entries(guide9Cases)){
+ const doc=searchIndex.documents.find(d=>d.slug===slug);
+ assert(doc && doc.headings.some(h=>h.includes('실무 점검')||h.includes('설정·오류 판별 예제')), 'Guide search index missing new practical section: '+slug);
+ for(const marker of markers) assert(doc.body.includes(marker), 'Searchable body missing setup information: '+slug+' / '+marker);
+}
+
 for (const [slug, markers] of Object.entries(updatedOperationalGuides)) {
  const doc=searchIndex.documents.find(d=>d.slug===slug);
  assert(doc && doc.headings.includes('실무 지표·오류 진단 예제'),'Index missing updated operational heading: '+slug);
