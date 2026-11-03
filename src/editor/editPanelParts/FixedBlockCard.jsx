@@ -35,8 +35,8 @@ export function FixedBlockCard({
           >
             <span className="screen-order-v2-type-icon" aria-hidden="true">{Icon && <Icon size={16} />}</span>
             <span className="screen-order-v2-identity-copy">
-              <strong>{title}</strong>
-              {!visible && <small className="screen-order-v2-identity-detail">숨김</small>}
+              <strong title={title}>{title}</strong>
+              {!visible && <span className="screen-order-v2-hidden-badge">숨김</span>}
             </span>
           </button>
           <ScreenOrderRowVisibility visible={visible} onToggleVisible={onToggleVisible} />
