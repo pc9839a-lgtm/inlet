@@ -2,6 +2,8 @@ import { Color } from '../controls.jsx';
 import { SegmentedControl, ToggleRow } from '../ui/index.js';
 import { WidgetSpacingControls } from './WidgetSpacingControls.jsx';
 import { AlignCenter, AlignLeft, AlignRight } from 'lucide-react';
+import { ThemeInheritanceRow, ThemeAlignmentNotice } from '../ui/ThemeInheritanceRow.jsx';
+import { describeBottomButtonColorSource } from '../ui/themeInheritanceModel.js';
 
 const ALIGN = [
   { value: 'left', label: '왼쪽', icon: AlignLeft },
@@ -19,9 +21,10 @@ function AlignmentControl({ s, set, options = ALIGN, defaultValue = 'left' }) {
   return <SegmentedControl label="정렬" iconOnly value={s.align || defaultValue} onChange={(value) => set({ align: value })} options={options} />;
 }
 
-export function HeroStylePanel({ s, set }) {
+export function HeroStylePanel({ s, set, theme }) {
   return <div className="editor-v2-control-list">
     <SegmentedControl label="정렬" iconOnly value={s.align || 'left'} onChange={(value) => set({ align: value })} options={ALIGN} />
+    <ThemeAlignmentNotice theme={theme} />
     <SegmentedControl label="제목 크기" value={s.titleSize || 'large'} onChange={(value) => set({ titleSize: value })} options={SIZES} />
     <SegmentedControl label="설명 크기" value={s.bodySize || 'medium'} onChange={(value) => set({ bodySize: value })} options={SIZES} />
   </div>;
@@ -100,10 +103,11 @@ export function CodeStylePanel({ s, set }) {
   </>;
 }
 
-export function TopNavStylePanel({ s, set }) {
+export function TopNavStylePanel({ s, set, theme }) {
   return <div className="editor-v2-control-list">
     <SegmentedControl label="배경" value={s.bg || 'white'} onChange={(value) => set({ bg: value })} options={[{ value: 'white', label: '밝게' }, { value: 'transparent', label: '투명' }, { value: 'dark', label: '어둡게' }]} />
     <SegmentedControl label="정렬" value={s.align || 'left'} onChange={(value) => set({ align: value })} options={ALIGN} />
+    <ThemeAlignmentNotice theme={theme} />
     <SegmentedControl label="로고 크기" value={s.logoSize || 'medium'} onChange={(value) => set({ logoSize: value })} options={SIZES} />
     <SegmentedControl label="메뉴 형태" value={s.menuStyle || 'pill'} onChange={(value) => set({ menuStyle: value })} options={[{ value: 'pill', label: '캡슐' }, { value: 'text', label: '텍스트' }, { value: 'outline', label: '라인' }]} />
     <ToggleRow label="상단 고정" checked={s.sticky !== false} onChange={(value) => set({ sticky: value })} />
@@ -117,11 +121,13 @@ export function FooterStylePanel({ s, set }) {
   </div>;
 }
 
-export function BottomBarStylePanel({ s, set }) {
+export function BottomBarStylePanel({ s, set, theme }) {
   const colorMode = s.buttonColorMode || 'theme';
+  const colorSource = describeBottomButtonColorSource(s, theme);
   return <div className="editor-v2-control-list">
     <SegmentedControl label="형태" value={s.style || 'pill'} onChange={(value) => set({ style: value })} options={[{ value: 'pill', label: '캡슐' }, { value: 'box', label: '박스' }]} />
     <ToggleRow label="직접 색상" checked={colorMode === 'custom'} onChange={(value) => set({ buttonColorMode: value ? 'custom' : 'theme' })} />
+    <ThemeInheritanceRow label="하단 버튼 배경색" inherited={colorSource.inherited} source={colorSource.source} stateLabel={colorSource.label} color={colorSource.color} inheritedFrom="전체 포인트색" onReset={() => set({ buttonColorMode: 'theme', color: 'accent' })} />
     {colorMode === 'theme' ? (
       <SegmentedControl label="프리셋" value={s.color || 'dark'} onChange={(value) => set({ color: value })} options={[{ value: 'dark', label: '다크' }, { value: 'accent', label: '강조' }, { value: 'light', label: '라이트' }]} />
     ) : (

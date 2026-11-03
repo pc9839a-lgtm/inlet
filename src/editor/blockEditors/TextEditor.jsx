@@ -4,7 +4,7 @@ import { TextStylePanel } from './WidgetStylePanels.jsx';
 import { WidgetSpacingControls } from './WidgetSpacingControls.jsx';
 import './TextEditor.css';
 
-export default function TextEditor({ s, set }) {
+export default function TextEditor({ s, set, page }) {
   return (
     <div className="text-editor-flow">
       <RichField
@@ -22,7 +22,7 @@ export default function TextEditor({ s, set }) {
         onChange={(value) => set({ body: value })}
       />
       <InspectorDisclosure label="디자인" className="text-editor-design" bodyClassName="text-editor-design-controls" defaultOpen>
-        <TextStylePanel s={s} set={set} />
+        <TextStylePanel s={s} set={set} theme={page?.theme} />
       </InspectorDisclosure>
       <WidgetSpacingControls s={s} set={set} />
     </div>

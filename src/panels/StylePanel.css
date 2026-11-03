@@ -313,3 +313,17 @@
 @media (prefers-reduced-motion: reduce) {
   .builder-shell .style-panel-v17 .style-advanced-group > summary svg { transition: none; }
 }
+
+/* The page-level alignment mode is explicit: only the named text blocks above
+   are counted for color inheritance; page alignment is a separate override. */
+.builder-shell .style-panel-v17 .style-theme-inheritance-summary,
+.builder-shell .style-panel-v17 .style-theme-inheritance-hint {
+  margin: 0;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: #f6f8ff;
+  color: #475467;
+  font-size: 11px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}

@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { createInspectorBlockNavigation } from '../src/editor/editPanelParts/inspectorBlockNavigationModel.js';
+import { themeAlignmentMode, isTextColorOverride, describeTextColorSource, describeBottomButtonColorSource, countTextColorSources } from '../src/editor/ui/themeInheritanceModel.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -29,6 +30,39 @@ assert(createInspectorBlockNavigation({ normalBlocks: sample, fixedDescriptors: 
 assert(sample.length === 3 && sample[1].id === 'hidden-photo' && pinned[0].block.id === 'topnav',
   'inspector navigation must not mutate source page data');
 
+// UX-020: exact renderer-aligned inheritance with no schema or page mutation.
+const pageTheme = { text: '#123456', accent: '#ABCDEF', globalAlign: 'center' };
+const sourceBlocks = [
+  { type: 'text', s: { title: 'Inherited', textColor: '' } },
+  { type: 'text', s: { title: 'Explicit', textColor: '#334455' } },
+  { type: 'text', visible: false, s: { textColor: 'bad' } },
+  { type: 'image', s: { textColor: '#FFFFFF' } },
+];
+const beforeThemeRead = JSON.stringify({ theme: pageTheme, blocks: sourceBlocks });
+const counts = countTextColorSources(sourceBlocks);
+assert(counts.total === 3 && counts.inherited === 2 && counts.custom === 1,
+  'text style summary must count explicit saved HEX values (including hidden blocks) without counting unrelated types');
+assert(!isTextColorOverride(sourceBlocks[0].s) && isTextColorOverride(sourceBlocks[1].s),
+  'only valid explicit text color is a block override');
+assert(describeTextColorSource(sourceBlocks[0].s, pageTheme).color === '#123456'
+  && describeTextColorSource(sourceBlocks[0].s, pageTheme).inherited
+  && describeTextColorSource(sourceBlocks[1].s, { ...pageTheme, text: '#AABBCC' }).color === '#334455'
+  && describeTextColorSource({ ...sourceBlocks[1].s, textColor: '' }, pageTheme).inherited,
+  'page color changes inherited text only, while explicit colors survive until the owner resets this one block');
+assert(themeAlignmentMode({}) === 'block' && themeAlignmentMode({ globalAlign: '' }) === 'block'
+  && themeAlignmentMode({ globalAlign: 'center' }) === 'center'
+  && themeAlignmentMode({ globalAlign: 'invalid' }) === 'block',
+  'page alignment must distinguish override from block-by-block mode');
+const bottomMode = describeBottomButtonColorSource({ buttonColorMode: 'custom', color: 'dark', buttonColor: '#DDAA22' }, pageTheme);
+assert(bottomMode.source === 'block' && bottomMode.color === '#DDAA22'
+  && describeBottomButtonColorSource({ buttonColorMode: 'theme', color: 'dark' }, pageTheme).source === 'preset'
+  && describeBottomButtonColorSource({ buttonColorMode: 'theme', color: 'light' }, pageTheme).color === '#FFFFFF'
+  && describeBottomButtonColorSource({ buttonColorMode: 'theme', color: 'accent' }, pageTheme).source === 'page'
+  && describeBottomButtonColorSource({ buttonColorMode: 'theme', color: 'accent' }, pageTheme).color === '#ABCDEF',
+  'bottom CTA must distinguish dark/light presets from inherited accent and explicit custom HEX');
+assert(JSON.stringify({ theme: pageTheme, blocks: sourceBlocks }) === beforeThemeRead,
+  'inheritance inspection must not mutate existing page JSON or saved overrides');
+
 const navigation = await readFile('src/builder/navigation.js', 'utf8');
 const screen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 'utf8');
 const active = await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8');
@@ -41,6 +75,11 @@ const settingsView = await readFile('src/editor/editPanelParts/ScreenOrderSettin
 const inspectorSwitch = await readFile('src/editor/editPanelParts/InspectorBlockSwitch.jsx', 'utf8');
 const settingsHeader = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const disclosure = await readFile('src/editor/ui/InspectorDisclosure.jsx', 'utf8');
+const stylePanel = await readFile('src/panels/StylePanel.jsx', 'utf8');
+const textAppearance = await readFile('src/editor/blockEditors/TextAppearanceControls.jsx', 'utf8');
+const widgetPanels = await readFile('src/editor/blockEditors/WidgetStylePanels.jsx', 'utf8');
+const themeStatusRow = await readFile('src/editor/ui/ThemeInheritanceRow.jsx', 'utf8');
+const sharedControlsCss = await readFile('src/styles/editor-expanded-controls.css', 'utf8');
 const heroEditor = await readFile('src/editor/blockEditors/HeroEditor.jsx', 'utf8');
 const textEditor = await readFile('src/editor/blockEditors/TextEditor.jsx', 'utf8');
 const imageEditor = await readFile('src/editor/blockEditors/ImageEditor.jsx', 'utf8');
@@ -118,6 +157,16 @@ assert(settingsView.includes('<InspectorBlockSwitch navigation={navigation} />')
   && editPanelLayoutCss.includes('.editor-inspector-panel .screen-order-v2-card')
   && editPanelLayoutCss.includes('.editor-block-switch'),
   'inspector must keep non-destructive previous/next controls available with the shared scrollbar');
+assert(stylePanel.includes("globalAlign: next === 'block' ? '' : next")
+  && stylePanel.includes("[ 'block', '블록별' ]")
+  && stylePanel.includes('countTextColorSources(page?.blocks)')
+  && textAppearance.includes("set({ textColor: '' })")
+  && textAppearance.includes('<ThemeInheritanceRow')
+  && widgetPanels.includes("buttonColorMode: 'theme', color: 'accent'")
+  && themeStatusRow.includes("data-style-source={source}")
+  && sharedControlsCss.includes('.editor-theme-source')
+  && !layout.includes('data-page-theme-inheritance-override'),
+  'page and block theme UI must use existing schema fields, explicit text reset and accurate bottom preset vs accent status');
 assert(disclosure.includes('<details') && disclosure.includes('<summary>') && disclosure.includes('inspector-disclosure-body')
   && settingsHeader.includes('inspector-primary-heading')
   && !settingsHeader.includes('InspectorNavigation')
