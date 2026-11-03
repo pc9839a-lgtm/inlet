@@ -322,11 +322,59 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
     'reference editor must show a balanced right-stage phone and one shared editing scrollbar: ' + JSON.stringify(geometry));
 
+  // UX-027/030: 390px public-layout parity with a light, low-noise frame
+  // and a single compact toolbar. Check normal/narrow desktop widths without
+  // modifying the page or using a separate fake preview.
+  for (const width of [900, 1024, 1440, 1672]) {
+    await setViewport(client, width, 941, false);
+    const chrome = await evaluate(client, `(() => {
+      const preview = document.querySelector('.preview-workspace');
+      const stage = preview.querySelector('.preview-sticky');
+      const toolbar = preview.querySelector('.preview-stage-toolbar');
+      const label = preview.querySelector('.preview-width-toolbar');
+      const controls = preview.querySelector('.preview-view-tools');
+      const select = controls.querySelector('select[aria-label="미리보기 배율"]');
+      const full = controls.querySelector('button[aria-label="미리보기 전체 화면"]');
+      const frame = preview.querySelector('.phone-frame');
+      const page = frame.querySelector('.landing-page');
+      const box = (el) => el.getBoundingClientRect();
+      const css = getComputedStyle(frame);
+      const outer = box(frame), top = box(toolbar), left = box(label), right = box(controls);
+      const buttons = [select, full].map(box);
+      return {
+        contentWidth: page.clientWidth, frameWidth: outer.width, frameBorder: css.borderTopWidth,
+        frameRadius: css.borderTopLeftRadius, frameShadow: css.boxShadow,
+        stageBackground: getComputedStyle(preview).backgroundColor,
+        labelBackground: getComputedStyle(label).backgroundColor,
+        labelText: label.textContent.trim(), labelSize: getComputedStyle(label).fontSize,
+        toolbarHeight: top.height, toolbarBottom: top.bottom, frameTop: outer.top,
+        controlsInside: buttons.every(b => b.left >= right.left - 2 && b.right <= right.right + 2),
+        toolbarSeparated: left.right <= right.left + 3,
+        stageCentered: Math.abs((box(stage).left + box(stage).right) / 2 - (outer.left + outer.right) / 2) <= 4,
+        zoomOptions: [...select.options].map(o => Number(o.value)), fullscreenLabel: full.getAttribute('aria-label'),
+        frameInsideStage: outer.left >= box(preview).left - 2 && outer.right <= box(preview).right + 2,
+      };
+    })()`);
+    const expectedWidth = width <= 950 ? 392 : 394;
+    const expectedBorder = width <= 950 ? '1px' : '2px';
+    assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
+      && chrome.frameBorder === expectedBorder && parseInt(chrome.frameRadius, 10) <= 20
+      && chrome.labelBackground === 'rgba(0, 0, 0, 0)'
+      && chrome.labelSize === '12px' && chrome.labelText.includes('390px')
+      && chrome.toolbarHeight <= 38 && chrome.controlsInside && chrome.toolbarSeparated
+      && chrome.stageCentered && chrome.frameInsideStage
+      && chrome.zoomOptions.join(',') === '75,100,125'
+      && chrome.fullscreenLabel === '미리보기 전체 화면',
+      'preview frame and compact toolbar must retain accurate dimensions at ' + width + ': ' + JSON.stringify(chrome));
+    if (width === 900 || width === 1440) await capture(client, 'light-preview-frame-' + width);
+  }
+  await setViewport(client, 1672, 941, false);
+
   // Zoom changes only the viewing scale; the page's layout width stays 390px.
   await evaluate(client, `(() => { const el = document.querySelector('select[aria-label="미리보기 배율"]'); el.value='75'; el.dispatchEvent(new Event('change',{bubbles:true})); })()`);
   await waitForBrowser(client, `document.querySelector('.phone-frame').getBoundingClientRect().width < 310 && document.querySelector('.phone-frame .landing-page').clientWidth === 390`, 'preview zoom scales the view without changing page layout');
   await evaluate(client, `(() => { const el = document.querySelector('select[aria-label="미리보기 배율"]'); el.value='100'; el.dispatchEvent(new Event('change',{bubbles:true})); })()`);
-  await waitForBrowser(client, `document.querySelector('.phone-frame').getBoundingClientRect().width >= 400`, 'preview zoom reset');
+  await waitForBrowser(client, `document.querySelector('.phone-frame').getBoundingClientRect().width >= 392`, 'preview zoom reset');
 
   // UX-025/026/029: an editor action dock belongs to the stage ABOVE the
   // phone. It must not cover any headline, form input, submit or fixed CTA at
@@ -338,7 +386,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       select.dispatchEvent(new Event('change', { bubbles: true }));
     })()`);
     await waitForBrowser(client,
-      `Math.abs(document.querySelector('.phone-frame').getBoundingClientRect().width - 402 * ${scale}/100) <= 3
+      `Math.abs(document.querySelector('.phone-frame').getBoundingClientRect().width - 394 * ${scale}/100) <= 3
         && document.querySelector('.phone-frame .landing-page').clientWidth === 390`,
       'preview keeps logical 390px canvas at ' + scale + '%');
     for (const [blockId, selector] of [
