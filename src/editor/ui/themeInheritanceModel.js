@@ -13,10 +13,16 @@ export function describeTextColorSource(settings = {}, theme = {}) {
   };
 }
 export function describeBottomButtonColorSource(settings = {}, theme = {}) {
-  return {
-    inherited: !isBottomButtonColorOverride(settings),
-    color: isBottomButtonColorOverride(settings) ? settings.buttonColor || '#111827' : theme?.accent || '#111827',
-  };
+  if (isBottomButtonColorOverride(settings)) {
+    return { source: 'block', inherited: false, color: settings.buttonColor || '#111827', label: '개별 지정' };
+  }
+  if (settings?.color === 'accent') {
+    return { source: 'page', inherited: true, color: theme?.accent || '#111827', label: '전체 포인트색 사용' };
+  }
+  if (settings?.color === 'light') {
+    return { source: 'preset', inherited: false, color: '#FFFFFF', label: '라이트 프리셋' };
+  }
+  return { source: 'preset', inherited: false, color: '#111827', label: '다크 프리셋' };
 }
 export function countTextColorSources(blocks = []) {
   const text = Array.isArray(blocks) ? blocks.filter(block => block?.type === 'text') : [];
