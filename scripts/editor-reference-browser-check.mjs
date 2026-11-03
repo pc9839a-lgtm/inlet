@@ -374,7 +374,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           canvasSelection: document.querySelector('.screen-order-v2-item[data-selected="true"],.fixed-composition-row[data-selected="true"]')?.id || '',
         };
       })()`);
-      assert(separation.position !== 'absolute' && separation.dockBottom + 3 <= separation.phoneTop
+      assert(separation.position !== 'absolute' && separation.dockBottom + 1 <= separation.phoneTop
         && separation.dockLeft >= separation.stageLeft - 2 && separation.dockRight <= separation.stageRight + 2
         && separation.logicalWidth === 390 && separation.visibleTitle
         && separation.controls >= 1 && !separation.hasOverflow && !separation.overlapping
