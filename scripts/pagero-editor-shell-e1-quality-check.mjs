@@ -158,7 +158,7 @@ assert(settingsView.includes('<InspectorBlockSwitch navigation={navigation} />')
   && editPanelLayoutCss.includes('.editor-block-switch'),
   'inspector must keep non-destructive previous/next controls available with the shared scrollbar');
 assert(stylePanel.includes("globalAlign: next === 'block' ? '' : next")
-  && stylePanel.includes("['block', '블록별']")
+  && stylePanel.includes("[ 'block', '블록별' ]")
   && stylePanel.includes('countTextColorSources(page?.blocks)')
   && textAppearance.includes("set({ textColor: '' })")
   && textAppearance.includes('<ThemeInheritanceRow')
