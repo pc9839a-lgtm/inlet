@@ -30,7 +30,7 @@ export default function BottomBarEditor({ s, set, page }) {
         </div>
       </details>
       <InspectorDisclosure label="디자인" className="bottom-bar-editor-design" bodyClassName="bottom-bar-editor-extra-controls">
-        <BottomBarStylePanel s={s} set={set} />
+        <BottomBarStylePanel s={s} set={set} theme={page?.theme} />
       </InspectorDisclosure>
     </div>
   );
