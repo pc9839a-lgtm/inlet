@@ -28,7 +28,7 @@
 
 .builder-shell .style-panel-v17 .style-apply-bar strong {
   display: block;
-  color: var(--product-text);
+  color: var(--editor-ui-text, #182230);
   font-size: var(--editor-ui-value-size, 14px);
   font-weight: var(--editor-ui-strong, 650);
   line-height: 1.4;
@@ -37,7 +37,7 @@
 .builder-shell .style-panel-v17 .style-apply-bar span {
   display: block;
   margin-top: 3px;
-  color: var(--product-muted);
+  color: var(--editor-ui-muted, #667085);
   font-size: 12px;
   line-height: 1.3;
 }
