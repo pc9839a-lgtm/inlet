@@ -3,7 +3,7 @@
 .preview-sticky { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; }
 .preview-workspace .phone-frame { --landing-runtime-width: 390px; box-sizing: border-box; width: 402px; max-width: none; height: calc(100dvh - 176px); min-height: 420px; max-height: 820px; border: 6px solid #242934; border-radius: 46px; background: #fff; overflow: hidden; box-shadow: 0 0 0 2px #b8bfcd, 0 18px 42px #1e2b481c; }
 .preview-workspace .phone-frame:fullscreen { height: 100dvh !important; max-height: none !important; min-height: 0; margin: 0 auto !important; background: #fff; }
-.preview-stage-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 40px; margin-bottom: 24px; }
+.preview-stage-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 36px; margin-bottom: 0; }
 .preview-width-toolbar { display: inline-flex; align-items: center; gap: 9px; min-height: 36px; padding: 7px 12px; border: 1px solid #e8ecf7; border-radius: 9px; background: #ffffffb8; color: #182236; font-size: 13px; font-weight: 600; }
 .preview-width-toolbar > svg { color: #2454ff; }
 .preview-view-tools { display: flex; align-items: center; gap: 6px; }
@@ -12,16 +12,107 @@
 .preview-view-tools > select { min-width: 88px; cursor: pointer; }
 .preview-view-tools :focus-visible { outline: 2px solid #2454ff; outline-offset: 2px; }
 .preview-workspace [data-preview-selected='true'] { scroll-margin-block: 120px; }
+/* Hover is a light dashed affordance; selected is the solid blue boundary.
+   Focus on the action dock uses an independent visible keyboard ring. */
+html body #root .canvas-editor-shell .preview-workspace .editor-preview .landing-section:hover:not(.preview-selected-block) {
+  outline: 1px dashed #93a9d7;
+  outline-offset: -1px;
+}
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block { outline: 2px solid #2454ff !important; outline-offset: -2px !important; box-shadow: none !important; }
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block::after { content: none !important; display: none !important; }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 2; grid-row: 2; min-width: 0 !important; height: 100% !important; min-height: 0 !important; padding: 18px clamp(4px, 2vw, 32px) 24px !important; justify-content: center !important; align-items: flex-start !important; background: #f5f7ff !important; overflow: auto !important; }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-sticky { position: relative !important; top: auto !important; flex: 0 0 auto; width: min(402px, 100%) !important; min-width: 0 !important; max-width: 100% !important; height: auto !important; max-height: none !important; overflow: visible !important; gap: 0 !important; margin: 0 auto !important; }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 402px !important; max-width: none !important; margin: 0 auto !important; height: calc(100dvh - 176px) !important; min-height: 0 !important; max-height: 820px !important; flex: 0 0 auto !important; border: 6px solid #242934 !important; border-radius: 46px !important; background: #fff; }
-.preview-selection-toolbar { position: absolute; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 2px; width: max-content; max-width: 100%; min-height: 40px; padding: 4px 8px; border: 1px solid #ffffff16; border-radius: 10px; background: #25282e; box-shadow: 0 6px 18px #17203933; }
-.preview-selection-toolbar > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 30px; min-height: 30px; padding: 4px 7px; border: 0; border-radius: 5px; background: transparent; color: #fff; font-size: 11px; font-weight: 500; cursor: pointer; white-space: nowrap; }
-.preview-selection-toolbar > button:hover { background: #ffffff1a; }
-.preview-selection-toolbar > button:disabled { opacity: .35; cursor: default; }
-.preview-selection-toolbar > button:focus-visible { outline: 2px solid #aec1ff; outline-offset: 1px; }
+/* Editor-only action dock: always outside the 390px phone content.
+   No absolute overlay or transform, so headings, form controls and fixed CTA
+   cannot be covered by selection actions at any view scale. */
+.preview-selection-toolbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  margin: 0 0 2px;
+  padding: 2px 6px 2px 8px;
+  border: 1px solid #dce4f5;
+  border-radius: 8px;
+  background: #fff;
+  color: #182230;
+  box-shadow: none;
+}
+.preview-selection-identity {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 4px;
+}
+.preview-selection-identity > strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: #2454ff;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preview-selection-identity > small {
+  flex: 0 0 auto;
+  padding: 2px 4px;
+  border: 1px solid #d6dfed;
+  border-radius: 4px;
+  background: #f2f4f7;
+  color: #475467;
+  font-size: 10px;
+  line-height: 1.2;
+}
+.preview-selection-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+.preview-selection-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 4px;
+  box-sizing: border-box;
+  min-width: 30px;
+  min-height: 30px;
+  margin: 0;
+  padding: 4px 5px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #344054;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 550;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.preview-selection-actions > button > svg { flex: 0 0 auto; }
+.preview-selection-actions > button:hover:not(:disabled) { background: #f0f4ff; color: #2454ff; }
+.preview-selection-actions > button:disabled { opacity: .38; cursor: default; }
+.preview-selection-actions > button:focus-visible { outline: 2px solid #2454ff; outline-offset: 1px; }
+.preview-selection-actions > button[aria-label="블록 삭제"]:hover:not(:disabled) { background: #fff2f1; color: #b42318; }
+@media (min-width: 900px) and (max-width: 1024px) {
+  .preview-selection-toolbar { padding-inline: 6px; }
+  .preview-selection-identity > strong { font-size: 11px; }
+  .preview-selection-actions { gap: 1px; }
+  .preview-selection-actions > button { padding-inline: 4px; }
+}
 @media (min-width:900px) and (max-width:1100px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { padding-inline: 4px !important; } .preview-stage-toolbar { gap: 6px; } .preview-width-toolbar { padding-inline: 8px; } .preview-view-tools { gap: 4px; } .preview-view-tools > select { min-width: 76px; } }
 @media (min-width:900px) and (max-width:950px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 392px !important; border-width: 1px !important; border-radius: 36px !important; } }
 @media (max-width:899px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 1; grid-row: 3; height: auto !important; min-height: 540px !important; } }
