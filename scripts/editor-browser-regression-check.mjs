@@ -2308,7 +2308,33 @@ async function run() {
     await focusSelector(client, accentHex);
     await setInputValue(client, accentHex, '#oops');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
-    await waitForBrowser(client, `document.querySelector(${JSON.stringify(accentHex)})?.value.toLowerCase() === '#aabbcc'`, 'invalid HEX does not replace the last valid color');
+    await waitForBrowser(client, `(() => {
+      const field = document.querySelector(${JSON.stringify(accentHex)});
+      const parent = field?.closest('.color-clean');
+      return field?.value === '#oops'
+        && field.getAttribute('aria-invalid') === 'true'
+        && !!parent?.querySelector('[role="alert"]')
+        && !!field.getAttribute('aria-describedby')
+        && parent.querySelector('[role="alert"]')?.id === field.getAttribute('aria-describedby')
+        && document.querySelector('.style-panel input[type="color"]')?.value === '#aabbcc';
+    })()`, 'invalid HEX is explained inline but never commits or changes the last valid swatch');
+    await capture(client, 'desktop-common-settings-invalid-hex');
+    await focusSelector(client, accentHex);
+    await pressKeyboardKey(client, 'Escape');
+    await waitForBrowser(client, `(() => {
+      const field = document.querySelector(${JSON.stringify(accentHex)});
+      return field?.value.toLowerCase() === '#aabbcc'
+        && field.getAttribute('aria-invalid') === 'false'
+        && !field.closest('.color-clean').querySelector('[role="alert"]');
+    })()`, 'Escape restores last valid HEX and clears its error');
+    await setInputValue(client, accentHex, 'a1b2c3');
+    await focusSelector(client, '.style-background-group .style-segment button:first-child');
+    await waitForBrowser(client, `(() => {
+      const field = document.querySelector(${JSON.stringify(accentHex)});
+      return field?.value === '#A1B2C3'
+        && document.querySelector('.style-panel input[type="color"]')?.value === '#a1b2c3'
+        && field.getAttribute('aria-invalid') === 'false';
+    })()`, 'six-digit pasted HEX without # normalizes to a valid swatch');
     await focusSelector(client, accentHex);
     await setInputValue(client, accentHex, updatedAccent);
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
