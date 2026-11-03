@@ -75,6 +75,52 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const afterSearchOrder = await evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map(el => el.id)`);
   assert(JSON.stringify(afterSearchOrder) === JSON.stringify(beforeSearchOrder), 'block search must not reorder or filter any original blocks');
   await setInputValue(client, 'input[aria-label="블록 이름 검색"]', '');
+
+  // UX-006: The selected inspector must allow navigating neighboring blocks
+  // without a second scrollbar, and keep the correct mobile selection.
+  await waitForBrowser(client, `document.querySelector('.editor-block-switch-position')?.textContent?.includes('/')`,
+    'selected inspector shows block index');
+  await clickPointer(client, '.editor-block-switch-actions button[aria-label="이전 블록"]');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-hero')?.dataset.selected === 'true'`,
+    'inspector previous selects the hero without a list scroll');
+  await clickPointer(client, '.editor-block-switch-actions button[aria-label="다음 블록"]');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
+    'inspector next returns to the text block');
+  assert(apiState.saveCount === 0, 'inspector navigation must not save or publish the page');
+
+  // A 30+ block list must not push the selected Inspector header out of view
+  // or add a second Inspector scrollbar (DOM fixture; no page data writes).
+  const longInspector = await evaluate(client, `(() => {
+    const list = document.querySelector('.screen-order-v2-list');
+    const seed = list?.querySelector('.screen-order-v2-slot');
+    const scroller = document.querySelector('.work-panel');
+    const header = document.querySelector('.screen-order-v2-settings-header');
+    const inspector = document.querySelector('.editor-inspector-panel');
+    if (!seed || !header || !scroller) return null;
+    const clones = [];
+    try {
+      for (let index = 0; index < 30; index++) {
+        const clone = seed.cloneNode(true);
+        clone.dataset.qaInspectorClone = String(index);
+        clone.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+        list.appendChild(clone);
+        clones.push(clone);
+      }
+      scroller.scrollTop = Math.min(420, scroller.scrollHeight - scroller.clientHeight);
+      const surface = scroller.getBoundingClientRect();
+      const title = header.getBoundingClientRect();
+      return { scrolled: scroller.scrollTop,
+        titleTop: title.top, scrollTop: surface.top,
+        inspectorOverflow: getComputedStyle(inspector).overflowY,
+        workOverflow: getComputedStyle(scroller).overflowY };
+    } finally {
+      clones.forEach((clone) => clone.remove());
+      scroller.scrollTop = 0;
+    }
+  })()`);
+  assert(longInspector?.scrolled > 250 && Math.abs(longInspector.titleTop - longInspector.scrollTop) < 4
+    && longInspector.inspectorOverflow === 'visible' && longInspector.workOverflow === 'auto',
+    'long page must keep inspector header pinned with a single shared scrollbar: ' + JSON.stringify(longInspector));
   const before = await evaluate(client, `[...document.querySelectorAll('.text-editor-flow textarea')].map(el => el.value)`);
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
