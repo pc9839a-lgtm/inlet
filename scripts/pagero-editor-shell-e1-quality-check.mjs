@@ -72,6 +72,7 @@ const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderIte
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
 const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
 const stylePanelTypographyCss = await readFile('src/panels/StylePanel.css', 'utf8');
+const blockEditorShellCss = await readFile('src/styles/editor-expanded-shell.css', 'utf8');
 const settingsView = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const inspectorSwitch = await readFile('src/editor/editPanelParts/InspectorBlockSwitch.jsx', 'utf8');
 const settingsHeader = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
@@ -132,7 +133,8 @@ const typographyTokens = [
 assert(typographyTokens.every(token => editPanelLayoutCss.includes(token))
   && editPanelLayoutCss.includes('font-size: var(--editor-ui-title-size)')
   && editPanelLayoutCss.includes('font-size: var(--editor-ui-section-size)')
-  && editPanelLayoutCss.includes('gap: var(--editor-ui-space-4)')
+  && blockEditorShellCss.includes('gap: var(--editor-ui-space-4, 16px)')
+  && !editPanelLayoutCss.includes('.block-editor-v2.block-editor')
   && rowCss.includes('font-size: var(--editor-ui-row-size, 12px)')
   && fixedBlocksCss.includes('font-size: var(--editor-ui-row-size, 12px)')
   && sharedControlsCss.includes('font-size: var(--editor-ui-label-size, 13px)')
