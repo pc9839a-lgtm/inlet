@@ -37,8 +37,8 @@ export default function ImageEditor({ s, set, block }) {
       <InspectorDisclosure label="디자인" className="image-editor-more" bodyClassName="image-editor-more-controls">
         <ToggleRow label="모서리 둥글게" checked={Boolean(s.rounded)} onChange={(value) => set({ rounded: value })} />
         <ImageGalleryDisplaySection s={s} set={set} />
-        <WidgetSpacingControls s={s} set={set} padding={false} defaultMargin={12} />
       </InspectorDisclosure>
+      <WidgetSpacingControls s={s} set={set} padding={false} defaultMargin={12} />
     </div>
   );
 }
