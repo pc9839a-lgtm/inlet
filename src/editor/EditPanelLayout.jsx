@@ -91,7 +91,6 @@ export function EditPanelLayout({
       <div id="editor-selection-panel" className="edit-section-panel" data-editor-section={showPageOptions ? 'options' : section}>
         {showPageOptions ? (
           <div className="editor-page-options-stack">
-            <header className="editor-page-options-header"><h2>페이지 설정</h2></header>
             {stylePanelProps && (
               <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
                 <PageThemeStylePanel {...stylePanelProps} />
