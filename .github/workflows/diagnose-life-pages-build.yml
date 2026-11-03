@@ -1,0 +1,62 @@
+name: Diagnose LIFE Cloudflare Pages builds
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/diagnose-life-pages-build.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Read LIFE project configuration and failed build logs
+        run: |
+          python - <<'PY'
+          import json, os, re, sys, urllib.request, urllib.error
+          token=os.environ.get('CF_TOKEN','')
+          account=os.environ.get('CF_ACCOUNT','')
+          if not token or not account:
+              sys.exit('Cloudflare credentials unavailable in this repository Actions environment')
+          base=f'https://api.cloudflare.com/client/v4/accounts/{account}/pages/projects/life-pagero'
+          def get(suffix):
+              req=urllib.request.Request(base+suffix,headers={'Authorization':'Bearer '+token,'Accept':'application/json'})
+              try:
+                  with urllib.request.urlopen(req, timeout=25) as response: data=json.load(response)
+              except urllib.error.HTTPError as e:
+                  print('CLOUDFLARE_API_ERROR',suffix,e.code)
+                  raise
+              if not data.get('success'): raise RuntimeError('Cloudflare endpoint failed: '+suffix+' '+str(data.get('errors',[]))[:250])
+              return data.get('result',{})
+          project=get('')
+          cfg=project.get('build_config') or {}
+          print('LIFE_BUILD_CONFIG',json.dumps({k:cfg.get(k) for k in ('build_command','destination_dir','root_dir','build_caching')},ensure_ascii=False))
+          print('LIFE_PROJECT',json.dumps({'production_branch':project.get('production_branch'),'deployment_configs':list((project.get('deployment_configs') or {}).keys())}))
+          deployments=get('/deployments')
+          if not isinstance(deployments,list):raise RuntimeError('Expected deployment array')
+          for row in deployments[:12]:
+              stage=row.get('latest_stage') or {}
+              print('LIFE_DEPLOYMENT',json.dumps({'id':row.get('id'),'sha':((row.get('deployment_trigger') or {}).get('metadata') or {}).get('commit_hash'),'url':row.get('url'),'branch':((row.get('deployment_trigger') or {}).get('metadata') or {}).get('branch'),'stage':stage.get('name'),'status':stage.get('status'),'created_at':row.get('created_on')},ensure_ascii=False))
+          failed=[d for d in deployments if (d.get('latest_stage') or {}).get('status') in ('failure','error')]
+          if not failed: print('NO_FAILED_DEPLOYMENTS_IN_RECENT_PAGE')
+          for d in failed[:3]:
+              did=d.get('id')
+              print('FAILED_BUILD',did)
+              raw=get('/deployments/'+did+'/history/logs')
+              log=raw.get('data') or []
+              lines=[str(x.get('line','')) for x in log]
+              redacted=lambda line:line.replace(token,'[redacted]').replace(account,'[account-redacted]')
+              matches=[(i,line) for i,line in enumerate(lines) if re.search(r'error|failed|exit code|npm ERR|command not found|cannot find|permission denied|Build failed|node version',line,re.I)]
+              selected=set()
+              for i,line in matches[-25:]:
+                  selected.update(range(max(0,i-2),min(len(lines),i+3)))
+              if not selected:
+                  selected=set(range(max(0,len(lines)-40),len(lines)))
+              for i in sorted(selected)[-100:]:
+                  print('CF_BUILD_LOG',i,redacted(lines[i])[:500])
+          PY
