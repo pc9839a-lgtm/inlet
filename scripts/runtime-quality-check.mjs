@@ -574,7 +574,8 @@ assert(!richField.includes('type="color"') && !richField.includes("document.exec
 assert(previewUtils.includes('dangerouslySetInnerHTML') && previewUtils.includes('style="color:${color}"') && previewUtils.includes('<u>${inner}</u>') && previewUtils.includes('<strong>${inner}</strong>'), 'preview rich text renderer must preserve color, underline, and bold markup');
 assert(stylePanel.includes('onPreviewThemeChange?.({ ...draftTheme, ...patch })') && app.includes('const [stylePreviewTheme, setStylePreviewTheme] = useState(null)'), 'StylePanel draft changes must keep live preview wiring');
 assert(!stylePanel.includes('defaultStyleBlockId') && !stylePanel.includes('block.type')
-  && stylePanel.includes('className="simple-panel style-panel style-panel-v17 style-panel-staged style-direct-flow"')
+  && stylePanel.includes('className="style-panel style-panel-v17 style-panel-staged style-direct-flow"')
+  && !stylePanel.includes('className="simple-panel style-panel')
   && stylePanel.includes('updateTheme(draftTheme)')
   && !stylePanel.includes('className="style-subnav"'),
   'StylePanel must remain a global staged theme editor with one direct flow, not a block editor or nested tab navigation');
