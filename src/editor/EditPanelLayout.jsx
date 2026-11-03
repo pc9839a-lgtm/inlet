@@ -8,6 +8,7 @@ import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
 import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
 import { createFixedBlockDescriptors } from './editPanelParts/fixedBlockDescriptors.js';
 import { ScreenOrderSettings } from './editPanelParts/ScreenOrderSettings.jsx';
+import { createInspectorBlockNavigation } from './editPanelParts/inspectorBlockNavigationModel.js';
 
 const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
 
@@ -23,7 +24,8 @@ export function EditPanelLayout({
   // A blank selection is page-level context, not a reason to collapse the editor.
   // Show the existing page design and options until a block is selected.
   const showPageOptions = section === 'options' || !selectedBlockId;
-  const fixedSelected = createFixedBlockDescriptors(fixedBlocksProps).find((item) => item.open);
+  const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
+  const fixedSelected = fixedDescriptors.find((item) => item.open);
   const chooseBlock = (id) => {
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
     setSection('order');
@@ -32,6 +34,27 @@ export function EditPanelLayout({
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
   };
+
+  // Previous/next follows the actual mobile page order, including pinned sections.
+  // Only the user's explicit switch action scrolls the shared editor; row clicks
+  // continue to preserve the existing scroll position.
+  const blockNavigation = createInspectorBlockNavigation({
+    normalBlocks: screenOrderListProps.normalBlocks,
+    fixedDescriptors,
+    selectedBlockId,
+  });
+  const switchBlock = (id) => {
+    if (!id || id === selectedBlockId) return;
+    if (fixedDescriptors.some((item) => item.block.id === id)) chooseFixed(id);
+    else chooseBlock(id);
+    requestAnimationFrame(() => {
+      const scroller = document.querySelector('.canvas-editor-shell .work-panel');
+      if (scroller) scroller.scrollTop = 0;
+    });
+  };
+  const inspectorNavigation = blockNavigation
+    ? { ...blockNavigation, onNavigate: switchBlock }
+    : null;
 
   React.useEffect(() => {
     if (selectedBlockId) setSection('order');
@@ -105,8 +128,8 @@ export function EditPanelLayout({
           </div>
         ) : (
           <>
-            {fixedSelected ? <ScreenOrderSettings block={fixedSelected.block} identity={{ customLabel: fixedSelected.title }} renderBlockEditor={fixedSelected.renderEditor} />
-              : <ScreenOrderList {...screenOrderListProps} inspectorOnly />}
+            {fixedSelected ? <ScreenOrderSettings block={fixedSelected.block} identity={{ customLabel: fixedSelected.title }} renderBlockEditor={fixedSelected.renderEditor} navigation={inspectorNavigation} />
+              : <ScreenOrderList {...screenOrderListProps} inspectorOnly inspectorNavigation={inspectorNavigation} />}
           </>
         )}
       </div>

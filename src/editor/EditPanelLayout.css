@@ -113,12 +113,85 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-search > 
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button:disabled { opacity: .35; cursor: default; }
 html body #root .builder-shell.canvas-editor-shell .editor-search-count { flex: 0 0 auto; font-size: 11px; font-variant-numeric: tabular-nums; color: #667085; }
 html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel { padding: 0 20px 32px; border-left: 1px solid #e7eaf2; container: editor-inspector / inline-size; scroll-padding-top: 140px; }
-html body #root .canvas-editor-shell .editor-inspector-panel > .edit-section-panel { margin: 0 !important; padding: 0 !important; }
-html body #root .canvas-editor-shell .screen-order-v2-settings-view { min-width: 0; }
+/* Keep the selected inspector as tall as the list without creating a second scrollbar.
+   Its sticky header remains reachable even after scrolling deep into 30+ blocks. */
+html body #root .canvas-editor-shell .editor-inspector-panel {
+  display: flex;
+  flex-direction: column;
+}
+html body #root .canvas-editor-shell .editor-inspector-panel > .edit-section-panel {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+html body #root .canvas-editor-shell .editor-inspector-panel .screen-order-v2-card {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings-view {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: sticky; top: 0; z-index: 6; padding: 22px 0 16px; margin: 0 0 18px; border-bottom: 1px solid #eef0f6; background: #fff; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title { display: flex; align-items: center; gap: 10px; min-height: 30px; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > h2 { margin: 0; min-width: 0; color: #101828; font-size: 18px !important; line-height: 1.4; font-weight: 650; overflow-wrap: anywhere; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > svg { flex: 0 0 auto; color: #2454ff; }
+html body #root .canvas-editor-shell .editor-block-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+html body #root .canvas-editor-shell .editor-block-switch-position {
+  flex: 0 0 auto;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+html body #root .canvas-editor-shell .editor-block-switch-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+html body #root .canvas-editor-shell .editor-block-switch-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 32px;
+  padding: 0 7px;
+  border: 1px solid #e0e6ef;
+  border-radius: 7px;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+html body #root .canvas-editor-shell .editor-block-switch-actions button:hover:not(:disabled) {
+  border-color: #b1c2f6;
+  background: #eef2ff;
+  color: #2454ff;
+}
+html body #root .canvas-editor-shell .editor-block-switch-actions button:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 1px;
+}
+html body #root .canvas-editor-shell .editor-block-switch-actions button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+html body #root .canvas-editor-shell .editor-block-switch + .inspector-navigation { margin-top: 4px; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > .screen-order-v2-action { margin-left: auto; flex: 0 0 30px; }
 html body #root .canvas-editor-shell .screen-order-settings-hidden { flex: 0 0 auto; color: #667085; font-size: 11px; }
 html body #root .canvas-editor-shell .screen-order-v2-settings[data-scroll-region='block-settings'] { max-height: none !important; overflow: visible !important; scrollbar-gutter: auto; }

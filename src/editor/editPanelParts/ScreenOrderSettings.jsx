@@ -1,8 +1,9 @@
 import React from 'react';
 import { META } from '../../config/blockMeta.jsx';
 import { InspectorNavigation } from './InspectorNavigation.jsx';
+import { InspectorBlockSwitch } from './InspectorBlockSwitch.jsx';
 
-export function ScreenOrderSettings({ block, identity, renderBlockEditor, actions }) {
+export function ScreenOrderSettings({ block, identity, renderBlockEditor, actions, navigation }) {
   const backRef = React.useRef(null);
   const metaType = block.s?.widgetMode === 'youtube' ? 'youtube' : block.type;
   const meta = META[metaType] || META.text;
@@ -23,6 +24,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
           {!block.visible && <span className="screen-order-settings-hidden">숨김</span>}
           {actions}
         </div>
+        <InspectorBlockSwitch navigation={navigation} />
         <InspectorNavigation key={block.id} blockType={block.type} />
       </header>
       <div

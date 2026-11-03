@@ -1,8 +1,33 @@
 import { readFile } from 'node:fs/promises';
+import { createInspectorBlockNavigation } from '../src/editor/editPanelParts/inspectorBlockNavigationModel.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
+
+const sample = [
+  { id: 'hero', type: 'hero' },
+  { id: 'hidden-photo', type: 'image', visible: false },
+  { id: 'form', type: 'form' },
+];
+const pinned = [
+  { key: 'topnav', block: { id: 'topnav' } },
+  { key: 'bottom', block: { id: 'bottom' } },
+  { key: 'footer', block: { id: 'footer' } },
+];
+const sequence = createInspectorBlockNavigation({ normalBlocks: sample, fixedDescriptors: pinned, selectedBlockId: 'hidden-photo' });
+assert(sequence?.index === 2 && sequence.total === 6 && sequence.previousId === 'hero' && sequence.nextId === 'form',
+  'inspector navigation must preserve hidden blocks and pinned regions in actual mobile page order');
+const boundary = createInspectorBlockNavigation({ normalBlocks: sample, fixedDescriptors: pinned, selectedBlockId: 'topnav' });
+assert(boundary?.index === 0 && boundary.previousId === '' && boundary.nextId === 'hero',
+  'top fixed area must disable previous navigation');
+const last = createInspectorBlockNavigation({ normalBlocks: sample, fixedDescriptors: pinned, selectedBlockId: 'footer' });
+assert(last?.index === 5 && last.nextId === '' && last.previousId === 'bottom',
+  'footer must disable next navigation');
+assert(createInspectorBlockNavigation({ normalBlocks: sample, fixedDescriptors: pinned, selectedBlockId: 'missing' }) === null,
+  'invalid selection must never navigate to a random block');
+assert(sample.length === 3 && sample[1].id === 'hidden-photo' && pinned[0].block.id === 'topnav',
+  'inspector navigation must not mutate source page data');
 
 const navigation = await readFile('src/builder/navigation.js', 'utf8');
 const screen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 'utf8');
@@ -12,6 +37,8 @@ const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
 const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
+const settingsView = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
+const inspectorSwitch = await readFile('src/editor/editPanelParts/InspectorBlockSwitch.jsx', 'utf8');
 const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSection.css', 'utf8');
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
@@ -64,6 +91,12 @@ assert(layout.includes('className="editor-page-settings-button"')
   && layout.includes('aria-controls="editor-selection-panel"')
   && !layout.includes('edit-section-tabs') && !editPanelLayoutCss.includes('edit-section-tabs'),
   'page settings must use one composition entry without a second inspector tab bar');
+assert(settingsView.includes('<InspectorBlockSwitch navigation={navigation} />')
+  && inspectorSwitch.includes('aria-label="이전 블록"')
+  && inspectorSwitch.includes('aria-label="다음 블록"')
+  && editPanelLayoutCss.includes('.editor-inspector-panel .screen-order-v2-card')
+  && editPanelLayoutCss.includes('.editor-block-switch'),
+  'inspector must keep non-destructive previous/next controls available with the shared scrollbar');
 assert(editPanelLayoutCss.includes('.editor-composition-heading > .editor-page-settings-button')
   && editPanelLayoutCss.includes('min-height: 40px;')
   && layout.includes('<BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} onSelect={chooseBlock} />'),
