@@ -1,6 +1,5 @@
 import React from 'react';
 import { META } from '../../config/blockMeta.jsx';
-import { InspectorNavigation } from './InspectorNavigation.jsx';
 import { InspectorBlockSwitch } from './InspectorBlockSwitch.jsx';
 
 export function ScreenOrderSettings({ block, identity, renderBlockEditor, actions, navigation }) {
@@ -25,7 +24,6 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
           {actions}
         </div>
         <InspectorBlockSwitch navigation={navigation} />
-        <InspectorNavigation key={block.id} blockType={block.type} />
       </header>
       <div
         id={`editor-block-settings-${block.id}`}
@@ -35,6 +33,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
         role="group"
         aria-label={`${meta.label} 상세 설정`}
       >
+        <h3 className="inspector-primary-heading">내용</h3>
         {renderBlockEditor(block)}
       </div>
     </div>
