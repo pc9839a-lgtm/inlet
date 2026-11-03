@@ -1,8 +1,8 @@
 .builder-shell .editor-number-control {
-  display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; min-width: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--editor-ui-space-2, 8px); min-width: 0;
 }
-.builder-shell .editor-number-control > label { color: #344054; font-size: 13px; font-weight: 500; line-height: 1.5; }
-.builder-shell .editor-number-inputs { display: grid; grid-template-columns: minmax(48px, 1fr) 86px; align-items: center; gap: 12px; min-width: 0; }
+.builder-shell .editor-number-control > label { color: var(--editor-ui-text, #182230); font-size: var(--editor-ui-label-size, 13px); font-weight: var(--editor-ui-label-weight, 600); line-height: 1.4; }
+.builder-shell .editor-number-inputs { display: grid; grid-template-columns: minmax(48px, 1fr) 86px; align-items: center; gap: var(--editor-ui-space-2, 8px); min-width: 0; }
 html body #root .builder-shell .editor-number-inputs > input[type='range'] {
   appearance: none; width: 100%; min-width: 0; min-height: 28px; margin: 0; padding: 0;
   border: 0; background: transparent; cursor: pointer;
@@ -11,41 +11,44 @@ html body #root .builder-shell .editor-number-inputs > input[type='range'] {
 .builder-shell .editor-number-inputs > input[type='range']::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; margin-top: -4.5px; border: 0; border-radius: 50%; background: #475467; }
 .builder-shell .editor-number-inputs > input[type='range']::-moz-range-track { height: 3px; border-radius: 2px; background: #e4e7ec; }
 .builder-shell .editor-number-inputs > input[type='range']::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #475467; }
-.builder-shell .editor-number-value { display: flex; align-items: center; gap: 4px; min-width: 0; padding-right: 8px; border: 1px solid #d0d5dd; border-radius: 6px; color: #667085; font-size: 12px; background: #fff; }
+.builder-shell .editor-number-value { display: flex; align-items: center; gap: 4px; min-width: 0; padding-right: 8px; border: 1px solid var(--editor-ui-control-line, #d0d5dd); border-radius: var(--editor-ui-control-radius, 7px); color: var(--editor-ui-muted, #667085); font-size: 12px; background: #fff; }
 html body #root .builder-shell .editor-number-value > input {
-  box-sizing: border-box; width: 100% !important; min-width: 0 !important; min-height: 36px !important;
-  margin: 0 !important; padding: 6px 8px !important; border: 0 !important; border-radius: 6px !important;
-  background: #fff !important; color: #1d2939 !important; font-size: 13px !important; font-weight: 400 !important; line-height: 1.5 !important; font-variant-numeric: tabular-nums;
+  box-sizing: border-box; width: 100% !important; min-width: 0 !important; min-height: var(--editor-ui-compact-height, 36px) !important;
+  margin: 0 !important; padding: 6px 8px !important; border: 0 !important; border-radius: var(--editor-ui-control-radius, 7px) !important;
+  background: #fff !important; color: var(--editor-ui-text, #182230) !important; font-size: 13px !important; font-weight: 400 !important; line-height: 1.5 !important; font-variant-numeric: tabular-nums;
 }
 .builder-shell .editor-number-presets { display: flex; flex-wrap: wrap; gap: 4px; }
 html body #root .builder-shell .editor-number-presets > button {
-  min-width: 34px; min-height: 28px; padding: 3px 7px; border: 0; border-radius: 4px;
-  background: transparent; color: #667085; font-size: 11px; font-weight: 400; line-height: 1.5; cursor: pointer;
+  min-width: 34px; min-height: var(--editor-ui-compact-height, 36px); padding: 3px 7px; border: 1px solid transparent; border-radius: var(--editor-ui-control-radius, 7px);
+  background: transparent; color: var(--editor-ui-muted, #667085); font-size: 11px; font-weight: 500; line-height: 1.5; cursor: pointer;
 }
-html body #root .builder-shell .editor-number-presets > button[aria-pressed='true'] { color: #101828; background: #f2f4f7; }
-.builder-shell .editor-number-control :is(input,button):focus-visible { outline: 2px solid #2563eb !important; outline-offset: 2px; }
+html body #root .builder-shell .editor-number-presets > button[aria-pressed='true'] { color: var(--editor-ui-accent, #2454ff); background: var(--editor-ui-active-bg, #e9efff); font-weight: 650; }
+html body #root .builder-shell .editor-number-presets > button:not(:disabled):hover:not([aria-pressed='true']) { background: #f2f4f7; color: var(--editor-ui-text, #182230); }
+html body #root .builder-shell .editor-number-presets > button:disabled { opacity: .45; cursor: not-allowed; }
+.builder-shell .editor-number-value:focus-within { border-color: var(--editor-ui-accent, #2454ff); }
+.builder-shell .editor-number-control :is(input,button):focus-visible { outline: 2px solid var(--editor-ui-accent, #2454ff) !important; outline-offset: 2px; }
 .builder-shell .crop-slider > .editor-number-control { grid-column: 1 / -1; width: 100%; }
 @container editor-inspector (min-width: 340px) {
   html body #root .builder-shell .editor-number-control { grid-template-columns: 88px minmax(0,1fr) !important; align-items: center !important; gap: 6px 12px !important; }
   .builder-shell .editor-number-presets { grid-column: 2; }
 }
-@media (pointer: coarse) { .builder-shell .editor-number-control :is(input[type='number'],button) { min-height: 44px !important; } }
+@media (pointer: coarse) { .builder-shell .editor-number-control :is(input[type='number'],button) { min-height: var(--editor-ui-touch-height, 44px) !important; } .builder-shell .editor-number-steppers { height: var(--editor-ui-touch-height, 44px); } }
 
 /* Exact spacing values need one input, without a second range or preset strip. */
 html body #root .builder-shell .editor-number-control[data-slider='false'] {
   grid-template-columns: minmax(0, 1fr) 86px !important;
   align-items: center !important;
-  gap: 12px !important;
+  gap: var(--editor-ui-space-2, 8px) !important;
 }
 .builder-shell .editor-number-control[data-slider='false'] > .editor-number-inputs { display: block; }
 
 /* Optional unit field with real, bounded step buttons. */
-html body #root .builder-shell .editor-number-control[data-steppers='true'][data-slider='false'] { grid-template-columns: minmax(72px,1fr) minmax(0,1.65fr) !important; gap: 12px !important; }
+html body #root .builder-shell .editor-number-control[data-steppers='true'][data-slider='false'] { grid-template-columns: minmax(72px,1fr) minmax(0,1.65fr) !important; gap: var(--editor-ui-space-2, 8px) !important; }
 html body #root .builder-shell .editor-number-control[data-steppers='true'] > .editor-number-inputs { display: grid; grid-template-columns: minmax(48px,1fr) 64px; gap: 8px; }
-.editor-number-steppers { display: flex; height: 36px; border: 1px solid #dce3ef; border-radius: 7px; overflow: hidden; background: #fff; }
+.editor-number-steppers { display: flex; height: var(--editor-ui-compact-height, 36px); border: 1px solid var(--editor-ui-control-line, #d0d5dd); border-radius: var(--editor-ui-control-radius, 7px); overflow: hidden; background: #fff; }
 html body #root .builder-shell .editor-number-steppers > button { display: grid; place-items: center; flex: 1; min-width: 0; min-height: 34px !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; color: #475467 !important; box-shadow: none !important; cursor: pointer; }
 html body #root .builder-shell .editor-number-steppers > button + button { border-left: 1px solid #e5eaf2 !important; }
-html body #root .builder-shell .editor-number-steppers > button:disabled { opacity: .35; cursor: default; }
+html body #root .builder-shell .editor-number-steppers > button:disabled { opacity: .45; cursor: not-allowed; }
 html body #root .builder-shell .editor-number-steppers > button:not(:disabled):hover { background: #edf1ff !important; color: #2454ff !important; }
 .editor-number-control[data-steppers='true'] input[type='number'] { appearance: textfield; }
 .editor-number-control[data-steppers='true'] input[type='number']::-webkit-inner-spin-button { appearance: none; }
