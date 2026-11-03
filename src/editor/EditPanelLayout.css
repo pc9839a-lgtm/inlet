@@ -109,15 +109,6 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-search > 
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button:focus-visible { outline: 2px solid #2454ff; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button:disabled { opacity: .35; cursor: default; }
 html body #root .builder-shell.canvas-editor-shell .editor-search-count { flex: 0 0 auto; font-size: 11px; font-variant-numeric: tabular-nums; color: #667085; }
-html body #root .builder-shell.canvas-editor-shell .editor-page-options-header {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  padding: 22px 0 16px;
-  border-bottom: 1px solid #eef0f6;
-  background: #fff;
-}
-html body #root .builder-shell.canvas-editor-shell .editor-page-options-header h2 { margin: 0; color: #101828; font-size: 18px; font-weight: 650; }
 html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel { padding: 0 20px 32px; border-left: 1px solid #e7eaf2; container: editor-inspector / inline-size; scroll-padding-top: 140px; }
 html body #root .canvas-editor-shell .editor-inspector-panel > .edit-section-panel { margin: 0 !important; padding: 0 !important; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-view { min-width: 0; }
