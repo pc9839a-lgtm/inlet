@@ -350,3 +350,93 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2 input, .e
     gap: 12px !important;
   }
 }
+
+/* P0 UX-020: exact applied-theme source, confined to editable widget fields. */
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  margin: -2px 0 6px;
+  padding: 8px 10px;
+  border: 1px solid #e4e9f2;
+  border-radius: 7px;
+  background: #fafbfe;
+}
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-summary,
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-label,
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-detail > span {
+  color: #667085;
+  font-size: 11px;
+  line-height: 1.45;
+}
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-state {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e8efff;
+  color: #2454ff;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-state.is-custom {
+  background: #f2f4f7;
+  color: #475467;
+}
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-detail code {
+  color: #344054;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-detail > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 4px;
+  min-height: 30px;
+  margin: 0;
+  padding: 0 7px;
+  border: 1px solid #d3dbed;
+  border-radius: 6px;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.25;
+  cursor: pointer;
+}
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-detail > button:is(:hover,:focus-visible) {
+  color: #2454ff;
+  border-color: #b3c5ff;
+}
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-detail > button:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 1px;
+}
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-align-notice {
+  margin: -2px 0 8px;
+  padding: 7px 9px;
+  border-left: 2px solid #2454ff;
+  background: #f6f8ff;
+  color: #475467;
+  font-size: 11px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+@container editor-inspector (max-width: 300px) {
+  body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-detail {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
