@@ -214,7 +214,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           fixedRow: style('.fixed-composition-row .screen-order-v2-identity-copy strong'),
           normalDetail: style('.editor-composition-panel .screen-order-v2-identity-detail'),
           label: field && { size: field.fontSize, weight: field.fontWeight, color: field.color },
-          editor: style('#editor-block-settings-${id} .block-editor-v2.block-editor'),
+          editor: style('#editor-block-settings-${id} .block-editor-v2'),
           tokens: Object.fromEntries(['--editor-ui-title-size','--editor-ui-section-size','--editor-ui-label-size','--editor-ui-row-size','--editor-ui-space-4'].map(k=>[k,getComputedStyle(document.querySelector('.edit-layout')).getPropertyValue(k).trim()])),
         };
       })()`);
