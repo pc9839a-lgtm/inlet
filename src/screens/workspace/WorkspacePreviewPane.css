@@ -1,16 +1,17 @@
 /* WorkspacePreviewPane — owns editor preview presentation and viewport parity. */
-.preview-workspace { min-width: 0; display: flex; justify-content: center; overflow: auto; background: #f5f7ff; }
+.preview-workspace { min-width: 0; display: flex; justify-content: center; overflow: auto; background: #f8f9fc; }
 .preview-sticky { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; }
-.preview-workspace .phone-frame { --landing-runtime-width: 390px; box-sizing: border-box; width: 402px; max-width: none; height: calc(100dvh - 176px); min-height: 420px; max-height: 820px; border: 6px solid #242934; border-radius: 46px; background: #fff; overflow: hidden; box-shadow: 0 0 0 2px #b8bfcd, 0 18px 42px #1e2b481c; }
+.preview-workspace .phone-frame { --landing-runtime-width: 390px; box-sizing: border-box; width: 394px; max-width: none; height: calc(100dvh - 176px); min-height: 420px; max-height: 820px; border: 2px solid #cbd5e1; border-radius: 20px; background: #fff; overflow: hidden; box-shadow: 0 5px 18px #17203912; }
 .preview-workspace .phone-frame:fullscreen { height: 100dvh !important; max-height: none !important; min-height: 0; margin: 0 auto !important; background: #fff; }
-.preview-stage-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 36px; margin-bottom: 0; }
-.preview-width-toolbar { display: inline-flex; align-items: center; gap: 9px; min-height: 36px; padding: 7px 12px; border: 1px solid #e8ecf7; border-radius: 9px; background: #ffffffb8; color: #182236; font-size: 13px; font-weight: 600; }
-.preview-width-toolbar > svg { color: #2454ff; }
+.preview-stage-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 36px; margin-bottom: 0; }
+.preview-width-toolbar { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 2px; border: 0; border-radius: 0; background: transparent; color: #667085; font-size: 12px; font-weight: 550; white-space: nowrap; }
+.preview-width-toolbar > svg { color: #667085; flex: 0 0 auto; }
 .preview-view-tools { display: flex; align-items: center; gap: 6px; }
-.preview-view-tools > button, .preview-view-tools > select { display: grid; place-items: center; min-height: 36px; padding: 0 10px; border: 1px solid #e5eaf5; border-radius: 8px; background: #fff; color: #273249; font: inherit; font-size: 13px; box-shadow: 0 2px 4px #17203905; }
-.preview-view-tools > button { width: 36px; padding: 0; cursor: pointer; }
-.preview-view-tools > select { min-width: 88px; cursor: pointer; }
+.preview-view-tools > button, .preview-view-tools > select { display: grid; place-items: center; min-height: 32px; padding: 0 9px; border: 1px solid #e4e7ec; border-radius: 7px; background: #fff; color: #344054; font: inherit; font-size: 12px; box-shadow: none; }
+.preview-view-tools > button { width: 32px; padding: 0; cursor: pointer; }
+.preview-view-tools > select { min-width: 76px; cursor: pointer; }
 .preview-view-tools :focus-visible { outline: 2px solid #2454ff; outline-offset: 2px; }
+.preview-view-tools > button:hover, .preview-view-tools > select:hover { border-color: #b9c7e6; color: #2454ff; }
 .preview-workspace [data-preview-selected='true'] { scroll-margin-block: 120px; }
 /* Hover is a light dashed affordance; selected is the solid blue boundary.
    Focus on the action dock uses an independent visible keyboard ring. */
@@ -20,9 +21,9 @@ html body #root .canvas-editor-shell .preview-workspace .editor-preview .landing
 }
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block { outline: 2px solid #2454ff !important; outline-offset: -2px !important; box-shadow: none !important; }
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block::after { content: none !important; display: none !important; }
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 2; grid-row: 2; min-width: 0 !important; height: 100% !important; min-height: 0 !important; padding: 18px clamp(4px, 2vw, 32px) 24px !important; justify-content: center !important; align-items: flex-start !important; background: #f5f7ff !important; overflow: auto !important; }
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-sticky { position: relative !important; top: auto !important; flex: 0 0 auto; width: min(402px, 100%) !important; min-width: 0 !important; max-width: 100% !important; height: auto !important; max-height: none !important; overflow: visible !important; gap: 0 !important; margin: 0 auto !important; }
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 402px !important; max-width: none !important; margin: 0 auto !important; height: calc(100dvh - 176px) !important; min-height: 0 !important; max-height: 820px !important; flex: 0 0 auto !important; border: 6px solid #242934 !important; border-radius: 46px !important; background: #fff; }
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 2; grid-row: 2; min-width: 0 !important; height: 100% !important; min-height: 0 !important; padding: 18px clamp(4px, 2vw, 32px) 24px !important; justify-content: center !important; align-items: flex-start !important; background: #f8f9fc !important; overflow: auto !important; }
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-sticky { position: relative !important; top: auto !important; flex: 0 0 auto; width: min(394px, 100%) !important; min-width: 0 !important; max-width: 100% !important; height: auto !important; max-height: none !important; overflow: visible !important; gap: 0 !important; margin: 0 auto !important; }
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 394px !important; max-width: none !important; margin: 0 auto !important; height: calc(100dvh - 176px) !important; min-height: 0 !important; max-height: 820px !important; flex: 0 0 auto !important; border: 2px solid #cbd5e1 !important; border-radius: 20px !important; background: #fff; }
 /* Editor-only action dock: always outside the 390px phone content.
    No absolute overlay or transform, so headings, form controls and fixed CTA
    cannot be covered by selection actions at any view scale. */
@@ -113,8 +114,8 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-work
   .preview-selection-actions { gap: 1px; }
   .preview-selection-actions > button { padding-inline: 4px; }
 }
-@media (min-width:900px) and (max-width:1100px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { padding-inline: 4px !important; } .preview-stage-toolbar { gap: 6px; } .preview-width-toolbar { padding-inline: 8px; } .preview-view-tools { gap: 4px; } .preview-view-tools > select { min-width: 76px; } }
-@media (min-width:900px) and (max-width:950px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 392px !important; border-width: 1px !important; border-radius: 36px !important; } }
+@media (min-width:900px) and (max-width:1100px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { padding-inline: 4px !important; } .preview-stage-toolbar { gap: 6px; } .preview-width-toolbar { padding-inline: 2px; } .preview-view-tools { gap: 4px; } .preview-view-tools > select { min-width: 70px; } }
+@media (min-width:900px) and (max-width:950px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 392px !important; border-width: 1px !important; border-radius: 18px !important; } }
 @media (max-width:899px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 1; grid-row: 3; height: auto !important; min-height: 540px !important; } }
 
 /* Editor preview viewport parity with the public landing width. */

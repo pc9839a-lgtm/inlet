@@ -50,13 +50,18 @@ export function WorkspacePreviewPane({
     >
       <div className="preview-sticky">
         <div className="preview-stage-toolbar">
-        <div className="preview-width-toolbar" aria-label="미리보기 화면 폭" data-preview-width={PREVIEW_CONTENT_WIDTH}>
-          <Smartphone size={18} aria-hidden="true" /><span>모바일 <span className="preview-width-value">{PREVIEW_CONTENT_WIDTH}px</span></span>
-        </div>
-        <div className="preview-view-tools">
-          <button type="button" aria-label="미리보기 전체 화면" onClick={fullscreen}><Maximize2 size={18} aria-hidden="true" /></button>
-          <select aria-label="미리보기 배율" value={zoom} onChange={(event) => setZoom(Number(event.target.value))}>{[75, 100, 125].map(value => <option key={value} value={value}>{value}%</option>)}</select>
-        </div>
+          <div className="preview-width-toolbar" aria-label="미리보기 화면 폭" data-preview-width={PREVIEW_CONTENT_WIDTH}>
+            <Smartphone size={16} aria-hidden="true" />
+            <span>모바일 <span className="preview-width-value">{PREVIEW_CONTENT_WIDTH}px</span></span>
+          </div>
+          <div className="preview-view-tools">
+            <select aria-label="미리보기 배율" title="보기 배율" value={zoom} onChange={(event) => setZoom(Number(event.target.value))}>
+              {[75, 100, 125].map(value => <option key={value} value={value}>{value}%</option>)}
+            </select>
+            <button type="button" aria-label="미리보기 전체 화면" title="전체 화면" onClick={fullscreen}>
+              <Maximize2 size={16} aria-hidden="true" />
+            </button>
+          </div>
         </div>
         <PreviewSelectionToolbar page={previewPage} selectedBlockId={selectedBlockId} actions={blockActions} />
         <div className="phone-frame" ref={frameRef} style={{ zoom: zoom / 100 }}>

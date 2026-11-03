@@ -142,7 +142,7 @@ assert(css.includes('--editor-list-width: clamp(220px, 18vw, 260px);') && css.in
 assert(!editPanelLayoutCss.includes('.editor-inspector-panel:has(.editor-selection-empty)') && layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;") && layout.includes('{showPageOptions ? ('), 'unselected editor must keep inspector open with useful page settings');
 assert(layout.includes('editor-composition-heading') && editPanelLayoutCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;'), 'block list and inspector must share compact editor space');
 assert(css.includes('overflow: hidden auto !important;') && editPanelLayoutCss.includes('overflow: visible !important;'), 'edit workspace must have one scrollbar and no nested scrolling panels');
-assert(previewPaneCss.includes('width: 402px !important;') && previewPaneCss.includes('width: 392px !important;') && previewPaneCss.includes('--landing-runtime-width: 390px;') && previewPaneCss.includes('justify-content: center !important;'), 'single 390px phone must be centered in its right-side stage, not pushed to the browser edge');
+assert(previewPaneCss.includes('width: 394px !important;') && previewPaneCss.includes('width: 392px !important;') && previewPaneCss.includes('--landing-runtime-width: 390px;') && previewPaneCss.includes('justify-content: center !important;'), 'single 390px phone must be centered in its right-side stage, not pushed to the browser edge');
 assert(addDockCss.includes('/* Active editor dock geometry.')
   && addDockCss.includes('position: static !important;')
   && addDockCss.includes('max-height: none !important;')
@@ -182,6 +182,15 @@ assert(editPanelLayoutCss.includes('.editor-composition-heading > .editor-page-s
   && layout.includes('<BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} onSelect={chooseBlock} />'),
   'page settings and non-destructive block search must remain reachable in the composition header');
 assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
+assert(previewPaneCss.includes('border: 2px solid #cbd5e1')
+  && previewPaneCss.includes('border-radius: 20px')
+  && previewPaneCss.includes('box-shadow: 0 5px 18px #17203912')
+  && previewPaneCss.includes('background: #f8f9fc')
+  && previewPaneCss.includes('.preview-width-toolbar')
+  && previewPaneCss.includes('background: transparent; color: #667085; font-size: 12px')
+  && !previewPaneCss.includes('border: 6px solid #242934')
+  && !previewPaneCss.includes('border-radius: 46px'),
+  'preview must retain 390px content with a slim shell and neutral non-promotional toolbar');
 assert(previewPaneCss.includes('WorkspacePreviewPane — owns editor preview presentation') && previewPaneCss.includes('.preview-workspace') && previewPaneCss.includes('.preview-sticky') && previewPaneCss.includes('.phone-frame') && previewPaneCss.includes('scroll-margin-block: 120px') && !css.includes('.preview-workspace') && !css.includes('.preview-sticky') && !css.includes('.phone-frame'), 'WorkspacePreviewPane.css must own preview presentation while editor-workspace.css stays geometry-only');
 assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') && pageOptionsCss.includes('padding: 0;') && pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('background: transparent;') && !css.includes('page-global-options'), 'page options base contract must live in PageGlobalOptions.css and stay out of editor-workspace.css');
 assert(!workspaceCss.includes('body .builder-shell .panel-header {') && !workspaceCss.includes('body .builder-shell .top-tabs {'), 'workspace shell must not own PanelHeader or top-tabs presentation');
