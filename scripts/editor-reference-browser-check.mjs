@@ -19,6 +19,20 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
     && unselected.editorWidth >= 698 && unselected.listWidth >= 258 && unselected.inspectorWidth >= 438,
     'no-selection must show actual page controls in the wide left editor: ' + JSON.stringify(unselected));
+  // UX-020: page alignment has two distinct modes; switching modes is a
+  // staged design change, and undo must preserve the real saved page.
+  await waitForBrowser(client, `!!document.querySelector('.style-panel-v17 .style-more-groups > .style-advanced-group')`, 'page theme design available');
+  await clickPointer(client, '.style-panel-v17 .style-more-groups > .style-advanced-group:first-child > summary');
+  await waitForBrowser(client, `!!document.querySelector('.style-panel-v17 button[aria-label="정렬: 블록별"]')`, 'page alignment offers block-by-block option');
+  const initialBlockAlignment = await evaluate(client, `document.querySelector('.style-panel-v17 button[aria-label="정렬: 블록별"]')?.getAttribute('aria-pressed') === 'true'`);
+  const alignmentChoice = initialBlockAlignment ? '정렬: 가운데' : '정렬: 블록별';
+  await clickPointer(client, `.style-panel-v17 button[aria-label="${alignmentChoice}"]`);
+  await waitForBrowser(client, `document.querySelector('.style-panel-v17 button[aria-label="${alignmentChoice}"]')?.getAttribute('aria-pressed') === 'true'`, 'page alignment mode selection updates only the staged design');
+  await capture(client, 'page-theme-alignment-modes');
+  await clickPointer(client, '.style-panel-v17 .style-reset-btn');
+  await waitForBrowser(client, `document.querySelector('.style-panel-v17 button[aria-label="정렬: 블록별"]')?.getAttribute('aria-pressed') === String(${initialBlockAlignment})`, 'undo restores exact original alignment mode');
+  assert(apiState.saveCount === 0, 'page alignment mode preview and undo must not write or publish');
+
   // Stress-test the block composition with 30+ rows. Clones are DOM-only
   // and removed in the same task; no app data, draft or publishing state changes.
   const longPage = await evaluate(client, `(() => {
@@ -265,6 +279,16 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await setInputValue(client, 'input[aria-label="글자색 HEX"]', '#111827');
   await focusSelector(client, 'input[aria-label="제목 크기 (px)"]');
   await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-editor-text h2')).color === 'rgb(17, 24, 39)'`, 'text color reset');
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .editor-theme-source-state')?.dataset.styleSource === 'block'`, 'text color displays explicit saved color source');
+  await clickPointer(client, 'button[aria-label="글자색 전체 디자인으로 되돌리기"]');
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .editor-theme-source-state')?.dataset.styleSource === 'page'
+    && !document.querySelector('.phone-frame #block-editor-text')?.hasAttribute('data-custom-text-color')`,
+    'reset only removes this text color override from preview');
+  await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-editor-text h2')).color
+    === getComputedStyle(document.querySelector('.phone-frame .landing-page')).color`,
+    'text without override follows page-wide text color');
+  await capture(client, 'text-color-inheritance-reset');
+  assert(apiState.saveCount === 0, 'text color source/reset must remain in the unpublished editor draft');
   await evaluate(client, `document.querySelector('.work-panel').scrollTop = 0`);
 
   const geometry = await evaluate(client, `(() => {
