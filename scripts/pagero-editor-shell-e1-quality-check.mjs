@@ -73,6 +73,7 @@ const css = await readFile('src/styles/editor-workspace.css', 'utf8');
 const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
 const stylePanelTypographyCss = await readFile('src/panels/StylePanel.css', 'utf8');
 const blockEditorShellCss = await readFile('src/styles/editor-expanded-shell.css', 'utf8');
+const textEditorTypographyCss = await readFile('src/editor/blockEditors/TextEditor.css', 'utf8');
 const settingsView = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const inspectorSwitch = await readFile('src/editor/editPanelParts/InspectorBlockSwitch.jsx', 'utf8');
 const settingsHeader = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
@@ -142,6 +143,10 @@ assert(typographyTokens.every(token => editPanelLayoutCss.includes(token))
   && sharedControlsCss.includes('gap: var(--editor-ui-space-3, 12px)')
   && stylePanelTypographyCss.includes('gap: var(--editor-ui-space-4, 16px)')
   && stylePanelTypographyCss.includes('font-size: var(--editor-ui-section-size, 13px)')
+  && textEditorTypographyCss.includes('font-size: var(--editor-ui-label-size, 13px) !important')
+  && textEditorTypographyCss.includes('font-weight: var(--editor-ui-label-weight, 600) !important')
+  && textEditorTypographyCss.includes('gap: var(--editor-ui-space-3, 12px)')
+  && !textEditorTypographyCss.includes('font-size: 14px !important; font-weight: 500 !important')
   && !css.includes('--editor-ui-title-size')
   && !previewPaneCss.includes('--editor-ui-title-size'),
   'type sizes and 4/8 rhythm must stay in existing editor owners without leaking to public preview or creating stylesheet overrides');
