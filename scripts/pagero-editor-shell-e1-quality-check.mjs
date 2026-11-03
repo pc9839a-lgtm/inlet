@@ -97,6 +97,8 @@ const workspaceScreen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 
 const operationsWorkspaceCss = await readFile('src/screens/workspace/OperationsWorkspace.css', 'utf8');
 const addDockCss = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const previewPaneCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
+const previewSelectionToolbar = await readFile('src/screens/workspace/PreviewSelectionToolbar.jsx', 'utf8');
+const previewSelectionPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 
 assert(!navigation.includes("['style', '스타일'"), 'editor navigation must not expose a duplicate style workspace tab');
 assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 'legacy style routes must still normalize into edit');
@@ -185,6 +187,21 @@ assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') 
 assert(!workspaceCss.includes('body .builder-shell .panel-header {') && !workspaceCss.includes('body .builder-shell .top-tabs {'), 'workspace shell must not own PanelHeader or top-tabs presentation');
 assert(workspaceScreen.includes("import './workspace/OperationsWorkspace.css';") && operationsWorkspaceCss.includes('.inbox-workspace-shell') && operationsWorkspaceCss.includes('.stats-dashboard-shell') && operationsWorkspaceCss.includes('.settings-workspace-shell') && !workspaceCss.includes('.inbox-workspace-shell'), 'desktop operations geometry must be isolated from the common workspace shell');
 
+assert(previewSelectionToolbar.includes('createScreenOrderMovement')
+  && previewSelectionToolbar.includes('canDuplicateScreenOrderBlock')
+  && previewSelectionToolbar.includes('data-preview-hidden={hidden')
+  && previewSelectionToolbar.includes("aria-label={hidden ? '블록 표시' : '블록 숨기기'}")
+  && previewSelectionToolbar.includes('preview-selection-actions')
+  && !previewSelectionToolbar.includes('getBoundingClientRect')
+  && !previewSelectionToolbar.includes('frameRef')
+  && !previewSelectionToolbar.includes('ResizeObserver')
+  && previewSelectionPane.indexOf('<PreviewSelectionToolbar') < previewSelectionPane.indexOf('<div className="phone-frame"')
+  && previewPaneCss.includes('.preview-selection-toolbar {\n  position: relative;')
+  && !previewPaneCss.includes('.preview-selection-toolbar { position: absolute')
+  && previewPaneCss.includes('.preview-selection-actions > button:focus-visible')
+  && previewPaneCss.includes('.preview-selected-block { outline: 2px solid #2454ff')
+  && previewPaneCss.includes('.landing-section:hover:not(.preview-selected-block)'),
+  'preview selection actions must occupy a safe outside-phone stage row with hidden CTA recovery and distinct hover/selection/focus');
 console.log(JSON.stringify({
   ok: true,
   checks: 23,
