@@ -71,6 +71,7 @@ const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
 const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
+const stylePanelTypographyCss = await readFile('src/panels/StylePanel.css', 'utf8');
 const settingsView = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const inspectorSwitch = await readFile('src/editor/editPanelParts/InspectorBlockSwitch.jsx', 'utf8');
 const settingsHeader = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
@@ -114,6 +115,34 @@ assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page th
 assert(!layout.includes('editor-structure-pane') && !layout.includes('className="editor-inspector-pane"'), 'three-pane editor DOM must not return');
 
 assert(css.includes('.canvas-editor-shell') && css.includes('@media (max-width: 899px)'), 'canvas shell must keep desktop and zoom geometry');
+// UX-008/018/019/032: the existing owner styles consume one editor-only
+// typography/rhythm scale, not a late stylesheet of !important overrides.
+const typographyTokens = [
+  '--editor-ui-title-size: 16px;',
+  '--editor-ui-section-size: 13px;',
+  '--editor-ui-label-size: 13px;',
+  '--editor-ui-value-size: 14px;',
+  '--editor-ui-row-size: 12px;',
+  '--editor-ui-helper-size: 11px;',
+  '--editor-ui-space-1: 4px;',
+  '--editor-ui-space-2: 8px;',
+  '--editor-ui-space-3: 12px;',
+  '--editor-ui-space-4: 16px;',
+];
+assert(typographyTokens.every(token => editPanelLayoutCss.includes(token))
+  && editPanelLayoutCss.includes('font-size: var(--editor-ui-title-size)')
+  && editPanelLayoutCss.includes('font-size: var(--editor-ui-section-size)')
+  && editPanelLayoutCss.includes('gap: var(--editor-ui-space-4)')
+  && rowCss.includes('font-size: var(--editor-ui-row-size, 12px)')
+  && fixedBlocksCss.includes('font-size: var(--editor-ui-row-size, 12px)')
+  && sharedControlsCss.includes('font-size: var(--editor-ui-label-size, 13px)')
+  && sharedControlsCss.includes('font-weight: var(--editor-ui-label-weight, 600)')
+  && sharedControlsCss.includes('gap: var(--editor-ui-space-3, 12px)')
+  && stylePanelTypographyCss.includes('gap: var(--editor-ui-space-4, 16px)')
+  && stylePanelTypographyCss.includes('font-size: var(--editor-ui-section-size, 13px)')
+  && !css.includes('--editor-ui-title-size')
+  && !previewPaneCss.includes('--editor-ui-title-size'),
+  'type sizes and 4/8 rhythm must stay in existing editor owners without leaking to public preview or creating stylesheet overrides');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
 assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
