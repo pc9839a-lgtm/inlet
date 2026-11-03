@@ -33,6 +33,14 @@ html body #root .canvas-editor-shell .text-editor-design-controls .editor-segmen
 html body #root .canvas-editor-shell .text-editor-design-controls .editor-segmented-v2-options button { min-height: var(--editor-ui-compact-height, 36px) !important; padding: 4px 7px !important; border: 0 !important; border-radius: 5px !important; color: #475467 !important; background: transparent !important; }
 html body #root .canvas-editor-shell .text-editor-design-controls .editor-segmented-v2-options button[aria-pressed='true'] { color: var(--editor-ui-accent, #2454ff) !important; background: var(--editor-ui-active-bg, #e9efff) !important; }
 html body #root .canvas-editor-shell .text-editor-design-controls .color { display: grid !important; grid-template-columns: 86px minmax(0,1fr) !important; align-items: center; gap: var(--editor-ui-space-2, 8px) !important; }
+/* The 36px swatch + HEX + eyedropper need 160px. In compact inspectors,
+   put only the label above the control rail rather than clipping an action. */
+@container editor-inspector (max-width: 300px) {
+  html body #root .canvas-editor-shell .text-editor-design-controls .color {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: var(--editor-ui-space-1, 4px) !important;
+  }
+}
 html body #root .canvas-editor-shell .text-editor-design-controls .color-main { min-width: 0; width: 100%; }
 html body #root .canvas-editor-shell .text-editor-design-controls .color-main > input[type='text'] { min-width: 0 !important; width: 100% !important; }
 html body #root .canvas-editor-shell .text-editor-flow .widget-spacing-controls { display: grid; gap: var(--editor-ui-space-3, 12px); border: 0; }
