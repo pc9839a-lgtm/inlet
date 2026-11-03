@@ -73,7 +73,9 @@ assert(!pageOptionsProps.includes('topNavBlock') && !pageOptionsProps.includes('
 assert(fixedBlocksProps.includes('topNavBlock: selection.topNavBlock') && fixedBlocksProps.includes('bottomBlock: selection.bottomBlock') && fixedBlocksProps.includes('footerBlock: selection.footerBlock'), 'fixed block props must own top, bottom, and footer editors');
 assert(sectionProps.includes('fixedBlocksProps: createFixedBlocksProps'), 'edit panel section props must expose fixed blocks separately');
 assert(editLayout.includes("only={['topnav']} compositionRow") && editLayout.includes("only={['bottom', 'footer']} compositionRow"), 'screen order mode must render fixed entries in the persistent composition');
-assert(editLayout.includes('aria-label="고정 영역"') && editLayout.includes('aria-label="헤더"'), 'fixed blocks must be clearly labeled outside page options');
+assert(editLayout.includes('aria-label="상단 고정 영역"') && editLayout.includes('aria-label="하단 고정 영역"')
+  && editLayout.includes('<h3>상단 고정</h3>') && editLayout.includes('<h3>하단 고정</h3>'),
+  'fixed blocks must be clearly labeled as top/bottom fixed groups outside page options');
 assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row') && fixedBlocksCss.includes('.fixed-composition-row .fixed-block-head'), 'fixed region section must own inline row geometry');
 assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px 30px !important') && fixedBlocksCss.includes('overflow-wrap: anywhere'), 'fixed block rows must align with normal block controls and wrap long Korean names');
@@ -110,7 +112,7 @@ assert(pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('
 assert(screenOrderCss.includes('.screen-order-v2-list') && screenOrderCss.includes('gap: 0 !important') && screenOrderCss.includes('border-bottom: 1px solid var(--product-line) !important') && !editorWorkspaceCss.includes('.screen-order-v2-card'), 'PC screen order must retain a flat compact list in its component owner');
 assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
 assert(screenOrderCss.includes('min-height: 44px !important;') && screenOrderCss.includes('grid-template-columns: 34px minmax(0, 1fr) 36px 36px !important'), 'PC screen-order rows must retain readable compact geometry and both existing action controls');
-assert(editorExpandedControlsCss.includes('min-height: 42px !important;') && editorExpandedControlsCss.includes('min-height: 84px !important;') && editorExpandedControlsCss.includes('min-height: 64px !important;'), 'shared editor fields must keep readable compact input and textarea heights');
+assert(editorExpandedControlsCss.includes('min-height: var(--editor-ui-input-height, 42px) !important;') && editorExpandedControlsCss.includes('min-height: 84px !important;') && editorExpandedControlsCss.includes('min-height: 64px !important;'), 'shared editor fields must keep readable compact input and textarea heights');
 assert(legacyScreenOrderTokens.every((token) => !workspaceShellCss.includes(token)), 'workspace shell must not restore legacy normal-block selectors');
 assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean'].every((token) => editorSharedUiCss.includes(token)) && fixedBlocksCss.includes('.fixed-block-head'), 'shared controls and fixed-block visuals must live with their current owners');
 assert(animationOptionsCard.includes("import './AnimationOptionsCard.css';") && animationOptionsCss.includes('.edit-animation-settings') && animationOptionsCss.includes('.edit-animation-options'), 'animation options must load and own their component CSS');

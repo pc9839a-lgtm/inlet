@@ -300,6 +300,18 @@ function createQaPage() {
         },
       },
       {
+        id: 'editor-image',
+        type: 'image',
+        visible: true,
+        s: {
+          anchorId: 'editor-image',
+          mode: 'single',
+          image: '',
+          display: 'original',
+          rounded: false,
+        },
+      },
+      {
         id: 'editor-bottom',
         type: 'bottombar',
         visible: true,
@@ -772,7 +784,11 @@ async function assertEditorHeader(client, label) {
     const actionsBox = header.querySelector('.panel-actions').getBoundingClientRect();
     const controls = [...header.querySelectorAll('button, summary')].filter((item) => item.getClientRects().length);
     return { title: title.textContent, titleAttribute: title.title, titleWidth: titleBox.width,
-      status: status.textContent, statusFits: statusBox.right <= heading.getBoundingClientRect().right + 2,
+      status: status.textContent,
+      publicState: status.dataset.publicState,
+      draftState: status.dataset.draftState,
+      stateTracks: status.querySelectorAll('.panel-status-track').length,
+      statusFits: statusBox.right <= heading.getBoundingClientRect().right + 2,
       fullTitle: titleBox.right <= box.right + 2 && (titleBox.right <= actionsBox.left - 4 || titleBox.bottom <= actionsBox.top),
       controlsFit: controls.every((item) => { const rect = item.getBoundingClientRect(); return rect.left >= box.left && rect.right <= box.right + 2; }),
       duplicateHeading: !!header.querySelector('.operations-panel-title-row'),
@@ -782,6 +798,7 @@ async function assertEditorHeader(client, label) {
   })()`);
   assert(metrics && metrics.title === createQaPage().title && metrics.titleAttribute === metrics.title
     && metrics.titleWidth >= 130 && metrics.fullTitle && metrics.status && metrics.statusFits
+    && metrics.publicState && metrics.draftState && metrics.stateTracks === 2
     && metrics.controlsFit && !metrics.duplicateHeading && metrics.preview && metrics.publish && metrics.back,
     label + ' must retain readable page identity, save state and primary actions: ' + JSON.stringify(metrics));
   await clickPointer(client, '.panel-backup-action summary');
@@ -861,7 +878,8 @@ async function collectNarrowDesktopMetrics(client) {
       inspector: rect(document.querySelector('.editor-inspector-panel')),
       frameContentWidth: document.querySelector('.preview-workspace .phone-frame')?.clientWidth || 0,
       minIdentityWidth: Math.min(...[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy')].map(el => el.getBoundingClientRect().width)),
-      inspectorNavigationLabelHeights: [...document.querySelectorAll('.inspector-navigation button > span')].map(el => el.getBoundingClientRect().height),
+      inspectorGroupLabelHeights: [...document.querySelectorAll('.inspector-primary-heading, .inspector-disclosure > summary > strong')].map(el => el.getBoundingClientRect().height),
+      duplicateInspectorNavigation: !!document.querySelector('.inspector-navigation'),
       frame: rect(document.querySelector('.preview-workspace .phone-frame')),
       preview: rect(document.querySelector('.preview-workspace')),
       topTabs: rect(document.querySelector('.top-tabs')),
@@ -972,7 +990,7 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
   assertInsideViewport(metrics.pageSettings, width, 'narrow desktop page settings entry');
   assert(metrics.minIdentityWidth >= 60, `compact block names must have readable horizontal space at ${width}px: ${metrics.minIdentityWidth}`);
-  assert(metrics.inspectorNavigationLabelHeights.every(height => height <= 24), `inspector navigation must not split labels vertically: ${JSON.stringify(metrics.inspectorNavigationLabelHeights)}`);
+  assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 30), `one Inspector group hierarchy must keep headings readable without a second navigator: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
   assert(!metrics.cockpit, 'narrow desktop preview must not expose the removed conversion cockpit');
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (width >= 900 ? 2 : 1), `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
   assert(metrics.workPanel?.width >= (width >= 900 ? 478 : width - 4), `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
@@ -1496,7 +1514,7 @@ async function run() {
       const style = getComputedStyle(field);
       return { radius: style.borderRadius, size: style.fontSize, minHeight: style.minHeight };
     })()`);
-    assert(stageFourField.radius === '6px' && stageFourField.size === '14px',
+    assert(stageFourField.radius === '7px' && stageFourField.size === '14px',
       'stage4 common text fields must use the shared readable input style: ' + JSON.stringify(stageFourField));
     await clickSelector(client, '#editor-block-settings-editor-hero .hero-editor-design > summary');
     const stageFourChoice = '#editor-block-settings-editor-hero .editor-segmented-v2[aria-label="정렬"]';
@@ -1512,7 +1530,7 @@ async function run() {
         outline: style.outlineStyle, outlineWidth: style.outlineWidth,
         overflow: button.scrollWidth > button.clientWidth + 2 };
     })()`);
-    assert(stageFourChoiceStyle.border === '1px' && stageFourChoiceStyle.background === 'rgb(243, 244, 246)'
+    assert(stageFourChoiceStyle.border === '1px' && stageFourChoiceStyle.background === 'rgb(233, 239, 255)'
       && stageFourChoiceStyle.outline === 'solid' && stageFourChoiceStyle.outlineWidth === '2px'
       && !stageFourChoiceStyle.overflow,
       'stage4 choices must have one rail, visible selection and keyboard focus: ' + JSON.stringify(stageFourChoiceStyle));
@@ -1928,7 +1946,7 @@ async function run() {
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '2px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '9px' && stageOneList.height >= 48
+      && stageOneList.rowRadius === '8px' && stageOneList.height >= 55
       && stageOneList.titleWhiteSpace === 'nowrap'
       && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
       'compact block list must show single-line names and reachable controls: ' + JSON.stringify(stageOneList));
@@ -2117,7 +2135,7 @@ async function run() {
     // E2E-04: visibility toggle must update the preview without publishing.
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-visibility-button');
     await waitForBrowser(client, `document.querySelector('#editor-block-editor-text .screen-order-v2-visibility-button')?.getAttribute('aria-checked') === 'false'`, 'text visibility off');
-    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-text .screen-order-v2-identity-detail')?.textContent || '').includes('숨김')`, 'hidden row carries a readable state label');
+    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-text .screen-order-v2-hidden-badge')?.textContent || '').trim() === '숨김'`, 'hidden row carries a readable state label');
     await waitForBrowser(client, `!(document.querySelector('.phone-frame')?.innerText || '').includes('편집기 회귀 방지')`, 'hidden text removed from preview');
 
     // E2E-03: move the form above the text row through the real overflow menu.
@@ -2283,6 +2301,11 @@ async function run() {
     await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled`, 'style apply enabled');
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 미적용')`),
       'D06 pending style must say it is preview-only until applied');
+    await waitForBrowser(client, `document.querySelector('.panel-save-status')?.dataset.draftState === 'unapplied'
+      && document.querySelector('.panel-save-status')?.dataset.publicState === 'unapplied'
+      && (document.querySelector('.panel-actions .primary-btn')?.textContent || '').includes('적용 후 발행')`,
+      'UX-034 unapplied theme must identify both local editor draft and unpublished public change without a server write');
+    await capture(client, 'status-unapplied-theme-and-public');
     assert(apiState.saveCount === 0, 'style preview must not publish automatically');
 
     // Page behavior updates must merge into an existing style draft without
@@ -2297,7 +2320,33 @@ async function run() {
     await focusSelector(client, accentHex);
     await setInputValue(client, accentHex, '#oops');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
-    await waitForBrowser(client, `document.querySelector(${JSON.stringify(accentHex)})?.value.toLowerCase() === '#aabbcc'`, 'invalid HEX does not replace the last valid color');
+    await waitForBrowser(client, `(() => {
+      const field = document.querySelector(${JSON.stringify(accentHex)});
+      const parent = field?.closest('.color-clean');
+      return field?.value === '#oops'
+        && field.getAttribute('aria-invalid') === 'true'
+        && !!parent?.querySelector('[role="alert"]')
+        && !!field.getAttribute('aria-describedby')
+        && parent.querySelector('[role="alert"]')?.id === field.getAttribute('aria-describedby')
+        && document.querySelector('.style-panel input[type="color"]')?.value === '#aabbcc';
+    })()`, 'invalid HEX is explained inline but never commits or changes the last valid swatch');
+    await capture(client, 'desktop-common-settings-invalid-hex');
+    await focusSelector(client, accentHex);
+    await pressKeyboardKey(client, 'Escape');
+    await waitForBrowser(client, `(() => {
+      const field = document.querySelector(${JSON.stringify(accentHex)});
+      return field?.value.toLowerCase() === '#aabbcc'
+        && field.getAttribute('aria-invalid') === 'false'
+        && !field.closest('.color-clean').querySelector('[role="alert"]');
+    })()`, 'Escape restores last valid HEX and clears its error');
+    await setInputValue(client, accentHex, 'a1b2c3');
+    await focusSelector(client, '.style-background-group .style-segment button:first-child');
+    await waitForBrowser(client, `(() => {
+      const field = document.querySelector(${JSON.stringify(accentHex)});
+      return field?.value === '#A1B2C3'
+        && document.querySelector('.style-panel input[type="color"]')?.value === '#a1b2c3'
+        && field.getAttribute('aria-invalid') === 'false';
+    })()`, 'six-digit pasted HEX without # normalizes to a valid swatch');
     await focusSelector(client, accentHex);
     await setInputValue(client, accentHex, updatedAccent);
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
@@ -2665,7 +2714,7 @@ async function run() {
     assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '9px' && screenOrderShellStyle?.rowBorder === '0px', `reference list must keep flat rows at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '8px' && screenOrderShellStyle?.rowBorder === '0px', `reference list must keep flat rows at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(255, 255, 255)', `compact add action must keep its reference neutral surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 1180) {
@@ -2693,7 +2742,7 @@ async function run() {
       };
     })()`);
     assert(inlineDetailStyle?.inlineMarginTop === '0px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
-    assert(inlineDetailStyle?.labelFontSize === '14px', `inline editor labels must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.labelFontSize === '13px', `inline editor labels must use readable unified 13px size: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.textareaFontSize === '16px', `inline editor text must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.designHeight >= 32, `text design disclosure must remain reachable: ${JSON.stringify(inlineDetailStyle)}`);
         await capture(client, 'desktop-narrow-1180-screen-order-detail');
@@ -2930,6 +2979,10 @@ async function run() {
     await clickSelector(client, '.panel-actions .primary-btn');
     await waitForState(() => apiState.saveCount === 4, 'tab A newer publish');
     await waitForBrowser(client, "(document.querySelector('.panel-actions .primary-btn')?.textContent || '').includes('발행됨')", 'tab A scoped save success');
+    await waitForBrowser(client, `document.querySelector('.panel-save-status')?.dataset.publicState === 'published'
+      && document.querySelector('.panel-save-status')?.dataset.draftState === 'published'`,
+      'UX-034 published current page displays independent editor and public success');
+    await capture(client, 'status-current-page-published');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabASuccessTitle, 'tab A must become authoritative');
 
     await clickSelector(secondClient, '.panel-actions .primary-btn');

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ChevronDown, Eye, MoreHorizontal, Redo2, Save, Undo2, Upload } from 'lucide-react';
 import './PanelHeader.css';
 import editorWordmark from './pagero-editor-wordmark.png';
-import { visibleEditorPublishState } from '../runtime/saveStatusActions.js';
+import { visibleEditorDraftState, visibleEditorPublishState } from '../runtime/saveStatusActions.js';
 import {
   getPageEditHistoryState,
   redoPageEdit,
@@ -45,8 +45,10 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
   };
   const title = titles[tab] || titles.edit;
   const editorHeader = tab === 'edit' || tab === 'style';
-  const publishState = visibleEditorPublishState({ page, saved, saveStatus, hasUnappliedDrafts: hasUnappliedDrafts || saveStatus?.hasUnappliedDrafts });
-  const publishing = saveStatus?.phase === 'publishing';
+  const unpublishedDrafts = hasUnappliedDrafts || saveStatus?.hasUnappliedDrafts;
+  const publishState = visibleEditorPublishState({ page, saved, saveStatus, hasUnappliedDrafts: unpublishedDrafts });
+  const draftState = visibleEditorDraftState({ page, saveStatus, hasUnappliedDrafts: unpublishedDrafts });
+  const publishing = publishState.kind === 'publishing';
   const historyEnabled = tab === 'edit' || tab === 'style' || tab === 'settings';
 
   useEffect(() => {
@@ -87,9 +89,26 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
   }, [historyEnabled]);
 
   const status = (
-    <div className="panel-save-status operations-save-status" data-tone={publishState.tone} role="status" aria-atomic="true" title={publishState.detail || publishState.label} aria-live="polite">
-      <strong style={{ color: saveStateColors[publishState.tone] || 'var(--product-muted)' }}>{publishState.label}</strong>
-      {publishState.at && <time dateTime={publishState.at} title={publishState.at} style={{ marginLeft: 6, fontSize: 10 }}>{new Date(publishState.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</time>}
+    <div
+      className="panel-save-status operations-save-status"
+      data-tone={publishState.tone}
+      data-public-state={publishState.kind}
+      data-draft-state={draftState.kind}
+      role="status"
+      aria-atomic="true"
+      aria-live="polite"
+      aria-label={`공개 상태: ${publishState.label}. 편집본 상태: ${draftState.label}.`}
+      title={[`공개: ${publishState.detail || publishState.label}`, `편집본: ${draftState.detail || draftState.label}`].join('\n')}
+    >
+      <span className="panel-status-track panel-public-track">
+        <span className="panel-status-track-label">공개</span>
+        <strong style={{ color: saveStateColors[publishState.tone] || 'var(--product-muted)' }}>{publishState.label}</strong>
+        {publishState.at && <time dateTime={publishState.at} title={publishState.at}>{new Date(publishState.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</time>}
+      </span>
+      <span className="panel-status-track panel-draft-track">
+        <span className="panel-status-track-label">편집본</span>
+        <span className="panel-draft-state" data-tone={draftState.tone}>{draftState.label}</span>
+      </span>
     </div>
   );
 
@@ -179,7 +198,7 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
           title="편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다."
           aria-busy={publishing}
         >
-          {editorHeader ? <Upload size={18} aria-hidden="true" /> : <Save size={14} aria-hidden="true" />}{publishing ? '발행 중' : publishState.tone === 'ok' && publishState.label === '발행됨' ? '발행됨' : editorHeader ? '게시하기' : '발행'}
+          {editorHeader ? <Upload size={18} aria-hidden="true" /> : <Save size={14} aria-hidden="true" />}{editorHeader ? publishState.actionLabel : publishing ? '발행 중' : publishState.tone === 'ok' && publishState.label === '발행됨' ? '발행됨' : '발행'}
         </button>
       </div>
     </header>

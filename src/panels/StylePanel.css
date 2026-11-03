@@ -8,8 +8,8 @@
   display: grid;
   width: 100%;
   min-width: 0;
-  gap: 18px;
-  color: var(--product-text);
+  gap: var(--editor-ui-space-4, 16px);
+  color: var(--editor-ui-text, var(--product-text));
 }
 
 .builder-shell .style-panel-v17 .style-apply-bar {
@@ -28,16 +28,16 @@
 
 .builder-shell .style-panel-v17 .style-apply-bar strong {
   display: block;
-  color: var(--product-text);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.3;
+  color: var(--editor-ui-text, #182230);
+  font-size: var(--editor-ui-value-size, 14px);
+  font-weight: var(--editor-ui-strong, 650);
+  line-height: 1.4;
 }
 
 .builder-shell .style-panel-v17 .style-apply-bar span {
   display: block;
   margin-top: 3px;
-  color: var(--product-muted);
+  color: var(--editor-ui-muted, #667085);
   font-size: 12px;
   line-height: 1.3;
 }
@@ -54,10 +54,10 @@
 
 .builder-shell .style-panel-v17 :is(.style-apply-btn, .style-reset-btn, .style-segment button, .style-overlay-title button) {
   min-width: 0;
-  min-height: 36px;
+  min-height: var(--editor-ui-compact-height, 36px);
   padding: 0 9px;
-  border: 1px solid var(--product-line);
-  border-radius: 6px;
+  border: 1px solid var(--editor-ui-control-line, #d0d5dd);
+  border-radius: var(--editor-ui-control-radius, 7px);
   background: #fff;
   color: #475467;
   box-shadow: none;
@@ -73,28 +73,35 @@
   color: #fff;
 }
 
+.builder-shell .style-panel-v17 :is(.style-segment button, .style-reset-btn, .style-overlay-title button):hover:not(:disabled):not(.active) {
+  border-color: #aebed1;
+  background: #f2f4f7;
+  color: var(--editor-ui-text, #182230);
+}
+
 .builder-shell .style-panel-v17 button:disabled {
   opacity: .45;
+  background-color: var(--editor-ui-disabled-bg, #f2f4f7);
   cursor: not-allowed;
 }
 
 .builder-shell .style-panel-v17 :is(.style-primary-group, .style-primary-colors, .style-panel-box, .style-photo-box, .style-advanced-body) {
   display: grid;
   min-width: 0;
-  gap: 14px;
+  gap: var(--editor-ui-space-3, 12px);
 }
 
 .builder-shell .style-panel-v17 .style-background-group {
   border-top: 1px solid var(--product-line);
-  padding-top: 17px;
+  padding-top: var(--editor-ui-space-4, 16px);
 }
 
 .builder-shell .style-panel-v17 .style-background-group h3 {
   margin: 0;
-  color: #344054;
-  font-size: 13px;
+  color: var(--editor-ui-text, #182230);
+  font-size: var(--editor-ui-section-size, 13px);
   line-height: 1.4;
-  font-weight: 600;
+  font-weight: var(--editor-ui-strong, 650);
 }
 
 .builder-shell .style-panel-v17 .style-line {
@@ -107,10 +114,10 @@
 }
 
 .builder-shell .style-panel-v17 :is(.style-line > span, .style-overlay-title strong) {
-  color: #475467;
-  font-size: 12px;
+  color: var(--editor-ui-muted, #667085);
+  font-size: var(--editor-ui-row-size, 12px);
   line-height: 1.4;
-  font-weight: 500;
+  font-weight: var(--editor-ui-label-weight, 600);
 }
 
 .builder-shell .style-panel-v17 .style-segment {
@@ -119,7 +126,7 @@
   gap: 3px;
   padding: 3px;
   border: 1px solid var(--product-line);
-  border-radius: 6px;
+  border-radius: var(--editor-ui-control-radius, 7px);
   background: #f8fafc;
 }
 
@@ -137,9 +144,9 @@
 }
 
 .builder-shell .style-panel-v17 :is(.style-segment button.active, .style-overlay-title button.active) {
-  background: #e9edf3;
-  color: #101828;
-  font-weight: 600;
+  background: var(--editor-ui-active-bg, #e9efff);
+  color: var(--editor-ui-accent, #2454ff);
+  font-weight: 650;
 }
 
 .builder-shell .style-panel-v17 .style-preset-row-v16 {
@@ -152,14 +159,14 @@
 .builder-shell .style-panel-v17 .style-preset-row-v16 button {
   width: 100%;
   min-width: 0;
-  height: 32px;
-  border: 1px solid #cfd6df;
-  border-radius: 6px;
+  height: var(--editor-ui-compact-height, 36px);
+  border: 1px solid var(--editor-ui-control-line, #d0d5dd);
+  border-radius: var(--editor-ui-control-radius, 7px);
   cursor: pointer;
 }
 
 .builder-shell .style-panel-v17 .style-preset-row-v16 button.active {
-  outline: 2px solid #344054;
+  outline: 2px solid var(--editor-ui-accent, #2454ff);
   outline-offset: 1px;
 }
 
@@ -290,7 +297,7 @@
 }
 
 .builder-shell .style-panel-v17 :is(button, input, summary):focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--editor-ui-accent, #2454ff);
   outline-offset: 2px;
 }
 
@@ -312,4 +319,18 @@
 
 @media (prefers-reduced-motion: reduce) {
   .builder-shell .style-panel-v17 .style-advanced-group > summary svg { transition: none; }
+}
+
+/* The page-level alignment mode is explicit: only the named text blocks above
+   are counted for color inheritance; page alignment is a separate override. */
+.builder-shell .style-panel-v17 .style-theme-inheritance-summary,
+.builder-shell .style-panel-v17 .style-theme-inheritance-hint {
+  margin: 0;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: #f6f8ff;
+  color: #475467;
+  font-size: 11px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }

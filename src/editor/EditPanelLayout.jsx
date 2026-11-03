@@ -1,5 +1,6 @@
 import React from 'react';
 import { Settings2 } from 'lucide-react';
+import { BlockNavigatorSearch } from './editPanelParts/BlockNavigatorSearch.jsx';
 import './EditPanelLayout.css';
 import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
 import { GlobalFixedBlocks } from './editPanelParts/GlobalFixedBlocks.jsx';
@@ -7,6 +8,7 @@ import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
 import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
 import { createFixedBlockDescriptors } from './editPanelParts/fixedBlockDescriptors.js';
 import { ScreenOrderSettings } from './editPanelParts/ScreenOrderSettings.jsx';
+import { createInspectorBlockNavigation } from './editPanelParts/inspectorBlockNavigationModel.js';
 
 const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
 
@@ -22,7 +24,8 @@ export function EditPanelLayout({
   // A blank selection is page-level context, not a reason to collapse the editor.
   // Show the existing page design and options until a block is selected.
   const showPageOptions = section === 'options' || !selectedBlockId;
-  const fixedSelected = createFixedBlockDescriptors(fixedBlocksProps).find((item) => item.open);
+  const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
+  const fixedSelected = fixedDescriptors.find((item) => item.open);
   const chooseBlock = (id) => {
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
     setSection('order');
@@ -31,6 +34,27 @@ export function EditPanelLayout({
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
   };
+
+  // Previous/next follows the actual mobile page order, including pinned sections.
+  // Only the user's explicit switch action scrolls the shared editor; row clicks
+  // continue to preserve the existing scroll position.
+  const blockNavigation = createInspectorBlockNavigation({
+    normalBlocks: screenOrderListProps.normalBlocks,
+    fixedDescriptors,
+    selectedBlockId,
+  });
+  const switchBlock = (id) => {
+    if (!id || id === selectedBlockId) return;
+    if (fixedDescriptors.some((item) => item.block.id === id)) chooseFixed(id);
+    else chooseBlock(id);
+    requestAnimationFrame(() => {
+      const scroller = document.querySelector('.canvas-editor-shell .work-panel');
+      if (scroller) scroller.scrollTop = 0;
+    });
+  };
+  const inspectorNavigation = blockNavigation
+    ? { ...blockNavigation, onNavigate: switchBlock }
+    : null;
 
   React.useEffect(() => {
     if (selectedBlockId) setSection('order');
@@ -60,25 +84,36 @@ export function EditPanelLayout({
         <div className="editor-composition-heading">
           <h2>블록</h2>
           <AddBlockDock {...addBlockDockProps} compact />
+          <button
+            className="editor-page-settings-button"
+            type="button"
+            aria-pressed={showPageOptions}
+            aria-controls="editor-selection-panel"
+            onClick={openPageOptions}
+            title={stylePanelProps?.hasPendingStyle ? '페이지 설정 · 미적용' : '페이지 설정'}
+          >
+            <Settings2 size={15} aria-hidden="true" />
+            <span>페이지 설정</span>
+            {stylePanelProps?.hasPendingStyle && (
+              <>
+                <span className="editor-settings-pending" aria-hidden="true" />
+                <span className="editor-visually-hidden"> · 미적용</span>
+              </>
+            )}
+          </button>
         </div>
+        <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} onSelect={chooseBlock} />
         <div className="editor-composition-content">
-          <section className="screen-order-fixed-blocks" aria-label="헤더">
+          <section className="screen-order-fixed-blocks" aria-label="상단 고정 영역">
+            <h3>상단 고정</h3>
             <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
           </section>
           <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
-          <section className="screen-order-fixed-blocks" aria-label="고정 영역">
+          <section className="screen-order-fixed-blocks" aria-label="하단 고정 영역">
+            <h3>하단 고정</h3>
             <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
           </section>
         </div>
-        <button
-          className="editor-page-settings-button"
-          type="button"
-          aria-pressed={showPageOptions}
-          aria-controls="editor-selection-panel"
-          onClick={openPageOptions}
-        >
-          <Settings2 size={16} aria-hidden="true" />페이지 설정{stylePanelProps?.hasPendingStyle ? ' · 미적용' : ''}
-        </button>
       </aside>
       <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>
       <div id="editor-selection-panel" className="edit-section-panel" data-editor-section={showPageOptions ? 'options' : section}>
@@ -93,8 +128,8 @@ export function EditPanelLayout({
           </div>
         ) : (
           <>
-            {fixedSelected ? <ScreenOrderSettings block={fixedSelected.block} identity={{ customLabel: fixedSelected.title }} renderBlockEditor={fixedSelected.renderEditor} />
-              : <ScreenOrderList {...screenOrderListProps} inspectorOnly />}
+            {fixedSelected ? <ScreenOrderSettings block={fixedSelected.block} identity={{ customLabel: fixedSelected.title }} renderBlockEditor={fixedSelected.renderEditor} navigation={inspectorNavigation} />
+              : <ScreenOrderList {...screenOrderListProps} inspectorOnly inspectorNavigation={inspectorNavigation} />}
           </>
         )}
       </div>

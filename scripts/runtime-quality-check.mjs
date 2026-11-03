@@ -468,7 +468,11 @@ assert(fixedBlockRenderers.includes('renderLazyEditor') && lazyRuntimeBoundary.i
 assert(blockEditor.includes('LazyEditorBoundary') && lazyEditorBoundary.includes('class LazyEditorErrorBoundary'), 'BlockEditor must isolate lazy editor chunk failures');
 assert(blockEditor.includes('<BlockAdvancedAnchorSettings') && blockEditor.indexOf('<BlockAdvancedAnchorSettings') > blockEditor.indexOf('</LazyEditorBoundary>'), 'D02: normal block advanced anchor must follow primary fields');
 assert(fixedBlockRenderers.includes('<BlockAdvancedAnchorSettings') && fixedBlockRenderers.indexOf('<BlockAdvancedAnchorSettings') > fixedBlockRenderers.indexOf('renderLazyEditor(Editor'), 'D02: fixed block advanced anchor must follow primary fields');
-assert(advancedAnchorSettings.includes('<details className="block-editor-advanced-settings">') && advancedAnchorSettings.includes('고급 설정 · 이동 앵커') && advancedAnchorSettings.includes('<AnchorControl') && advancedAnchorSettings.includes("value={block.s?.anchorId || ''}"), 'D02: advanced disclosure must retain saved anchor and copy/edit controls');
+assert((advancedAnchorSettings.includes('<details className="block-editor-advanced-settings">')
+  || advancedAnchorSettings.includes('<InspectorDisclosure label="고급 설정 · 이동 앵커" className="block-editor-advanced-settings"'))
+  && advancedAnchorSettings.includes('고급 설정 · 이동 앵커') && advancedAnchorSettings.includes('<AnchorControl')
+  && advancedAnchorSettings.includes("value={block.s?.anchorId || ''}"),
+  'D02: advanced disclosure must retain saved anchor and copy/edit controls');
 assert(editorExpandedShellCss.includes('.block-editor-advanced-settings:not([open]) > .block-editor-advanced-body') && editorExpandedShellCss.includes('display: none !important'), 'D02: closed advanced settings must hide all anchor controls regardless of legacy CSS');
 assert(scheduleEditor.includes("import { EditorTabs } from '../ui/index.js'") && scheduleEditor.includes('<EditorTabs'), 'ScheduleEditor must import and render EditorTabs inside its lazy chunk');
 assert(widgetStyleEditors.filter((source) => !source.includes('export default function TimerEditor')).every((source) =>
@@ -570,7 +574,8 @@ assert(!richField.includes('type="color"') && !richField.includes("document.exec
 assert(previewUtils.includes('dangerouslySetInnerHTML') && previewUtils.includes('style="color:${color}"') && previewUtils.includes('<u>${inner}</u>') && previewUtils.includes('<strong>${inner}</strong>'), 'preview rich text renderer must preserve color, underline, and bold markup');
 assert(stylePanel.includes('onPreviewThemeChange?.({ ...draftTheme, ...patch })') && app.includes('const [stylePreviewTheme, setStylePreviewTheme] = useState(null)'), 'StylePanel draft changes must keep live preview wiring');
 assert(!stylePanel.includes('defaultStyleBlockId') && !stylePanel.includes('block.type')
-  && stylePanel.includes('className="simple-panel style-panel style-panel-v17 style-panel-staged style-direct-flow"')
+  && stylePanel.includes('className="style-panel style-panel-v17 style-panel-staged style-direct-flow"')
+  && !stylePanel.includes('className="simple-panel style-panel')
   && stylePanel.includes('updateTheme(draftTheme)')
   && !stylePanel.includes('className="style-subnav"'),
   'StylePanel must remain a global staged theme editor with one direct flow, not a block editor or nested tab navigation');

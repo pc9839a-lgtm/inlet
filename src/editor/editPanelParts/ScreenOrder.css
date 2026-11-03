@@ -93,7 +93,7 @@
 .screen-order-v2-item.is-open,
 .screen-order-v2-item[data-selected='true'] {
   z-index: 20;
-  background: #fcfcfd;
+  background: #e9efff;
   box-shadow: none;
 }
 
@@ -106,11 +106,7 @@
   left: 0;
   width: 2px;
   border-radius: 999px;
-  background: #98a2b3;
-}
-
-.screen-order-v2-item.is-hidden .screen-order-v2-title-wrap {
-  opacity: .8;
+  background: #2454ff;
 }
 
 .screen-order-v2-item.is-dragging { opacity: .45; }
@@ -444,7 +440,7 @@
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item.is-open,
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] {
-    background: #f4f5f7 !important;
+    background: #e9efff !important;
     box-shadow: none !important;
   }
 
@@ -456,7 +452,7 @@
     left: 0;
     width: 2px;
     border-radius: 0;
-    background: #667085;
+    background: #2454ff;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-head {
@@ -787,7 +783,9 @@ html body #root .builder-shell.edit-mode-shell
   outline-offset: 2px;
 }
 
-/* D03 — screen-order identity: a compact title and optional descriptive line. */
+/* Persistent editor layer navigator — one canonical row rule for every desktop width.
+   The list remains 220–260px; retain icon/thumbnail/status/action widths instead
+   of progressively shrinking them in overlapping 1200px media overrides. */
 .screen-order-v2-title-wrap .screen-order-v2-identity-copy {
   display: grid;
   min-width: 0;
@@ -802,79 +800,158 @@ html body #root .builder-shell.edit-mode-shell
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.screen-order-v2-title-wrap .screen-order-v2-identity-subline {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 4px;
+}
 .screen-order-v2-title-wrap .screen-order-v2-identity-detail {
-  color: #667085;
-  font-size: 11px;
-  line-height: 1.3;
+  flex: 1 1 auto;
+  color: var(--editor-ui-muted, #667085);
+  font-size: var(--editor-ui-helper-size, 11px);
+  line-height: 1.4;
   font-weight: 500;
 }
-.screen-order-v2-type-icon { position: relative; }
+.screen-order-v2-title-wrap .screen-order-v2-hidden-badge {
+  flex: 0 0 auto;
+  padding: 1px 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.screen-order-v2-type-icon { position: relative; overflow: hidden; }
 .screen-order-v2-type-icon .screen-order-v2-thumbnail {
   position: absolute;
   inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: 5px;
+  border-radius: inherit;
   background: #fff;
   object-fit: cover;
+  object-position: center;
+  opacity: 0;
 }
-.screen-order-v2-type-icon .screen-order-v2-thumbnail[hidden] {
-  display: none;
+.screen-order-v2-type-icon.has-thumbnail .screen-order-v2-thumbnail { opacity: 1; }
+.screen-order-v2-title-wrap:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 1px;
+  border-radius: 5px;
 }
 
-/* Persistent left list keeps names readable alongside the settings. */
-html body #root .builder-shell .editor-composition-panel .screen-order-v2-head {
-  grid-template-columns: 14px minmax(0, 1fr) 26px 26px !important;
+/* Single layer-list visual hierarchy, including selected and hidden states. */
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-card {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-list {
+  display: grid !important;
   gap: 2px !important;
-  padding-inline: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
 }
-html body #root .builder-shell .editor-composition-panel .screen-order-v2-drag { width: 14px !important; min-width: 14px !important; }
-html body #root .builder-shell .editor-composition-panel :is(.screen-order-v2-visibility-button, .screen-order-v2-action) { width: 26px !important; min-width: 26px !important; }
-html body #root .builder-shell .editor-composition-panel .screen-order-v2-title-wrap { grid-template-columns: 20px minmax(0, 1fr) !important; gap: 4px !important; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item:is(:hover,:focus-within) {
+  background: #f4f6fc !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true'] {
+  background: #e5ebff !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true']::before { display: none !important; }
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-title { display: none !important; }
 
-/* Compact composition: show the full name on hover/focus, never break it into vertical syllables. */
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head {
+  grid-template-columns: 14px minmax(0, 1fr) 28px 28px !important;
+  gap: 2px !important;
+  min-height: 58px !important;
   height: auto !important;
-  min-height: 44px !important;
-  padding-block: 6px !important;
+  padding: 6px 3px !important;
 }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag {
+  width: 14px !important;
+  min-width: 14px !important;
+  height: 32px !important;
+  opacity: .65;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag > svg { width: 13px; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-title-wrap {
+  grid-template-columns: 28px minmax(0, 1fr) !important;
+  gap: 6px !important;
+  min-width: 0;
   overflow: hidden !important;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong,
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon {
+  display: grid;
+  place-items: center;
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px;
+  background: #edf2f7;
+  color: #475467 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon.has-thumbnail {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong {
+  min-width: 0;
+  color: var(--editor-ui-text, #182230) !important;
+  font-size: var(--editor-ui-row-size, 12px) !important;
+  font-weight: var(--editor-ui-label-weight, 600) !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+  overflow-wrap: normal;
+  text-overflow: ellipsis !important;
+}
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-detail {
+  color: var(--editor-ui-muted, #667085) !important;
+  font-size: var(--editor-ui-helper-size, 11px) !important;
+  font-weight: 500 !important;
   overflow: hidden !important;
   white-space: nowrap !important;
   text-overflow: ellipsis !important;
   overflow-wrap: normal;
 }
-
-/* Reference navigation: flat rows, one restrained selection surface. */
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-card { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-list { display: grid !important; gap: 2px !important; border: 0 !important; background: transparent !important; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 9px !important; background: transparent !important; box-shadow: none !important; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item:is(:hover,:focus-within) { background: #f4f6fc !important; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true'] { background: #e5ebff !important; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true']::before { display: none !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head { grid-template-columns: 10px minmax(0,1fr) 24px 24px !important; min-height: 48px !important; padding: 6px 3px !important; gap: 0 !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-title-wrap { grid-template-columns: 16px minmax(0,1fr) !important; gap: 4px !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong { color: #273249 !important; font-size: 13px !important; font-weight: 500 !important; line-height: 1.4 !important; white-space: nowrap !important; overflow-wrap: normal; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item[data-selected='true'] :is(.screen-order-v2-identity-copy strong,.screen-order-v2-type-icon,.screen-order-v2-drag,.screen-order-v2-visibility-button,.screen-order-v2-action) { color: #2454ff !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon { color: #334155 !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-detail { color: #7b8497 !important; font-size: 11px !important; font-weight: 400 !important; }
-html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-title { display: none !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is(.screen-order-v2-visibility, .screen-order-v2-actions) { width: 24px !important; min-width: 24px !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is(.screen-order-v2-visibility-button, .screen-order-v2-action) { width: 24px !important; min-width: 24px !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-actions { grid-template-columns: 24px !important; }
-
-/* Compact desktop keeps text readable before shrinking its action targets. */
-@media (max-width: 1200px) {
-  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head { grid-template-columns: 10px minmax(0,1fr) 24px 24px !important; padding-inline: 4px !important; gap: 0 !important; }
-  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag { width: 10px !important; min-width: 10px !important; }
-  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag > svg { width: 8px; }
-  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is(.screen-order-v2-visibility-button,.screen-order-v2-action) { width: 24px !important; min-width: 24px !important; }
-  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-title-wrap { grid-template-columns: 16px minmax(0,1fr) !important; gap: 4px !important; }
-  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon { width: 16px !important; min-width: 16px !important; }
-  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong { font-size: 14px !important; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item.is-hidden .screen-order-v2-title-wrap {
+  opacity: 1 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item.is-hidden .screen-order-v2-type-icon {
+  color: #667085 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item[data-selected='true'] :is(.screen-order-v2-identity-copy strong, .screen-order-v2-drag, .screen-order-v2-visibility-button, .screen-order-v2-action) {
+  color: #2454ff !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is(.screen-order-v2-visibility, .screen-order-v2-actions) {
+  width: 28px !important;
+  min-width: 28px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is(.screen-order-v2-visibility-button, .screen-order-v2-action) {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-actions {
+  grid-template-columns: 28px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is(.screen-order-v2-visibility-button, .screen-order-v2-action):focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 1px;
 }

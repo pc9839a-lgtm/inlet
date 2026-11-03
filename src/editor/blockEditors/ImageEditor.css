@@ -1,5 +1,5 @@
 /* Photo replacement and display settings share one selected-item flow. */
-.builder-shell .image-editor-flow { display: grid; gap: 20px; min-width: 0; }
+.builder-shell .image-editor-flow { display: grid; gap: var(--editor-ui-space-4, 16px); min-width: 0; }
 .builder-shell .image-editor-flow .image-preview-placeholder { color: #98a2b3; }
 .builder-shell .image-editor-flow .image-input-source-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 html body #root .builder-shell .image-editor-flow .image-input-source-actions > button,
@@ -15,22 +15,25 @@ html body #root .builder-shell .image-editor-flow .image-input-source-actions > 
   margin-left: auto !important; border-color: transparent !important; color: #667085 !important;
 }
 html body #root .builder-shell .image-editor-flow .crop-open-button { justify-self: start; }
-.builder-shell .image-editor-more > summary,
+/* The image design group is a shared InspectorDisclosure; storage is a
+   separate native details control with the same 44px hit target. */
+.builder-shell .image-editor-storage { min-width: 0; border-top: 1px solid #e7eaf2; }
 .builder-shell .image-editor-storage > summary {
-  display: flex; align-items: center; justify-content: space-between; min-height: 40px; list-style: none;
-  color: #344054; font-size: 13px; font-weight: 500; cursor: pointer;
+  display: flex; align-items: center; min-height: var(--editor-ui-touch-height, 44px);
+  padding: var(--editor-ui-space-2, 8px) 0; list-style: none;
+  color: var(--editor-ui-text, #182230); font-size: var(--editor-ui-section-size, 13px);
+  font-weight: var(--editor-ui-strong, 650); line-height: 1.4; cursor: pointer;
 }
-.builder-shell .image-editor-more > summary::-webkit-details-marker { display: none; }
-.builder-shell .image-editor-more[open] > summary svg { transform: rotate(180deg); }
-.builder-shell .image-editor-more-controls { display: grid; gap: 16px; padding: 12px 0 4px; }
+.builder-shell .image-editor-storage > summary::-webkit-details-marker { display: none; }
+.builder-shell .image-editor-more-controls { display: grid; gap: var(--editor-ui-space-3, 12px); padding: var(--editor-ui-space-1, 4px) 0 var(--editor-ui-space-3, 12px); }
 .builder-shell .image-editor-more:not([open]) > .image-editor-more-controls { display: none; }
 .builder-shell .image-editor-storage:not([open]) > .image-storage-cleanup { display: none !important; }
-.builder-shell .image-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: 16px; }
-.builder-shell .image-editor-flow summary:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 4px; }
+.builder-shell .image-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: var(--editor-ui-space-4, 16px); }
+.builder-shell .image-editor-flow summary:focus-visible { outline: 2px solid var(--editor-ui-accent, #2454ff); outline-offset: 2px; border-radius: var(--editor-ui-space-1, 4px); }
 
 /* Keep the complete photo inside the short thumbnail despite legacy image rules. */
 html body #root .builder-shell .image-editor-flow .image-input--compact .image-preview-frame > img {
   width: 100% !important; height: 110px !important; max-height: 110px !important;
   object-fit: contain !important; object-position: center !important;
 }
-.builder-shell .image-editor-flow .image-display-controls { display: grid; gap: 16px; min-width: 0; }
+.builder-shell .image-editor-flow .image-display-controls { display: grid; gap: var(--editor-ui-space-3, 12px); min-width: 0; }

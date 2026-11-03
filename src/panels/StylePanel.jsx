@@ -2,6 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import { ImageInput, Color } from '../editor/controls.jsx';
 import { NumberControl } from '../editor/ui/NumberControl.jsx';
 import { notify } from '../lib/uiFeedback.js';
+import { countTextColorSources, themeAlignmentMode } from '../editor/ui/themeInheritanceModel.js';
 import './StylePanel.css';
 
 const T = {
@@ -123,6 +124,7 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
   const draftTheme = stagedTheme ?? page.theme ?? {};
   const bgMode = draftTheme.bgMode || 'solid';
   const dirty = JSON.stringify(draftTheme) !== JSON.stringify(page.theme || {});
+  const textSources = countTextColorSources(page?.blocks);
 
   const updateDraft = (patch) => onPreviewThemeChange?.({ ...draftTheme, ...patch });
   const applyStyle = () => {
@@ -137,7 +139,7 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
   const resetDraft = () => onPreviewThemeChange?.(null);
 
   return (
-    <div className="simple-panel style-panel style-panel-v17 style-panel-staged style-direct-flow">
+    <div className="style-panel style-panel-v17 style-panel-staged style-direct-flow">
       <div className="style-apply-bar">
         <div>
           <strong>{T.commonStyle}</strong>
@@ -155,6 +157,11 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
           <StyleColorLine label={T.textColor} value={draftTheme.text} fallback="#111827" onChange={(next) => updateDraft({ text: next })} />
           <StyleSegment label={T.font} value={draftTheme.fontFamily || 'pretendard'} onChange={(next) => updateDraft({ fontFamily: next })} options={[[ 'pretendard', 'Pretendard' ], [ 'noto', 'Noto' ], [ 'serif', 'Serif' ]]} />
         </div>
+        {textSources.total > 0 && (
+          <p className="style-theme-inheritance-summary" aria-label="전체 글자색 적용 범위">
+            전체 글자색 적용: 텍스트 {textSources.inherited}개 · 개별 글자색 유지: {textSources.custom}개
+          </p>
+        )}
       </section>
 
       <section className="style-primary-group style-background-group" aria-label="페이지 배경">
@@ -214,7 +221,12 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
         <details className="style-advanced-group">
           <summary><strong>글자 정렬·분위기</strong><ChevronDown size={16} aria-hidden="true" /></summary>
           <div className="style-advanced-body">
-            <StyleSegment label={T.align} value={draftTheme.globalAlign || 'left'} onChange={(next) => updateDraft({ globalAlign: next })} options={ALIGN_OPTIONS} />
+            <StyleSegment label={T.align} value={themeAlignmentMode(draftTheme)} onChange={(next) => updateDraft({ globalAlign: next === 'block' ? '' : next })} options={[[ 'block', '블록별' ], ...ALIGN_OPTIONS]} />
+            <p className="style-theme-inheritance-hint">
+              {themeAlignmentMode(draftTheme) === 'block'
+                ? '각 블록에 저장된 정렬을 사용합니다. 기존 블록 설정은 변경되지 않습니다.'
+                : '전체 정렬이 블록별 정렬보다 우선 적용됩니다. 블록별로 되돌리면 기존 개별 정렬이 다시 표시됩니다.'}
+            </p>
             <StyleSegment label={T.mood} value={draftTheme.font || 'modern'} onChange={(next) => updateDraft({ font: next })} options={[[ 'modern', T.modern ], [ 'soft', T.soft ], [ 'bold', T.bold ]]} />
           </div>
         </details>

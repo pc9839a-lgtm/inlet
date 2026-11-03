@@ -25,6 +25,7 @@ export function ScreenOrderList(props) {
           key={selectedBlock.id}
           block={selectedBlock}
           identity={selectedIdentity}
+          navigation={props.inspectorNavigation}
           renderBlockEditor={props.renderBlockEditor}
           actions={<ScreenOrderRowActions block={selectedBlock} meta={META[selectedBlock.type] || META.text} selected instance="inspector"
             canMoveUp={selectedIndex > 0} canMoveDown={selectedIndex < props.normalBlocks.length - 1}

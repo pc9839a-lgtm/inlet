@@ -3,10 +3,10 @@
 .block-editor-v2 .form-fields-section,
 .block-editor-v2 .form-design-group {
   display: grid;
-  gap: 14px;
+  gap: var(--editor-ui-space-3, 12px);
   min-width: 0;
 }
-.block-editor-v2 .form-editor-flow { gap: 20px; }
+.block-editor-v2 .form-editor-flow { gap: var(--editor-ui-space-4, 16px); }
 .block-editor-v2 .form-basic-grid { grid-template-columns: minmax(0, 1fr); }
 .block-editor-v2 .form-basic-grid textarea { min-height: 64px !important; }
 .block-editor-v2 .form-fields-section > h3,
@@ -78,17 +78,23 @@ body .builder-shell .edit-layout .block-editor-v2 .form-question-actions > butto
 .block-editor-v2 .form-question-add > summary::-webkit-details-marker { display: none; }
 .block-editor-v2 .form-question-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 8px 0; }
 body .builder-shell .edit-layout .block-editor-v2 .form-question-tools > button { min-height: 36px !important; padding: 0 12px !important; text-align: left; border: 0 !important; border-radius: 4px !important; background: var(--editor-v2-soft) !important; color: var(--editor-v2-text) !important; font-size: 12px !important; font-weight: 400 !important; box-shadow: none !important; }
-.block-editor-v2 .form-editor-settings { border-top: 1px solid var(--editor-v2-line); }
-.block-editor-v2 .form-basic-detail { border-bottom: 1px solid var(--editor-v2-line); }
-.block-editor-v2 .form-basic-detail > summary { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; list-style: none; font-size: 12px; }
+.block-editor-v2 .form-editor-settings { border-top: 0; }
+.block-editor-v2 .form-basic-detail { min-width: 0; border-top: 1px solid #e7eaf2; border-bottom: 0; }
+.block-editor-v2 .form-basic-detail > summary {
+  display: flex; align-items: center; gap: var(--editor-ui-space-2, 8px);
+  min-height: var(--editor-ui-touch-height, 44px); padding: var(--editor-ui-space-2, 8px) 0;
+  cursor: pointer; list-style: none;
+  color: var(--editor-ui-text, #182230); font-size: var(--editor-ui-section-size, 13px);
+  font-weight: var(--editor-ui-strong, 650); line-height: 1.4;
+}
 .block-editor-v2 .form-basic-detail > summary::-webkit-details-marker { display: none; }
-.block-editor-v2 .form-basic-detail > summary > strong { flex: 1; font-size: 12px; font-weight: 500; }
-.block-editor-v2 .form-basic-detail > summary > span { color: var(--editor-v2-muted); font-size: 11px; }
-.block-editor-v2 .form-basic-detail > summary > svg { color: var(--editor-v2-muted); }
+.block-editor-v2 .form-basic-detail > summary > strong { flex: 1; min-width: 0; font-size: var(--editor-ui-section-size, 13px); font-weight: var(--editor-ui-strong, 650); }
+.block-editor-v2 .form-basic-detail > summary > span { color: var(--editor-ui-muted, #667085); font-size: var(--editor-ui-helper-size, 11px); }
+.block-editor-v2 .form-basic-detail > summary > svg { flex: 0 0 auto; color: var(--editor-ui-muted, #667085); }
 .block-editor-v2 .form-basic-detail[open] > summary > svg { transform: rotate(180deg); }
 .block-editor-v2 .form-basic-detail > div,
 .block-editor-v2 .privacy-compact-panel,
-.block-editor-v2 .form-one-line-panel { display: grid; gap: 16px; padding: 6px 0 16px; }
+.block-editor-v2 .form-one-line-panel { display: grid; gap: var(--editor-ui-space-3, 12px); padding: var(--editor-ui-space-1, 4px) 0 var(--editor-ui-space-3, 12px); }
 .block-editor-v2 .form-basic-detail:not([open]) > div,
 .block-editor-v2 .form-question-add:not([open]) > .form-question-tools { display: none !important; }
 body .builder-shell .edit-layout .block-editor-v2 .form-embed-button { display: flex !important; align-items: center; justify-content: flex-start; gap: 8px; min-height: 36px !important; padding: 0 !important; border: 0 !important; background: transparent !important; color: var(--editor-v2-muted) !important; font-size: 12px !important; font-weight: 400 !important; box-shadow: none !important; }
@@ -278,7 +284,7 @@ body .builder-shell .edit-layout .block-editor-v2 .form-embed-button { display: 
 
 /* Mobile form builder: questions read as editable items, not a dense table. */
 body .builder-shell.canvas-editor-shell .edit-layout .form-editor-flow {
-  gap: 22px;
+  gap: var(--editor-ui-space-4, 16px);
 }
 body .builder-shell.canvas-editor-shell .edit-layout .form-question-list {
   gap: 8px;

@@ -20,7 +20,7 @@ import { createPageEditMutations } from './runtime/pageEditMutations.js';
 import { normalizeFreeEmailIntegrations as normalizeFreeEmailIntegrationsForAccount } from './runtime/pageIntegrationMutations.js';
 import { usePageSaveHelpers } from './runtime/usePageSaveHelpers.js';
 import { usePersistStyleSaveAction } from './runtime/usePersistStyleSaveAction.js';
-import { createLocalJsonSaver, createSaveStatusMarker } from './runtime/saveStatusActions.js';
+import { createLocalJsonSaver, createSaveStatusMarker, nextEditorMutationStatus } from './runtime/saveStatusActions.js';
 import { pageOperationIdentity } from './runtime/pageOperationIdentity.js';
 import { usePendingStyleBeforeUnload } from './runtime/usePendingStyleBeforeUnload.js';
 import { createWorkspacePanelProps } from './runtime/createWorkspacePanelProps.js';
@@ -801,11 +801,7 @@ function App() {
     if (localPageMutationRef.current === lastMutationStatusRef.current) return;
     lastMutationStatusRef.current = localPageMutationRef.current;
     setSaved(false);
-    setSaveStatus((current) => current.phase === 'publishing' ? current : ({
-      tone: 'idle', label: '공개 미반영', phase: 'dirty',
-      detail: '브라우저 임시보관을 시도하며 발행 전에는 공개되지 않습니다.',
-      at: new Date().toISOString(),
-    }));
+    setSaveStatus((current) => nextEditorMutationStatus(current));
   }, [page]);
 
   const blockWrite = createBlockWriteGuard({
