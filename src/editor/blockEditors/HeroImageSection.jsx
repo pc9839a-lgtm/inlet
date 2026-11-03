@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react';
+import { InspectorDisclosure } from '../ui/InspectorDisclosure.jsx';
 import { ImageInput } from '../controls.jsx';
 import { SegmentedControl, ToggleRow } from '../ui/index.js';
 import HeroImageRange from './HeroImageRange.jsx';
@@ -12,12 +12,7 @@ export default function HeroImageSection({ s, set, Range }) {
   return (
     <div className="hero-image-section">
       <ImageInput label="히어로 이미지" value={s.image} onChange={(value) => set({ image: value })} />
-      <details className="hero-image-adjustments">
-        <summary>
-          <strong>이미지 배치·효과</strong>
-          <ChevronDown size={16} aria-hidden="true" />
-        </summary>
-        <div className="hero-image-controls">
+      <InspectorDisclosure label="이미지 배치·효과" className="hero-image-adjustments" bodyClassName="hero-image-controls">
           <SegmentedControl
             label="이미지 배치"
             value={mode}
@@ -51,8 +46,7 @@ export default function HeroImageSection({ s, set, Range }) {
           {filterVisible && s.overlay !== false && (
             <HeroImageRange Range={Range} label="필터 진하기" unit="%" value={s.overlayOpacity ?? 38} min={0} max={85} onChange={(value) => set({ overlayOpacity: value })} />
           )}
-        </div>
-      </details>
+      </InspectorDisclosure>
     </div>
   );
 }

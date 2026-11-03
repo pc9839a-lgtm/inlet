@@ -300,6 +300,18 @@ function createQaPage() {
         },
       },
       {
+        id: 'editor-image',
+        type: 'image',
+        visible: true,
+        s: {
+          anchorId: 'editor-image',
+          mode: 'single',
+          image: '',
+          display: 'original',
+          rounded: false,
+        },
+      },
+      {
         id: 'editor-bottom',
         type: 'bottombar',
         visible: true,

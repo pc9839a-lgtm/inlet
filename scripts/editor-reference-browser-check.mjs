@@ -266,6 +266,77 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         'consistent font/spacing contract at ' + width + ' for ' + id + ': ' + JSON.stringify(uiType));
       if ((width === 900 || width === 1672) && id === 'editor-form') await capture(client, 'unified-editor-type-' + width);
     }
+    // UX-024: four real block inspectors must use the same 44px disclosure
+    // header, 12px control rhythm and native keyboard/close behaviour.
+    for (const [id, selector] of [
+      ['editor-hero', '.hero-editor-design'],
+      ['editor-text', '.text-editor-design'],
+      ['editor-image', '.image-editor-more'],
+      ['editor-form', '.form-design-detail'],
+    ]) {
+      await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+      await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-${id} ${selector} > summary')`,
+        'shared design disclosure exists for ' + id);
+      const before = await evaluate(client, `(() => {
+        const detail = document.querySelector('#editor-block-settings-${id} ${selector}');
+        return { open: detail?.open, bodyVisible: !!detail?.querySelector(':scope > .inspector-disclosure-body')?.getClientRects().length };
+      })()`);
+      await clickPointer(client, `#editor-block-settings-${id} ${selector} > summary`);
+      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} ${selector}')?.open !== ${before.open}`,
+        'design disclosure toggles natively for ' + id);
+      if (before.open) {
+        await clickPointer(client, `#editor-block-settings-${id} ${selector} > summary`);
+        await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} ${selector}')?.open === true`,
+          'design disclosure restores open state for ' + id);
+      }
+      const expanded = await evaluate(client, `(() => {
+        const detail = document.querySelector('#editor-block-settings-${id} ${selector}');
+        const header = detail?.querySelector(':scope > summary');
+        const body = detail?.querySelector(':scope > .inspector-disclosure-body');
+        const a = header?.getBoundingClientRect(), b = body?.getBoundingClientRect(), d = detail?.getBoundingClientRect();
+        const h = header && getComputedStyle(header), c = body && getComputedStyle(body);
+        return {
+          isNative: detail?.tagName === 'DETAILS', open:detail?.open,
+          height:a?.height, labelSize:h?.fontSize, labelWeight:h?.fontWeight,
+          gap:c?.gap, paddingTop:c?.paddingTop, paddingBottom:c?.paddingBottom,
+          bodyVisible:!!b?.height, overflow:!!b && !!d && (b.right > d.right + 2 || b.left < d.left - 2),
+        };
+      })()`);
+      assert(expanded.isNative && expanded.open && expanded.height >= 44 && expanded.height <= 46
+        && expanded.labelSize === '13px' && expanded.labelWeight === '650'
+        && expanded.gap === '12px' && expanded.paddingTop === '4px'
+        && expanded.paddingBottom === '12px' && expanded.bodyVisible && !expanded.overflow,
+        'native design groups should have uniform density at ' + width + ' for ' + id + ': ' + JSON.stringify(expanded));
+      if ((width === 900 || width === 1672) && id === 'editor-image')
+        await capture(client, 'inspector-group-image-' + width);
+      if (!before.open) {
+        await clickPointer(client, `#editor-block-settings-${id} ${selector} > summary`);
+        await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} ${selector}')?.open === false`,
+          'design group recloses for ' + id);
+      }
+    }
+    await clickPointer(client, '#editor-block-editor-hero .screen-order-v2-head');
+    const heroImageBefore = await evaluate(client, `(() => {
+      const d = document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments');
+      return {open:d?.open, native:d?.classList.contains('inspector-disclosure')};
+    })()`);
+    assert(heroImageBefore.native, 'hero image effects must share native disclosure component');
+    await clickPointer(client, '#editor-block-settings-editor-hero .hero-image-adjustments > summary');
+    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments')?.open !== ${heroImageBefore.open}`,
+      'hero image effects native disclosure expands');
+    const heroImageState = await evaluate(client, `(() => {
+      const d = document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments');
+      const h = d.querySelector('summary').getBoundingClientRect();
+      const body = d.querySelector('.hero-image-controls');
+      const css = getComputedStyle(body);
+      return {height:h.height,gap:css.gap,visible:!!body.getClientRects().length};
+    })()`);
+    assert(heroImageState.height >= 44 && heroImageState.gap === '12px' && heroImageState.visible,
+      'hero image effects must follow disclosure rhythm: ' + JSON.stringify(heroImageState));
+    await clickPointer(client, '#editor-block-settings-editor-hero .hero-image-adjustments > summary');
+    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments')?.open === ${heroImageBefore.open}`,
+      'hero image disclosure restores original state');
+    assert(apiState.saveCount === 0, 'inspector group expand/collapse must never write or publish');
     if (width === 1024 || width === 1672) await capture(client, 'single-hierarchy-form-' + width);
   }
   for (const width of [900, 1440]) {

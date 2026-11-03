@@ -19,14 +19,15 @@
 }
 .builder-shell .text-editor-design > summary::-webkit-details-marker { display: none; }
 .builder-shell .text-editor-design[open] > summary svg { transform: rotate(180deg); }
-.builder-shell .text-editor-design-controls { display: grid; gap: 16px; padding: 12px 0 4px; }
-.builder-shell .text-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: 16px; }
+.builder-shell .text-editor-design-controls { display: grid; gap: var(--editor-ui-space-3, 12px); padding: var(--editor-ui-space-1, 4px) 0 var(--editor-ui-space-3, 12px); }
+.builder-shell .text-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: var(--editor-ui-space-4, 16px); }
 
 .builder-shell .text-editor-design:not([open]) > .text-editor-design-controls { display: none; }
 
 /* Reference inspector rhythm: property labels at left, compact controls at right. */
-html body #root .canvas-editor-shell .text-editor-flow .text-editor-design { padding-block: 10px; border-top: 1px solid #edf0f6; border-bottom: 1px solid #edf0f6; }
-html body #root .canvas-editor-shell .text-editor-flow .text-editor-design > summary { min-height: 32px; color: var(--editor-ui-text, #182230); font-size: var(--editor-ui-section-size, 13px); font-weight: var(--editor-ui-strong, 650); }
+/* InspectorDisclosure owns its top divider and 44px header; no local extra padding/bottom divider. */
+html body #root .canvas-editor-shell .text-editor-flow .text-editor-design { padding-block: 0; border-bottom: 0; }
+html body #root .canvas-editor-shell .text-editor-flow .text-editor-design > summary { min-height: var(--editor-ui-touch-height, 44px); color: var(--editor-ui-text, #182230); font-size: var(--editor-ui-section-size, 13px); font-weight: var(--editor-ui-strong, 650); }
 html body #root .canvas-editor-shell .text-editor-flow .text-editor-design-controls { gap: var(--editor-ui-space-3, 12px); }
 html body #root .canvas-editor-shell .text-editor-design-controls > .editor-segmented-v2 { display: grid !important; grid-template-columns: 86px minmax(0,1fr) !important; align-items: center; gap: var(--editor-ui-space-2, 8px) !important; }
 html body #root .canvas-editor-shell .text-editor-design-controls .editor-segmented-v2-options { min-height: var(--editor-ui-input-height, 42px); padding: 2px; border: 1px solid var(--editor-ui-control-line, #d0d5dd); border-radius: var(--editor-ui-control-radius, 7px); background: #fff; }
