@@ -157,6 +157,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     ]) {
       await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
       await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .inspector-primary-heading')?.textContent?.trim() === '내용'`, 'inspector content heading for ' + id);
+      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .${designClass} > summary > strong')?.textContent?.trim() === '디자인'`, 'lazy inspector design group for ' + id);
       const hierarchy = await evaluate(client, `(() => {
         const panel = document.querySelector('#editor-block-settings-${id}');
         const design = panel?.querySelector('.${designClass}');
