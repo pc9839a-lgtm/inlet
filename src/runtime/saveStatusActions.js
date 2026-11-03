@@ -10,6 +10,9 @@ export function visibleEditorDraftState({ page, saveStatus, hasUnappliedDrafts =
   if (saveStatus?.phase === 'saving') {
     return { kind: 'saving', label: '임시저장 중', tone: 'warning', detail: saveStatus.detail || '브라우저에 편집 내용을 보관하고 있습니다.' };
   }
+  if (saveStatus?.phase === 'publishing') {
+    return { kind: 'publishing', label: '서버 저장·발행 중', tone: 'warning', detail: '공개 페이지에 저장·발행 처리를 진행하고 있습니다.' };
+  }
   if (hasUnappliedDrafts) {
     return { kind: 'unapplied', label: '미적용 변경', tone: 'warning', detail: '스타일 또는 코드의 변경을 편집본에 아직 적용하지 않았습니다.' };
   }
@@ -32,6 +35,12 @@ export function visibleEditorPublishState({ page, saved, saveStatus, hasUnapplie
   // A failure or unverified publication must remain visible even if another
   // style/code change is still unapplied. Never replace an error with "dirty".
   if (publishing) return { kind: 'publishing', label: '발행 중', tone: 'warning', detail: saveStatus.detail, actionLabel: '발행 중' };
+  if (saveStatus?.phase === 'saving' || saveStatus?.label === '임시저장 실패') {
+    return {
+      kind: 'local-only', label: page?.publishedAt ? '이전 발행본 있음' : '발행 전',
+      tone: 'idle', detail: '브라우저 편집본의 임시보관 상태와 실제 공개 발행은 별개입니다.', actionLabel: '게시하기',
+    };
+  }
   if (saveStatus?.tone === 'error') {
     const isPublishError = /발행|저장|충돌|로그인/.test(saveStatus.label || '');
     return { kind: 'failed', label: saveStatus.label || '발행 실패', tone: 'error', detail: saveStatus.detail, actionLabel: isPublishError ? '다시 발행' : '게시하기' };
