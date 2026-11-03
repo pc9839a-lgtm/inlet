@@ -193,8 +193,74 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         && hierarchy.groupRight <= hierarchy.inspectorRight + 2
         && hierarchy.innerWidth > 210,
         'inspector hierarchy at ' + width + ' for ' + id + ': ' + JSON.stringify(hierarchy));
+      // UX-008/018/019/032: browser-resolved editor-only typography tokens,
+      // not merely source CSS strings. Test all major inspector block types.
+      const uiType = await evaluate(client, `(() => {
+        const style = (selector) => {
+          const node = document.querySelector(selector);
+          if (!node) return null;
+          const css = getComputedStyle(node);
+          return { size: css.fontSize, weight: css.fontWeight, color: css.color, gap: css.gap };
+        };
+        const panel = document.querySelector('#editor-block-settings-${id}');
+        const firstLabel = panel?.querySelector('.block-editor-v2 :is(.editor-field-v2-label strong, .field > span, .range > span, .color > span, .choice > span, .toggle > span)');
+        const field = firstLabel ? getComputedStyle(firstLabel) : null;
+        return {
+          listTitle: style('.editor-composition-heading h2'),
+          detailTitle: style('.screen-order-v2-settings-title > h2'),
+          contentHeading: style('.screen-order-v2-settings .inspector-primary-heading'),
+          disclosure: style('.screen-order-v2-settings .inspector-disclosure > summary > strong'),
+          normalRow: style('.editor-composition-panel .screen-order-v2-identity-copy strong'),
+          fixedRow: style('.fixed-composition-row .screen-order-v2-identity-copy strong'),
+          normalDetail: style('.editor-composition-panel .screen-order-v2-identity-detail'),
+          label: field && { size: field.fontSize, weight: field.fontWeight, color: field.color },
+          editor: style('#editor-block-settings-${id} .block-editor-v2.block-editor'),
+          tokens: Object.fromEntries(['--editor-ui-title-size','--editor-ui-section-size','--editor-ui-label-size','--editor-ui-row-size','--editor-ui-space-4'].map(k=>[k,getComputedStyle(document.querySelector('.edit-layout')).getPropertyValue(k).trim()])),
+        };
+      })()`);
+      assert(uiType.listTitle?.size === '16px' && uiType.listTitle?.weight === '650'
+        && uiType.detailTitle?.size === '16px' && uiType.detailTitle?.weight === '650'
+        && uiType.contentHeading?.size === '13px' && uiType.contentHeading?.weight === '650'
+        && uiType.disclosure?.size === '13px' && uiType.disclosure?.weight === '650'
+        && uiType.normalRow?.size === '12px' && uiType.normalRow?.weight === '600'
+        && uiType.fixedRow?.size === '12px' && uiType.fixedRow?.weight === '600'
+        && uiType.normalDetail?.size === '11px' && uiType.normalDetail?.weight === '500'
+        && uiType.label?.size === '13px' && uiType.label?.weight === '600'
+        && uiType.editor?.gap === '16px'
+        && uiType.tokens['--editor-ui-title-size'] === '16px'
+        && uiType.tokens['--editor-ui-space-4'] === '16px'
+        && uiType.listTitle.color === uiType.detailTitle.color
+        && uiType.normalRow.color === uiType.fixedRow.color,
+        'consistent font/spacing contract at ' + width + ' for ' + id + ': ' + JSON.stringify(uiType));
+      if ((width === 900 || width === 1672) && id === 'editor-form') await capture(client, 'unified-editor-type-' + width);
     }
     if (width === 1024 || width === 1672) await capture(client, 'single-hierarchy-form-' + width);
+  }
+  for (const width of [900, 1440]) {
+    await setViewport(client, width, 941, false);
+    await clickPointer(client, '.editor-page-settings-button');
+    await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel-v17')`, 'unified design inspector is mounted');
+    const pageType = await evaluate(client, `(() => {
+      const css = selector => {
+        const e = document.querySelector(selector);
+        if (!e) return null;
+        const c = getComputedStyle(e);
+        return { size: c.fontSize, weight: c.fontWeight, color: c.color, gap: c.gap };
+      };
+      return {
+        status: css('.style-panel-v17 .style-apply-bar strong'),
+        heading: css('.style-panel-v17 .style-background-group h3'),
+        label: css('.style-panel-v17 .style-line > span'),
+        panel: css('.style-panel-v17'),
+        group: css('.style-panel-v17 .style-primary-group'),
+      };
+    })()`);
+    assert(pageType.status?.size === '14px' && pageType.status?.weight === '650'
+      && pageType.heading?.size === '13px' && pageType.heading?.weight === '650'
+      && pageType.label?.size === '12px' && pageType.label?.weight === '600'
+      && pageType.panel?.gap === '16px' && pageType.group?.gap === '12px',
+      'page-level design inspector matches editor type and spacing at ' + width + ': ' + JSON.stringify(pageType));
+    await capture(client, 'unified-page-design-type-' + width);
   }
   await setViewport(client, 1672, 941, false);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
