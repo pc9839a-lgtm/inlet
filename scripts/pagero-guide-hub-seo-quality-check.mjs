@@ -61,8 +61,45 @@ for (const [slug, markers] of Object.entries(currentGuideEvidence)) {
 const workStyles=read('public/guide/manual.css');
 assert(workStyles.includes('.guide-process-steps,.guide-editor-map') && workStyles.includes('@media(max-width:700px)'), 'Mobile workflow diagram styles missing');
 
+
+const updatedOperationalGuides = {
+ 'analytics': ['실제 코드 기준으로 전환율 다시 계산하기','저장된 접수 42 ÷ 조회 500 × 100','8.4%','CTA 전환율','75.0%'],
+ 'inbox-management': ['접수함 6건을 상태별로 분류하는 실무 예제','확인중·보류','연락완료·예약완료·종료','처리중'],
+ 'troubleshooting': ['오류를 지우지 않고 원인을 좁히는 4단계 진단','전송 내역','접수함','광고 전환 50, 접수 42'],
+};
+for (const [slug, markers] of Object.entries(updatedOperationalGuides)) {
+ const html=read('public/guide/'+slug+'/index.html');
+ assert(html.includes('<section id="field-workflow" class="manual-lab"'),'Operational walkthrough missing: '+slug);
+ assert(html.includes('<a href="#field-workflow">'),'Operational walkthrough not in TOC: '+slug);
+ assert(html.includes('class="guide-ops-flow') && html.includes('role="img"') && html.includes('<figcaption>'),'Accessible operation diagram missing: '+slug);
+ assert.equal((html.match(/rel="canonical"/g)||[]).length,1,'Canonical duplication: '+slug);
+ assert(html.includes('"dateModified":"2026-11-03"') && html.includes('최종 확인 2026.11.03'),'Metadata date mismatch: '+slug);
+ assert(sitemap.includes('<loc>https://pagero.kr/guide/'+slug+'/</loc><lastmod>2026-11-03</lastmod>'),'Sitemap lastmod mismatch: '+slug);
+ for(const marker of markers) assert(html.includes(marker),'Missing operational evidence: '+slug+' / '+marker);
+}
+const operationStyle=read('public/guide/manual.css');
+assert(operationStyle.includes('.guide-ops-flow') && operationStyle.includes('grid-template-columns:repeat(2,minmax(0,1fr))'),'Responsive operation diagrams missing');
+
+// Arithmetic and status grouping are derived from the same values rendered in the guides.
+// The tests prevent plausible-looking but wrong denominator and status-group examples.
+const sample={pv:500,cta:120,formStarts:90,attempts:60,successEvents:45,savedLeads:42};
+assert.equal((sample.savedLeads/sample.pv*100).toFixed(1),'8.4');
+assert.equal((sample.savedLeads/sample.cta*100).toFixed(1),'35.0');
+assert.equal((sample.formStarts/sample.pv*100).toFixed(1),'18.0');
+assert.equal((sample.successEvents/sample.attempts*100).toFixed(1),'75.0');
+const exampleStatuses=['신규','신규','확인중','보류','연락완료','종료'];
+assert.equal(exampleStatuses.filter(s=>s==='신규').length,2);
+assert.equal(exampleStatuses.filter(s=>['확인중','보류'].includes(s)).length,2);
+assert.equal(exampleStatuses.filter(s=>['연락완료','예약완료','종료'].includes(s)).length,2);
+
 const searchIndex=JSON.parse(read('public/guide/search-index.json'));
 assert.equal(searchIndex.documents.length,15,'Full-text index must cover 15 official guides');
+for (const [slug, markers] of Object.entries(updatedOperationalGuides)) {
+ const doc=searchIndex.documents.find(d=>d.slug===slug);
+ assert(doc && doc.headings.includes('실무 지표·오류 진단 예제'),'Index missing updated operational heading: '+slug);
+ for(const marker of markers) assert(doc.body.includes(marker),'Index missing updated evidence: '+slug+' / '+marker);
+}
+
 for (const [slug, markers] of Object.entries(currentGuideEvidence)) {
  const entry=searchIndex.documents.find(doc=>doc.slug===slug);
  assert(entry && entry.headings.includes('실무 예제·화면 구조도'),'Search index missing new section: '+slug);
