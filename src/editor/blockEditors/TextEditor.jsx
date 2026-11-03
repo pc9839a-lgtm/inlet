@@ -23,8 +23,8 @@ export default function TextEditor({ s, set }) {
       />
       <InspectorDisclosure label="디자인" className="text-editor-design" bodyClassName="text-editor-design-controls" defaultOpen>
         <TextStylePanel s={s} set={set} />
-        <WidgetSpacingControls s={s} set={set} />
       </InspectorDisclosure>
+      <WidgetSpacingControls s={s} set={set} />
     </div>
   );
 }
