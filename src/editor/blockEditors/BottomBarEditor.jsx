@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react';
+import { InspectorDisclosure } from '../ui/InspectorDisclosure.jsx';
 import BottomBarBasicSection from './BottomBarBasicSection.jsx';
 import BottomBarTimerSection from './BottomBarTimerSection.jsx';
 import { useBottomBarButtons } from './useBottomBarButtons.js';
@@ -28,15 +29,9 @@ export default function BottomBarEditor({ s, set, page }) {
           <BottomBarTimerSection enabled={s.timerEnabled} onChange={(timerEnabled) => set({ timerEnabled })} />
         </div>
       </details>
-      <details className="bottom-bar-editor-design">
-        <summary>
-          <strong>디자인</strong>
-          <ChevronDown size={16} aria-hidden="true" />
-        </summary>
-        <div className="bottom-bar-editor-extra-controls">
-          <BottomBarStylePanel s={s} set={set} />
-        </div>
-      </details>
+      <InspectorDisclosure label="디자인" className="bottom-bar-editor-design" bodyClassName="bottom-bar-editor-extra-controls">
+        <BottomBarStylePanel s={s} set={set} />
+      </InspectorDisclosure>
     </div>
   );
 }

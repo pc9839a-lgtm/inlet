@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react';
+import { InspectorDisclosure } from '../ui/InspectorDisclosure.jsx';
 import TopNavBasicSection from './TopNavBasicSection.jsx';
 import TopNavMenuListSection from './TopNavMenuListSection.jsx';
 import { useTopNavMenuController } from './useTopNavMenuController.js';
@@ -17,15 +17,9 @@ export default function TopNavEditor({ s, set, page, TargetControl }) {
         <h3>메뉴</h3>
         <TopNavMenuListSection page={page} TargetControl={TargetControl} {...menuController} />
       </section>
-      <details className="topnav-editor-design">
-        <summary>
-          <strong>디자인</strong>
-          <ChevronDown size={16} aria-hidden="true" />
-        </summary>
-        <div className="topnav-editor-design-controls">
-          <TopNavStylePanel s={s} set={set} />
-        </div>
-      </details>
+      <InspectorDisclosure label="디자인" className="topnav-editor-design" bodyClassName="topnav-editor-design-controls">
+        <TopNavStylePanel s={s} set={set} />
+      </InspectorDisclosure>
     </div>
   );
 }

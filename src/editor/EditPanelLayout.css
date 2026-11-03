@@ -191,19 +191,90 @@ html body #root .canvas-editor-shell .editor-block-switch-actions button:disable
   opacity: .4;
   cursor: default;
 }
-html body #root .canvas-editor-shell .editor-block-switch + .inspector-navigation { margin-top: 4px; }
+
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > .screen-order-v2-action { margin-left: auto; flex: 0 0 30px; }
 html body #root .canvas-editor-shell .screen-order-settings-hidden { flex: 0 0 auto; color: #667085; font-size: 11px; }
 html body #root .canvas-editor-shell .screen-order-v2-settings[data-scroll-region='block-settings'] { max-height: none !important; overflow: visible !important; scrollbar-gutter: auto; }
 html body #root .canvas-editor-shell .screen-order-v2-settings .block-editor-v2.block-editor { gap: 18px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
-.inspector-navigation { display: flex; align-items: stretch; gap: 3px; margin-top: 20px; padding: 4px; border: 1px solid #eceff5; border-radius: 10px; background: #fafbfe; }
-html body #root .canvas-editor-shell .inspector-navigation > button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 36px; padding: 6px 8px; border: 0; border-radius: 7px; background: transparent; color: #475467; font-size: 14px; font-weight: 550; cursor: pointer; }
-html body #root .canvas-editor-shell .inspector-navigation > button[aria-pressed='true'] { color: #2454ff; background: #e7edff; }
-.inspector-navigation > button:focus-visible { outline: 2px solid #2454ff; outline-offset: 1px; }
-.inspector-navigation > button > span { white-space: nowrap; }
-@media (max-width: 1100px) { html body #root .canvas-editor-shell .inspector-navigation > button { gap: 4px; padding-inline: 4px; font-size: 13px; } }
+
 body .builder-shell.edit-mode-shell .editor-page-options-stack { width: 100%; min-width: 0; display: grid; gap: 14px; }
 body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
 @media (min-width: 900px) and (max-width: 1100px) { html body #root .canvas-editor-shell .editor-inspector-panel { padding-inline: 16px; } html body #root .canvas-editor-shell .editor-composition-panel { padding-inline: 8px; } }
 @media (max-width: 899px) { html body #root .canvas-editor-shell .edit-layout { height: auto; min-height: 640px; } html body #root .canvas-editor-shell .editor-composition-panel, html body #root .canvas-editor-shell .editor-inspector-panel { height: auto; max-height: none; overflow: visible !important; } html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: static; } }
 
+
+/* Inspector owns a single native disclosure hierarchy instead of redundant
+   shortcut tabs + internal design accordions. Existing widget field values and
+   detail class names remain unchanged; no new nested scrollbar is introduced. */
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-primary-heading {
+  margin: 2px 0 14px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-subgroup-heading {
+  margin: 18px 0 6px;
+  padding-top: 14px;
+  border-top: 1px solid #eaecf0;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure {
+  min-width: 0;
+  margin: 12px 0 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid #e7eaf2;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 0;
+  list-style: none;
+  color: #344054;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.4;
+  cursor: pointer;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary::-webkit-details-marker { display: none; }
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary > strong {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 650;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary > svg {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: #667085;
+  transition: transform .12s ease;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure[open] > summary > svg {
+  transform: rotate(180deg);
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > .inspector-disclosure-body {
+  min-width: 0;
+  padding: 4px 0 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary > svg { transition: none; }
+}
