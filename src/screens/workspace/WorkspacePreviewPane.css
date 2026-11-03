@@ -12,6 +12,12 @@
 .preview-view-tools > select { min-width: 88px; cursor: pointer; }
 .preview-view-tools :focus-visible { outline: 2px solid #2454ff; outline-offset: 2px; }
 .preview-workspace [data-preview-selected='true'] { scroll-margin-block: 120px; }
+/* Hover is a light dashed affordance; selected is the solid blue boundary.
+   Focus on the action dock uses an independent visible keyboard ring. */
+html body #root .canvas-editor-shell .preview-workspace .editor-preview .landing-section:hover:not(.preview-selected-block) {
+  outline: 1px dashed #93a9d7;
+  outline-offset: -1px;
+}
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block { outline: 2px solid #2454ff !important; outline-offset: -2px !important; box-shadow: none !important; }
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block::after { content: none !important; display: none !important; }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 2; grid-row: 2; min-width: 0 !important; height: 100% !important; min-height: 0 !important; padding: 18px clamp(4px, 2vw, 32px) 24px !important; justify-content: center !important; align-items: flex-start !important; background: #f5f7ff !important; overflow: auto !important; }
