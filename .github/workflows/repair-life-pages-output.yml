@@ -1,0 +1,76 @@
+name: Repair LIFE Pages output directory and rebuild
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/repair-life-pages-output.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Repair Pages project output path and retry latest source commit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,os,sys,time,urllib.request,urllib.error
+          token=os.environ.get('CF_TOKEN','')
+          account=os.environ.get('CF_ACCOUNT','')
+          if not token or not account: sys.exit('Cloudflare credentials missing')
+          base=f'https://api.cloudflare.com/client/v4/accounts/{account}/pages/projects/life-pagero'
+          headers={'Authorization':'Bearer '+token,'Accept':'application/json'}
+          def api(path='',method='GET',body=None):
+              payload=None if body is None else json.dumps(body).encode()
+              req=urllib.request.Request(base+path,data=payload,headers={**headers,**({'Content-Type':'application/json'} if body is not None else {})},method=method)
+              try:
+                  with urllib.request.urlopen(req,timeout=45) as response: data=json.load(response)
+              except urllib.error.HTTPError as e:
+                  print('CF_API_HTTP_ERROR',method,path,e.code,e.read().decode('utf-8','replace')[:300]);raise
+              if not data.get('success'): raise RuntimeError('CF API error '+str(data.get('errors',[]))[:350])
+              return data.get('result')
+          project=api()
+          build=project.get('build_config') or {}
+          prior=build.get('destination_dir')
+          print('BEFORE_OUTPUT_DIR',prior)
+          if prior not in ('../dist','dist'): sys.exit('Unexpected output path; refusing modification')
+          if build.get('build_command')!='npm run build':sys.exit('Unexpected build command; refusing modification')
+          if (build.get('root_dir') or '') not in ('','/'):sys.exit('Unexpected build root; refusing modification')
+          if prior!='dist':
+              api('','PATCH',{'build_config':{'build_command':'npm run build','destination_dir':'dist','root_dir':''}})
+          updated=api()
+          print('AFTER_OUTPUT_DIR',(updated.get('build_config') or {}).get('destination_dir'))
+          if (updated.get('build_config') or {}).get('destination_dir')!='dist':sys.exit('Output directory did not persist')
+          if (updated.get('build_config') or {}).get('build_command')!='npm run build':sys.exit('Build command changed unexpectedly')
+          deployment_id='b2e42882-7a56-41e6-9525-b9ca2c597539'
+          latest=api('/deployments/'+deployment_id)
+          metadata=((latest.get('deployment_trigger') or {}).get('metadata') or {})
+          if metadata.get('commit_hash')!='550caa4aa1e982cd910d95c727eca591b4d7183b' or metadata.get('branch')!='main':
+              sys.exit('Unexpected source commit; refusing retry')
+          retry=api('/deployments/'+deployment_id+'/retry','POST',{})
+          print('RETRY_RESPONSE',json.dumps({'id':(retry or {}).get('id'),'url':(retry or {}).get('url'),'stage':(retry or {}).get('latest_stage')},ensure_ascii=False))
+          new_id=(retry or {}).get('id')
+          if not new_id:sys.exit('Retry response did not provide deployment ID')
+          for attempt in range(75):
+              d=api('/deployments/'+new_id)
+              stage=d.get('latest_stage') or {}
+              status=stage.get('status');name=stage.get('name')
+              if attempt%5==0 or status in ('success','failure','error'):
+                  print('DEPLOY_CHECK',json.dumps({'id':new_id,'stage':name,'status':status,'url':d.get('url'),'attempt':attempt},ensure_ascii=False),flush=True)
+              if status=='success' and name in ('deploy','build'):
+                  print('DEPLOY_SUCCESS',d.get('url'))
+                  break
+              if status in ('failure','error'):
+                  print('DEPLOY_FAILURE',new_id)
+                  logs=api('/deployments/'+new_id+'/history/logs').get('data') or []
+                  for row in logs[-35:]:
+                      print('BUILD_LOG',str(row.get('line','')).replace(token,'[redacted]').replace(account,'[account-redacted]')[:350])
+                  sys.exit('Retry failed')
+              time.sleep(4)
+          else:sys.exit('Deployment still running at check timeout')
+          PY
