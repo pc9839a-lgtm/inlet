@@ -388,7 +388,7 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-state {
   font-weight: 650;
   line-height: 1.35;
 }
-body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-state.is-custom {
+body .builder-shell .edit-layout .block-editor-v2 .editor-theme-source-state:is(.is-block,.is-preset) {
   background: #f2f4f7;
   color: #475467;
 }
