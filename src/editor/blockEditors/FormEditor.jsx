@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { InspectorDisclosure } from '../ui/InspectorDisclosure.jsx';
 import './FormEditor.css';
 import { Field } from '../controls.jsx';
 import FormBasicSection from './FormBasicSection.jsx';
@@ -37,13 +37,13 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
       />
       <Field label="버튼 문구" value={s.submit} onChange={(value) => set({ submit: value })} />
       <div className="form-editor-settings">
+        <h3 className="inspector-subgroup-heading">동작</h3>
         <FormPrivacySettings s={s} set={set} />
         <FormSuccessSettings s={s} set={set} />
-        <details className="form-basic-detail form-design-detail">
-          <summary><strong>디자인</strong><ChevronDown size={16} aria-hidden="true" /></summary>
-          <div><FormDesignSection s={s} set={set} direct /></div>
-        </details>
         <FormSubmissionSection s={s} set={set} />
+        <InspectorDisclosure label="디자인" className="form-basic-detail form-design-detail">
+          <FormDesignSection s={s} set={set} direct />
+        </InspectorDisclosure>
       </div>
       <FormExternalSection
         s={s}
