@@ -146,8 +146,44 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       'mixed 30+ row navigator must not overlap or horizontally overflow at ' + width + ': ' + JSON.stringify(rowQuality));
   }
   await setViewport(client, 1672, 941, false);
+  // UX-017/024: all primary widget types share one actual inspector hierarchy
+  // (not a second row of shortcuts pointing at nested design controls).
+  for (const width of [900, 1024, 1440, 1672]) {
+    await setViewport(client, width, 941, false);
+    for (const [id, designClass, behavior] of [
+      ['editor-hero', 'hero-editor-design', false],
+      ['editor-text', 'text-editor-design', false],
+      ['editor-form', 'form-design-detail', true],
+    ]) {
+      await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .inspector-primary-heading')?.textContent?.trim() === '내용'`, 'inspector content heading for ' + id);
+      const hierarchy = await evaluate(client, `(() => {
+        const panel = document.querySelector('#editor-block-settings-${id}');
+        const design = panel?.querySelector('.${designClass}');
+        const label = design?.querySelector(':scope > summary > strong');
+        const behavior = panel?.querySelector('.inspector-subgroup-heading');
+        const body = panel?.querySelector('.block-editor-v2');
+        const box = el => el?.getBoundingClientRect();
+        return { hasDuplicate: !!document.querySelector('.inspector-navigation'),
+          content: panel?.querySelector('.inspector-primary-heading')?.textContent?.trim(),
+          design: label?.textContent?.trim(),
+          designOpen: design?.open,
+          behavior: behavior?.textContent?.trim() || '',
+          groupX: box(design)?.left, groupRight: box(design)?.right,
+          inspectorRight: box(panel)?.right,
+          innerWidth: box(body)?.width };
+      })()`);
+      assert(!hierarchy.hasDuplicate && hierarchy.content === '내용' && hierarchy.design === '디자인'
+        && (behavior ? hierarchy.behavior === '동작' : !hierarchy.behavior)
+        && hierarchy.groupRight <= hierarchy.inspectorRight + 2
+        && hierarchy.innerWidth > 210,
+        'inspector hierarchy at ' + width + ' for ' + id + ': ' + JSON.stringify(hierarchy));
+    }
+    if (width === 1024 || width === 1672) await capture(client, 'single-hierarchy-form-' + width);
+  }
+  await setViewport(client, 1672, 941, false);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
-  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && document.querySelector('.inspector-navigation')?.querySelectorAll('button').length >= 3`, 'reference text inspector');
+  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('.inspector-primary-heading') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy text inspector');
 
   // UX-015: Search locates a block without filtering, renumbering, or changing
   // the order of the user's original page blocks.
@@ -277,10 +313,10 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `!!document.querySelector('.add-panel')`, 'compact add catalog');
   await pressKeyboardKey(client, 'Escape');
   await waitForBrowser(client, `!document.querySelector('.add-panel')`, 'compact add catalog Escape');
-  await clickPointer(client, '.inspector-navigation button:last-child');
-  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .block-editor-advanced-settings').open`, 'inspector advanced navigation opens the real anchor control');
-  await clickPointer(client, '.inspector-navigation button:first-child');
-  await waitForBrowser(client, `document.querySelector('.work-panel').scrollTop === 0`, 'content navigation returns to shared editor top');
+  await clickPointer(client, '#editor-block-settings-editor-text .block-editor-advanced-settings > summary');
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .block-editor-advanced-settings').open`, 'single advanced group opens the anchor control');
+  await evaluate(client, `document.querySelector('.work-panel').scrollTop = 0`);
+  await waitForBrowser(client, `document.querySelector('.work-panel').scrollTop === 0`, 'shared editor scroll remains available without a second group navigator');
 
   await waitForBrowser(client, `getComputedStyle(document.querySelector('.preview-selection-toolbar')).visibility === 'visible'`, 'selected preview action bar');
   await clickPointer(client, '.preview-selection-toolbar button[aria-label="블록 위로 이동"]');
