@@ -23,6 +23,16 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout {
   --editor-ui-space-3: 12px;
   --editor-ui-space-4: 16px;
   --editor-ui-space-5: 24px;
+  /* 10th patch: editor controls only, never the published mobile page. */
+  --editor-ui-input-height: 42px;
+  --editor-ui-compact-height: 36px;
+  --editor-ui-touch-height: 44px;
+  --editor-ui-control-radius: 7px;
+  --editor-ui-control-line: #d0d5dd;
+  --editor-ui-accent: #2454ff;
+  --editor-ui-active-bg: #e9efff;
+  --editor-ui-disabled-bg: #f2f4f7;
+  --editor-ui-disabled-text: #667085;
   grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;
   grid-template-rows: auto;
   align-items: stretch;

@@ -1502,7 +1502,7 @@ async function run() {
       const style = getComputedStyle(field);
       return { radius: style.borderRadius, size: style.fontSize, minHeight: style.minHeight };
     })()`);
-    assert(stageFourField.radius === '6px' && stageFourField.size === '14px',
+    assert(stageFourField.radius === '7px' && stageFourField.size === '14px',
       'stage4 common text fields must use the shared readable input style: ' + JSON.stringify(stageFourField));
     await clickSelector(client, '#editor-block-settings-editor-hero .hero-editor-design > summary');
     const stageFourChoice = '#editor-block-settings-editor-hero .editor-segmented-v2[aria-label="정렬"]';
@@ -1518,7 +1518,7 @@ async function run() {
         outline: style.outlineStyle, outlineWidth: style.outlineWidth,
         overflow: button.scrollWidth > button.clientWidth + 2 };
     })()`);
-    assert(stageFourChoiceStyle.border === '1px' && stageFourChoiceStyle.background === 'rgb(243, 244, 246)'
+    assert(stageFourChoiceStyle.border === '1px' && stageFourChoiceStyle.background === 'rgb(233, 239, 255)'
       && stageFourChoiceStyle.outline === 'solid' && stageFourChoiceStyle.outlineWidth === '2px'
       && !stageFourChoiceStyle.overflow,
       'stage4 choices must have one rail, visible selection and keyboard focus: ' + JSON.stringify(stageFourChoiceStyle));

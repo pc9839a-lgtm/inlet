@@ -2,12 +2,12 @@
    Shared controls have one owner for normal and fixed block settings.
    Important declarations bridge legacy editor globals; geometry stays local. */
 body .builder-shell .edit-layout .block-editor-v2 {
-  --control-line: #cbd2dc;
+  --control-line: var(--editor-ui-control-line, #d0d5dd);
   --control-text: var(--editor-ui-text, #182230);
   --control-muted: var(--editor-ui-muted, #667085);
   --control-soft: #f2f4f7;
-  --control-focus: #2563eb;
-  --control-radius: 6px;
+  --control-focus: var(--editor-ui-accent, #2454ff);
+  --control-radius: var(--editor-ui-control-radius, 7px);
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2, .field, .range, .range-field, .color, .color-field, .choice, .weekday, .editor-segmented-v2) {
@@ -56,7 +56,7 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2, .field) 
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100%;
-  min-height: 42px !important;
+  min-height: var(--editor-ui-input-height, 42px) !important;
   margin: 0;
   padding: 9px 11px !important;
   border: 1px solid var(--control-line) !important;
@@ -79,13 +79,18 @@ body .builder-shell .edit-layout .block-editor-v2 .editor-field-v2--compact-text
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2, .field) :is(input, textarea, select):disabled {
-  background: #f2f4f7 !important;
-  color: var(--control-muted) !important;
+  background: var(--editor-ui-disabled-bg, #f2f4f7) !important;
+  color: var(--editor-ui-disabled-text, #667085) !important;
+  border-color: var(--control-line) !important;
   cursor: not-allowed;
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2, .field) :is(input, textarea, select)[aria-invalid='true'] {
   border-color: #d92d20 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2, .field) :is(input, textarea, select):hover:not(:disabled):not([aria-invalid='true']) {
+  border-color: #9facbd !important;
 }
 
 .editor-field-v2-error {
@@ -99,9 +104,9 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-optio
   grid-template-columns: repeat(auto-fit, minmax(min(88px, 100%), 1fr)) !important;
   min-width: 0;
   gap: 4px !important;
-  padding: 3px !important;
-  border: 1px solid #e4e7ec !important;
-  border-radius: 4px !important;
+  padding: 2px !important;
+  border: 1px solid var(--control-line) !important;
+  border-radius: var(--control-radius) !important;
   background: #fff !important;
   overflow: visible;
 }
@@ -127,11 +132,11 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-optio
   justify-content: center !important;
   gap: 4px;
   min-width: 0 !important;
-  min-height: 36px !important;
+  min-height: var(--editor-ui-compact-height, 36px) !important;
   height: auto !important;
   padding: 7px 9px !important;
   border: 1px solid transparent !important;
-  border-radius: 6px !important;
+  border-radius: 5px !important;
   background: transparent !important;
   color: #475467 !important;
   box-shadow: none !important;
@@ -144,9 +149,20 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-optio
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-options, .choice > div, .weekday > div, .image-mode-toolbar) button:is(.active, [aria-pressed='true']) {
   border-color: transparent !important;
-  background: #f3f4f6 !important;
+  background: var(--editor-ui-active-bg, #e9efff) !important;
+  color: var(--control-focus) !important;
+  font-weight: 650 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-options, .choice > div, .weekday > div, .image-mode-toolbar) button:hover:not(:disabled):not(.active):not([aria-pressed='true']) {
+  background: #f2f4f7 !important;
   color: var(--control-text) !important;
-  font-weight: 600 !important;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-options, .choice > div, .weekday > div, .image-mode-toolbar) button:disabled {
+  opacity: .45;
+  color: var(--editor-ui-disabled-text, #667085) !important;
+  cursor: not-allowed;
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .toggle) {
@@ -154,7 +170,7 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .to
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   min-width: 0;
-  min-height: 44px !important;
+  min-height: var(--editor-ui-touch-height, 44px) !important;
   gap: 12px !important;
   margin: 0;
   padding: 0 !important;
@@ -179,7 +195,7 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .to
   max-height: 44px !important;
   padding: 0 3px !important;
   border: 0 !important;
-  border-radius: 8px !important;
+  border-radius: var(--control-radius) !important;
   background: transparent !important;
   box-shadow: none !important;
   overflow: visible !important;
@@ -211,7 +227,7 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .to
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .toggle) > button[role="switch"][aria-checked='true']::before {
-  background: #344054;
+  background: var(--control-focus);
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .toggle) > button[role="switch"][aria-checked='true'] > :is(span, i) {
@@ -221,6 +237,10 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .to
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .toggle) > button[role="switch"]:disabled {
   opacity: .45;
   cursor: not-allowed;
+}
+
+body .builder-shell .edit-layout .block-editor-v2 :is(.editor-toggle-row-v2, .toggle) > button[role='switch']:hover:not(:disabled)::before {
+  box-shadow: 0 0 0 2px #d4dded;
 }
 
 body .builder-shell .edit-layout .block-editor-v2 .range > div {
@@ -250,7 +270,7 @@ body .builder-shell .edit-layout .block-editor-v2 .range b {
 }
 
 body .builder-shell .edit-layout .block-editor-v2 :is(.add-line-clean, .danger-btn-clean, .eyedropper) {
-  min-height: 38px !important;
+  min-height: var(--editor-ui-compact-height, 36px) !important;
   padding: 8px 12px !important;
   border: 1px solid var(--control-line) !important;
   border-radius: var(--control-radius) !important;
@@ -273,7 +293,7 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2 input, .e
 
 @media (pointer: coarse) {
   body .builder-shell .edit-layout .block-editor-v2 :is(.editor-segmented-v2-options, .choice > div, .weekday > div, .image-mode-toolbar) button {
-    min-height: 44px !important;
+    min-height: var(--editor-ui-touch-height, 44px) !important;
   }
 }
 

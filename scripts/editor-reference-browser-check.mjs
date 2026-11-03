@@ -28,9 +28,41 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const alignmentChoice = initialBlockAlignment ? '정렬: 가운데' : '정렬: 블록별';
   await clickPointer(client, `.style-panel-v17 button[aria-label="${alignmentChoice}"]`);
   await waitForBrowser(client, `document.querySelector('.style-panel-v17 button[aria-label="${alignmentChoice}"]')?.getAttribute('aria-pressed') === 'true'`, 'page alignment mode selection updates only the staged design');
+  // UX-032: page-theme selections and apply/undo use the same compact
+  // height, radius, blue selected state and disabled conventions as blocks.
+  const pageControlState = await evaluate(client, `(() => {
+    const root = document.querySelector('.style-panel-v17');
+    const selected = root?.querySelector('.style-segment button[aria-pressed="true"]');
+    const apply = root?.querySelector('.style-apply-btn');
+    const reset = root?.querySelector('.style-reset-btn');
+    const data = (node) => {
+      if (!node) return null;
+      const s = getComputedStyle(node), b = node.getBoundingClientRect();
+      return {height:b.height, radius:s.borderTopLeftRadius, color:s.color, bg:s.backgroundColor, opacity:s.opacity, disabled:node.disabled};
+    };
+    return {selected:data(selected), apply:data(apply), reset:data(reset), activeLabel:selected?.getAttribute('aria-label')};
+  })()`);
+  assert(pageControlState?.selected?.height >= 36 && pageControlState.selected.height <= 40
+    && parseInt(pageControlState.selected.radius,10) <= 7
+    && pageControlState.selected.color === 'rgb(36, 84, 255)'
+    && pageControlState.selected.bg === 'rgb(233, 239, 255)'
+    && pageControlState.apply.height >= 36 && !pageControlState.apply.disabled
+    && !pageControlState.reset.disabled,
+    'page controls must show clear selected and enabled state before applying: '+JSON.stringify(pageControlState));
   await capture(client, 'page-theme-alignment-modes');
   await clickPointer(client, '.style-panel-v17 .style-reset-btn');
   await waitForBrowser(client, `document.querySelector('.style-panel-v17 button[aria-label="정렬: 블록별"]')?.getAttribute('aria-pressed') === String(${initialBlockAlignment})`, 'undo restores exact original alignment mode');
+  const pageDisabledState = await evaluate(client, `(() => {
+    const apply = document.querySelector('.style-panel-v17 .style-apply-btn');
+    const reset = document.querySelector('.style-panel-v17 .style-reset-btn');
+    return { applyDisabled:apply?.disabled, resetDisabled:reset?.disabled,
+      applyOpacity:apply && getComputedStyle(apply).opacity,
+      resetOpacity:reset && getComputedStyle(reset).opacity };
+  })()`);
+  assert(pageDisabledState?.applyDisabled && pageDisabledState?.resetDisabled
+    && Number(pageDisabledState.applyOpacity) <= .5 && Number(pageDisabledState.resetOpacity) <= .5,
+    'unmodified page design must expose disabled actions, not enabled-looking dead buttons: ' + JSON.stringify(pageDisabledState));
+  await capture(client, 'controls-page-disabled-1672');
   assert(apiState.saveCount === 0, 'page alignment mode preview and undo must not write or publish');
 
   // Stress-test the block composition with 30+ rows. Clones are DOM-only
@@ -265,6 +297,102 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await setViewport(client, 1672, 941, false);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('.inspector-primary-heading') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy text inspector');
+
+  // UX-032: 42px native fields / 36px compact fields / 44px toggle hit area.
+  // Check computed styles at compact and wide inspector widths. Keep model
+  // values unchanged; disabled states below are DOM-only and immediately reset.
+  for (const width of [900, 1024, 1440, 1672]) {
+    await setViewport(client, width, 941, false);
+    const metrics = await evaluate(client, `(() => {
+      const scope = document.querySelector('#editor-block-settings-editor-text');
+      const details = scope?.querySelector('.text-editor-flow');
+      if (!details) return null;
+      const input = details.querySelector('.editor-field-v2 textarea');
+      const segment = details.querySelector('.editor-segmented-v2-options button[aria-pressed="true"]');
+      const rail = segment?.parentElement;
+      const number = details.querySelector('.editor-number-value > input');
+      const numberBox = details.querySelector('.editor-number-value');
+      const steppers = details.querySelector('.editor-number-steppers');
+      const hex = details.querySelector('.color-clean input[type="text"]');
+      const swatch = details.querySelector('.color-clean input[type="color"]');
+      const eyedropper = details.querySelector('.color-clean .eyedropper');
+      const colorRow = details.querySelector('.color-clean .color-main');
+      const measure = (node) => {
+        if (!node) return null;
+        const rect = node.getBoundingClientRect(), css = getComputedStyle(node);
+        return {height:rect.height, left:rect.left, right:rect.right, radius:css.borderTopLeftRadius,
+          color:css.color, bg:css.backgroundColor, outline:css.outlineWidth};
+      };
+      const oldDisabled = segment?.disabled;
+      if (segment) segment.disabled = true;
+      const disabledOpacity = segment ? getComputedStyle(segment).opacity : null;
+      if (segment) segment.disabled = oldDisabled;
+      return {
+        input:measure(input), segment:measure(segment), rail:measure(rail),
+        number:measure(number), numberBox:measure(numberBox), steppers:measure(steppers),
+        hex:measure(hex), swatch:measure(swatch), eyedropper:measure(eyedropper),
+        colorRow:measure(colorRow), disabledOpacity,
+        overflow:colorRow ? colorRow.scrollWidth > colorRow.clientWidth + 1 : true,
+        cssToken:getComputedStyle(document.querySelector('.edit-layout')).getPropertyValue('--editor-ui-control-radius').trim(),
+      };
+    })()`);
+    assert(metrics?.input?.height >= 78
+      && metrics.segment?.height >= 36 && metrics.segment.height <= 44
+      && metrics.segment.color === 'rgb(36, 84, 255)'
+      && metrics.segment.bg === 'rgb(233, 239, 255)'
+      && metrics.rail?.height >= 40 && parseInt(metrics.rail.radius,10) <= 7
+      && metrics.number?.height >= 36 && metrics.number.height <= 44
+      && metrics.hex?.height >= 36 && metrics.hex.height <= 44
+      && metrics.swatch?.height >= 36 && metrics.eyedropper?.height >= 36
+      && metrics.numberBox?.radius === '7px' && metrics.hex.radius === '7px'
+      && Number(metrics.disabledOpacity) <= .5 && !metrics.overflow
+      && metrics.swatch.right <= metrics.hex.left
+      && metrics.hex.right <= metrics.eyedropper.left
+      && metrics.cssToken === '7px',
+      'block fields/selection/number/HEX must align at ' + width + ': ' + JSON.stringify(metrics));
+    if (width === 900 || width === 1440) await capture(client, 'control-states-block-' + width);
+  }
+  await setViewport(client, 1672, 941, false);
+  await focusSelector(client, '#editor-block-settings-editor-text .color-clean input[type="text"]');
+  const focusRing = await evaluate(client, `(() => {
+    const element = document.querySelector('#editor-block-settings-editor-text .color-clean input[type="text"]');
+    return { focused:document.activeElement === element,
+      width:element && getComputedStyle(element).outlineWidth,
+      style:element && getComputedStyle(element).outlineStyle };
+  })()`);
+  assert(focusRing.focused && focusRing.width === '2px' && focusRing.style === 'solid',
+    'keyboard focus must be visible on HEX input: ' + JSON.stringify(focusRing));
+
+  await clickPointer(client, '#editor-block-editor-bottom .fixed-block-head');
+  await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-bottom .bottom-bar-editor-design > summary')`,
+    'bottom fixed CTA exposes real design controls');
+  await clickPointer(client, '#editor-block-settings-editor-bottom .bottom-bar-editor-design > summary');
+  await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-bottom .editor-toggle-row-v2 button[role="switch"]')`,
+    'bottom CTA shows semantic on/off control');
+  const switchMetrics = await evaluate(client, `(() => {
+    const node = document.querySelector('#editor-block-settings-editor-bottom .editor-toggle-row-v2 button[role="switch"]');
+    const original = node.getAttribute('aria-checked'), initialDisabled=node.disabled;
+    const rect = node.getBoundingClientRect();
+    node.setAttribute('aria-checked','false');
+    const off = getComputedStyle(node,'::before').backgroundColor;
+    node.setAttribute('aria-checked','true');
+    const on = getComputedStyle(node,'::before').backgroundColor;
+    node.disabled = true;
+    const disabledOpacity = getComputedStyle(node).opacity;
+    node.disabled = initialDisabled;
+    node.setAttribute('aria-checked', original);
+    return { width:rect.width,height:rect.height,off,on,disabledOpacity,restored:node.getAttribute('aria-checked')===original };
+  })()`);
+  assert(switchMetrics.width === 46 && switchMetrics.height >= 44
+    && switchMetrics.off === 'rgb(208, 213, 221)'
+    && switchMetrics.on === 'rgb(36, 84, 255)'
+    && Number(switchMetrics.disabledOpacity) <= .5 && switchMetrics.restored,
+    'switch must retain 44px target, clear off/on color and disabled appearance: ' + JSON.stringify(switchMetrics));
+  await capture(client, 'control-states-bottom-toggle');
+  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .text-editor-flow')`,
+    'control QA returns to original text editor without draft or public save');
+  assert(apiState.saveCount === 0, 'control styling, temporary disabled attributes and navigation must never publish');
 
   // UX-015: Search locates a block without filtering, renumbering, or changing
   // the order of the user's original page blocks.

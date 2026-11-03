@@ -54,10 +54,10 @@
 
 .builder-shell .style-panel-v17 :is(.style-apply-btn, .style-reset-btn, .style-segment button, .style-overlay-title button) {
   min-width: 0;
-  min-height: 36px;
+  min-height: var(--editor-ui-compact-height, 36px);
   padding: 0 9px;
-  border: 1px solid var(--product-line);
-  border-radius: 6px;
+  border: 1px solid var(--editor-ui-control-line, #d0d5dd);
+  border-radius: var(--editor-ui-control-radius, 7px);
   background: #fff;
   color: #475467;
   box-shadow: none;
@@ -73,8 +73,15 @@
   color: #fff;
 }
 
+.builder-shell .style-panel-v17 :is(.style-segment button, .style-reset-btn, .style-overlay-title button):hover:not(:disabled):not(.active) {
+  border-color: #aebed1;
+  background: #f2f4f7;
+  color: var(--editor-ui-text, #182230);
+}
+
 .builder-shell .style-panel-v17 button:disabled {
   opacity: .45;
+  background-color: var(--editor-ui-disabled-bg, #f2f4f7);
   cursor: not-allowed;
 }
 
@@ -119,7 +126,7 @@
   gap: 3px;
   padding: 3px;
   border: 1px solid var(--product-line);
-  border-radius: 6px;
+  border-radius: var(--editor-ui-control-radius, 7px);
   background: #f8fafc;
 }
 
@@ -137,9 +144,9 @@
 }
 
 .builder-shell .style-panel-v17 :is(.style-segment button.active, .style-overlay-title button.active) {
-  background: #e9edf3;
-  color: #101828;
-  font-weight: 600;
+  background: var(--editor-ui-active-bg, #e9efff);
+  color: var(--editor-ui-accent, #2454ff);
+  font-weight: 650;
 }
 
 .builder-shell .style-panel-v17 .style-preset-row-v16 {
@@ -152,14 +159,14 @@
 .builder-shell .style-panel-v17 .style-preset-row-v16 button {
   width: 100%;
   min-width: 0;
-  height: 32px;
-  border: 1px solid #cfd6df;
-  border-radius: 6px;
+  height: var(--editor-ui-compact-height, 36px);
+  border: 1px solid var(--editor-ui-control-line, #d0d5dd);
+  border-radius: var(--editor-ui-control-radius, 7px);
   cursor: pointer;
 }
 
 .builder-shell .style-panel-v17 .style-preset-row-v16 button.active {
-  outline: 2px solid #344054;
+  outline: 2px solid var(--editor-ui-accent, #2454ff);
   outline-offset: 1px;
 }
 
@@ -290,7 +297,7 @@
 }
 
 .builder-shell .style-panel-v17 :is(button, input, summary):focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--editor-ui-accent, #2454ff);
   outline-offset: 2px;
 }
 
