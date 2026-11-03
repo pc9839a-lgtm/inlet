@@ -149,6 +149,7 @@ assert(typographyTokens.every(token => editPanelLayoutCss.includes(token))
   && textEditorTypographyCss.includes('gap: var(--editor-ui-space-3, 12px)')
   && !textEditorTypographyCss.includes('font-size: 14px !important; font-weight: 500 !important')
   && !legacyStylePanelCss.includes('.style-panel-v17{gap:14px!important}')
+  && !stylePanel.includes('className="simple-panel style-panel')
   && !css.includes('--editor-ui-title-size')
   && !previewPaneCss.includes('--editor-ui-title-size'),
   'type sizes and 4/8 rhythm must stay in existing editor owners without leaking to public preview or creating stylesheet overrides');
