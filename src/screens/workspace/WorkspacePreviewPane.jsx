@@ -58,6 +58,7 @@ export function WorkspacePreviewPane({
           <select aria-label="미리보기 배율" value={zoom} onChange={(event) => setZoom(Number(event.target.value))}>{[75, 100, 125].map(value => <option key={value} value={value}>{value}%</option>)}</select>
         </div>
         </div>
+        <PreviewSelectionToolbar page={previewPage} selectedBlockId={selectedBlockId} actions={blockActions} />
         <div className="phone-frame" ref={frameRef} style={{ zoom: zoom / 100 }}>
           <PreviewRenderer
             page={previewPage}
@@ -67,7 +68,6 @@ export function WorkspacePreviewPane({
             onSelectBlock={onSelectPreviewBlock}
           />
         </div>
-        <PreviewSelectionToolbar frameRef={frameRef} page={previewPage} selectedBlockId={selectedBlockId} actions={blockActions} zoom={zoom} />
       </div>
     </main>
   );
