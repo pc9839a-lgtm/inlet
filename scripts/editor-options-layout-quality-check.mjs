@@ -73,7 +73,9 @@ assert(!pageOptionsProps.includes('topNavBlock') && !pageOptionsProps.includes('
 assert(fixedBlocksProps.includes('topNavBlock: selection.topNavBlock') && fixedBlocksProps.includes('bottomBlock: selection.bottomBlock') && fixedBlocksProps.includes('footerBlock: selection.footerBlock'), 'fixed block props must own top, bottom, and footer editors');
 assert(sectionProps.includes('fixedBlocksProps: createFixedBlocksProps'), 'edit panel section props must expose fixed blocks separately');
 assert(editLayout.includes("only={['topnav']} compositionRow") && editLayout.includes("only={['bottom', 'footer']} compositionRow"), 'screen order mode must render fixed entries in the persistent composition');
-assert(editLayout.includes('aria-label="고정 영역"') && editLayout.includes('aria-label="헤더"'), 'fixed blocks must be clearly labeled outside page options');
+assert(editLayout.includes('aria-label="상단 고정 영역"') && editLayout.includes('aria-label="하단 고정 영역"')
+  && editLayout.includes('<h3>상단 고정</h3>') && editLayout.includes('<h3>하단 고정</h3>'),
+  'fixed blocks must be clearly labeled as top/bottom fixed groups outside page options');
 assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row') && fixedBlocksCss.includes('.fixed-composition-row .fixed-block-head'), 'fixed region section must own inline row geometry');
 assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px 30px !important') && fixedBlocksCss.includes('overflow-wrap: anywhere'), 'fixed block rows must align with normal block controls and wrap long Korean names');
