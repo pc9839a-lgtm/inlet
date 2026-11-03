@@ -1,0 +1,82 @@
+name: Verify LIFE immutable origin and canonical proxy
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'functions/life/[[path]].js'
+      - '.github/workflows/verify-life-immutable-promotion.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'functions/life/[[path]].js'
+      - '.github/workflows/verify-life-immutable-promotion.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify immutable Pages deployment content, canonical and robots
+        shell: bash
+        run: |
+          python - <<'PY'
+          import pathlib, re, urllib.request, sys, os, time
+          src=pathlib.Path('functions/life/[[path]].js').read_text(encoding='utf-8')
+          found=re.search(r"const LIFE_UPSTREAM_ORIGIN = '(https://[0-9a-f]+\.life-pagero\.pages\.dev)';",src)
+          if not found:sys.exit('Immutable LIFE origin missing')
+          origin=found.group(1)
+          expected={
+            '/support/child-support-advance-payment-2026/':['2026년 10월 29일부터 소득기준은 폐지됐습니다'],
+            '/car/car-inspection-period/':['검사 유효기간과 실제 검사 가능기간은 다릅니다'],
+            '/support/flu-vaccination-children-2026/':['2026-2027절기 무료접종 대상과 기간','9월 21일'],
+            '/support/culture-card-2026/':['2026 문화누리카드: 발급은 11월 30일까지'],
+            '/support/energy-voucher-2026/':['11월 에너지바우처: 신청·사용·재신청 구분'],
+            '/support/earned-income-tax-credit-late-2026/':['2026년 11월 근로장려금 기한 후 신청'],
+          }
+          def read(url):
+            request=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (PageroLifeImmutableGate)','Cache-Control':'no-cache'})
+            with urllib.request.urlopen(request,timeout=23) as response:
+              return response.status,response.headers,response.read(850000).decode('utf-8','replace')
+          for path,markers in expected.items():
+            status,headers,html=read(origin+path)
+            target='https://pagero.kr/life'+path
+            assertions={
+              'status':status==200,
+              'origin-noindex':'noindex' in headers.get('X-Robots-Tag','').lower(),
+              'canonical':('<link rel="canonical" href="'+target+'">') in html,
+              'primary-index-meta':'<meta name="robots" content="index,follow' in html,
+              'fresh-content':all(marker in html for marker in markers),
+              'not-old-draft':not (path.endswith('/child-support-advance-payment-2026/') and '소득기준 폐지를 앞둔' in html),
+            }
+            print('ORIGIN_CHECK',path,assertions,flush=True)
+            if not all(assertions.values()):sys.exit('Immutable origin page verification failed '+path)
+          status,headers,sitemap=read(origin+'/sitemap.xml')
+          if status!=200 or sitemap.count('<loc>')<50 or 'https://pagero.kr/life/car/car-inspection-period/' not in sitemap:
+            sys.exit('Immutable origin sitemap invalid')
+          print('IMMUTABLE_ORIGIN_VERIFIED',origin,'sitemap_urls',sitemap.count('<loc>'),flush=True)
+          if os.environ.get('GITHUB_EVENT_NAME')!='push':
+            sys.exit(0)
+          # Main-branch promotion is not considered done until the public Pages Function
+          # serves these same pages WITHOUT the origin-only X-Robots-Tag.
+          pending=dict(expected)
+          for attempt in range(1,22):
+            for path,markers in list(pending.items()):
+              try:
+                status,headers,html=read('https://pagero.kr/life'+path)
+                good=(status==200
+                  and all(marker in html for marker in markers)
+                  and headers.get('X-Pagero-Life-Proxy')=='1'
+                  and 'noindex' not in headers.get('X-Robots-Tag','').lower()
+                  and '<meta name="robots" content="index,follow' in html)
+                print('PUBLIC_CHECK',attempt,path,'OK' if good else 'NOT_UPDATED',flush=True)
+                if good:pending.pop(path)
+              except Exception as ex:
+                print('PUBLIC_RETRY',attempt,path,type(ex).__name__,str(ex)[:100],flush=True)
+            if not pending:break
+            time.sleep(12)
+          if pending:sys.exit('Public canonical not updated: '+str(list(pending)))
+          print('CANONICAL_LIFE_PROMOTION_VERIFIED',flush=True)
+          PY
