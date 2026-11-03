@@ -18,7 +18,7 @@ export default function TopNavEditor({ s, set, page, TargetControl }) {
         <TopNavMenuListSection page={page} TargetControl={TargetControl} {...menuController} />
       </section>
       <InspectorDisclosure label="디자인" className="topnav-editor-design" bodyClassName="topnav-editor-design-controls">
-        <TopNavStylePanel s={s} set={set} />
+        <TopNavStylePanel s={s} set={set} theme={page?.theme} />
       </InspectorDisclosure>
     </div>
   );
