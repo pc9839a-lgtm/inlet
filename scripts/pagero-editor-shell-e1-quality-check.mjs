@@ -41,6 +41,9 @@ const settingsView = await readFile('src/editor/editPanelParts/ScreenOrderSettin
 const inspectorSwitch = await readFile('src/editor/editPanelParts/InspectorBlockSwitch.jsx', 'utf8');
 const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSection.css', 'utf8');
+const rowIdentity = await readFile('src/editor/editPanelParts/ScreenOrderRowIdentity.jsx', 'utf8');
+const rowCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8');
+const fixedCard = await readFile('src/editor/editPanelParts/FixedBlockCard.jsx', 'utf8');
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const chromeCss = await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8');
 const leftPanel = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx', 'utf8');
@@ -74,6 +77,17 @@ assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-ro
   && fixedBlocksCss.includes('.fixed-composition-select')
   && !css.includes('.screen-order-fixed-blocks'),
   'fixed areas must use aligned compact rows under FixedBlocksSection.css ownership');
+assert(rowIdentity.includes('function BlockTypeThumbnail({ Icon, src })')
+  && rowIdentity.includes("onError={() => setImageState('error')}")
+  && rowIdentity.includes("key={thumbnail || 'block-type'}")
+  && rowIdentity.includes('screen-order-v2-hidden-badge')
+  && rowIdentity.includes('title={summary}')
+  && fixedCard.includes('screen-order-v2-hidden-badge')
+  && rowCss.includes('/* Persistent editor layer navigator')
+  && !rowCss.includes('Compact desktop keeps text readable before shrinking its action targets.')
+  && fixedBlocksCss.includes('/* Pinned regions share the navigator row geometry')
+  && !fixedBlocksCss.includes('One-line fixed labels match regular blocks in the 180px list.'),
+  'persistent list must have a single row system, stable thumbnail fallback, visible hidden state and full-name tooltip');
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
 assert(css.includes('--editor-list-width: clamp(220px, 18vw, 260px);') && css.includes('--editor-edit-width: clamp(490px, calc(100vw - 418px), 700px);') && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'reference inspector requires a genuinely usable left editor up to 700px');

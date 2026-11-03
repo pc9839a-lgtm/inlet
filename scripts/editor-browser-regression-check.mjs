@@ -1928,7 +1928,7 @@ async function run() {
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '2px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '9px' && stageOneList.height >= 48
+      && stageOneList.rowRadius === '8px' && stageOneList.height >= 55
       && stageOneList.titleWhiteSpace === 'nowrap'
       && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
       'compact block list must show single-line names and reachable controls: ' + JSON.stringify(stageOneList));
@@ -2117,7 +2117,7 @@ async function run() {
     // E2E-04: visibility toggle must update the preview without publishing.
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-visibility-button');
     await waitForBrowser(client, `document.querySelector('#editor-block-editor-text .screen-order-v2-visibility-button')?.getAttribute('aria-checked') === 'false'`, 'text visibility off');
-    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-text .screen-order-v2-identity-detail')?.textContent || '').includes('숨김')`, 'hidden row carries a readable state label');
+    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-text .screen-order-v2-hidden-badge')?.textContent || '').trim() === '숨김'`, 'hidden row carries a readable state label');
     await waitForBrowser(client, `!(document.querySelector('.phone-frame')?.innerText || '').includes('편집기 회귀 방지')`, 'hidden text removed from preview');
 
     // E2E-03: move the form above the text row through the real overflow menu.
@@ -2665,7 +2665,7 @@ async function run() {
     assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '9px' && screenOrderShellStyle?.rowBorder === '0px', `reference list must keep flat rows at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '8px' && screenOrderShellStyle?.rowBorder === '0px', `reference list must keep flat rows at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(255, 255, 255)', `compact add action must keep its reference neutral surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 1180) {
