@@ -1928,7 +1928,7 @@ async function run() {
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '2px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '9px' && stageOneList.height >= 48
+      && stageOneList.rowRadius === '8px' && stageOneList.height >= 55
       && stageOneList.titleWhiteSpace === 'nowrap'
       && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
       'compact block list must show single-line names and reachable controls: ' + JSON.stringify(stageOneList));
