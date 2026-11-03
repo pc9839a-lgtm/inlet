@@ -39,6 +39,13 @@ const css = await readFile('src/styles/editor-workspace.css', 'utf8');
 const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
 const settingsView = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const inspectorSwitch = await readFile('src/editor/editPanelParts/InspectorBlockSwitch.jsx', 'utf8');
+const settingsHeader = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
+const disclosure = await readFile('src/editor/ui/InspectorDisclosure.jsx', 'utf8');
+const heroEditor = await readFile('src/editor/blockEditors/HeroEditor.jsx', 'utf8');
+const textEditor = await readFile('src/editor/blockEditors/TextEditor.jsx', 'utf8');
+const imageEditor = await readFile('src/editor/blockEditors/ImageEditor.jsx', 'utf8');
+const formEditor = await readFile('src/editor/blockEditors/FormEditor.jsx', 'utf8');
+const advanced = await readFile('src/editor/BlockAdvancedAnchorSettings.jsx', 'utf8');
 const pageOptionsCss = await readFile('src/editor/editPanelParts/PageGlobalOptions.css', 'utf8');
 const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSection.css', 'utf8');
 const rowIdentity = await readFile('src/editor/editPanelParts/ScreenOrderRowIdentity.jsx', 'utf8');
@@ -111,6 +118,14 @@ assert(settingsView.includes('<InspectorBlockSwitch navigation={navigation} />')
   && editPanelLayoutCss.includes('.editor-inspector-panel .screen-order-v2-card')
   && editPanelLayoutCss.includes('.editor-block-switch'),
   'inspector must keep non-destructive previous/next controls available with the shared scrollbar');
+assert(disclosure.includes('<details') && disclosure.includes('<summary>') && disclosure.includes('inspector-disclosure-body')
+  && settingsHeader.includes('inspector-primary-heading')
+  && !settingsHeader.includes('InspectorNavigation')
+  && !editPanelLayoutCss.includes('.inspector-navigation')
+  && [heroEditor, textEditor, imageEditor, formEditor, advanced].every(source => source.includes('<InspectorDisclosure'))
+  && formEditor.includes('inspector-subgroup-heading')
+  && editPanelLayoutCss.includes('.screen-order-v2-settings .inspector-disclosure'),
+  'inspector must use one shared content/behavior/design/advanced native disclosure hierarchy without duplicate shortcuts');
 assert(editPanelLayoutCss.includes('.editor-composition-heading > .editor-page-settings-button')
   && editPanelLayoutCss.includes('min-height: 40px;')
   && layout.includes('<BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} onSelect={chooseBlock} />'),
