@@ -25,10 +25,11 @@ assert(visibleEditorPublishState({ page: { ...sample, id: 'semantics-b' }, saved
 const scenarios = [
   ['before-publication', { page: sample }, '발행 전', '편집본 준비', '게시하기'],
   ['dirty', { page: sample, saveStatus: { phase: 'dirty', tone: 'idle', label: '공개 미반영' } }, '미발행 변경', '편집본 변경됨', '게시하기'],
-  ['saving-draft', { page: sample, saveStatus: { phase: 'saving', tone: 'warning', label: '임시저장 중' } }, '임시저장 중', '임시저장 중', '게시하기'],
+  ['saving-draft', { page: sample, saveStatus: { phase: 'saving', tone: 'warning', label: '임시저장 중' } }, '발행 전', '임시저장 중', '게시하기'],
   ['stored-locally', { page: sample, saveStatus: { tone: 'ok', label: '브라우저에 임시저장됨' } }, '미발행 변경', '브라우저 임시보관됨', '게시하기'],
+  ['failed-local', { page: sample, saveStatus: { tone: 'error', label: '임시저장 실패' } }, '발행 전', '임시보관 실패', '게시하기'],
   ['unapplied', { page: sample, hasUnappliedDrafts: true }, '미발행 변경', '미적용 변경', '적용 후 발행'],
-  ['publishing', { page: sample, saveStatus: { phase: 'publishing', tone: 'warning', label: '발행 중' } }, '발행 중', '편집본 준비', '발행 중'],
+  ['publishing', { page: sample, saveStatus: { phase: 'publishing', tone: 'warning', label: '발행 중' } }, '발행 중', '서버 저장·발행 중', '발행 중'],
   ['published', { page: sample, saveStatus: success }, '발행됨', '편집본 발행됨', '발행됨'],
   ['failed-with-unapplied', { page: sample, saveStatus: { tone: 'error', label: '발행 실패', detail: '네트워크 오류' }, hasUnappliedDrafts: true }, '발행 실패', '미적용 변경', '다시 발행'],
   ['unverified-with-unapplied', { page: sample, saveStatus: { tone: 'warning', label: '발행됨 · 공개 반영 확인 중' }, hasUnappliedDrafts: true }, '발행됨 · 공개 반영 확인 중', '미적용 변경', '다시 발행'],
