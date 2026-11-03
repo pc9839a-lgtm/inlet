@@ -24,7 +24,7 @@ jobs:
         run: |
           python - <<'PY'
           import pathlib, re, urllib.request, sys, os, time
-          src=pathlib.Path('functions/life/**').read_text(encoding='utf-8')
+          src=pathlib.Path('functions/life/[[path]].js').read_text(encoding='utf-8')
           found=re.search(r"const LIFE_UPSTREAM_ORIGIN = '(https://[0-9a-f]+\.life-pagero\.pages\.dev)';",src)
           if not found:sys.exit('Immutable LIFE origin missing')
           origin=found.group(1)
