@@ -9,11 +9,11 @@
 }
 
 .screen-order-fixed-blocks h3 {
-  margin: 0 0 8px;
+  margin: 13px 8px 6px;
   color: #667085;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.35;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row {
