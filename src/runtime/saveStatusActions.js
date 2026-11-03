@@ -57,6 +57,21 @@ export function visibleEditorPublishState({ page, saved, saveStatus, hasUnapplie
   return { kind: 'before', label: '발행 전', tone: 'idle', detail: '변경사항을 공개하려면 발행하세요.', actionLabel: '게시하기' };
 }
 
+// A fresh edit must not silently hide an outstanding publish failure or
+// unresolved public-verification warning. A later retry/success replaces it.
+export function nextEditorMutationStatus(current = {}, now = new Date().toISOString()) {
+  if (current?.phase === 'publishing') return current;
+  if (current?.tone === 'error') return current;
+  if (current?.tone === 'warning' && /^발행됨 · 공개 반영 확인/.test(String(current.label || ''))) return current;
+  return {
+    tone: 'idle',
+    label: '공개 미반영',
+    phase: 'dirty',
+    detail: '브라우저 임시보관을 시도하며 발행 전에는 공개되지 않습니다.',
+    at: now,
+  };
+}
+
 export function createSaveStatusMarker(setSaveStatus) {
   return function markSaveStatus(tone, label, detail = '', options = {}) {
     // Optional page scope applies only to the success flash. Other status
