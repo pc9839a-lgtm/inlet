@@ -2117,7 +2117,7 @@ async function run() {
     // E2E-04: visibility toggle must update the preview without publishing.
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-visibility-button');
     await waitForBrowser(client, `document.querySelector('#editor-block-editor-text .screen-order-v2-visibility-button')?.getAttribute('aria-checked') === 'false'`, 'text visibility off');
-    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-text .screen-order-v2-identity-detail')?.textContent || '').includes('숨김')`, 'hidden row carries a readable state label');
+    await waitForBrowser(client, `(document.querySelector('#editor-block-editor-text .screen-order-v2-hidden-badge')?.textContent || '').trim() === '숨김'`, 'hidden row carries a readable state label');
     await waitForBrowser(client, `!(document.querySelector('.phone-frame')?.innerText || '').includes('편집기 회귀 방지')`, 'hidden text removed from preview');
 
     // E2E-03: move the form above the text row through the real overflow menu.
