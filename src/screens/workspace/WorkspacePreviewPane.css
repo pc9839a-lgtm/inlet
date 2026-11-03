@@ -3,7 +3,7 @@
 .preview-sticky { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; }
 .preview-workspace .phone-frame { --landing-runtime-width: 390px; box-sizing: border-box; width: 402px; max-width: none; height: calc(100dvh - 176px); min-height: 420px; max-height: 820px; border: 6px solid #242934; border-radius: 46px; background: #fff; overflow: hidden; box-shadow: 0 0 0 2px #b8bfcd, 0 18px 42px #1e2b481c; }
 .preview-workspace .phone-frame:fullscreen { height: 100dvh !important; max-height: none !important; min-height: 0; margin: 0 auto !important; background: #fff; }
-.preview-stage-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 40px; margin-bottom: 12px; }
+.preview-stage-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 36px; margin-bottom: 0; }
 .preview-width-toolbar { display: inline-flex; align-items: center; gap: 9px; min-height: 36px; padding: 7px 12px; border: 1px solid #e8ecf7; border-radius: 9px; background: #ffffffb8; color: #182236; font-size: 13px; font-weight: 600; }
 .preview-width-toolbar > svg { color: #2454ff; }
 .preview-view-tools { display: flex; align-items: center; gap: 6px; }
@@ -37,9 +37,9 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-work
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  min-height: 42px;
-  margin: 0 0 12px;
-  padding: 4px 6px 4px 10px;
+  min-height: 36px;
+  margin: 0 0 2px;
+  padding: 2px 6px 2px 8px;
   border: 1px solid #dce4f5;
   border-radius: 8px;
   background: #fff;
@@ -89,7 +89,7 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-work
   gap: 4px;
   box-sizing: border-box;
   min-width: 30px;
-  min-height: 32px;
+  min-height: 30px;
   margin: 0;
   padding: 4px 5px;
   border: 0;
