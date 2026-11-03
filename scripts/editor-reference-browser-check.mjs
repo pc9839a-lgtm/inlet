@@ -61,6 +61,91 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && longPage.scrollTop > 0 && longPage.ownerOverflow === 'auto'
     && longPage.listWidth >= 220,
     'a wedding invitation with 30+ blocks must scroll without label/action overlap: ' + JSON.stringify(longPage));
+  // UX-003/010/011/014/035: mixed 30+ block navigation fixture. DOM-only;
+  // no persisted blocks, live account data, or published page are modified.
+  for (const width of [900, 1024, 1440, 1672]) {
+    await setViewport(client, width, 941, false);
+    await evaluate(client, `(() => {
+      const list = document.querySelector('.screen-order-v2-list');
+      const seed = list?.querySelector('.screen-order-v2-slot');
+      if (!seed) return;
+      for (let i = 0; i < 30; i++) {
+        const clone = seed.cloneNode(true);
+        clone.dataset.qaMixedRow = String(i);
+        clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+        const title = clone.querySelector('.screen-order-v2-identity-copy strong');
+        if (title) title.textContent = i % 3 === 0
+          ? '이미지 6 · 세로형 웨딩 스냅사진 길어진제목홍길동'
+          : i % 3 === 1 ? '코드 7 · wedding-invitation-custom-section' : '텍스트 4 · 찾아오시는 길 안내';
+        const icon = clone.querySelector('.screen-order-v2-type-icon');
+        if (icon && i % 3 === 0) {
+          const image = document.createElement('img');
+          image.className = 'screen-order-v2-thumbnail';
+          image.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="50" height="110"><rect width="50" height="110" fill="#aeb9cb"/></svg>');
+          icon.appendChild(image);
+          icon.classList.add('has-thumbnail');
+        }
+        const copy = clone.querySelector('.screen-order-v2-identity-copy');
+        let subline = copy?.querySelector('.screen-order-v2-identity-subline');
+        if (!subline && copy) {
+          subline = document.createElement('span');
+          subline.className = 'screen-order-v2-identity-subline';
+          copy.appendChild(subline);
+        }
+        if (subline) {
+          subline.replaceChildren();
+          const detail = document.createElement('small');
+          detail.className = 'screen-order-v2-identity-detail';
+          detail.textContent = i % 3 === 0 ? '세로 사진, 타이틀' : '길어진 한글·English 상세 메모';
+          subline.appendChild(detail);
+          if (i % 4 === 0) {
+            clone.querySelector('.screen-order-v2-item')?.classList.add('is-hidden');
+            const badge = document.createElement('span');
+            badge.className = 'screen-order-v2-hidden-badge';
+            badge.textContent = '숨김';
+            subline.appendChild(badge);
+          }
+        }
+        list.appendChild(clone);
+      }
+    })()`);
+    const rowQuality = await evaluate(client, `(() => {
+      const composition = document.querySelector('.editor-composition-panel');
+      const slots = [...composition.querySelectorAll('.screen-order-v2-slot')];
+      const rect = el => el?.getBoundingClientRect();
+      const intersect = (a,b) => a && b && a.left < b.right - .5 && a.right > b.left + .5 && a.top < b.bottom - .5 && a.bottom > b.top + .5;
+      const problems = [];
+      let thumbs = 0, hidden = 0;
+      slots.forEach((slot, index) => {
+        const title = slot.querySelector('.screen-order-v2-identity-copy strong');
+        const badge = slot.querySelector('.screen-order-v2-hidden-badge');
+        const thumb = slot.querySelector('.screen-order-v2-thumbnail');
+        const icon = slot.querySelector('.screen-order-v2-type-icon');
+        const head = slot.querySelector('.screen-order-v2-head');
+        const actions = [...slot.querySelectorAll('.screen-order-v2-visibility-button,.screen-order-v2-action')];
+        if (thumb) { thumbs++; if (rect(icon).width < 26 || rect(icon).height < 26 || getComputedStyle(thumb).objectFit !== 'cover') problems.push('thumbnail-'+index); }
+        if (badge) { hidden++; if (getComputedStyle(badge).display === 'none' || getComputedStyle(title).opacity === '0') problems.push('hidden-'+index); }
+        if (rect(head).height < 55) problems.push('height-'+index);
+        if (actions.some(el => intersect(rect(title), rect(el)) || intersect(rect(badge), rect(el)))) problems.push('actions-'+index);
+        if (intersect(rect(title), rect(icon)) || intersect(rect(badge), rect(icon))) problems.push('icon-'+index);
+        if (getComputedStyle(title).whiteSpace !== 'nowrap') problems.push('wrap-'+index);
+        if (slot.scrollWidth > slot.clientWidth + 1) problems.push('overflow-'+index);
+      });
+      const fixed = composition.querySelector('.fixed-composition-row .fixed-block-head');
+      const regular = composition.querySelector('.screen-order-v2-head');
+      const fixedMatches = fixed && regular && Math.abs(rect(fixed).height - rect(regular).height) < 4;
+      return {width:composition.clientWidth,rows:slots.length,thumbs,hidden,
+        fixedMatches, problems:problems.slice(0,12),totalProblems:problems.length,
+        scrollWidth:composition.scrollWidth,clientWidth:composition.clientWidth};
+    })()`);
+    if (width === 1024 || width === 1672) await capture(client, 'mixed-30-block-navigator-' + width);
+    await evaluate(client, `document.querySelectorAll('[data-qa-mixed-row]').forEach(el => el.remove())`);
+    assert(rowQuality.rows >= 32 && rowQuality.thumbs >= 10 && rowQuality.hidden >= 7
+      && rowQuality.fixedMatches && rowQuality.totalProblems === 0
+      && rowQuality.scrollWidth <= rowQuality.clientWidth + 1,
+      'mixed 30+ row navigator must not overlap or horizontally overflow at ' + width + ': ' + JSON.stringify(rowQuality));
+  }
+  await setViewport(client, 1672, 941, false);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && document.querySelector('.inspector-navigation')?.querySelectorAll('button').length >= 3`, 'reference text inspector');
 
