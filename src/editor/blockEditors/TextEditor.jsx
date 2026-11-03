@@ -1,5 +1,5 @@
 import RichField from '../RichField.jsx';
-import { ChevronDown } from 'lucide-react';
+import { InspectorDisclosure } from '../ui/InspectorDisclosure.jsx';
 import { TextStylePanel } from './WidgetStylePanels.jsx';
 import { WidgetSpacingControls } from './WidgetSpacingControls.jsx';
 import './TextEditor.css';
@@ -21,11 +21,10 @@ export default function TextEditor({ s, set }) {
         value={s.body}
         onChange={(value) => set({ body: value })}
       />
-      <details className="text-editor-design" open>
-        <summary>디자인<ChevronDown size={16} aria-hidden="true" /></summary>
-        <div className="text-editor-design-controls"><TextStylePanel s={s} set={set} /></div>
-      </details>
-      <WidgetSpacingControls s={s} set={set} />
+      <InspectorDisclosure label="디자인" className="text-editor-design" bodyClassName="text-editor-design-controls" defaultOpen>
+        <TextStylePanel s={s} set={set} />
+        <WidgetSpacingControls s={s} set={set} />
+      </InspectorDisclosure>
     </div>
   );
 }
