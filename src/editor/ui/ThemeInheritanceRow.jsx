@@ -1,4 +1,5 @@
 import { RotateCcw } from 'lucide-react';
+import { themeAlignmentMode } from './themeInheritanceModel.js';
 
 // One explicit source indicator for fields with real renderer-level inheritance.
 // Do not imply that every widget style is inherited from the page theme.
@@ -24,7 +25,6 @@ export function ThemeInheritanceRow({ label, inherited, color, onReset, inherite
   );
 }
 
-import { themeAlignmentMode } from './themeInheritanceModel.js';
 
 // Actual renderer rule: page globalAlign wins over s.align when set.
 // A block-specific alignment does not override this rule.
