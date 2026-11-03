@@ -2704,7 +2704,7 @@ async function run() {
       };
     })()`);
     assert(inlineDetailStyle?.inlineMarginTop === '0px', `inline editor top spacing drifted: ${JSON.stringify(inlineDetailStyle)}`);
-    assert(inlineDetailStyle?.labelFontSize === '14px', `inline editor labels must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
+    assert(inlineDetailStyle?.labelFontSize === '13px', `inline editor labels must use readable unified 13px size: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.textareaFontSize === '16px', `inline editor text must remain readable: ${JSON.stringify(inlineDetailStyle)}`);
     assert(inlineDetailStyle?.designHeight >= 32, `text design disclosure must remain reachable: ${JSON.stringify(inlineDetailStyle)}`);
         await capture(client, 'desktop-narrow-1180-screen-order-detail');

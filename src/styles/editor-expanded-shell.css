@@ -53,9 +53,10 @@
   --editor-v2-danger: #dc2626;
   display: grid;
   min-width: 0;
+  gap: var(--editor-ui-space-4, 16px);
   color: var(--editor-v2-text);
   background: transparent;
-  font-size: 14px;
+  font-size: var(--editor-ui-value-size, 14px);
 }
 
 .block-editor-v2-content {

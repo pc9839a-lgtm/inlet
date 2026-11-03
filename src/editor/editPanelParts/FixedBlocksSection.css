@@ -241,10 +241,10 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-compositi
 html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .screen-order-v2-identity-copy strong {
   min-width: 0;
   overflow: hidden;
-  color: #182230 !important;
-  font-size: 12px !important;
-  line-height: 1.35;
-  font-weight: 600 !important;
+  color: var(--editor-ui-text, #182230) !important;
+  font-size: var(--editor-ui-row-size, 12px) !important;
+  line-height: 1.4;
+  font-weight: var(--editor-ui-label-weight, 600) !important;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

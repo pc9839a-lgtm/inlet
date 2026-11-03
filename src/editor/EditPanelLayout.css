@@ -7,6 +7,22 @@ body .builder-shell .edit-section-panel { width: 100%; min-width: 0; max-width: 
 .editor-selection-empty h2 { font-size: 14px; font-weight: 500; }
 .editor-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout {
+  /* Shared editor-only type/spacing rhythm. Keep public landing untouched. */
+  --editor-ui-title-size: 16px;
+  --editor-ui-section-size: 13px;
+  --editor-ui-label-size: 13px;
+  --editor-ui-value-size: 14px;
+  --editor-ui-row-size: 12px;
+  --editor-ui-helper-size: 11px;
+  --editor-ui-text: #182230;
+  --editor-ui-muted: #667085;
+  --editor-ui-strong: 650;
+  --editor-ui-label-weight: 600;
+  --editor-ui-space-1: 4px;
+  --editor-ui-space-2: 8px;
+  --editor-ui-space-3: 12px;
+  --editor-ui-space-4: 16px;
+  --editor-ui-space-5: 24px;
   grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;
   grid-template-rows: auto;
   align-items: stretch;
@@ -32,7 +48,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-heading {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   min-height: 76px; padding: 16px 10px; border-bottom: 1px solid #eef0f6; background: #fff;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 { flex: 1; white-space: nowrap !important; margin: 0; color: #101828; font-size: 18px; font-weight: 700; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 { flex: 1; white-space: nowrap !important; margin: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size); font-weight: var(--editor-ui-strong); }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-content { padding: 4px 0 12px; }
 html body #root .builder-shell.canvas-editor-shell .screen-order-fixed-blocks { margin: 0 !important; padding: 0 !important; border: 0 !important; }
 html body #root .builder-shell.canvas-editor-shell .screen-order-fixed-blocks[hidden] { display: none !important; }
@@ -72,7 +88,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-search {
   z-index: 7;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--editor-ui-space-1);
   min-width: 0;
   min-height: 42px;
   padding: 5px 8px;
@@ -88,10 +104,10 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-search > 
   height: 30px;
   border: 0;
   padding: 0 3px;
-  color: #182230;
+  color: var(--editor-ui-text);
   background: transparent;
   font: inherit;
-  font-size: 12px;
+  font-size: var(--editor-ui-row-size);
   outline-offset: 2px;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > input:focus-visible { outline: 2px solid #2454ff; border-radius: 3px; }
@@ -111,7 +127,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-search > 
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button:hover:not(:disabled) { background: #eef2ff; color: #2454ff; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button:focus-visible { outline: 2px solid #2454ff; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button:disabled { opacity: .35; cursor: default; }
-html body #root .builder-shell.canvas-editor-shell .editor-search-count { flex: 0 0 auto; font-size: 11px; font-variant-numeric: tabular-nums; color: #667085; }
+html body #root .builder-shell.canvas-editor-shell .editor-search-count { flex: 0 0 auto; font-size: var(--editor-ui-helper-size); font-variant-numeric: tabular-nums; color: var(--editor-ui-muted); }
 html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel { padding: 0 20px 32px; border-left: 1px solid #e7eaf2; container: editor-inspector / inline-size; scroll-padding-top: 140px; }
 /* Keep the selected inspector as tall as the list without creating a second scrollbar.
    Its sticky header remains reachable even after scrolling deep into 30+ blocks. */
@@ -139,7 +155,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-view {
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: sticky; top: 0; z-index: 6; padding: 22px 0 16px; margin: 0 0 18px; border-bottom: 1px solid #eef0f6; background: #fff; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title { display: flex; align-items: center; gap: 10px; min-height: 30px; }
-html body #root .canvas-editor-shell .screen-order-v2-settings-title > h2 { margin: 0; min-width: 0; color: #101828; font-size: 18px !important; line-height: 1.4; font-weight: 650; overflow-wrap: anywhere; }
+html body #root .canvas-editor-shell .screen-order-v2-settings-title > h2 { margin: 0; min-width: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size) !important; line-height: 1.4; font-weight: var(--editor-ui-strong); overflow-wrap: anywhere; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > svg { flex: 0 0 auto; color: #2454ff; }
 html body #root .canvas-editor-shell .editor-block-switch {
   display: flex;
@@ -193,11 +209,10 @@ html body #root .canvas-editor-shell .editor-block-switch-actions button:disable
 }
 
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > .screen-order-v2-action { margin-left: auto; flex: 0 0 30px; }
-html body #root .canvas-editor-shell .screen-order-settings-hidden { flex: 0 0 auto; color: #667085; font-size: 11px; }
+html body #root .canvas-editor-shell .screen-order-settings-hidden { flex: 0 0 auto; color: var(--editor-ui-muted); font-size: var(--editor-ui-helper-size); }
 html body #root .canvas-editor-shell .screen-order-v2-settings[data-scroll-region='block-settings'] { max-height: none !important; overflow: visible !important; scrollbar-gutter: auto; }
-html body #root .canvas-editor-shell .screen-order-v2-settings .block-editor-v2.block-editor { gap: 18px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
 
-body .builder-shell.edit-mode-shell .editor-page-options-stack { width: 100%; min-width: 0; display: grid; gap: 14px; }
+body .builder-shell.edit-mode-shell .editor-page-options-stack { width: 100%; min-width: 0; display: grid; gap: var(--editor-ui-space-3, 12px); }
 body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
 @media (min-width: 900px) and (max-width: 1100px) { html body #root .canvas-editor-shell .editor-inspector-panel { padding-inline: 16px; } html body #root .canvas-editor-shell .editor-composition-panel { padding-inline: 8px; } }
 @media (max-width: 899px) { html body #root .canvas-editor-shell .edit-layout { height: auto; min-height: 640px; } html body #root .canvas-editor-shell .editor-composition-panel, html body #root .canvas-editor-shell .editor-inspector-panel { height: auto; max-height: none; overflow: visible !important; } html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: static; } }
@@ -207,24 +222,24 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel { wi
    shortcut tabs + internal design accordions. Existing widget field values and
    detail class names remain unchanged; no new nested scrollbar is introduced. */
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-primary-heading {
-  margin: 2px 0 14px;
-  color: #344054;
-  font-size: 13px;
-  font-weight: 700;
+  margin: 2px 0 var(--editor-ui-space-3);
+  color: var(--editor-ui-text);
+  font-size: var(--editor-ui-section-size);
+  font-weight: var(--editor-ui-strong);
   line-height: 1.4;
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-subgroup-heading {
-  margin: 18px 0 6px;
-  padding-top: 14px;
+  margin: var(--editor-ui-space-4) 0 var(--editor-ui-space-2);
+  padding-top: var(--editor-ui-space-3);
   border-top: 1px solid #eaecf0;
-  color: #344054;
-  font-size: 13px;
-  font-weight: 700;
+  color: var(--editor-ui-text);
+  font-size: var(--editor-ui-section-size);
+  font-weight: var(--editor-ui-strong);
   line-height: 1.4;
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure {
   min-width: 0;
-  margin: 12px 0 0;
+  margin: var(--editor-ui-space-3) 0 0;
   padding: 0;
   border: 0;
   border-top: 1px solid #e7eaf2;
@@ -236,15 +251,15 @@ html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclo
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--editor-ui-space-2);
   min-height: 44px;
   margin: 0;
-  padding: 8px 0;
+  padding: var(--editor-ui-space-2) 0;
   list-style: none;
-  color: #344054;
+  color: var(--editor-ui-text);
   background: transparent;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--editor-ui-section-size);
+  font-weight: var(--editor-ui-strong);
   line-height: 1.4;
   cursor: pointer;
 }
@@ -253,8 +268,8 @@ html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclo
   flex: 1 1 auto;
   min-width: 0;
   color: inherit;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--editor-ui-section-size);
+  font-weight: var(--editor-ui-strong);
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary > svg {
   flex: 0 0 auto;
@@ -273,7 +288,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclo
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > .inspector-disclosure-body {
   min-width: 0;
-  padding: 4px 0 12px;
+  padding: var(--editor-ui-space-1) 0 var(--editor-ui-space-3);
 }
 @media (prefers-reduced-motion: reduce) {
   html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary > svg { transition: none; }
