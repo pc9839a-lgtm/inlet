@@ -67,11 +67,16 @@ export function EditPanelLayout({
             aria-pressed={showPageOptions}
             aria-controls="editor-selection-panel"
             onClick={openPageOptions}
-            title="페이지 설정"
+            title={stylePanelProps?.hasPendingStyle ? '페이지 설정 · 미적용' : '페이지 설정'}
           >
             <Settings2 size={15} aria-hidden="true" />
             <span>페이지 설정</span>
-            {stylePanelProps?.hasPendingStyle && <span className="editor-settings-pending" aria-label="변경 미적용" title="변경 미적용" />}
+            {stylePanelProps?.hasPendingStyle && (
+              <>
+                <span className="editor-settings-pending" aria-hidden="true" />
+                <span className="editor-visually-hidden"> · 미적용</span>
+              </>
+            )}
           </button>
         </div>
         <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} onSelect={chooseBlock} />
