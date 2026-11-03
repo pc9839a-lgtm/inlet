@@ -84,6 +84,11 @@ const textAppearance = await readFile('src/editor/blockEditors/TextAppearanceCon
 const widgetPanels = await readFile('src/editor/blockEditors/WidgetStylePanels.jsx', 'utf8');
 const themeStatusRow = await readFile('src/editor/ui/ThemeInheritanceRow.jsx', 'utf8');
 const sharedControlsCss = await readFile('src/styles/editor-expanded-controls.css', 'utf8');
+const editorNumberCss = await readFile('src/editor/ui/NumberControl.css', 'utf8');
+const editorColorCss = await readFile('src/editor/ColorControl.css', 'utf8');
+const segmentedControl = await readFile('src/editor/ui/SegmentedControl.jsx', 'utf8');
+const toggleRow = await readFile('src/editor/ui/ToggleRow.jsx', 'utf8');
+const legacyToggle = await readFile('src/editor/ToggleControl.jsx', 'utf8');
 const heroEditor = await readFile('src/editor/blockEditors/HeroEditor.jsx', 'utf8');
 const textEditor = await readFile('src/editor/blockEditors/TextEditor.jsx', 'utf8');
 const imageEditor = await readFile('src/editor/blockEditors/ImageEditor.jsx', 'utf8');
@@ -153,6 +158,39 @@ assert(typographyTokens.every(token => editPanelLayoutCss.includes(token))
   && !css.includes('--editor-ui-title-size')
   && !previewPaneCss.includes('--editor-ui-title-size'),
   'type sizes and 4/8 rhythm must stay in existing editor owners without leaking to public preview or creating stylesheet overrides');
+// UX-032: control geometry and state affordances share editor-only tokens.
+// Keep native textarea expansion, existing aria semantics and 44px switch hits.
+const controlTokens = [
+  '--editor-ui-input-height: 42px;',
+  '--editor-ui-compact-height: 36px;',
+  '--editor-ui-touch-height: 44px;',
+  '--editor-ui-control-radius: 7px;',
+  '--editor-ui-accent: #2454ff;',
+  '--editor-ui-active-bg: #e9efff;',
+];
+assert(controlTokens.every(token => editPanelLayoutCss.includes(token))
+  && sharedControlsCss.includes('min-height: var(--editor-ui-input-height, 42px)')
+  && sharedControlsCss.includes('min-height: var(--editor-ui-compact-height, 36px)')
+  && sharedControlsCss.includes('background: var(--editor-ui-active-bg, #e9efff)')
+  && sharedControlsCss.includes("button[role=\"switch\"][aria-checked='true']")
+  && sharedControlsCss.includes('background: var(--control-focus);')
+  && sharedControlsCss.includes("button:disabled")
+  && editorNumberCss.includes('min-height: var(--editor-ui-compact-height, 36px)')
+  && editorNumberCss.includes("button[aria-pressed='true']")
+  && editorNumberCss.includes('var(--editor-ui-control-radius, 7px)')
+  && editorColorCss.includes('var(--editor-ui-control-line, #d0d5dd)')
+  && editorColorCss.includes('var(--editor-ui-compact-height, 36px)')
+  && editorColorCss.includes('var(--editor-ui-accent, #2454ff)')
+  && textEditorTypographyCss.includes('var(--editor-ui-active-bg, #e9efff)')
+  && stylePanelTypographyCss.includes('var(--editor-ui-compact-height, 36px)')
+  && legacyStylePanelCss.includes('var(--editor-ui-compact-height, 36px)')
+  && legacyStylePanelCss.includes('var(--editor-ui-active-bg, #e9efff)')
+  && segmentedControl.includes('aria-pressed={String(value) === String(optionValue)}')
+  && toggleRow.includes('role="switch"') && toggleRow.includes('aria-checked={checked}')
+  && legacyToggle.includes('role="switch"') && legacyToggle.includes('aria-checked={checked}')
+  && !css.includes('--editor-ui-input-height')
+  && !previewPaneCss.includes('--editor-ui-input-height'),
+  'editable field/segment/number/color/toggle state tokens must stay in existing owners and out of public canvas');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
 assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
