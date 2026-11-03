@@ -139,7 +139,7 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
   const resetDraft = () => onPreviewThemeChange?.(null);
 
   return (
-    <div className="simple-panel style-panel style-panel-v17 style-panel-staged style-direct-flow">
+    <div className="style-panel style-panel-v17 style-panel-staged style-direct-flow">
       <div className="style-apply-bar">
         <div>
           <strong>{T.commonStyle}</strong>
