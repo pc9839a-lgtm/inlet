@@ -3,8 +3,8 @@
    Important declarations bridge legacy editor globals; geometry stays local. */
 body .builder-shell .edit-layout .block-editor-v2 {
   --control-line: #cbd2dc;
-  --control-text: #1d2939;
-  --control-muted: #667085;
+  --control-text: var(--editor-ui-text, #182230);
+  --control-muted: var(--editor-ui-muted, #667085);
   --control-soft: #f2f4f7;
   --control-focus: #2563eb;
   --control-radius: 6px;
@@ -17,7 +17,7 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2, .field, 
   min-width: 0;
   min-height: 0 !important;
   margin: 0;
-  gap: 6px !important;
+  gap: var(--editor-ui-space-2, 8px) !important;
   padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -28,21 +28,21 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2, .field, 
 body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2-label strong, .field > span, .range > span, .range-field > span, .color > span, .color-field > span, .choice > span, .weekday > span, .image-input > span, .editor-control-v2-copy strong, .toggle > span) {
   margin: 0 !important;
   color: var(--control-text) !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  line-height: 1.5 !important;
+  font-size: var(--editor-ui-label-size, 13px) !important;
+  font-weight: var(--editor-ui-label-weight, 600) !important;
+  line-height: 1.4 !important;
   overflow-wrap: anywhere;
 }
 
 .editor-field-v2-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--editor-ui-space-2, 8px);
 }
 
 .editor-field-v2-label em {
-  color: #667085;
-  font-size: 11px;
+  color: var(--editor-ui-muted, #667085);
+  font-size: var(--editor-ui-helper-size, 11px);
   font-style: normal;
 }
 
@@ -64,7 +64,7 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2, .field) 
   background: #fff !important;
   color: var(--control-text) !important;
   box-shadow: none !important;
-  font-size: 14px !important;
+  font-size: var(--editor-ui-value-size, 14px) !important;
   font-weight: 400 !important;
   line-height: 1.5 !important;
 }
@@ -294,14 +294,14 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2 input, .e
 .editor-section-v2-copy strong,
 .editor-control-v2-copy strong {
   color: #101828;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--editor-ui-section-size, 13px);
+  font-weight: var(--editor-ui-strong, 650);
 }
 
 .editor-section-v2-copy small,
 .editor-control-v2-copy small,
 .editor-field-v2-description {
-  color: #667085;
+  color: var(--editor-ui-muted, #667085);
   font-size: 12px;
   font-weight: 500;
 }
@@ -325,11 +325,11 @@ body .builder-shell .edit-layout .block-editor-v2 :is(.editor-field-v2 input, .e
 
 .editor-v2-control-list {
   display: grid;
-  gap: 16px;
+  gap: var(--editor-ui-space-3, 12px);
 }
 
-.widget-spacing-controls { display: grid; gap: 16px; min-width: 0; margin-top: 8px; padding-top: 20px; border-top: 1px solid #eaecf0; }
-.widget-spacing-controls h3 { margin: 0; color: #344054; font-size: 13px; font-weight: 600; }
+.widget-spacing-controls { display: grid; gap: var(--editor-ui-space-3, 12px); min-width: 0; margin-top: var(--editor-ui-space-2, 8px); padding-top: var(--editor-ui-space-4, 16px); border-top: 1px solid #eaecf0; }
+.widget-spacing-controls h3 { margin: 0; color: var(--editor-ui-text, #182230); font-size: var(--editor-ui-section-size, 13px); font-weight: var(--editor-ui-strong, 650); }
 
 .editor-tabs-v2-panel > :is(.editor-field-v2, .field, .range, .color, .choice, .choice-clean, .toggle, .toggle-clean, .weekday, .anchor-control) {
   margin: 0;
