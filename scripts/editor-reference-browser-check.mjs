@@ -28,9 +28,41 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const alignmentChoice = initialBlockAlignment ? '정렬: 가운데' : '정렬: 블록별';
   await clickPointer(client, `.style-panel-v17 button[aria-label="${alignmentChoice}"]`);
   await waitForBrowser(client, `document.querySelector('.style-panel-v17 button[aria-label="${alignmentChoice}"]')?.getAttribute('aria-pressed') === 'true'`, 'page alignment mode selection updates only the staged design');
+  // UX-032: page-theme selections and apply/undo use the same compact
+  // height, radius, blue selected state and disabled conventions as blocks.
+  const pageControlState = await evaluate(client, `(() => {
+    const root = document.querySelector('.style-panel-v17');
+    const selected = root?.querySelector('.style-segment button[aria-pressed="true"]');
+    const apply = root?.querySelector('.style-apply-btn');
+    const reset = root?.querySelector('.style-reset-btn');
+    const data = (node) => {
+      if (!node) return null;
+      const s = getComputedStyle(node), b = node.getBoundingClientRect();
+      return {height:b.height, radius:s.borderTopLeftRadius, color:s.color, bg:s.backgroundColor, opacity:s.opacity, disabled:node.disabled};
+    };
+    return {selected:data(selected), apply:data(apply), reset:data(reset), activeLabel:selected?.getAttribute('aria-label')};
+  })()`);
+  assert(pageControlState?.selected?.height >= 36 && pageControlState.selected.height <= 40
+    && parseInt(pageControlState.selected.radius,10) <= 7
+    && pageControlState.selected.color === 'rgb(36, 84, 255)'
+    && pageControlState.selected.bg === 'rgb(233, 239, 255)'
+    && pageControlState.apply.height >= 36 && !pageControlState.apply.disabled
+    && !pageControlState.reset.disabled,
+    'page controls must show clear selected and enabled state before applying: '+JSON.stringify(pageControlState));
   await capture(client, 'page-theme-alignment-modes');
   await clickPointer(client, '.style-panel-v17 .style-reset-btn');
   await waitForBrowser(client, `document.querySelector('.style-panel-v17 button[aria-label="정렬: 블록별"]')?.getAttribute('aria-pressed') === String(${initialBlockAlignment})`, 'undo restores exact original alignment mode');
+  const pageDisabledState = await evaluate(client, `(() => {
+    const apply = document.querySelector('.style-panel-v17 .style-apply-btn');
+    const reset = document.querySelector('.style-panel-v17 .style-reset-btn');
+    return { applyDisabled:apply?.disabled, resetDisabled:reset?.disabled,
+      applyOpacity:apply && getComputedStyle(apply).opacity,
+      resetOpacity:reset && getComputedStyle(reset).opacity };
+  })()`);
+  assert(pageDisabledState?.applyDisabled && pageDisabledState?.resetDisabled
+    && Number(pageDisabledState.applyOpacity) <= .5 && Number(pageDisabledState.resetOpacity) <= .5,
+    'unmodified page design must expose disabled actions, not enabled-looking dead buttons: ' + JSON.stringify(pageDisabledState));
+  await capture(client, 'controls-page-disabled-1672');
   assert(apiState.saveCount === 0, 'page alignment mode preview and undo must not write or publish');
 
   // Stress-test the block composition with 30+ rows. Clones are DOM-only
