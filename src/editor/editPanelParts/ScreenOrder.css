@@ -93,7 +93,7 @@
 .screen-order-v2-item.is-open,
 .screen-order-v2-item[data-selected='true'] {
   z-index: 20;
-  background: #fcfcfd;
+  background: #e9efff;
   box-shadow: none;
 }
 
@@ -106,7 +106,7 @@
   left: 0;
   width: 2px;
   border-radius: 999px;
-  background: #98a2b3;
+  background: #2454ff;
 }
 
 .screen-order-v2-item.is-hidden .screen-order-v2-title-wrap {
@@ -444,7 +444,7 @@
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item.is-open,
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-item[data-selected='true'] {
-    background: #f4f5f7 !important;
+    background: #e9efff !important;
     box-shadow: none !important;
   }
 
@@ -456,7 +456,7 @@
     left: 0;
     width: 2px;
     border-radius: 0;
-    background: #667085;
+    background: #2454ff;
   }
 
   html body #root .builder-shell.edit-mode-shell .screen-order-v2-head {
