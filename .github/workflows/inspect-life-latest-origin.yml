@@ -1,0 +1,52 @@
+name: Inspect latest LIFE Pages immutable origin
+on:
+  push:
+    branches: [ops/life-origin-probe-20261104]
+    paths: [.github/workflows/inspect-life-latest-origin.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Verify current LIFE production commit and immutable Pages host
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request, sys, re
+          token=os.environ.get('CF_TOKEN','')
+          acct=os.environ.get('CF_ACCOUNT','')
+          if not token or not acct:sys.exit('Cloudflare read credentials unavailable')
+          url=f'https://api.cloudflare.com/client/v4/accounts/{acct}/pages/projects/life-pagero/deployments'
+          req=urllib.request.Request(url,headers={'Authorization':'Bearer '+token,'Accept':'application/json'})
+          with urllib.request.urlopen(req,timeout=35) as resp: payload=json.load(resp)
+          if not payload.get('success'):sys.exit('Cloudflare deployment read rejected')
+          items=payload.get('result') or []
+          expected='d1cecb6d82facea3d0bce7547d513ffe0e2885c9'
+          found=False
+          for d in items[:24]:
+            stage=d.get('latest_stage') or {}
+            m=((d.get('deployment_trigger') or {}).get('metadata') or {})
+            sha=m.get('commit_hash','')
+            name=stage.get('name');status=stage.get('status')
+            host=d.get('url','')
+            if sha==expected:
+              print('LIFE_CANDIDATE',json.dumps({'commit':sha,'stage':name,'status':status,'url':host,'deployment_id':d.get('id')},ensure_ascii=False))
+              if status=='success' and name in ('build','deploy') and re.fullmatch(r'https://[a-z0-9-]+\.life-pagero\.pages\.dev/?',host or ''):
+                path='/support/year-end-tax-precheck-2026/'
+                r=urllib.request.Request(host.rstrip('/')+path,headers={'User-Agent':'Mozilla/5.0 (LIFE editorial release gate)'})
+                with urllib.request.urlopen(r,timeout=25) as response:
+                  body=response.read(800000).decode('utf-8','replace')
+                  robots=response.headers.get('X-Robots-Tag','')
+                  if response.status!=200 or 'noindex' not in robots.lower() or '2026 연말정산 미리보기' not in body or '12월 18일' not in body:
+                    sys.exit('New LIFE immutable origin failed article/SEO verification')
+                print('LIFE_VERIFIED_IMMUTABLE_ORIGIN',host)
+                found=True
+                break
+          if not found:sys.exit('Latest target commit not yet a successful immutable Cloudflare deployment')
+          PY
