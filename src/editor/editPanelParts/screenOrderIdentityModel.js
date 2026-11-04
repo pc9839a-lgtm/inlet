@@ -14,6 +14,19 @@ function previewText(value) {
     .slice(0, 100);
 }
 
+// Code blocks on long pages are often numbered but have no editorLabel.
+// Extract only visible markup text for the navigator; never render raw HTML,
+// execute embedded code, or persist this derived label into the page schema.
+// Limit processing of giant snippets to keep a large composition responsive.
+function previewCodeContent(value) {
+  if (typeof value !== 'string' || !value) return '';
+  const excerpt = value.slice(0, 20000);
+  const visibleMarkup = excerpt
+    .replace(/<!--[\s\S]*?(?:-->|$)/g, ' ')
+    .replace(/<(script|style|noscript|template)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi, ' ');
+  return previewText(visibleMarkup);
+}
+
 function blockVisualType(block) {
   return block?.s?.widgetMode === 'youtube' ? 'youtube' : block?.type || '';
 }
@@ -57,7 +70,7 @@ export function createScreenOrderIdentities(blocks) {
     const fields = block?.type === 'image'
       ? [s.caption, s.alt]
       : block?.type === 'code'
-        ? []
+        ? [s.widgetMode === 'youtube' ? '' : previewCodeContent(s.html)]
         : [s.title, s.heading, s.label, s.caption];
     const detail = fields.map(previewText).find(Boolean) || '';
     return {
