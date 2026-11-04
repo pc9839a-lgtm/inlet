@@ -14,12 +14,15 @@ const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'))
 
 // Collapse only the navigator rows. Fixed blocks, their editor state and page
 // placement stay intact. A fresh fixed-block selection reveals its group.
-function FixedCompositionGroup({ groupId, title, keys, descriptors, selectedId, children }) {
+function FixedCompositionGroup({ groupId, title, keys, descriptors, selectedId, revealRequest, children }) {
   const [expanded, setExpanded] = React.useState(true);
   const entries = descriptors.filter((item) => keys.includes(item.key));
   React.useEffect(() => {
     if (entries.some((item) => item.block.id === selectedId)) setExpanded(true);
   }, [selectedId]);
+  React.useEffect(() => {
+    if (revealRequest && entries.some((item) => item.block.id === revealRequest.id)) setExpanded(true);
+  }, [revealRequest]);
   if (!entries.length) return null;
 
   const regionId = `editor-fixed-group-${groupId}`;
@@ -53,6 +56,7 @@ export function EditPanelLayout({
   stylePanelProps,
 }) {
   const [section, setSection] = React.useState('order');
+  const [fixedSearchReveal, setFixedSearchReveal] = React.useState(null);
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
   // A blank selection is page-level context, not a reason to collapse the editor.
   // Show the existing page design and options until a block is selected.
@@ -66,6 +70,15 @@ export function EditPanelLayout({
   const chooseFixed = (id) => {
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
+  };
+  const revealFixedSearch = (id) => {
+    if (fixedDescriptors.some((item) => item.block.id === id)) setFixedSearchReveal({ id });
+  };
+  const chooseSearchResult = (id) => {
+    if (fixedDescriptors.some((item) => item.block.id === id)) {
+      revealFixedSearch(id);
+      chooseFixed(id);
+    } else chooseBlock(id);
   };
 
   // Previous/next follows the actual mobile page order, including pinned sections.
@@ -135,18 +148,18 @@ export function EditPanelLayout({
             )}
           </button>
         </div>
-        <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} selectedId={fixedSelected ? '' : screenOrderListProps.selectedId} onSelect={chooseBlock} />
+        <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} fixedDescriptors={fixedDescriptors} selectedId={selectedBlockId} onSelect={chooseSearchResult} onRevealSelected={revealFixedSearch} />
         <div className="editor-composition-content">
           <FixedCompositionGroup
             groupId="top" title="상단 고정" keys={['topnav']}
-            descriptors={fixedDescriptors} selectedId={fixedBlocksProps.openId}
+            descriptors={fixedDescriptors} selectedId={fixedBlocksProps.openId} revealRequest={fixedSearchReveal}
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
           </FixedCompositionGroup>
           <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
           <FixedCompositionGroup
             groupId="bottom" title="하단 고정" keys={['bottom', 'footer']}
-            descriptors={fixedDescriptors} selectedId={fixedBlocksProps.openId}
+            descriptors={fixedDescriptors} selectedId={fixedBlocksProps.openId} revealRequest={fixedSearchReveal}
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
           </FixedCompositionGroup>
