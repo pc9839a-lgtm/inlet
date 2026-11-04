@@ -559,6 +559,29 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const afterFixedSearchOrder = await evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map(el => el.id)`);
   assert(JSON.stringify(afterFixedSearchOrder) === JSON.stringify(beforeSearchOrder),
     'fixed search must not reorder or filter normal page blocks');
+
+  // 17th patch: HTML text is a read-only secondary label for code blocks.
+  // The same text must be searchable, without exposing code/CSS source.
+  const codeSummary = await evaluate(client, `(() => {
+    const row = document.querySelector('#editor-block-editor-code');
+    return {
+      detail: row?.querySelector('.screen-order-v2-identity-detail')?.textContent || '',
+      label: row?.querySelector('.screen-order-v2-identity-copy strong')?.textContent || ''
+    };
+  })()`);
+  assert(codeSummary.label.includes('코드') && codeSummary.detail.includes('초대합니다')
+    && codeSummary.detail.includes('초대장 보기')
+    && !codeSummary.detail.includes('code-preview-qa'),
+    'code rows must expose a readable snippet instead of indistinguishable code numbers: ' + JSON.stringify(codeSummary));
+  await setInputValue(client, searchInput, '초대합니다');
+  await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`,
+    'HTML text is a valid block search result');
+  await focusSelector(client, searchInput);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-code')?.dataset.selected === 'true'
+    && !!document.querySelector('#editor-block-settings-editor-code')`,
+    'code-content search chooses the correct editor without changing code data');
+
   await setInputValue(client, searchInput, '텍스트');
   await focusSelector(client, searchInput);
   await pressKeyboardKey(client, 'Enter');
