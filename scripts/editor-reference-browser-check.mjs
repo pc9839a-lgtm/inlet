@@ -498,6 +498,18 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(locateBefore?.scrollTop > 250 && locateBefore.selected === 'true',
     'locate fixture must scroll the shared editor: ' + JSON.stringify(locateBefore));
   await clickPointer(client, 'button[aria-label="선택 블록 위치 찾기"]');
+  const locateDiagnostic = await evaluate(client, `(() => {
+    const scroller = document.querySelector('.work-panel');
+    const row = document.querySelector('#editor-block-editor-text');
+    const search = document.querySelector('.editor-composition-search');
+    const button = document.querySelector('button[aria-label="선택 블록 위치 찾기"]');
+    const box = (element) => element ? (({top,bottom,height,left,right})=>({top,bottom,height,left,right}))(element.getBoundingClientRect()) : null;
+    return {scrollTop:scroller.scrollTop, scrollMax:scroller.scrollHeight-scroller.clientHeight,
+      view:box(scroller), row:box(row), search:box(search), button:box(button),
+      selected:row?.dataset.selected, active:document.activeElement?.className,
+      rootScroll:document.documentElement.scrollTop};
+  })()`);
+  console.log('[editor-qa] selected locate geometry', JSON.stringify(locateDiagnostic));
   await waitForBrowser(client, `(() => {
     const scroller = document.querySelector('.work-panel');
     const selected = document.querySelector('#editor-block-editor-text');
