@@ -41,7 +41,10 @@ function manifest() {
     .sort((a,b) => a.pathname.localeCompare(b.pathname));
 }
 const articles = manifest();
-if (articles.length !== 45) warn('manifest_count', 'Expected 45 published articles, found ' + articles.length);
+if (articles.length < 46) warn('manifest_count', 'Expected at least 46 published articles after the 2026 tax guide, found ' + articles.length);
+if (!articles.some(article => article.pathname === '/life/support/year-end-tax-precheck-2026/')) {
+  warn('tax_preview_missing', 'The November 2026 tax preview article is missing from the LIFE published manifest');
+}
 
 const [root, index, rootSitemap, lifeSitemap, robots, lifeRobots, adsTxt, privacy, standards, continuation] = await Promise.all([
   get(ROOT + '/'), get(LIFE + '/'), get(ROOT + '/sitemap.xml'),
@@ -131,7 +134,7 @@ for (const resource of guideResources) {
 got('pagero_guide_hub', 'Checked canonical crawlable guide hub and its four verified practical resources on public main site');
 
 if (lifeSitemap.status !== 200 || !lifeSitemap.html.includes('<urlset')) warn('life_sitemap', 'Invalid LIFE sitemap response');
-if (!index.html.includes('LIFE EDITORIAL ARCHIVE')) warn('life_home_archive', '45-article editorial index missing');
+if (!index.html.includes('LIFE EDITORIAL ARCHIVE')) warn('life_home_archive', 'Life editorial archive missing');
 
 const decisionPaths = [
   ['/life/car/car-inspection-period/','검사기간 확인'],
