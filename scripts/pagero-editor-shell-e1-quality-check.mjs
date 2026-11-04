@@ -57,6 +57,24 @@ assert(createScreenOrderIdentities([
 ])[0].detail === '',
   'oversized scripts must never leak source text through partial previews');
 
+// UX-010 / 18th patch: image nicknames change editor identity, not the
+// public caption, alt text, thumbnail selection or original page data.
+const photos = [
+  { id: 'image-a', type: 'image', s: { image: '/uploads/main.jpg', caption: '외부 공개 캡션', alt: '설명' } },
+  { id: 'image-b', type: 'image', s: { mode: 'gallery', gallery: ['/uploads/a.jpg'], editorLabel: '본식 스냅', caption: '사진 설명' } },
+  { id: 'image-c', type: 'image', visible: false, s: { editorLabel: '<b>약도 사진</b>', caption: '오시는 길' } },
+  { id: 'text-a', type: 'text', s: { editorLabel: '반영하지 않음', title: '텍스트 헤더' } },
+];
+const unchangedPhotos = JSON.stringify(photos);
+const photoIdentities = createScreenOrderIdentities(photos);
+assert(photoIdentities[0].customLabel === '' && photoIdentities[0].detail === '외부 공개 캡션'
+  && photoIdentities[1].customLabel === '본식 스냅' && photoIdentities[1].detail === '사진 설명'
+  && photoIdentities[1].thumbnail === '/uploads/a.jpg'
+  && photoIdentities[2].customLabel === '약도 사진' && photoIdentities[2].detail === '오시는 길'
+  && photoIdentities[3].customLabel === '',
+  'image aliases must be editor-only, preserve caption/thumbnail, and not affect unrelated block types');
+assert(JSON.stringify(photos) === unchangedPhotos, 'image display labels must not mutate original image data');
+
 // UX-020: exact renderer-aligned inheritance with no schema or page mutation.
 const pageTheme = { text: '#123456', accent: '#ABCDEF', globalAlign: 'center' };
 const sourceBlocks = [

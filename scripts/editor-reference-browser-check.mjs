@@ -582,6 +582,29 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && !!document.querySelector('#editor-block-settings-editor-code')`,
     'code-content search chooses the correct editor without changing code data');
 
+  // 18th patch: image-only navigator name, separate from public caption.
+  await setInputValue(client, searchInput, '');
+  await clickPointer(client, '#editor-block-editor-image .screen-order-v2-head');
+  await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-image input[aria-label="이미지 목록 구분 이름"]')`,
+    'image editor offers list-only nickname');
+  const originalCaption = await evaluate(client, `document.querySelector('#editor-block-settings-editor-image input[placeholder="이미지 설명을 입력하세요"]')?.value`);
+  await setInputValue(client, '#editor-block-settings-editor-image input[aria-label="이미지 목록 구분 이름"]', '본식 사진 QA');
+  await waitForBrowser(client, `(() => {
+    const row = document.querySelector('#editor-block-editor-image');
+    return row?.querySelector('.screen-order-v2-identity-copy strong')?.textContent === '본식 사진 QA'
+      && document.querySelector('.screen-order-v2-settings-title > h2')?.textContent === '본식 사진 QA';
+  })()`, 'image nickname synchronizes list and inspector');
+  await capture(client, 'image-label-editor-1672');
+  assert(await evaluate(client, `document.querySelector('#editor-block-settings-editor-image input[placeholder="이미지 설명을 입력하세요"]')?.value`) === originalCaption,
+    'image nickname must not overwrite the public caption');
+  await setInputValue(client, searchInput, '본식 사진 QA');
+  await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`, 'image nickname searchable');
+  await setInputValue(client, searchInput, '');
+  await setInputValue(client, '#editor-block-settings-editor-image input[aria-label="이미지 목록 구분 이름"]', '');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-image .screen-order-v2-identity-copy strong')?.textContent === '이미지'`,
+    'clearing image nickname restores default type title');
+  assert(apiState.saveCount === 0, 'image nickname preview must not publish or save');
+
   await setInputValue(client, searchInput, '텍스트');
   await focusSelector(client, searchInput);
   await pressKeyboardKey(client, 'Enter');
