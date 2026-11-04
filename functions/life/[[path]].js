@@ -1,8 +1,8 @@
 // Read from an immutable verified content deployment. The legacy hostname now
 // issues a 301 redirect and must never be used as the reverse-proxy upstream.
-// 2026-11-04: LIFE commit d1cecb6 deployed and source/SEO verified at this immutable Pages URL.
+// 2026-11-04: LIFE source containing Tenping 4 campaigns verified at this immutable Pages URL.
 // The origin returns noindex; prepareHeaders removes that header on canonical pagero.kr/life.
-const LIFE_UPSTREAM_ORIGIN = 'https://d84fa5af.life-pagero.pages.dev';
+const LIFE_UPSTREAM_ORIGIN = 'https://8cbdc943.life-pagero.pages.dev';
 const LIFE_PUBLIC_ORIGIN = 'https://pagero.kr/life';
 const LIFE_PREFIX = '/life';
 

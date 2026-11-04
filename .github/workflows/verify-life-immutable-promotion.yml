@@ -36,6 +36,9 @@ jobs:
             '/support/energy-voucher-2026/':['11월 에너지바우처: 신청·사용·재신청 구분'],
             '/support/earned-income-tax-credit-late-2026/':['2026년 11월 근로장려금 기한 후 신청'],
             '/support/year-end-tax-precheck-2026/':['2026 연말정산 미리보기','12월 18일','900만원 + 300만원 = 1,200만원'],
+            '/':['data-offer-group="three-life-offers-2026"','data-affiliate="tenping-auto-lease-202610"','data-affiliate="tenping-pon-gabi-2026"','data-affiliate="tenping-mbti-relationship-2026"','data-affiliate="tenping-elementary-education-2026"'],
+            '/car/used-car-transfer-cost/':['data-affiliate="tenping-auto-lease-202610"'],
+            '/support/child-allowance-2026/':['data-affiliate="tenping-elementary-education-2026"'],
           }
           def read(url):
             request=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (PageroLifeImmutableGate)','Cache-Control':'no-cache'})
