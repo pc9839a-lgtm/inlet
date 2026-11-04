@@ -1,3 +1,4 @@
+# 2026-11-04: refresh LIFE origin with verified Tenping affiliate placements before canonical promotion.
 # 2026-10-26: publish fact-checked expired car-tax deadline corrections from LIFE source, verify immutable HTML before promoting.
 # 2026-10-23 practical benefit and car procedure comparisons with stable review dates.
 # 2026-10-23 editorial reader-value refresh: deploy 4 task-first guides from life-pagero main, verify immutable homepage and record the new origin.
@@ -72,6 +73,13 @@ jobs:
           test -f dist/car/car-inspection-period/index.html
           grep -q '생활비서' dist/index.html
           grep -q 'pagero.kr/life/' dist/index.html
+          # Verify all supplied campaigns are baked into the actual production build.
+          for campaign in tenping-auto-lease-202610 tenping-pon-gabi-2026 tenping-mbti-relationship-2026 tenping-elementary-education-2026; do
+            grep -q "data-affiliate=\"$campaign\"" dist/index.html
+          done
+          grep -q 'data-affiliate="tenping-auto-lease-202610"' dist/car/index.html
+          grep -q 'data-affiliate="tenping-elementary-education-2026"' dist/support/child-allowance-2026/index.html
+          grep -q 'data-affiliate="tenping-elementary-education-2026"' dist/support/childcare-service-government-support-2026/index.html
           # Fail closed: never publish this phase's snapshot with an old policy.
           grep -q 'https://adssettings.google.com/' dist/privacy-policy/index.html
           grep -q 'https://policies.google.com/technologies/partner-sites' dist/privacy-policy/index.html
@@ -152,11 +160,11 @@ jobs:
             '/car/car-tax-annual-payment-2026/':['2026년 10월 26일 현재 연납 신청은','2027년 공식','공식자료 확인'],
             '/car/car-tax-second-half-2026/':['2026년 10월 26일 현재','12월 16~31일','공식자료 확인'],
             '/car/used-car-transfer-documents/':['class="reader-decision"','공식자료 확인'],
-            '/support/child-allowance-2026/':['class="reader-decision"','공식자료 확인'],
+            '/support/child-allowance-2026/':['class="reader-decision"','공식자료 확인','data-affiliate="tenping-elementary-education-2026"'],
             '/support/parental-benefit-2026/':['class="reader-decision"','공식자료 확인'],
             '/support/livelihood-benefit-2026/':['class="reader-decision"','공식자료 확인'],
             '/support/housing-benefit-2026/':['class="reader-decision"','공식자료 확인'],
-            '/':['id="life-pathways-title"','data-path="inspection"','data-path="transfer"','data-path="parenting"','data-path="livelihood"'],
+            '/':['id="life-pathways-title"','data-path="inspection"','data-path="transfer"','data-path="parenting"','data-path="livelihood"','data-offer-group="three-life-offers-2026"','data-affiliate="tenping-auto-lease-202610"'],
             '/privacy-policy/':['Google AdSense','https://adssettings.google.com/','https://policies.google.com/technologies/partner-sites'],
             '/car/car-inspection-period/':['class="reader-decision"','생활비서','rel="canonical"','https://pagero.kr/life/car/car-inspection-period/'],
             '/editorial-standards/':['작성·검수 기준 확인일: 2026-10-23','광고와 편집의 분리'],
