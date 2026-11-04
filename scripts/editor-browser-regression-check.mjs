@@ -2541,19 +2541,28 @@ async function run() {
       return { tabs: panel.querySelectorAll('[role="tablist"]').length,
         duplicateHeading: !!panel.querySelector('.code-editor-head strong'),
         optionsClosed: !panel.querySelector('.code-editor-options').open,
+        aliasVisible: panel.querySelector('input[aria-label="구분 이름"]')?.getClientRects().length > 0,
+        aliasOutsideDisclosure: !panel.querySelector('.code-editor-options input[aria-label="구분 이름"]'),
+        disclosureLabel: panel.querySelector('.code-editor-options > summary')?.textContent?.trim(),
         height: panel.querySelector('.code-editor-box textarea').getBoundingClientRect().height };
     })()`);
-    assert(directCode.tabs === 0 && !directCode.duplicateHeading && directCode.optionsClosed && directCode.height >= 240,
-      'code selection must show its input directly without tabs, repeated headings or naming fields: ' + JSON.stringify(directCode));
+    assert(directCode.tabs === 0 && !directCode.duplicateHeading && directCode.optionsClosed && directCode.height >= 240
+      && directCode.aliasVisible && directCode.aliasOutsideDisclosure && directCode.disclosureLabel === '영역 높이',
+      'code editor must expose its list nickname before opening height controls: ' + JSON.stringify(directCode));
     await capture(client, 'desktop-left-code-only');
-    await focusSelector(client, '#editor-block-settings-editor-code .code-editor-options > summary');
-    await pressKeyboardKey(client, 'Space');
-    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-code .code-editor-options')?.open === true`, 'code naming and height options open by keyboard');
-
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-code input[aria-label="구분 이름"]')`, 'code block custom label input');
     await setInputValue(client, '#editor-block-settings-editor-code input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
 
+    await waitForBrowser(client, `document.querySelector('.screen-order-v2-settings-title > h2')?.textContent === ${JSON.stringify(persistedCodeLabel)}`,
+      'code list name updates the selected inspector immediately');
+
+    await focusSelector(client, '#editor-block-settings-editor-code .code-editor-options > summary');
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-code .code-editor-options')?.open === true`, 'code naming and height options open by keyboard');
+
+    await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-code .code-editor-options .code-editor-options-body button')`,
+      'code height settings remain available behind the disclosure');
     await clickSelector(client, '#editor-block-settings-editor-code .code-editor-options > summary');
     await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-code .code-editor-options')?.open === false`, 'code options close while direct editing stays available');
 
