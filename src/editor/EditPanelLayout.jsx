@@ -82,21 +82,42 @@ export function EditPanelLayout({
   };
 
   // Previous/next follows the actual mobile page order, including pinned sections.
-  // Only the user's explicit switch action scrolls the shared editor; row clicks
-  // continue to preserve the existing scroll position.
+  // Keep the navigator's existing scroll position whenever the next selected row
+  // is already visible; do not jump to the top of a 30+ block composition.
   const blockNavigation = createInspectorBlockNavigation({
     normalBlocks: screenOrderListProps.normalBlocks,
     fixedDescriptors,
     selectedBlockId,
   });
-  const switchBlock = (id) => {
-    if (!id || id === selectedBlockId) return;
-    if (fixedDescriptors.some((item) => item.block.id === id)) chooseFixed(id);
-    else chooseBlock(id);
+  const revealInspectorSelection = (id, attempts = 5) => {
     requestAnimationFrame(() => {
       const scroller = document.querySelector('.canvas-editor-shell .work-panel');
-      if (scroller) scroller.scrollTop = 0;
+      const row = document.getElementById(`editor-block-${id}`);
+      if (!scroller || !row || !scroller.contains(row)) return;
+      if (!row.getClientRects().length) {
+        // A newly selected fixed block can still be inside a collapsed group
+        // until its disclosure reacts to the change.
+        if (attempts > 0) revealInspectorSelection(id, attempts - 1);
+        return;
+      }
+      const viewport = scroller.getBoundingClientRect();
+      const stickySearch = scroller.querySelector('.editor-composition-search');
+      const searchBottom = stickySearch?.getBoundingClientRect().bottom ?? viewport.top;
+      const safeTop = Math.max(viewport.top + 8, searchBottom + 12);
+      const safeBottom = viewport.bottom - 12;
+      const bounds = row.getBoundingClientRect();
+      if (bounds.top >= safeTop && bounds.bottom <= safeBottom) return;
+      const scrollTop = scroller.scrollTop + bounds.top - safeTop;
+      scroller.scrollTo({ top: Math.max(0, scrollTop), behavior: 'instant' });
     });
+  };
+  const switchBlock = (id) => {
+    if (!id || id === selectedBlockId) return;
+    if (fixedDescriptors.some((item) => item.block.id === id)) {
+      revealFixedSearch(id);
+      chooseFixed(id);
+    } else chooseBlock(id);
+    revealInspectorSelection(id);
   };
   const inspectorNavigation = blockNavigation
     ? { ...blockNavigation, onNavigate: switchBlock }

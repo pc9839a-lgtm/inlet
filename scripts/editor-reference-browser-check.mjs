@@ -638,6 +638,74 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await clickPointer(client, '.editor-block-switch-actions button[aria-label="다음 블록"]');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
     'inspector next returns to the text block');
+
+  // 16th patch: a deep composition should keep the selected row visible when
+  // switching via inspector previous/next, rather than resetting scrollTop=0.
+  // DOM-only clones add depth; React page data and saved block order are untouched.
+  const inspectorDepth = await evaluate(client, `(() => {
+    const list = document.querySelector('.screen-order-v2-list');
+    const image = document.querySelector('#editor-block-editor-image')?.closest('.screen-order-v2-slot');
+    const scroller = document.querySelector('.work-panel');
+    const seed = list?.querySelector('.screen-order-v2-slot');
+    if (!list || !image || !seed || !scroller) return null;
+    const addClone = (placement, i) => {
+      const node = seed.cloneNode(true);
+      node.dataset.qaDeepSwitchClone = String(i);
+      node.querySelectorAll('[id]').forEach((item) => item.removeAttribute('id'));
+      if (placement === 'before') image.before(node);
+      else list.appendChild(node);
+    };
+    for (let i = 0; i < 26; i++) addClone('before', i);
+    for (let i = 26; i < 42; i++) addClone('after', i);
+    scroller.scrollTop = 0;
+    return { clones: list.querySelectorAll('[data-qa-deep-switch-clone]').length,
+      initialScroll: scroller.scrollTop, height: scroller.scrollHeight };
+  })()`);
+  assert(inspectorDepth?.clones === 42 && inspectorDepth.height > 1200,
+    'deep navigation fixture must provide a long scrollable block composition: ' + JSON.stringify(inspectorDepth));
+  // Inspector navigation is already verified with native pointer clicks above.
+  // A direct button activation here avoids the generic test helper's
+  // scrollIntoView() resetting the shared scrollbar before each click.
+  // The real fixture order is hero → text → form → code → image.
+  // Advance through form and code before checking the deep image position.
+  await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'`,
+    'inspector next moves from text to form');
+  await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-code')?.dataset.selected === 'true'`,
+    'inspector next moves from form to code');
+  await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
+  await waitForBrowser(client, `(() => {
+    const scroller = document.querySelector('.work-panel');
+    const row = document.querySelector('#editor-block-editor-image');
+    const search = document.querySelector('.editor-composition-search');
+    const bounds = row?.getBoundingClientRect();
+    return row?.dataset.selected === 'true'
+      && !!bounds && bounds.top >= search.getBoundingClientRect().bottom + 4
+      && bounds.bottom < scroller.getBoundingClientRect().bottom
+      && scroller.scrollTop > 350;
+  })()`, 'deep inspector next locates the selected image row without jumping to top');
+  const imageScroll = await evaluate(client, `document.querySelector('.work-panel').scrollTop`);
+  await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
+  await waitForBrowser(client, `(() => {
+    const scroller = document.querySelector('.work-panel');
+    const row = document.querySelector('#editor-block-editor-bottom');
+    const search = document.querySelector('.editor-composition-search');
+    const bounds = row?.getBoundingClientRect();
+    return row?.dataset.selected === 'true'
+      && !!bounds && bounds.top >= search.getBoundingClientRect().bottom - 2
+      && bounds.bottom < scroller.getBoundingClientRect().bottom
+      && scroller.scrollTop > 350;
+  })()`, 'deep inspector next finds the lower fixed CTA instead of losing its list position');
+  const bottomScroll = await evaluate(client, `document.querySelector('.work-panel').scrollTop`);
+  assert(imageScroll > 350 && bottomScroll > 350, 'deep navigation must never reset to the list start');
+  await evaluate(client, `(() => {
+    document.querySelectorAll('[data-qa-deep-switch-clone]').forEach((node) => node.remove());
+    document.querySelector('.work-panel').scrollTop = 0;
+  })()`);
+  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
+    'deep inspector regression returns to the original text editor');
   assert(apiState.saveCount === 0, 'inspector navigation must not save or publish the page');
 
   // A 30+ block list must not push the selected Inspector header out of view
