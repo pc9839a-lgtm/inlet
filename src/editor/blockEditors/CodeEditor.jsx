@@ -1,5 +1,6 @@
 import './CodeEditor.css';
 import { ChevronDown } from 'lucide-react';
+import { EditorField } from '../ui/index.js';
 import { CodeStylePanel } from './WidgetStylePanels.jsx';
 import CodeEditorBox from './CodeEditorBox.jsx';
 import CodeEditorModal from './CodeEditorModal.jsx';
@@ -28,22 +29,19 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
   return (
     <>
       <CodeEditorBox draft={draft} onDraftChange={setDraft} onOpenModal={() => setModalOpen(true)} onApply={apply} codePending={codePending} codeDraftHint={codeDraftHint} />
+      <EditorField label="목록 구분 이름">
+        <input
+          type="text"
+          aria-label="구분 이름"
+          value={s.editorLabel || ''}
+          maxLength={40}
+          placeholder="예: 축하 영상, 찾아오시는 길"
+          onChange={(event) => set({ editorLabel: event.target.value.slice(0, 40) })}
+        />
+      </EditorField>
       <details className="code-editor-options">
-        <summary>이름·높이<ChevronDown size={16} aria-hidden="true" /></summary>
+        <summary>영역 높이<ChevronDown size={16} aria-hidden="true" /></summary>
         <div className="code-editor-options-body">
-          <div className="anchor-control block-editor-anchor-control code-editor-name-control">
-            <span className="block-editor-anchor-label">구분 이름</span>
-            <div className="block-editor-anchor-value code-editor-name-value">
-              <input
-                type="text"
-                value={s.editorLabel || ''}
-                maxLength={40}
-                placeholder="항목 이름"
-                onChange={(event) => set({ editorLabel: event.target.value.slice(0, 40) })}
-                aria-label="구분 이름"
-              />
-            </div>
-          </div>
           <CodeStylePanel s={s} set={set} />
         </div>
       </details>

@@ -152,17 +152,6 @@
   .code-editor-box textarea { height: 190px; }
 }
 
-/* Code block label intentionally reuses the native widget-code row.
-   Only the inner value grid differs because this row has no # prefix/copy action. */
-.block-editor-v2 .code-editor-name-value {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.block-editor-v2 .code-editor-name-value > input {
-  grid-column: 1;
-}
-
-
 .code-editor-modal-card :is(button,textarea):focus-visible {
   outline: 3px solid #2563eb;
   outline-offset: 2px;
@@ -199,7 +188,8 @@
   }
 }
 
-/* Code is the primary surface; naming and display height are secondary. */
+/* Code remains the primary surface; the name uses the shared editor field,
+   while only display height remains in the secondary disclosure. */
 .code-editor-head { justify-content: flex-end; }
 .builder-shell .code-editor-options { margin-top: 16px; }
 .builder-shell .code-editor-options > summary {
