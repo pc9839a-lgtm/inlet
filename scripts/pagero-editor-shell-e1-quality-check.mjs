@@ -38,6 +38,7 @@ const codeBlocks = [
   { id: 'c2', type: 'code', visible: false, s: { widgetMode: 'custom', html: '<!-- internal --><section>주차 안내</section><script>alert(1)</script>' } },
   { id: 'c3', type: 'code', s: { widgetMode: 'custom', editorLabel: '약도 영역', html: '<h2>가는 방법</h2>' } },
   { id: 'yt', type: 'code', s: { widgetMode: 'youtube', html: '<iframe>embedded player</iframe>' } },
+  { id: 'c4', type: 'code', s: { html: '<script>const tag = "</style>"; window.hiddenScript = true;</script><p>안전한 내용</p>' } },
 ];
 const beforeCodeRead = JSON.stringify(codeBlocks);
 const codeLabels = createScreenOrderIdentities(codeBlocks);
@@ -45,8 +46,10 @@ assert(codeLabels[0].detail.includes('청첩장 안내') && codeLabels[0].detail
   && !codeLabels[0].detail.includes('secret') && !codeLabels[0].detail.includes('color:red')
   && codeLabels[1].detail === '주차 안내'
   && codeLabels[2].customLabel === '약도 영역'
-  && codeLabels[3].detail === '',
-  'code row descriptions must show text only, preserve user aliases, and exclude scripts, CSS and YouTube internals');
+  && codeLabels[3].detail === ''
+  && codeLabels[4].detail === '안전한 내용'
+  && !codeLabels[4].detail.includes('hiddenScript'),
+  'code row descriptions must show text only, preserve aliases, and exclude scripts even with mismatched inner tags');
 assert(JSON.stringify(codeBlocks) === beforeCodeRead,
   'code navigator descriptions must not mutate stored HTML or hidden block state');
 assert(createScreenOrderIdentities([
