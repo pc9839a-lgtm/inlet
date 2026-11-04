@@ -66,7 +66,7 @@ export function createScreenOrderIdentities(blocks) {
     const occurrence = (seen.get(kind) || 0) + 1;
     seen.set(kind, occurrence);
     const s = block?.s || {};
-    const customLabel = block?.type === 'code' ? previewText(s.editorLabel) : '';
+    const customLabel = ['code', 'image'].includes(block?.type) ? previewText(s.editorLabel) : '';
     const fields = block?.type === 'image'
       ? [s.caption, s.alt]
       : block?.type === 'code'
