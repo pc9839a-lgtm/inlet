@@ -123,8 +123,51 @@ for(const item of ["id: 'brand'","id: 'hero'","id: 'action'","id: 'fields'","id:
 const domainUI=read('src/panels/settings/CustomDomainSettingsSection.jsx');
 assert(domainUI.includes("apexDomain ? '네임서버' : 'CNAME'"), 'Domain root/subdomain instructions no longer match UI');
 assert(domainUI.includes('refreshDomainStatus') && domainUI.includes('removeDomain') && domainUI.includes('sslLabel'), 'Domain verification / detach / SSL behavior changed');
+
+const guide10Cases={
+ 'content-blocks': ['같은 정보라도 어떤 블록을 쓰느냐에 따라 다릅니다','블록 추가','자료 다운로드','상담 폼','지도'],
+ 'hero-and-buttons': ['히어로 한 화면과 고정 버튼 한 개를 완성하는 예제','글 위·글 뒤·전체 이미지','180~720px','0~85%','1개 / 2개 / 3개','위젯 / 링크 / 전화'],
+ 'design-mobile': ['모바일 360·390·430px에서 같은 페이지를 검증하는 방법','Pretendard / Noto / Serif','채우기 / 전체 보기 / 원본','스타일 미적용','적용'],
+};
+for(const [slug,markers] of Object.entries(guide10Cases)){
+ const html=read('public/guide/'+slug+'/index.html');
+ assert(html.includes('<section id="field-workflow" class="manual-lab"'), 'Source-verified manual walkthrough missing: '+slug);
+ assert(html.includes('<a href="#field-workflow">실무 설정·판단 예제</a>'), 'Practical walkthrough omitted from TOC: '+slug);
+ assert(html.includes('role="img"') && html.includes('<figcaption>'), 'Explanatory diagram needs accessible label: '+slug);
+ assert.equal((html.match(/rel="canonical"/g)||[]).length,1, 'Canonical duplication: '+slug);
+ assert(html.includes('"dateModified":"2026-11-04"') && html.includes('최종 확인 2026.11.04'), 'Article revision metadata mismatch: '+slug);
+ assert(sitemap.includes('<loc>https://pagero.kr/guide/'+slug+'/</loc><lastmod>2026-11-04</lastmod>'), 'Sitemap revision date mismatch: '+slug);
+ for(const marker of markers) assert(html.includes(marker), 'Practical product evidence missing: '+slug+' / '+marker);
+}
+// Check that these manuals describe actual live controls, not invented settings.
+const blockCatalog=read('src/config/blockMeta.jsx');
+for(const label of ['히어로','이미지','동영상','텍스트','카드','자료 다운로드','지도','FAQ','상담 폼','방문 예약']){
+ assert(blockCatalog.includes("label: '"+label+"'"), 'Guide10 references a removed block type: '+label);
+}
+const targetModes=read('src/editor/targetControlModel.js');
+for(const mode of ["widget: '위젯'","link: '링크'","phone: '전화'"]){
+ assert(targetModes.includes(mode), 'Button target mode diverged: '+mode);
+}
+const heroImages=read('src/editor/blockEditors/HeroImageSection.jsx');
+for(const key of ["value: 'top'","value: 'background'","value: 'full'","min={180} max={720}","min={0} max={85}"]){
+ assert(heroImages.includes(key), 'Hero image guide diverged: '+key);
+}
+const bottomButtons=read('src/editor/blockEditors/BottomBarBasicSection.jsx');
+for(const key of ["value: '1'","value: '2'","value: '3'"]){
+ assert(bottomButtons.includes(key), 'Bottom button count options diverged: '+key);
+}
+const styleUI=read('src/panels/StylePanel.jsx');
+for(const key of ["'pretendard', 'Pretendard'","'noto', 'Noto'","'serif', 'Serif'","'solid', T.solid","'gradient', T.gradient","'image', T.image","T.dirty","T.apply","'block', '블록별'"]){
+ assert(styleUI.includes(key), 'Mobile style guide diverged: '+key);
+}
 const searchIndex=JSON.parse(read('public/guide/search-index.json'));
 assert.equal(searchIndex.documents.length,15,'Full-text index must cover 15 official guides');
+for(const [slug,markers] of Object.entries(guide10Cases)){
+ const doc=searchIndex.documents.find(x=>x.slug===slug);
+ assert(doc && doc.headings.includes('실무 설정·판단 예제'), 'Guide search index lacks new walkthrough: '+slug);
+ for(const marker of markers) assert(doc.body.includes(marker), 'Guide search text missing practical example: '+slug+' / '+marker);
+}
+
 for(const [slug,markers] of Object.entries(guide9Cases)){
  const doc=searchIndex.documents.find(d=>d.slug===slug);
  assert(doc && doc.headings.some(h=>h.includes('실무 점검')||h.includes('설정·오류 판별 예제')), 'Guide search index missing new practical section: '+slug);
