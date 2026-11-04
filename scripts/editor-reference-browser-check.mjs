@@ -503,8 +503,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const selected = document.querySelector('#editor-block-editor-text');
     const row = selected?.getBoundingClientRect();
     const view = scroller?.getBoundingClientRect();
-    return !!row && !!view && row.top >= view.top + 105 && row.top <= view.top + 195
-      && selected.dataset.selected === 'true';
+    const search = document.querySelector('.editor-composition-search')?.getBoundingClientRect();
+    return !!row && !!view && !!search && row.top >= search.bottom - 2
+      && row.bottom <= view.bottom + 2 && selected.dataset.selected === 'true';
   })()`, 'selected block appears below sticky navigator');
   const locateAfter = await evaluate(client, `(() => {
     const scroller = document.querySelector('.work-panel');
