@@ -521,6 +521,52 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(JSON.stringify(afterSearchOrder) === JSON.stringify(beforeSearchOrder), 'block search must not reorder or filter any original blocks');
   await setInputValue(client, 'input[aria-label="블록 이름 검색"]', '');
 
+  // 15th patch: searching the composition must include fixed navigation rows.
+  // Each result selects the real inspector; collapsed groups reopen on search.
+  const searchInput = 'input[aria-label="블록 이름 검색"]';
+  await setInputValue(client, searchInput, '푸터');
+  await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`,
+    'footer is independently searchable');
+  await focusSelector(client, searchInput);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-footer')?.dataset.selected === 'true'
+    && !!document.querySelector('#editor-block-settings-editor-footer')`,
+    'search selects footer and its actual inspector');
+
+  await setInputValue(client, searchInput, '');
+  await clickPointer(client, '[data-fixed-group="bottom"] .editor-fixed-group-toggle');
+  await waitForBrowser(client, `document.querySelector('#editor-fixed-group-bottom')?.hidden === true`,
+    'footer group collapses before repeated search');
+  await setInputValue(client, searchInput, '푸터');
+  await focusSelector(client, searchInput);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('#editor-fixed-group-bottom')?.hidden === false
+    && document.querySelector('#editor-block-editor-footer')?.dataset.selected === 'true'`,
+    'search reopens a collapsed group for an already-selected fixed row');
+
+  await setInputValue(client, searchInput, '상단 메뉴');
+  await focusSelector(client, searchInput);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-topnav')?.dataset.selected === 'true'
+    && !!document.querySelector('#editor-block-settings-editor-topnav')`,
+    'search locates the fixed top menu');
+  await setInputValue(client, searchInput, '하단 고정 버튼');
+  await focusSelector(client, searchInput);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-bottom')?.dataset.selected === 'true'
+    && !!document.querySelector('#editor-block-settings-editor-bottom')`,
+    'search locates the bottom CTA rather than the footer');
+  const afterFixedSearchOrder = await evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map(el => el.id)`);
+  assert(JSON.stringify(afterFixedSearchOrder) === JSON.stringify(beforeSearchOrder),
+    'fixed search must not reorder or filter normal page blocks');
+  await setInputValue(client, searchInput, '텍스트');
+  await focusSelector(client, searchInput);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
+    'normal block selection still works after fixed results');
+  await setInputValue(client, searchInput, '');
+  assert(apiState.saveCount === 0, 'fixed-block search and disclosure changes never save or publish');
+
   // UX-006/015: Locate the selected React block in a long DOM-only
   // composition, retaining the original page order and one shared scrollbar.
   await waitForBrowser(client, `!!document.querySelector('button[aria-label="선택 블록 위치 찾기"]')`,
