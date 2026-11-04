@@ -4,36 +4,52 @@ import { META } from '../../config/blockMeta.jsx';
 import { createScreenOrderIdentities } from './screenOrderIdentityModel.js';
 
 // Search selects existing blocks without filtering/reordering the source list.
-export function BlockNavigatorSearch({ blocks = [], selectedId = '', onSelect }) {
+export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selectedId = '', onSelect, onRevealSelected }) {
   const [query, setQuery] = React.useState('');
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const matches = React.useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     if (!needle) return [];
     const identities = createScreenOrderIdentities(blocks);
-    return blocks.filter((block, index) => {
+    const fixed = (placement) => fixedDescriptors
+      .filter((item) => item.block?.id && (placement === 'top' ? item.key === 'topnav' : item.key !== 'topnav'))
+      .map((item) => ({
+        id: item.block.id,
+        terms: [item.title, item.badge, placement === 'top' ? '상단 고정' : '하단 고정'],
+      }));
+    const normal = blocks.filter((block) => block?.id).map((block) => {
+      const index = blocks.indexOf(block);
       const identity = identities[index];
       const label = META[block.s?.widgetMode === 'youtube' ? 'youtube' : block.type]?.label || block.type;
-      return [label, identity?.customLabel, identity?.detail, identity?.occurrence]
-        .filter((value) => value !== undefined && value !== null)
-        .some((value) => String(value).toLocaleLowerCase().includes(needle));
+      return { id: block.id, terms: [label, identity?.customLabel, identity?.detail, identity?.occurrence] };
     });
-  }, [blocks, query]);
+    return [...fixed('top'), ...normal, ...fixed('bottom')]
+      .filter((item) => item.terms
+        .filter((value) => value !== undefined && value !== null)
+        .some((value) => String(value).toLocaleLowerCase().includes(needle)));
+  }, [blocks, fixedDescriptors, query]);
 
   // Locate a search result or the selected block without adding another
   // scrollbar or changing the user's stored block list.
   const revealRow = (id, focus = false) => {
-    requestAnimationFrame(() => {
+    // Fixed rows may be hidden while their group expands after selection.
+    // Retry a few animation frames without changing the selected page data.
+    const locate = (remaining) => requestAnimationFrame(() => {
       const scroller = document.querySelector('.canvas-editor-shell .work-panel');
       const target = document.getElementById(`editor-block-${id}`);
       if (!scroller || !target || !scroller.contains(target)) return;
+      if (!target.getClientRects().length) {
+        if (remaining > 0) locate(remaining - 1);
+        return;
+      }
       const view = scroller.getBoundingClientRect();
       const row = target.getBoundingClientRect();
-      // Leave room for the 76px sticky heading and 42px search bar.
+      // Leave room for the sticky heading and search bar.
       const top = scroller.scrollTop + row.top - view.top - 136;
       scroller.scrollTo({ top: Math.max(0, top), behavior: focus ? 'instant' : 'smooth' });
       if (focus) target.querySelector('.screen-order-v2-title-wrap')?.focus({ preventScroll: true });
     });
+    locate(4);
   };
 
   const navigate = (index) => {
@@ -44,7 +60,10 @@ export function BlockNavigatorSearch({ blocks = [], selectedId = '', onSelect })
     onSelect(id);
     revealRow(id);
   };
-  const canLocateSelected = !query.trim() && blocks.some((block) => block.id === selectedId);
+  const canLocateSelected = !query.trim() && (
+    blocks.some((block) => block.id === selectedId) ||
+    fixedDescriptors.some((item) => item.block?.id === selectedId)
+  );
 
   const changeQuery = (event) => {
     setQuery(event.target.value);
@@ -84,7 +103,7 @@ export function BlockNavigatorSearch({ blocks = [], selectedId = '', onSelect })
           type="button"
           aria-label="선택 블록 위치 찾기"
           title="선택한 블록의 목록 위치로 이동"
-          onClick={() => revealRow(selectedId, true)}
+          onClick={() => { onRevealSelected?.(selectedId); revealRow(selectedId, true); }}
         >
           <LocateFixed size={16} aria-hidden="true" />
         </button>
