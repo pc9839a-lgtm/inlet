@@ -35,6 +35,7 @@ jobs:
             '/support/culture-card-2026/':['2026 문화누리카드: 발급은 11월 30일까지'],
             '/support/energy-voucher-2026/':['11월 에너지바우처: 신청·사용·재신청 구분'],
             '/support/earned-income-tax-credit-late-2026/':['2026년 11월 근로장려금 기한 후 신청'],
+            '/support/year-end-tax-precheck-2026/':['2026 연말정산 미리보기','12월 18일','900만원 + 300만원 = 1,200만원'],
           }
           def read(url):
             request=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (PageroLifeImmutableGate)','Cache-Control':'no-cache'})
@@ -56,6 +57,13 @@ jobs:
           status,headers,sitemap=read(origin+'/sitemap.xml')
           if status!=200 or sitemap.count('<loc>')<50 or 'https://pagero.kr/life/car/car-inspection-period/' not in sitemap:
             sys.exit('Immutable origin sitemap invalid')
+          if 'https://pagero.kr/life/support/year-end-tax-precheck-2026/' not in sitemap:
+            sys.exit('2026 year-end tax preview missing from canonical sitemap')
+          for suffix in ('calendar','inputs','checklist'):
+            asset='/images/year-end-tax-precheck-2026-'+suffix+'.svg'
+            imgstatus,imgheaders,imgbody=read(origin+asset)
+            if imgstatus!=200 or '<svg ' not in imgbody or len(imgbody)<800:
+              sys.exit('New original SVG infographic missing: '+asset)
           print('IMMUTABLE_ORIGIN_VERIFIED',origin,'sitemap_urls',sitemap.count('<loc>'),flush=True)
           if os.environ.get('GITHUB_EVENT_NAME')!='push':
             sys.exit(0)
