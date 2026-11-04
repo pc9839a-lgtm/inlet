@@ -126,6 +126,8 @@ const formGroupCss = await readFile('src/editor/blockEditors/FormEditor.css', 'u
 const legacyStylePanelCss = await readFile('src/styles/panels-style-v17.css', 'utf8');
 const settingsView = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const inspectorSwitch = await readFile('src/editor/editPanelParts/InspectorBlockSwitch.jsx', 'utf8');
+const codeEditor = await readFile('src/editor/blockEditors/CodeEditor.jsx', 'utf8');
+const codeEditorCss = await readFile('src/editor/blockEditors/CodeEditor.css', 'utf8');
 const settingsHeader = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const disclosure = await readFile('src/editor/ui/InspectorDisclosure.jsx', 'utf8');
 const stylePanel = await readFile('src/panels/StylePanel.jsx', 'utf8');
@@ -313,6 +315,14 @@ assert(layout.includes('className="editor-page-settings-button"')
   && layout.includes('aria-controls="editor-selection-panel"')
   && !layout.includes('edit-section-tabs') && !editPanelLayoutCss.includes('edit-section-tabs'),
   'page settings must use one composition entry without a second inspector tab bar');
+assert(codeEditor.includes('import { EditorField }')
+  && codeEditor.includes('<EditorField label="목록 구분 이름">')
+  && codeEditor.includes('aria-label="구분 이름"')
+  && codeEditor.includes('<summary>영역 높이')
+  && !codeEditor.includes('<summary>이름·높이')
+  && !codeEditor.includes('code-editor-name-value')
+  && !codeEditorCss.includes('.code-editor-name-value'),
+  'code block list labels must be directly editable while display height stays in a single native disclosure');
 assert(settingsView.includes('<InspectorBlockSwitch navigation={navigation} />')
   && inspectorSwitch.includes('aria-label="이전 블록"')
   && inspectorSwitch.includes('aria-label="다음 블록"')
