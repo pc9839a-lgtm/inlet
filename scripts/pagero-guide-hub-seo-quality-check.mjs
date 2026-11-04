@@ -160,8 +160,67 @@ const styleUI=read('src/panels/StylePanel.jsx');
 for(const key of ["'pretendard', 'Pretendard'","'noto', 'Noto'","'serif', 'Serif'","'solid', T.solid","'gradient', T.gradient","'image', T.image","T.dirty","T.apply","'block', '블록별'"]){
  assert(styleUI.includes(key), 'Mobile style guide diverged: '+key);
 }
+
+const guide11Cases={
+ 'create-page':['페이지 주소가 저장되지 않을 때까지 확인하는 생성 예제','직접 · 템플릿 · AI','3자','48자','login','저장 성공'],
+ 'integrations':['접수 한 건이 이메일·시트·Webhook으로 전달되는지 구분하기','Google로 연결','Google Sheets — Webhook','외부 사이트에 넣기','연동 저장'],
+ 'seo-tracking':['검색 정보·태그 설치·실제 접수를 각각 검증하는 방법','GTM-XXXXXXX','G-XXXXXXXXXX','AW-123456789','Meta Pixel','색인'],
+};
+for(const [slug,markers] of Object.entries(guide11Cases)){
+ const html=read('public/guide/'+slug+'/index.html');
+ assert(html.includes('<section id="field-workflow" class="manual-lab"'),'Missing final first-party practical section: '+slug);
+ assert(html.includes('<a href="#field-workflow">설정·진단 실무 예제</a>'),'Missing final section link in TOC: '+slug);
+ assert(html.includes('class="guide-process-steps" role="img"') && html.includes('<figcaption>'),'Missing accessible explanatory workflow diagram: '+slug);
+ assert.equal((html.match(/rel="canonical"/g)||[]).length,1,'Duplicate canonical: '+slug);
+ assert(html.includes('"dateModified":"2026-11-04"') && html.includes('최종 확인 2026.11.04'),'Revised metadata missing: '+slug);
+ assert(sitemap.includes('<loc>https://pagero.kr/guide/'+slug+'/</loc><lastmod>2026-11-04</lastmod>'),'Revised sitemap date missing: '+slug);
+ for(const marker of markers) assert(html.includes(marker),'Missing source-grounded step: '+slug+' / '+marker);
+}
+const createSlug=read('src/lib/pageSlugs.js');
+assert(createSlug.includes('slug.length < 3') && createSlug.includes('slug.length > 48'),'Real page URL length requirements changed');
+assert(createSlug.includes("'login'") && createSlug.includes('RESERVED_PAGE_SLUGS'),'Reserved page URL restrictions changed');
+const createPageActions=read('src/runtime/useCreatePageActions.js');
+for(const fn of ['createWithAi','createManual','createFromTemplate','saveCreatedPageToServer']){
+ assert(createPageActions.includes(fn),'Page creation guide disagrees with code: '+fn);
+}
+const createUrl=read('src/runtime/useCreatePageUrlCheck.js');
+assert(createUrl.includes('서버 중복 확인이 불안정합니다. 저장 단계에서 다시 확인합니다.'),'Creation guide must cover uncertain duplicate lookups');
+const inboxConnect=read('src/panels/inbox/InboxConnectionsPanel.jsx');
+for(const item of ['Google로 연결','연동 저장','연결 테스트','받을 이메일','Webhook','외부 연동']){
+ assert(inboxConnect.includes(item),'Integration guide no longer matches inbox settings: '+item);
+}
+const embedSource=read('src/lib/formEmbed.js');
+assert(embedSource.includes('https://pagero.kr/embed/form.js') && embedSource.includes('data-pagero-page'),'External embedded form implementation changed');
+const seoControls=read('src/panels/settings/SeoSettingsSection.jsx');
+for(const field of ['메타 제목','메타 설명','파비콘','공유 이미지','네이버','Google']){
+ assert(seoControls.includes(field),'SEO guide describes a missing field: '+field);
+}
+const trackingControls=read('src/panels/settings/TrackingSettingsSection.jsx');
+for(const id of ['GTM-XXXXXXX','G-XXXXXXXXXX','AW-123456789','Meta Pixel','네이버 WCS','카카오 픽셀']){
+ assert(trackingControls.includes(id),'Tracking guide describes a missing ID format: '+id);
+}
+const conversionFields=read('src/panels/settings/ConversionCodeFields.jsx');
+assert(conversionFields.includes('AW-123456789/AbCdEf'),'Google Ads conversion action example changed');
+const allFirstPartyGuideSlugs=[
+ 'getting-started','editor-overview','contact-form','analytics','inbox-management','troubleshooting',
+ 'reservation-form','preview-publish','settings-domain','content-blocks','hero-and-buttons','design-mobile',
+ 'create-page','integrations','seo-tracking',
+];
+for(const slug of allFirstPartyGuideSlugs){
+ const html=read('public/guide/'+slug+'/index.html');
+ assert(html.includes('id="field-workflow"'),'Official manual still lacks distinct hands-on evidence: '+slug);
+ assert(html.includes('<a href="#field-workflow">'),'Official manual TOC still missing hands-on evidence: '+slug);
+ assert(html.includes('<figcaption>'),'Official manual lacks clearly labeled explanatory diagram: '+slug);
+}
 const searchIndex=JSON.parse(read('public/guide/search-index.json'));
 assert.equal(searchIndex.documents.length,15,'Full-text index must cover 15 official guides');
+for(const [slug,markers] of Object.entries(guide11Cases)){
+ const doc=searchIndex.documents.find(x=>x.slug===slug);
+ assert(doc && doc.headings.includes('설정·진단 실무 예제'),'Search index missing final hands-on chapter: '+slug);
+ for(const marker of markers) assert(doc.body.includes(marker),'Guide search index missing practical content: '+slug+' / '+marker);
+}
+assert.equal(searchIndex.documents.filter(doc=>allFirstPartyGuideSlugs.includes(doc.slug)).length,15,'All 15 guide titles must remain searchable');
+
 for(const [slug,markers] of Object.entries(guide10Cases)){
  const doc=searchIndex.documents.find(x=>x.slug===slug);
  assert(doc && doc.headings.includes('실무 설정·판단 예제'), 'Guide search index lacks new walkthrough: '+slug);
