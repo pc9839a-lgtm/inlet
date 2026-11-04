@@ -23,7 +23,7 @@ function previewCodeContent(value) {
   const excerpt = value.slice(0, 20000);
   const visibleMarkup = excerpt
     .replace(/<!--[\s\S]*?(?:-->|$)/g, ' ')
-    .replace(/<(?:script|style|noscript|template)\b[^>]*>[\s\S]*?(?:<\/(?:script|style|noscript|template)\s*>|$)/gi, ' ');
+    .replace(/<(script|style|noscript|template)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi, ' ');
   return previewText(visibleMarkup);
 }
 
