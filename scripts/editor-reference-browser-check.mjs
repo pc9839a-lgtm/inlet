@@ -477,6 +477,51 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(JSON.stringify(afterSearchOrder) === JSON.stringify(beforeSearchOrder), 'block search must not reorder or filter any original blocks');
   await setInputValue(client, 'input[aria-label="블록 이름 검색"]', '');
 
+  // UX-006/015: Locate the selected React block in a long DOM-only
+  // composition, retaining the original page order and one shared scrollbar.
+  await waitForBrowser(client, `!!document.querySelector('button[aria-label="선택 블록 위치 찾기"]')`,
+    'selected normal block exposes locate control');
+  const locateBefore = await evaluate(client, `(() => {
+    const list = document.querySelector('.screen-order-v2-list');
+    const scroller = document.querySelector('.work-panel');
+    const seed = list?.querySelector('.screen-order-v2-slot');
+    if (!list || !scroller || !seed) return null;
+    for (let i = 0; i < 34; i++) {
+      const clone = seed.cloneNode(true);
+      clone.dataset.qaLocateClone = String(i);
+      clone.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
+      list.appendChild(clone);
+    }
+    scroller.scrollTop = scroller.scrollHeight;
+    return { scrollTop: scroller.scrollTop, selected: document.querySelector('#editor-block-editor-text')?.dataset.selected };
+  })()`);
+  assert(locateBefore?.scrollTop > 250 && locateBefore.selected === 'true',
+    'locate fixture must scroll the shared editor: ' + JSON.stringify(locateBefore));
+  await clickPointer(client, 'button[aria-label="선택 블록 위치 찾기"]');
+  await waitForBrowser(client, `(() => {
+    const scroller = document.querySelector('.work-panel');
+    const selected = document.querySelector('#editor-block-editor-text');
+    const row = selected?.getBoundingClientRect();
+    const view = scroller?.getBoundingClientRect();
+    return !!row && !!view && row.top >= view.top + 105 && row.top <= view.top + 195
+      && selected.dataset.selected === 'true';
+  })()`, 'selected block appears below sticky navigator');
+  const locateAfter = await evaluate(client, `(() => {
+    const scroller = document.querySelector('.work-panel');
+    const selected = document.querySelector('#editor-block-editor-text');
+    return { focused: document.activeElement === selected?.querySelector('.screen-order-v2-title-wrap'),
+      overflow: getComputedStyle(scroller).overflowY,
+      order: [...document.querySelectorAll('.screen-order-v2-list > .screen-order-v2-slot:not([data-qa-locate-clone]) .screen-order-v2-item')].map((element) => element.id) };
+  })()`);
+  assert(locateAfter.focused && locateAfter.overflow === 'auto'
+    && JSON.stringify(locateAfter.order) === JSON.stringify(beforeSearchOrder),
+    'selected row must have keyboard focus without changing page order: ' + JSON.stringify(locateAfter));
+  await evaluate(client, `(() => {
+    document.querySelectorAll('[data-qa-locate-clone]').forEach((element) => element.remove());
+    document.querySelector('.work-panel').scrollTop = 0;
+  })()`);
+  assert(apiState.saveCount === 0, 'locating the selected block must never save or publish');
+
   // UX-006: The selected inspector must allow navigating neighboring blocks
   // without a second scrollbar, and keep the correct mobile selection.
   await waitForBrowser(client, `document.querySelector('.editor-block-switch-position')?.textContent?.includes('/')`,
