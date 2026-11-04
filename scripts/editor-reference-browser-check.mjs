@@ -497,19 +497,22 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   assert(locateBefore?.scrollTop > 250 && locateBefore.selected === 'true',
     'locate fixture must scroll the shared editor: ' + JSON.stringify(locateBefore));
-  await clickPointer(client, 'button[aria-label="선택 블록 위치 찾기"]');
-  const locateDiagnostic = await evaluate(client, `(() => {
-    const scroller = document.querySelector('.work-panel');
-    const row = document.querySelector('#editor-block-editor-text');
-    const search = document.querySelector('.editor-composition-search');
+  // The generic pointer helper calls scrollIntoView(), which shifts sticky
+  // search navigation while calculating coordinates. Click the already-visible
+  // sticky button at its actual viewport position instead.
+  const locatePoint = await evaluate(client, `(() => {
     const button = document.querySelector('button[aria-label="선택 블록 위치 찾기"]');
-    const box = (element) => element ? (({top,bottom,height,left,right})=>({top,bottom,height,left,right}))(element.getBoundingClientRect()) : null;
-    return {scrollTop:scroller.scrollTop, scrollMax:scroller.scrollHeight-scroller.clientHeight,
-      view:box(scroller), row:box(row), search:box(search), button:box(button),
-      selected:row?.dataset.selected, active:document.activeElement?.className,
-      rootScroll:document.documentElement.scrollTop};
+    const rect = button?.getBoundingClientRect();
+    if (!rect) return null;
+    const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
+    return { x, y, visible: y > 0 && y < innerHeight,
+      hit: document.elementFromPoint(x, y)?.closest('button') === button };
   })()`);
-  console.log('[editor-qa] selected locate geometry', JSON.stringify(locateDiagnostic));
+  assert(locatePoint?.visible && locatePoint?.hit,
+    'sticky selected locator must be hit-testable at its visible position: ' + JSON.stringify(locatePoint));
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: locatePoint.x, y: locatePoint.y });
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: locatePoint.x, y: locatePoint.y, button: 'left', buttons: 1, clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: locatePoint.x, y: locatePoint.y, button: 'left', buttons: 0, clickCount: 1 });
   await waitForBrowser(client, `(() => {
     const scroller = document.querySelector('.work-panel');
     const selected = document.querySelector('#editor-block-editor-text');
