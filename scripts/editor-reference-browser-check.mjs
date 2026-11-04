@@ -666,6 +666,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // Inspector navigation is already verified with native pointer clicks above.
   // A direct button activation here avoids the generic test helper's
   // scrollIntoView() resetting the shared scrollbar before each click.
+  // The real fixture order is hero → text → form → code → image.
+  // Advance through form and code before checking the deep image position.
+  await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'`,
+    'inspector next moves from text to form');
+  await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-code')?.dataset.selected === 'true'`,
+    'inspector next moves from form to code');
   await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
   await waitForBrowser(client, `(() => {
     const scroller = document.querySelector('.work-panel');
@@ -681,16 +689,16 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
   await waitForBrowser(client, `(() => {
     const scroller = document.querySelector('.work-panel');
-    const row = document.querySelector('#editor-block-editor-form');
+    const row = document.querySelector('#editor-block-editor-bottom');
     const search = document.querySelector('.editor-composition-search');
     const bounds = row?.getBoundingClientRect();
     return row?.dataset.selected === 'true'
-      && !!bounds && bounds.top >= search.getBoundingClientRect().bottom
+      && !!bounds && bounds.top >= search.getBoundingClientRect().bottom - 2
       && bounds.bottom < scroller.getBoundingClientRect().bottom
       && scroller.scrollTop > 350;
-  })()`, 'deep inspector next retains navigation context for the form row');
-  const formScroll = await evaluate(client, `document.querySelector('.work-panel').scrollTop`);
-  assert(imageScroll > 350 && formScroll > 350, 'deep navigation must never reset to the list start');
+  })()`, 'deep inspector next finds the lower fixed CTA instead of losing its list position');
+  const bottomScroll = await evaluate(client, `document.querySelector('.work-panel').scrollTop`);
+  assert(imageScroll > 350 && bottomScroll > 350, 'deep navigation must never reset to the list start');
   await evaluate(client, `(() => {
     document.querySelectorAll('[data-qa-deep-switch-clone]').forEach((node) => node.remove());
     document.querySelector('.work-panel').scrollTop = 0;
