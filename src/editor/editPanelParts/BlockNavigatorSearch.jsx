@@ -31,7 +31,7 @@ export function BlockNavigatorSearch({ blocks = [], selectedId = '', onSelect })
       const row = target.getBoundingClientRect();
       // Leave room for the 76px sticky heading and 42px search bar.
       const top = scroller.scrollTop + row.top - view.top - 136;
-      scroller.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      scroller.scrollTo({ top: Math.max(0, top), behavior: focus ? 'instant' : 'smooth' });
       if (focus) target.querySelector('.screen-order-v2-title-wrap')?.focus({ preventScroll: true });
     });
   };
