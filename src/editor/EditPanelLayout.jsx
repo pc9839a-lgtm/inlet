@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings2 } from 'lucide-react';
+import { ChevronDown, Settings2 } from 'lucide-react';
 import { BlockNavigatorSearch } from './editPanelParts/BlockNavigatorSearch.jsx';
 import './EditPanelLayout.css';
 import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
@@ -11,6 +11,39 @@ import { ScreenOrderSettings } from './editPanelParts/ScreenOrderSettings.jsx';
 import { createInspectorBlockNavigation } from './editPanelParts/inspectorBlockNavigationModel.js';
 
 const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
+
+// Collapse only the navigator rows. Fixed blocks, their editor state and page
+// placement stay intact. A fresh fixed-block selection reveals its group.
+function FixedCompositionGroup({ groupId, title, keys, descriptors, selectedId, children }) {
+  const [expanded, setExpanded] = React.useState(true);
+  const entries = descriptors.filter((item) => keys.includes(item.key));
+  React.useEffect(() => {
+    if (entries.some((item) => item.block.id === selectedId)) setExpanded(true);
+  }, [selectedId]);
+  if (!entries.length) return null;
+
+  const regionId = `editor-fixed-group-${groupId}`;
+  return (
+    <section className="screen-order-fixed-blocks" data-fixed-group={groupId} aria-label={`${title} 영역`}>
+      <h3>
+        <button
+          type="button"
+          className="editor-fixed-group-toggle"
+          aria-expanded={expanded}
+          aria-controls={regionId}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          <span className="editor-fixed-group-label">{title}</span>
+          <span className="editor-fixed-group-count">{entries.length}개</span>
+          <ChevronDown size={14} aria-hidden="true" />
+        </button>
+      </h3>
+      <div id={regionId} className="editor-fixed-group-content" hidden={!expanded}>
+        {children}
+      </div>
+    </section>
+  );
+}
 
 export function EditPanelLayout({
   pageGlobalOptionsProps,
@@ -104,15 +137,19 @@ export function EditPanelLayout({
         </div>
         <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} selectedId={fixedSelected ? '' : screenOrderListProps.selectedId} onSelect={chooseBlock} />
         <div className="editor-composition-content">
-          <section className="screen-order-fixed-blocks" aria-label="상단 고정 영역">
-            <h3>상단 고정</h3>
+          <FixedCompositionGroup
+            groupId="top" title="상단 고정" keys={['topnav']}
+            descriptors={fixedDescriptors} selectedId={fixedBlocksProps.openId}
+          >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
-          </section>
+          </FixedCompositionGroup>
           <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
-          <section className="screen-order-fixed-blocks" aria-label="하단 고정 영역">
-            <h3>하단 고정</h3>
+          <FixedCompositionGroup
+            groupId="bottom" title="하단 고정" keys={['bottom', 'footer']}
+            descriptors={fixedDescriptors} selectedId={fixedBlocksProps.openId}
+          >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
-          </section>
+          </FixedCompositionGroup>
         </div>
       </aside>
       <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>
