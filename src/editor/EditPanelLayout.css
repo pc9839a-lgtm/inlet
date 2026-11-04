@@ -137,6 +137,15 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-search > 
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button:hover:not(:disabled) { background: #eef2ff; color: #2454ff; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button:focus-visible { outline: 2px solid #2454ff; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button:disabled { opacity: .35; cursor: default; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-search > button.editor-search-locate {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #dfe5f0;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--editor-ui-accent);
+}
 html body #root .builder-shell.canvas-editor-shell .editor-search-count { flex: 0 0 auto; font-size: var(--editor-ui-helper-size); font-variant-numeric: tabular-nums; color: var(--editor-ui-muted); }
 html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel { padding: 0 20px 32px; border-left: 1px solid #e7eaf2; container: editor-inspector / inline-size; scroll-padding-top: 140px; }
 /* Keep the selected inspector as tall as the list without creating a second scrollbar.

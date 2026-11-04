@@ -294,7 +294,7 @@ assert(disclosure.includes('<details') && disclosure.includes('<summary>') && di
   'inspector must use one shared content/behavior/design/advanced native disclosure hierarchy without duplicate shortcuts');
 assert(editPanelLayoutCss.includes('.editor-composition-heading > .editor-page-settings-button')
   && editPanelLayoutCss.includes('min-height: 40px;')
-  && layout.includes('<BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} onSelect={chooseBlock} />'),
+  && layout.includes("<BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} selectedId={fixedSelected ? '' : screenOrderListProps.selectedId} onSelect={chooseBlock} />"),
   'page settings and non-destructive block search must remain reachable in the composition header');
 assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
 assert(previewPaneCss.includes('border: 2px solid #cbd5e1')

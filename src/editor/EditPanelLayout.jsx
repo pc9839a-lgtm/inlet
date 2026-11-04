@@ -102,7 +102,7 @@ export function EditPanelLayout({
             )}
           </button>
         </div>
-        <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} onSelect={chooseBlock} />
+        <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} selectedId={fixedSelected ? '' : screenOrderListProps.selectedId} onSelect={chooseBlock} />
         <div className="editor-composition-content">
           <section className="screen-order-fixed-blocks" aria-label="상단 고정 영역">
             <h3>상단 고정</h3>
