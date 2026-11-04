@@ -186,7 +186,7 @@ for(const fn of ['createWithAi','createManual','createFromTemplate','saveCreated
 const createUrl=read('src/runtime/useCreatePageUrlCheck.js');
 assert(createUrl.includes('서버 중복 확인이 불안정합니다. 저장 단계에서 다시 확인합니다.'),'Creation guide must cover uncertain duplicate lookups');
 const inboxConnect=read('src/panels/inbox/InboxConnectionsPanel.jsx');
-for(const item of ['Google로 연결','연동 저장','연결 테스트','받을 이메일','Webhook','외부 연동']){
+for(const item of ['Google로 연결','연동 저장','연결 테스트','받을 이메일','Webhook','id="inbox-connections-title"']){
  assert(inboxConnect.includes(item),'Integration guide no longer matches inbox settings: '+item);
 }
 const embedSource=read('src/lib/formEmbed.js');
