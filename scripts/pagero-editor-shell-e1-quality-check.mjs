@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { createInspectorBlockNavigation } from '../src/editor/editPanelParts/inspectorBlockNavigationModel.js';
+import { createScreenOrderIdentities } from '../src/editor/editPanelParts/screenOrderIdentityModel.js';
 import { themeAlignmentMode, isTextColorOverride, describeTextColorSource, describeBottomButtonColorSource, countTextColorSources } from '../src/editor/ui/themeInheritanceModel.js';
 
 function assert(condition, message) {
@@ -29,6 +30,29 @@ assert(createInspectorBlockNavigation({ normalBlocks: sample, fixedDescriptors: 
   'invalid selection must never navigate to a random block');
 assert(sample.length === 3 && sample[1].id === 'hidden-photo' && pinned[0].block.id === 'topnav',
   'inspector navigation must not mutate source page data');
+
+// UX-010: repeat code blocks are distinguishable by visible content, while
+// JavaScript, CSS and hidden markup never appear in list text or page data.
+const codeBlocks = [
+  { id: 'c1', type: 'code', s: { widgetMode: 'custom', html: '<style>.x{color:red}</style><script>window.secret=1</script><h2>청첩장 안내</h2><p>오시는 길</p>' } },
+  { id: 'c2', type: 'code', visible: false, s: { widgetMode: 'custom', html: '<!-- internal --><section>주차 안내</section><script>alert(1)</script>' } },
+  { id: 'c3', type: 'code', s: { widgetMode: 'custom', editorLabel: '약도 영역', html: '<h2>가는 방법</h2>' } },
+  { id: 'yt', type: 'code', s: { widgetMode: 'youtube', html: '<iframe>embedded player</iframe>' } },
+];
+const beforeCodeRead = JSON.stringify(codeBlocks);
+const codeLabels = createScreenOrderIdentities(codeBlocks);
+assert(codeLabels[0].detail.includes('청첩장 안내') && codeLabels[0].detail.includes('오시는 길')
+  && !codeLabels[0].detail.includes('secret') && !codeLabels[0].detail.includes('color:red')
+  && codeLabels[1].detail === '주차 안내'
+  && codeLabels[2].customLabel === '약도 영역'
+  && codeLabels[3].detail === '',
+  'code row descriptions must show text only, preserve user aliases, and exclude scripts, CSS and YouTube internals');
+assert(JSON.stringify(codeBlocks) === beforeCodeRead,
+  'code navigator descriptions must not mutate stored HTML or hidden block state');
+assert(createScreenOrderIdentities([
+  { id: 'large', type: 'code', s: { html: '<script>' + 'internal'.repeat(7000) + '</script><h1>after large code</h1>' } },
+])[0].detail === '',
+  'oversized scripts must never leak source text through partial previews');
 
 // UX-020: exact renderer-aligned inheritance with no schema or page mutation.
 const pageTheme = { text: '#123456', accent: '#ABCDEF', globalAlign: 'center' };
