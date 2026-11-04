@@ -460,6 +460,50 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && Number(switchMetrics.disabledOpacity) <= .5 && switchMetrics.restored,
     'switch must retain 44px target, clear off/on color and disabled appearance: ' + JSON.stringify(switchMetrics));
   await capture(client, 'control-states-bottom-toggle');
+
+  // 14th patch / UX-009: fixed groups can collapse without touching pinned
+  // block identities, current inspector selection or the shared scrollbar.
+  const fixedGroupsInitial = await evaluate(client, `(() => {
+    const top = document.querySelector('[data-fixed-group="top"]');
+    const bottom = document.querySelector('[data-fixed-group="bottom"]');
+    const button = (root) => root?.querySelector('.editor-fixed-group-toggle');
+    return {
+      topExpanded: button(top)?.getAttribute('aria-expanded'),
+      bottomExpanded: button(bottom)?.getAttribute('aria-expanded'),
+      topRows: top?.querySelectorAll('.fixed-composition-row').length,
+      bottomRows: bottom?.querySelectorAll('.fixed-composition-row').length,
+      buttonCount: document.querySelectorAll('.editor-fixed-group-toggle').length,
+    };
+  })()`);
+  assert(fixedGroupsInitial.topExpanded === 'true' && fixedGroupsInitial.bottomExpanded === 'true'
+    && fixedGroupsInitial.topRows === 1 && fixedGroupsInitial.bottomRows === 2
+    && fixedGroupsInitial.buttonCount === 2,
+    'fixed regions initially expose their real, unreordered rows: ' + JSON.stringify(fixedGroupsInitial));
+
+  await clickPointer(client, '[data-fixed-group="bottom"] .editor-fixed-group-toggle');
+  await waitForBrowser(client, `(() => {
+    const region = document.querySelector('#editor-fixed-group-bottom');
+    const selectedInspector = document.querySelector('#editor-block-settings-editor-bottom');
+    const button = document.querySelector('[data-fixed-group="bottom"] .editor-fixed-group-toggle');
+    return button?.getAttribute('aria-expanded') === 'false' && !!region && region.hidden
+      && !region.getClientRects().length && !!selectedInspector;
+  })()`, 'bottom group collapses without clearing its selected inspector');
+  await clickPointer(client, '[data-fixed-group="top"] .editor-fixed-group-toggle');
+  await waitForBrowser(client, `document.querySelector('#editor-fixed-group-top')?.hidden === true`,
+    'top fixed group collapses independently');
+  await capture(client, 'fixed-groups-collapsed-1672');
+
+  await clickPointer(client, '[data-fixed-group="top"] .editor-fixed-group-toggle');
+  await clickPointer(client, '[data-fixed-group="bottom"] .editor-fixed-group-toggle');
+  await waitForBrowser(client, `(() => {
+    const top = document.querySelector('#editor-fixed-group-top');
+    const bottom = document.querySelector('#editor-fixed-group-bottom');
+    return top && !top.hidden && bottom && !bottom.hidden
+      && top.querySelectorAll('.fixed-composition-row').length === 1
+      && bottom.querySelectorAll('.fixed-composition-row').length === 2;
+  })()`, 'both fixed groups restore the original buttons and selectors');
+  assert(apiState.saveCount === 0, 'collapsing fixed navigation must not save, publish or reorder the page');
+
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .text-editor-flow')`,
     'control QA returns to original text editor without draft or public save');
