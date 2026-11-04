@@ -582,6 +582,19 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && !!document.querySelector('#editor-block-settings-editor-code')`,
     'code-content search chooses the correct editor without changing code data');
 
+  // 20th patch: combine a type name with content text, then reject a missing
+  // second term rather than treating multiple words as an OR search.
+  await setInputValue(client, searchInput, '코드 초대합니다');
+  await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`,
+    'combined type and HTML snippet matches a single code block');
+  await focusSelector(client, searchInput);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-code')?.dataset.selected === 'true'`,
+    'combined code search selects the same real inspector');
+  await setInputValue(client, searchInput, '코드 일치하지않음');
+  await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.trim() === '없음'`,
+    'combined search requires every term rather than matching code alone');
+
   // 18th patch: image-only navigator name, separate from public caption.
   await setInputValue(client, searchInput, '');
   await clickPointer(client, '#editor-block-editor-image .screen-order-v2-head');
@@ -597,8 +610,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await capture(client, 'image-label-editor-1672');
   assert(await evaluate(client, `document.querySelector('#editor-block-settings-editor-image input[placeholder="이미지 설명을 입력하세요"]')?.value`) === originalCaption,
     'image nickname must not overwrite the public caption');
-  await setInputValue(client, searchInput, '본식 사진 QA');
-  await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`, 'image nickname searchable');
+  await setInputValue(client, searchInput, '이미지 본식 사진 QA');
+  await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`,
+    'combined image type and custom nickname are searchable');
+  await focusSelector(client, searchInput);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-image')?.dataset.selected === 'true'`,
+    'combined image query keeps the correct selected inspector');
   await setInputValue(client, searchInput, '');
   await setInputValue(client, '#editor-block-settings-editor-image input[aria-label="이미지 목록 구분 이름"]', '');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-image .screen-order-v2-identity-copy strong')?.textContent === '이미지'`,

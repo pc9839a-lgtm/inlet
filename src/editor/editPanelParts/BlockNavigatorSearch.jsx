@@ -1,33 +1,18 @@
 import React from 'react';
 import { ChevronDown, ChevronUp, LocateFixed, Search } from 'lucide-react';
 import { META } from '../../config/blockMeta.jsx';
-import { createScreenOrderIdentities } from './screenOrderIdentityModel.js';
+import { findBlockNavigationMatches } from './blockNavigatorSearchModel.js';
 
 // Search selects existing blocks without filtering/reordering the source list.
 export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selectedId = '', onSelect, onRevealSelected }) {
   const [query, setQuery] = React.useState('');
   const [currentIndex, setCurrentIndex] = React.useState(0);
-  const matches = React.useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
-    if (!needle) return [];
-    const identities = createScreenOrderIdentities(blocks);
-    const fixed = (placement) => fixedDescriptors
-      .filter((item) => item.block?.id && (placement === 'top' ? item.key === 'topnav' : item.key !== 'topnav'))
-      .map((item) => ({
-        id: item.block.id,
-        terms: [item.title, item.badge, placement === 'top' ? '상단 고정' : '하단 고정'],
-      }));
-    const normal = blocks.filter((block) => block?.id).map((block) => {
-      const index = blocks.indexOf(block);
-      const identity = identities[index];
-      const label = META[block.s?.widgetMode === 'youtube' ? 'youtube' : block.type]?.label || block.type;
-      return { id: block.id, terms: [label, identity?.customLabel, identity?.detail, identity?.occurrence] };
-    });
-    return [...fixed('top'), ...normal, ...fixed('bottom')]
-      .filter((item) => item.terms
-        .filter((value) => value !== undefined && value !== null)
-        .some((value) => String(value).toLocaleLowerCase().includes(needle)));
-  }, [blocks, fixedDescriptors, query]);
+  const matches = React.useMemo(() => findBlockNavigationMatches({
+    blocks,
+    fixedDescriptors,
+    query,
+    getBlockLabel: (block) => META[block.s?.widgetMode === 'youtube' ? 'youtube' : block.type]?.label || block.type,
+  }), [blocks, fixedDescriptors, query]);
 
   // Locate a search result or the selected block without adding another
   // scrollbar or changing the user's stored block list.

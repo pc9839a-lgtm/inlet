@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { createInspectorBlockNavigation } from '../src/editor/editPanelParts/inspectorBlockNavigationModel.js';
 import { createScreenOrderIdentities } from '../src/editor/editPanelParts/screenOrderIdentityModel.js';
+import { findBlockNavigationMatches } from '../src/editor/editPanelParts/blockNavigatorSearchModel.js';
 import { themeAlignmentMode, isTextColorOverride, describeTextColorSource, describeBottomButtonColorSource, countTextColorSources } from '../src/editor/ui/themeInheritanceModel.js';
 
 function assert(condition, message) {
@@ -74,6 +75,40 @@ assert(photoIdentities[0].customLabel === '' && photoIdentities[0].detail === '�
   && photoIdentities[3].customLabel === '',
   'image aliases must be editor-only, preserve caption/thumbnail, and not affect unrelated block types');
 assert(JSON.stringify(photos) === unchangedPhotos, 'image display labels must not mutate original image data');
+
+// UX-015 / 20th patch: combined type + number, type + content and aliases.
+const searchBlocks = [
+  { id: 'code-1', type: 'code', s: { html: '<h2>행사 코드 2 안내</h2>' } },
+  { id: 'photo-1', type: 'image', s: { caption: '이미지 2 위치 안내' } },
+  { id: 'code-2', type: 'code', s: { editorLabel: '본식 영상', html: '<h2>본식 시작</h2>' } },
+  { id: 'photo-2', type: 'image', s: { editorLabel: '약도 사진', caption: '오시는 길' } },
+  { id: 'code-3', type: 'code', s: { html: '<h2>축하 인사</h2>' } },
+];
+const searchFixed = [
+  { key: 'topnav', title: '상단 메뉴', block: { id: 'top' } },
+  { key: 'bottom', title: '하단 고정 버튼', block: { id: 'bottom' } },
+  { key: 'footer', title: '푸터', block: { id: 'footer' } },
+];
+const searchSnapshot = JSON.stringify([searchBlocks, searchFixed]);
+const searchBy = (query) => findBlockNavigationMatches({
+  query, blocks: searchBlocks, fixedDescriptors: searchFixed,
+  getBlockLabel: (block) => ({ code: '코드 입력', image: '이미지' }[block.type] || block.type),
+}).map((result) => result.id);
+assert(JSON.stringify(searchBy('코드 2')) === JSON.stringify(['code-2'])
+  && JSON.stringify(searchBy('코드 입력 3')) === JSON.stringify(['code-3'])
+  && JSON.stringify(searchBy('이미지 2')) === JSON.stringify(['photo-2']),
+  'explicit type-and-number search must find the numbered block, not another row whose description mentions the same number');
+assert(JSON.stringify(searchBy('코드 축하')) === JSON.stringify(['code-3'])
+  && JSON.stringify(searchBy('코드 본식')) === JSON.stringify(['code-2'])
+  && JSON.stringify(searchBy('이미지 약도')) === JSON.stringify(['photo-2'])
+  && JSON.stringify(searchBy('상단 고정 메뉴')) === JSON.stringify(['top'])
+  && JSON.stringify(searchBy('하단 고정 버튼')) === JSON.stringify(['bottom']),
+  'multi-word search must combine type, alias, preview and pinned group names');
+assert(searchBy('없는 결과').length === 0 && searchBy('  ').length === 0
+  && JSON.stringify(searchBy('코드')) === JSON.stringify(['code-1', 'code-2', 'code-3']),
+  'search must preserve empty-result behavior and actual page order');
+assert(JSON.stringify([searchBlocks, searchFixed]) === searchSnapshot,
+  'search must never alter original page blocks, order, pinned regions or aliases');
 
 // UX-020: exact renderer-aligned inheritance with no schema or page mutation.
 const pageTheme = { text: '#123456', accent: '#ABCDEF', globalAlign: 'center' };
