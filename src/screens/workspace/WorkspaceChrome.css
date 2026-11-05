@@ -68,31 +68,6 @@ body .builder-shell .operations-panel-title-row {
   gap: var(--product-space-2);
 }
 
-body .builder-shell .panel-save-status,
-body .builder-shell .operations-save-status {
-  width: auto !important;
-  min-width: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-  margin: 0 !important;
-  padding: 4px 8px !important;
-  border-radius: 999px !important;
-  background: var(--product-soft) !important;
-  line-height: 1 !important;
-}
-
-body .builder-shell .panel-save-status strong,
-body .builder-shell .operations-save-status strong {
-  font-size: 10px !important;
-  line-height: 1 !important;
-  white-space: nowrap;
-}
-
-body .builder-shell .panel-save-status small {
-  display: none !important;
-}
-
 body .builder-shell .panel-actions {
   flex: 0 0 auto;
   display: flex !important;

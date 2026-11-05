@@ -189,6 +189,8 @@ const rowCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8
 const fixedCard = await readFile('src/editor/editPanelParts/FixedBlockCard.jsx', 'utf8');
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const chromeCss = await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8');
+const headerSource = await readFile('src/builder/PanelHeader.jsx', 'utf8');
+const headerCss = await readFile('src/builder/PanelHeader.css', 'utf8');
 const leftPanel = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx', 'utf8');
 const workspaceScreen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 'utf8');
 const operationsWorkspaceCss = await readFile('src/screens/workspace/OperationsWorkspace.css', 'utf8');
@@ -337,6 +339,23 @@ assert(rowIdentity.includes('function BlockTypeThumbnail({ Icon, src })')
   && fixedBlocksCss.includes('/* Pinned regions share the navigator row geometry')
   && !fixedBlocksCss.includes('One-line fixed labels match regular blocks in the 180px list.'),
   'persistent list must have a single row system, stable thumbnail fallback, visible hidden state and full-name tooltip');
+// 22nd patch: visible public/draft status card is gone, but separate
+// status computation, accessible announcement and actionable publish state stay.
+assert(!headerSource.includes('panel-save-status operations-save-status')
+  && !headerSource.includes('panel-status-track')
+  && !headerSource.includes('{status}')
+  && !headerCss.includes('.panel-save-status')
+  && !chromeCss.includes('.panel-save-status')
+  && headerSource.includes('visibleEditorDraftState({ page, saveStatus')
+  && headerSource.includes('visibleEditorPublishState({ page, saved, saveStatus')
+  && headerSource.includes('className="panel-save-announce" role="status"')
+  && headerCss.includes('.panel-save-announce {')
+  && headerSource.includes('data-public-state={publishState.kind}')
+  && headerSource.includes('data-draft-state={draftState.kind}')
+  && headerSource.includes('title={publishButtonHint}')
+  && headerSource.includes('aria-busy={publishing}'),
+  'header public/draft save card must be removed without changing publish logic or accessibility');
+
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
 assert(css.includes('--editor-list-width: clamp(220px, 18vw, 260px);') && css.includes('--editor-edit-width: clamp(490px, calc(100vw - 418px), 700px);') && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'reference inspector requires a genuinely usable left editor up to 700px');

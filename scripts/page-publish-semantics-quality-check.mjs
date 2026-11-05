@@ -49,9 +49,13 @@ assert(nextEditorMutationStatus(untouchedError) === untouchedError && nextEditor
   && nextEditorMutationStatus({ tone: 'ok', label: '발행됨' }, '2026-11-03T10:00:00.000Z').phase === 'dirty',
   'local mutations must preserve unresolved failure and verification warnings, while ordinary edits become dirty');
 assert(header.includes('data-public-state={publishState.kind}') && header.includes('data-draft-state={draftState.kind}')
-  && header.includes('role="status"') && header.includes('publishState.actionLabel')
-  && header.includes('공개 상태:') && header.includes('편집본 상태:'),
-  'header must expose independent and accessible draft/public stages without changing onSave');
+  && header.includes('className="panel-save-announce" role="status"')
+  && header.includes('aria-describedby="panel-save-announce"')
+  && header.includes('title={publishButtonHint}')
+  && header.includes('publishState.actionLabel')
+  && header.includes('공개:') && header.includes('편집본:')
+  && !header.includes('className="panel-save-status'),
+  'header must retain separate accessible draft/public states without a visible status card or changing onSave');
 assert(header.includes('자동 임시보관됩니다') && header.includes('공개 페이지에 반영됩니다'), 'publish button must explain local draft versus public effect');
 assert(feedback.includes("title: local ? '브라우저에 임시저장됨' : '발행됨'"), 'save feedback must distinguish local temporary storage from server publish');
 assert(feedback.includes('공개 반영 확인 중') && feedback.includes('공개 반영 확인 필요'), 'publish feedback must retain public verification states');

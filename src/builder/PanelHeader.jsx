@@ -11,11 +11,6 @@ import {
   undoPageEdit,
 } from '../runtime/pageEditHistory.js';
 
-const saveStateColors = {
-  warning: '#946100',
-  error: '#b42318',
-};
-
 export default function PanelHeader({ page, tab, saved, saveStatus, hasUnappliedDrafts = false, onSave, onPreview, onDashboard, previewUrl, backupEnabled = false, onBackup, onImportBackup, navigation }) {
   const [historyState, setHistoryState] = useState(() => getPageEditHistoryState());
   const backupFileInputRef = useRef(null);
@@ -88,29 +83,14 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [historyEnabled]);
 
-  const status = (
-    <div
-      className="panel-save-status operations-save-status"
-      data-tone={publishState.tone}
-      data-public-state={publishState.kind}
-      data-draft-state={draftState.kind}
-      role="status"
-      aria-atomic="true"
-      aria-live="polite"
-      aria-label={`공개 상태: ${publishState.label}. 편집본 상태: ${draftState.label}.`}
-      title={[`공개: ${publishState.detail || publishState.label}`, `편집본: ${draftState.detail || draftState.label}`].join('\n')}
-    >
-      <span className="panel-status-track panel-public-track">
-        <span className="panel-status-track-label">공개</span>
-        <strong style={{ color: saveStateColors[publishState.tone] || 'var(--product-muted)' }}>{publishState.label}</strong>
-        {publishState.at && <time dateTime={publishState.at} title={publishState.at}>{new Date(publishState.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</time>}
-      </span>
-      <span className="panel-status-track panel-draft-track">
-        <span className="panel-status-track-label">편집본</span>
-        <span className="panel-draft-state" data-tone={draftState.tone}>{draftState.label}</span>
-      </span>
-    </div>
-  );
+  // Keep state announcements accessible without a visible header status box.
+  // The publish action and unsaved-change safeguards still use the same model.
+  const statusAnnouncement = `공개: ${publishState.label}. 편집본: ${draftState.label}.`;
+  const publishButtonHint = [
+    `공개: ${publishState.detail || publishState.label}`,
+    `편집본: ${draftState.detail || draftState.label}`,
+    '편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다.',
+  ].join('\n');
 
   return (
     <header className={`panel-header product-panel-header${editorHeader ? ' editor-panel-header' : ''}`}>
@@ -135,7 +115,6 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
                   {navigation}
                 </details>}
               </div>
-              {status}
             </div>
           </>
         ) : (
@@ -143,11 +122,14 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
             <p>{page.title}</p>
             <div className="operations-panel-title-row">
               <h1>{title}</h1>
-              {status}
             </div>
           </>
         )}
       </div>
+
+      <span id="panel-save-announce" className="panel-save-announce" role="status" aria-live="polite" aria-atomic="true">
+        {statusAnnouncement}
+      </span>
 
       <div className="panel-actions">
         {historyEnabled && (
@@ -195,7 +177,10 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
           className="primary-btn"
           type="button"
           onClick={onSave}
-          title="편집 내용은 브라우저에 자동 임시보관됩니다. 발행하면 공개 페이지에 반영됩니다."
+          title={publishButtonHint}
+          aria-describedby="panel-save-announce"
+          data-public-state={publishState.kind}
+          data-draft-state={draftState.kind}
           aria-busy={publishing}
         >
           {editorHeader ? <Upload size={18} aria-hidden="true" /> : <Save size={14} aria-hidden="true" />}{editorHeader ? publishState.actionLabel : publishing ? '발행 중' : publishState.tone === 'ok' && publishState.label === '발행됨' ? '발행됨' : '발행'}
