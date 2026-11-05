@@ -856,8 +856,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 260) <= 1 && geometry.inspector.width >= 438 && geometry.inspector.width <= 441,
-    'reference viewport must have 260px block navigator and 440px property editing: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 240) <= 1
+    && geometry.inspector.width >= 458 && geometry.inspector.width <= 461,
+    'reference 1672px viewport must give properties 460px while keeping a compact 240px navigator: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'auto'
