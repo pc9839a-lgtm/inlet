@@ -117,7 +117,7 @@
   min-width: 0;
   min-height: 38px;
   display: grid;
-  grid-template-columns: 20px minmax(0,1fr) 30px 30px;
+  grid-template-columns: 20px minmax(0,1fr) 30px;
   align-items: center;
   gap: 2px;
   margin: 0;
@@ -783,9 +783,8 @@ html body #root .builder-shell.edit-mode-shell
   outline-offset: 2px;
 }
 
-/* Persistent editor layer navigator — one canonical row rule for every desktop width.
-   The list remains 220–260px; retain icon/thumbnail/status/action widths instead
-   of progressively shrinking them in overlapping 1200px media overrides. */
+/* Persistent editor layer navigator: keep drag, title/thumbnail, and one actions
+   menu. Visibility lives in that menu, freeing space for long titles. */
 .screen-order-v2-title-wrap .screen-order-v2-identity-copy {
   display: grid;
   min-width: 0;
@@ -877,7 +876,7 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-title { display: none !important; }
 
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head {
-  grid-template-columns: 14px minmax(0, 1fr) 28px 28px !important;
+  grid-template-columns: 14px minmax(0, 1fr) 28px !important;
   gap: 2px !important;
   min-height: 58px !important;
   height: auto !important;
@@ -910,14 +909,21 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
   border: 1px solid #e2e8f0;
   background: #fff;
 }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon.thumbnail-error {
+  color: #b42318 !important;
+  background: #fff4f2;
+}
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong {
   min-width: 0;
   color: var(--editor-ui-text, #182230) !important;
   font-size: var(--editor-ui-row-size, 12px) !important;
   font-weight: var(--editor-ui-label-weight, 600) !important;
   line-height: 1.4 !important;
-  white-space: nowrap !important;
-  overflow-wrap: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
   text-overflow: ellipsis !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-detail {
