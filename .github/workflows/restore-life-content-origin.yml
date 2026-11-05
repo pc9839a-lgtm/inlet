@@ -1,3 +1,4 @@
+# 2026-11-05: publish full-width affiliate placements across all Life articles and category pages.
 # 2026-11-04: refresh LIFE origin with verified Tenping affiliate placements before canonical promotion.
 # 2026-10-26: publish fact-checked expired car-tax deadline corrections from LIFE source, verify immutable HTML before promoting.
 # 2026-10-23 practical benefit and car procedure comparisons with stable review dates.
@@ -80,6 +81,34 @@ jobs:
           grep -q 'data-affiliate="tenping-auto-lease-202610"' dist/car/index.html
           grep -q 'data-affiliate="tenping-elementary-education-2026"' dist/support/child-allowance-2026/index.html
           grep -q 'data-affiliate="tenping-elementary-education-2026"' dist/support/childcare-service-government-support-2026/index.html
+          # New sitewide placement must be built for each indexable first article page,
+          # not only present in a few previously curated article URLs.
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          dist=Path('dist')
+          articles=0
+          for source in Path('content/posts').rglob('*.json'):
+              post=json.loads(source.read_text(encoding='utf-8'))
+              if post.get('noindex'): continue
+              file=dist/post['category']/post['slug']/'index.html'
+              html=file.read_text(encoding='utf-8')
+              if 'data-life-affiliate-layout="wide-v2"' not in html:
+                  raise SystemExit('Missing sitewide affiliate marker: '+str(file))
+              if html.count('class="life-article-sponsor') != 2:
+                  raise SystemExit('Expected two distinct sponsored placements: '+str(file))
+              if html.count('rel="sponsored noopener noreferrer"') < 4:
+                  raise SystemExit('Missing proper sponsored link attributes: '+str(file))
+              articles += 1
+          for relative in ('index.html','car/index.html','support/index.html'):
+              html=(dist/relative).read_text(encoding='utf-8')
+              if 'data-life-affiliate-layout="wide-v2"' not in html:
+                  raise SystemExit('Missing large ad layout on '+relative)
+          css=(dist/'styles.css').read_text(encoding='utf-8')
+          if '.life-affiliate-image img{display:block;width:100%;max-height:none;height:auto' not in css:
+              raise SystemExit('New large responsive affiliate image styles missing')
+          print('SITEWIDE_AFFILIATE',articles,'indexable articles with two big units each',flush=True)
+          PY
           # Fail closed: never publish this phase's snapshot with an old policy.
           grep -q 'https://adssettings.google.com/' dist/privacy-policy/index.html
           grep -q 'https://policies.google.com/technologies/partner-sites' dist/privacy-policy/index.html
@@ -164,7 +193,7 @@ jobs:
             '/support/parental-benefit-2026/':['class="reader-decision"','공식자료 확인'],
             '/support/livelihood-benefit-2026/':['class="reader-decision"','공식자료 확인'],
             '/support/housing-benefit-2026/':['class="reader-decision"','공식자료 확인'],
-            '/':['id="life-pathways-title"','data-path="inspection"','data-path="transfer"','data-path="parenting"','data-path="livelihood"','data-offer-group="three-life-offers-2026"','data-affiliate="tenping-auto-lease-202610"'],
+            '/':['id="life-pathways-title"','data-path="inspection"','data-path="transfer"','data-path="parenting"','data-path="livelihood"','data-offer-group="three-life-offers-2026"','data-affiliate="tenping-auto-lease-202610"','data-life-affiliate-layout="wide-v2"'],
             '/privacy-policy/':['Google AdSense','https://adssettings.google.com/','https://policies.google.com/technologies/partner-sites'],
             '/car/car-inspection-period/':['class="reader-decision"','생활비서','rel="canonical"','https://pagero.kr/life/car/car-inspection-period/'],
             '/editorial-standards/':['작성·검수 기준 확인일: 2026-10-23','광고와 편집의 분리'],
