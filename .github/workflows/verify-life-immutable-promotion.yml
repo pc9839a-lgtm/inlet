@@ -1,4 +1,4 @@
-name: Verify LIFE immutable origin and canonical proxy
+name: Verify LIFE production origin and canonical proxy
 on:
   pull_request:
     branches: [main]
@@ -19,14 +19,14 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - name: Verify immutable Pages deployment content, canonical and robots
+      - name: Verify current Pages production content, canonical and robots
         shell: bash
         run: |
           python - <<'PY'
           import pathlib, re, urllib.request, sys, os, time
           src=pathlib.Path('functions/life/[[path]].js').read_text(encoding='utf-8')
-          found=re.search(r"const LIFE_UPSTREAM_ORIGIN = '(https://[0-9a-f]+\.life-pagero\.pages\.dev)';",src)
-          if not found:sys.exit('Immutable LIFE origin missing')
+          found=re.search(r"const LIFE_UPSTREAM_ORIGIN = '(https://life-pagero\.pages\.dev)';",src)
+          if not found:sys.exit('LIFE production alias missing')
           origin=found.group(1)
           expected={
             '/support/child-support-advance-payment-2026/':['2026년 10월 29일부터 소득기준은 폐지됐습니다'],
@@ -36,9 +36,9 @@ jobs:
             '/support/energy-voucher-2026/':['11월 에너지바우처: 신청·사용·재신청 구분'],
             '/support/earned-income-tax-credit-late-2026/':['2026년 11월 근로장려금 기한 후 신청'],
             '/support/year-end-tax-precheck-2026/':['2026 연말정산 미리보기','12월 18일','900만원 + 300만원 = 1,200만원'],
-            '/':['data-offer-group="three-life-offers-2026"','data-affiliate="tenping-auto-lease-202610"','data-affiliate="tenping-pon-gabi-2026"','data-affiliate="tenping-mbti-relationship-2026"','data-affiliate="tenping-elementary-education-2026"','data-life-affiliate-layout="wide-v2"'],
-            '/car/':['data-life-affiliate-layout="wide-v2"','data-affiliate="tenping-auto-lease-202610"','data-affiliate="tenping-pon-gabi-2026"'],
-            '/support/':['data-life-affiliate-layout="wide-v2"','data-affiliate="tenping-elementary-education-2026"','data-affiliate="tenping-mbti-relationship-2026"'],
+            '/':['data-offer-group="three-life-offers-2026"','data-affiliate="tenping-auto-lease-202610"','data-affiliate="tenping-pon-gabi-2026"','data-affiliate="tenping-mbti-relationship-2026"','data-affiliate="tenping-elementary-education-2026"','data-life-affiliate-layout="wide-v2"','data-life-coupang-banner="sitewide-v3"','ads-partners.coupang.com/g.js','AF2358798','1046806'],
+            '/car/':['data-life-affiliate-layout="wide-v2"','data-affiliate="tenping-auto-lease-202610"','data-affiliate="tenping-pon-gabi-2026"','data-life-coupang-banner="sitewide-v3"'],
+            '/support/':['data-life-affiliate-layout="wide-v2"','data-affiliate="tenping-elementary-education-2026"','data-affiliate="tenping-mbti-relationship-2026"','data-life-coupang-banner="sitewide-v3"'],
             '/car/used-car-transfer-cost/':['data-affiliate="tenping-auto-lease-202610"','life-article-sponsor--early','life-article-sponsor--mid'],
             '/car/car-inspection-reservation/':['data-affiliate="tenping-auto-lease-202610"','life-article-sponsor--early','life-article-sponsor--mid'],
             '/support/energy-voucher-2026/':['life-article-sponsor--early','life-article-sponsor--mid'],
@@ -61,13 +61,13 @@ jobs:
               'not-old-draft':not (path.endswith('/child-support-advance-payment-2026/') and '소득기준 폐지를 앞둔' in html),
             }
             print('ORIGIN_CHECK',path,assertions,flush=True)
-            if not all(assertions.values()):sys.exit('Immutable origin page verification failed '+path)
+            if not all(assertions.values()):sys.exit('LIFE production page verification failed '+path)
           status,cssheaders,styles=read(origin+'/styles.css')
           if status!=200 or '.life-affiliate-image img{display:block;width:100%;max-height:none;height:auto' not in styles:
-            sys.exit('New Life large image styles missing on immutable origin')
+            sys.exit('New Life large image styles missing on production origin')
           status,headers,sitemap=read(origin+'/sitemap.xml')
           if status!=200 or sitemap.count('<loc>')<50 or 'https://pagero.kr/life/car/car-inspection-period/' not in sitemap:
-            sys.exit('Immutable origin sitemap invalid')
+            sys.exit('LIFE production sitemap invalid')
           if 'https://pagero.kr/life/support/year-end-tax-precheck-2026/' not in sitemap:
             sys.exit('2026 year-end tax preview missing from canonical sitemap')
           for suffix in ('calendar','inputs','checklist'):
@@ -94,7 +94,7 @@ jobs:
             if article_status!=200 or 'https://pagero.kr/life'+asset not in article_body:
               sys.exit('Original image missing from published article: '+asset)
             print('EDITORIAL_IMAGE_VERIFIED',asset,digest[:12],flush=True)
-          print('IMMUTABLE_ORIGIN_VERIFIED',origin,'sitemap_urls',sitemap.count('<loc>'),flush=True)
+          print('PRODUCTION_ORIGIN_VERIFIED',origin,'sitemap_urls',sitemap.count('<loc>'),flush=True)
           if os.environ.get('GITHUB_EVENT_NAME')!='push':
             sys.exit(0)
           # Main-branch promotion is not considered done until the public Pages Function
