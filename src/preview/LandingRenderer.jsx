@@ -330,7 +330,10 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
     const section = event.target.closest?.('[id^="block-"]');
     if (!section) return;
     const id = section.id.replace('block-', '');
-    onSelectBlock?.(id);
+    const imageClick = editorPreview && section.classList.contains('image-sec')
+      && !!event.target.closest?.('.image-wrap, .image-gallery-grid, .image-placeholder')
+      && !event.target.closest?.('button, a, input, textarea, select, label');
+    onSelectBlock?.(id, { imageClick });
   };
 
   const go = (target, url, labelText) => {
@@ -422,7 +425,7 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
     : block;
   if(block.type==='topnav')return <LayoutRenderTopNav block={renderBlock} blocks={blocks} go={go}/>;
   if(block.type==='hero')return <ContentRenderHero block={renderBlock}/>;
-  if(block.type==='image')return <MediaRenderImage block={renderBlock}/>;
+  if(block.type==='image')return <MediaRenderImage block={renderBlock} editorPreview={editorPreview}/>;
   if(block.type==='text')return <ContentRenderText block={renderBlock} editorPreview={editorPreview} onEditPreviewText={onEditPreviewText}/>;
   if(block.type==='cards')return <ContentRenderCards block={renderBlock}/>;
   if(block.type==='map')return <InfoRenderMap block={renderBlock} page={page}/>;

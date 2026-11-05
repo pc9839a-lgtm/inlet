@@ -64,6 +64,45 @@ export default function WorkspaceEditorScreen({
     return true;
   };
 
+  // An image click keeps the existing preview selection and directs attention
+  // to the current ImageInput uploader. Never opens a native picker implicitly,
+  // bypasses the existing media library, or writes image content itself.
+  const selectPreviewBlockWithImage = (id, interaction) => {
+    onSelectPreviewBlock?.(id);
+    if (!interaction?.imageClick || !canUseBuilder || !editWorkspace || startMode === 'template'
+      || stylePanelProps?.hasPendingStyle || typeof requestAnimationFrame !== 'function') return;
+    const selectedImage = editPanelProps?.page?.blocks?.find((block) => block.id === id && block.type === 'image');
+    if (!selectedImage || selectedImage.visible === false) return;
+    // ImageEditor is lazy-loaded; five animation frames can expire before
+    // its uploader appears. Observe only the selected inspector and stop on
+    // success or after a bounded timeout, without opening file dialogs.
+    const inspector = document.querySelector('.editor-inspector-panel');
+    if (!inspector || typeof MutationObserver !== 'function') return;
+    let finished = false;
+    let timeoutId = 0;
+    const observer = new MutationObserver(() => focusUpload());
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+      observer.disconnect();
+      window.clearTimeout(timeoutId);
+    };
+    const focusUpload = () => {
+      if (finished) return;
+      const settings = document.getElementById(`editor-block-settings-${id}`);
+      const button = settings?.querySelector(
+        '.image-input-upload-action:not([disabled]), .gallery-multi-upload button:not([disabled]), .image-input-library-action:not([disabled])'
+      );
+      if (!button) return;
+      cleanup();
+      button.scrollIntoView({ block: 'nearest' });
+      button.focus({ preventScroll: true });
+    };
+    observer.observe(inspector, { childList: true, subtree: true });
+    timeoutId = window.setTimeout(cleanup, 5000);
+    requestAnimationFrame(focusUpload);
+  };
+
   return (
     <div className={`builder-shell${previewWorkspace ? ' preview-workspace-shell' : ''}${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ` edit-mode-shell${startMode !== 'template' ? ' canvas-editor-shell' : ''}` : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
 
@@ -99,7 +138,7 @@ export default function WorkspaceEditorScreen({
         addLead={addLead}
         track={track}
         selectedBlockId={selectedBlockId}
-        onSelectPreviewBlock={onSelectPreviewBlock}
+        onSelectPreviewBlock={selectPreviewBlockWithImage}
         onEditPreviewText={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? editPreviewText : undefined}
       />}
     </div>

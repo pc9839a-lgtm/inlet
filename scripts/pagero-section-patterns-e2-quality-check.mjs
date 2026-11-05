@@ -10,6 +10,7 @@ const panel = await readFile('src/editor/editPanelParts/AddBlockPanel.jsx', 'utf
 const dock = await readFile('src/editor/editPanelParts/AddBlockDock.jsx', 'utf8');
 const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const actions = await readFile('src/runtime/useEditorBlockActions.js', 'utf8');
+const insertion = await readFile('src/runtime/insertEditorBlocks.js', 'utf8');
 const sectionProps = await readFile('src/editor/createEditPanelSectionProps.js', 'utf8');
 const dockProps = await readFile('src/editor/editPanelSectionProps/addBlockDockProps.js', 'utf8');
 const app = await readFile('src/App.jsx', 'utf8');
@@ -30,8 +31,8 @@ assert(dock.includes('embedded = false') && dock.includes('const panelOpen = emb
 assert(layout.includes('<AddBlockDock {...addBlockDockProps} compact />'), 'reference editor must keep existing insertion callbacks in its compact add dock');
 
 assert(actions.includes('createSectionPatternBlocks') && actions.includes('const addSectionPattern = (patternId)'), 'runtime must expose section pattern insertion');
-assert(actions.includes("['bottombar', 'footer'].includes(item.type)"), 'section bundle must insert before trailing fixed blocks');
-assert(actions.includes('commitLocalPageDraft') && actions.includes('...blocks'), 'section bundle must commit as one local page mutation');
+assert(actions.includes('insertBlocksAfterSelection(p.blocks, blocks, openId)') && insertion.includes("'bottombar', 'footer'"), 'section bundle must insert after selected content without crossing trailing fixed blocks');
+assert(actions.includes('commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(next) })'), 'section bundle must commit as one local page mutation');
 assert(sectionProps.includes('addSectionPattern') && dockProps.includes('addSectionPattern') && app.includes('addSectionPattern'), 'section pattern action prop chain is incomplete');
 
 assert(!css.includes('.section-add-modes') && !css.includes('.section-pattern-card') && !css.includes('.section-pattern-tags'), 'removed recommendation picker styles must not leak back into the primary editor bundle');
