@@ -971,8 +971,9 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  const expectedEdit = Math.min(700, Math.max(500, width - 410));
-  const expectedComposition = Math.min(240, Math.max(220, width * 0.16));
+  // Selected 1672px reference: 276px list + 394px Inspector.
+  const expectedComposition = Math.min(276, Math.max(220, width * 0.165));
+  const expectedEdit = Math.min(670, Math.max(500, Math.min(width - 410, expectedComposition + 394)));
   const expectedInspector = expectedEdit - expectedComposition;
   assert(Math.abs(edit - expectedEdit) <= 2,
     `left editor must be wide enough for editing at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
@@ -1713,51 +1714,70 @@ async function run() {
     assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
     await capture(client, 'desktop-hero-background-stage6');
     assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'content must stay available alongside background-image settings');
-    // Single shared scrollbar: block list and selected inspector stay in the
-    // same editor workspace, without two competing vertical scroll tracks.
+    // Independent navigator and Inspector scrolling, pinned page options.
     const inspectorScroll = await evaluate(client, `(() => {
       const settings = document.querySelector('#editor-block-settings-editor-hero');
       const panel = settings?.closest('.editor-inspector-panel');
       const composition = document.querySelector('.editor-composition-panel');
+      const list = document.querySelector('.editor-composition-content');
       const workPanel = document.querySelector('.work-panel');
       const content = settings?.querySelector('.block-editor-v2');
-      if (!panel || !composition || !workPanel || !content) return null;
-      const original = content.style.minHeight;
+      const order = list?.querySelector('.screen-order-v2-list-view');
+      if (!panel || !composition || !list || !workPanel || !content || !order) return null;
+      const previousMinHeight = content.style.minHeight;
+      const previousOrderHeight = order.style.minHeight;
+      const previousListTop = list.scrollTop;
+      const previousInspectorTop = panel.scrollTop;
       let result;
       try {
         content.style.minHeight = '1600px';
+        order.style.minHeight = '1500px';
+        list.scrollTop = 270;
+        const listBeforeInspectorScroll = list.scrollTop;
+        panel.scrollTop = 320;
         workPanel.scrollTop = 320;
+        const footer = composition.querySelector('.editor-composition-footer');
+        const footerBox = footer?.getBoundingClientRect();
+        const panelBox = composition.getBoundingClientRect();
         result = {
-          role: panel.getAttribute('role'),
-          label: panel.getAttribute('aria-label'),
-          tabIndex: panel.tabIndex,
+          role: panel.getAttribute('role'), label: panel.getAttribute('aria-label'),
+          tabIndex: panel.tabIndex, listRole: list.getAttribute('role'),
+          listLabel: list.getAttribute('aria-label'), listTabIndex: list.tabIndex,
           inspectorOverflowY: getComputedStyle(panel).overflowY,
           compositionOverflowY: getComputedStyle(composition).overflowY,
+          navigatorOverflowY: getComputedStyle(list).overflowY,
           workOverflowY: getComputedStyle(workPanel).overflowY,
-          workHeight: workPanel.clientHeight,
-          workContentHeight: workPanel.scrollHeight,
-          workScrollTop: workPanel.scrollTop,
-          inspectorScrollTop: panel.scrollTop,
-          compositionScrollTop: composition.scrollTop,
+          inspectorScrollHeight: panel.scrollHeight, inspectorHeight: panel.clientHeight,
+          navigatorScrollHeight: list.scrollHeight, navigatorHeight: list.clientHeight,
+          workScrollTop: workPanel.scrollTop, inspectorScrollTop: panel.scrollTop,
+          navigatorScrollTop: list.scrollTop,
+          independentScroll: list.scrollTop === listBeforeInspectorScroll,
+          footerPinned: !!footer && Math.abs(footerBox.bottom - panelBox.bottom) <= 2,
           innerOverflowY: getComputedStyle(settings).overflowY,
         };
       } finally {
-        workPanel.scrollTop = 0;
-        content.style.minHeight = original;
+        content.style.minHeight = previousMinHeight;
+        order.style.minHeight = previousOrderHeight;
+        list.scrollTop = previousListTop;
+        panel.scrollTop = previousInspectorTop;
       }
       return result;
     })()`);
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
-      && inspectorScroll.label?.includes('선택 항목 편집'), `D01 selected property region must stay keyboard accessible: ${JSON.stringify(inspectorScroll)}`);
-    assert(inspectorScroll.inspectorOverflowY === 'visible'
-      && inspectorScroll.compositionOverflowY === 'visible'
-      && inspectorScroll.workOverflowY === 'auto'
-      && inspectorScroll.workContentHeight > inspectorScroll.workHeight
-      && inspectorScroll.workScrollTop > 0
-      && inspectorScroll.inspectorScrollTop === 0
-      && inspectorScroll.compositionScrollTop === 0
-      && inspectorScroll.innerOverflowY === 'visible',
-      `D01 long settings must scroll the one shared editor workspace: ${JSON.stringify(inspectorScroll)}`);
+      && inspectorScroll.label?.includes('선택 항목 편집')
+      && inspectorScroll.listRole === 'region' && inspectorScroll.listTabIndex === 0
+      && inspectorScroll.listLabel === '블록 목록',
+      'D01 list and Inspector must remain keyboard-accessible regions: ' + JSON.stringify(inspectorScroll));
+    assert(inspectorScroll.inspectorOverflowY === 'auto'
+      && inspectorScroll.compositionOverflowY === 'hidden'
+      && inspectorScroll.navigatorOverflowY === 'auto'
+      && inspectorScroll.workOverflowY === 'hidden'
+      && inspectorScroll.inspectorScrollHeight > inspectorScroll.inspectorHeight
+      && inspectorScroll.navigatorScrollHeight > inspectorScroll.navigatorHeight
+      && inspectorScroll.workScrollTop === 0 && inspectorScroll.inspectorScrollTop > 0
+      && inspectorScroll.navigatorScrollTop > 0 && inspectorScroll.independentScroll
+      && inspectorScroll.footerPinned && inspectorScroll.innerOverflowY === 'visible',
+      'D01 navigator and Inspector independently scroll with pinned page settings: ' + JSON.stringify(inspectorScroll));
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
@@ -2875,18 +2895,19 @@ async function run() {
         inspectorSpills: (inspector?.scrollWidth || 0) > (inspector?.clientWidth || 0) + 2,
         editorScroll: getComputedStyle(document.querySelector('.work-panel')).overflowY,
         inspectorScroll: getComputedStyle(inspector).overflowY,
+        navigatorScroll: getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
         rightEdge: i?.right, previewLeft: rect(preview)?.left,
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
       && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 252 : 340)
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
-      && leftGeometry.editorScroll === 'auto' && leftGeometry.inspectorScroll === 'visible'
+      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && (desktopViewport.width <= 1100
         ? leftGeometry.inspectorPadding === '8px' && leftGeometry.compositionPadding === '8px'
         : leftGeometry.inspectorPadding === '16px')
       && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
-      '24th patch must provide usable inspector width with no clipped controls, second scrollbar or preview overlap: '
+      'reference-width independent panels must fit without clipped controls or preview overlap: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
     const pageOptionsShellStyle = await evaluate(client, `(() => {
