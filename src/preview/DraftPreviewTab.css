@@ -1,0 +1,30 @@
+/* Standalone read-only draft preview tab. No editor chrome or phone bezel. */
+.pagero-draft-preview-tab {
+  box-sizing: border-box;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  background: #f4f6f9;
+}
+.pagero-draft-preview-content {
+  box-sizing: border-box;
+  width: min(390px, 100%);
+  min-height: 100dvh;
+  background: #fff;
+}
+.pagero-draft-preview-content > .landing-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100dvh;
+  height: auto;
+}
+.pagero-draft-preview-message {
+  align-self: flex-start;
+  margin: 20vh 16px 0;
+  color: #475467;
+  font-size: 14px;
+  text-align: center;
+}
+@media (max-width: 390px) {
+  .pagero-draft-preview-tab { background: #fff; }
+}
