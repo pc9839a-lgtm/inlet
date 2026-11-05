@@ -1186,6 +1186,41 @@ async function run() {
       "document.activeElement === document.querySelector('#editor-block-settings-editor-image .image-input-upload-action')",
       'preview image focuses its existing photo replacement action');
     assert(apiState.saveCount === 0, 'preview image selection must not publish');
+    // Clicking the selected photo runs the existing ImageInput picker.
+    // Stub the native input click to avoid opening the OS file dialog.
+    await waitForBrowser(client, "!!document.querySelector('.phone-frame #block-editor-image button.editor-preview-image-replace')", 'selected image displays replace action');
+    const imagePickerStubbed = await evaluate(client, '(() => { const input = document.querySelector("#editor-block-settings-editor-image .image-input input[type=file]"); if (!input) return false; window.__previewImageFileOpenCount = 0; input.click = () => { window.__previewImageFileOpenCount += 1; }; return true; })()');
+    assert(imagePickerStubbed, 'existing ImageInput file input must exist');
+    await clickSelector(client, '.phone-frame #block-editor-image button.editor-preview-image-replace');
+    assert(await evaluate(client, 'window.__previewImageFileOpenCount === 1'), 'photo action invokes current upload input exactly once');
+    assert(apiState.saveCount === 0, 'image action must not publish before choosing a file');
+
+    // Clicking the second fixed CTA selects the exact Inspector button;
+    // neither phone nor outbound link is executed from the editor preview.
+    await evaluate(client, 'window.__previewBottomWindowOpens = 0; window.__previousBottomWindowOpen = window.open; window.open = () => { window.__previewBottomWindowOpens += 1; };');
+    const secondPreviewBottomButton = '.phone-frame .bottom-bar-buttons button[data-preview-bottom-index="1"]';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(secondPreviewBottomButton) + ')', 'second bottom CTA is editable');
+    await clickSelector(client, secondPreviewBottomButton);
+    const bottomLabelInput = '#editor-block-settings-editor-bottom input[data-bottom-button-label-index="1"]';
+    await waitForBrowser(client, 'document.activeElement === document.querySelector(' + JSON.stringify(bottomLabelInput) + ')', 'selected CTA opens exact button label setting');
+    assert(await evaluate(client, 'window.__previewBottomWindowOpens === 0'), 'CTA must never open phone or link from editor');
+    const originalBottomLabel = await evaluate(client, 'document.querySelector(' + JSON.stringify(bottomLabelInput) + ')?.value');
+    await setInputValue(client, bottomLabelInput, '전화 상담 바로 연결');
+    await waitForBrowser(client, 'document.querySelector(' + JSON.stringify(secondPreviewBottomButton + ' b') + ')?.textContent === "전화 상담 바로 연결"', 'edited CTA label renders in preview');
+    const targetControls = '#editor-block-settings-editor-bottom .bottom-link-compact[data-bottom-button-target-index="1"]';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(targetControls) + ')', 'matching CTA target controls appear');
+    assert(await evaluate(client, 'document.querySelector(' + JSON.stringify(targetControls + ' .bottom-link-modes button:nth-child(3)') + ')?.getAttribute("aria-pressed") === "true"'), 'phone target must not be shown as first widget');
+    await clickSelector(client, targetControls + ' .bottom-link-modes button:nth-child(2)');
+    await waitForBrowser(client, 'document.querySelector(' + JSON.stringify(targetControls + ' .bottom-link-modes button:nth-child(2)') + ')?.getAttribute("aria-pressed") === "true"', 'CTA changes to URL target mode');
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(targetControls + ' input[aria-label="링크 URL"]') + ')', 'URL setting appears');
+    await clickSelector(client, targetControls + ' .bottom-link-modes button:nth-child(3)');
+    await waitForBrowser(client, 'document.querySelector(' + JSON.stringify(targetControls + ' .bottom-link-modes button:nth-child(3)') + ')?.getAttribute("aria-pressed") === "true"', 'CTA restores phone mode');
+    await setInputValue(client, bottomLabelInput, originalBottomLabel);
+    await waitForBrowser(client, 'document.querySelector(' + JSON.stringify(secondPreviewBottomButton + ' b') + ')?.textContent === ' + JSON.stringify(originalBottomLabel), 'CTA label restored');
+    assert(await evaluate(client, 'window.__previewBottomWindowOpens === 0'), 'CTA editing never creates external window');
+    await evaluate(client, 'window.open = window.__previousBottomWindowOpen; delete window.__previousBottomWindowOpen;');
+    assert(apiState.saveCount === 0, 'CTA edits stay local until save');
+
 
     // Custom HTML/CSS/JS must be visible and interactive in the actual editor,
     // while the iframe cannot inherit editor credentials or submit live leads.
