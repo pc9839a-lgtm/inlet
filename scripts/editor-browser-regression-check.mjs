@@ -3441,11 +3441,21 @@ async function run() {
     assert(Math.abs(narrow.width - 390) <= 1 && narrow.overflow <= 3 && narrow.selected,
       '900px long page preserves 390px preview and inspector: ' + JSON.stringify(narrow));
     await capture(longPageClient, 'editor-vnext-36-blocks-900');
+    // Shared SPA bootstrap requests AdSense and Pretendard even before a
+    // block is edited; the CDP mock blocks both remote resources. This test
+    // must reject *new* outbound destinations, not confuse existing shell
+    // assets with link-click navigation caused by this editor patch.
+    const unrelatedShellAssets = longState.externalRequests.filter((url) =>
+      url.startsWith('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=')
+      || url === 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
+    );
+    const unexpectedExternal = longState.externalRequests.filter((url) => !unrelatedShellAssets.includes(url));
     assert(longState.saveCount === 0 && longState.unexpectedApis.length === 0
-      && longState.externalRequests.length === 0 && !longState.interceptError,
-      'long-page flow must not save or call unauthorized endpoints: '
+      && unexpectedExternal.length === 0 && !longState.interceptError,
+      'long-page flow must not save or navigate outside known bootstrap assets: '
       + JSON.stringify({ saves: longState.saveCount, unexpected: longState.unexpectedApis,
-        external: longState.externalRequests, interceptError: longState.interceptError?.message }));
+        unexpectedExternal, shellAssetsBlocked: unrelatedShellAssets.length,
+        interceptError: longState.interceptError?.message }));
 
     assert(!apiState.interceptError, `API interception failed: ${apiState.interceptError?.message || apiState.interceptError}`);
     assert(apiState.unexpectedApis.length === 0, `Unexpected API requests: ${apiState.unexpectedApis.join(', ')}`);
