@@ -150,7 +150,7 @@ export function EditPanelLayout({
       <aside className="editor-composition-panel" aria-label="구성">
         <div className="editor-composition-heading">
           <h2>블록</h2>
-          <AddBlockDock {...addBlockDockProps} compact />
+          <AddBlockDock {...addBlockDockProps} compact afterSelected={screenOrderListProps.normalBlocks.some((block) => block.id === selectedBlockId)} />
           <button
             className="editor-page-settings-button"
             type="button"
