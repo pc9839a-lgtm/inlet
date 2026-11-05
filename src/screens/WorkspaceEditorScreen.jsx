@@ -147,6 +147,60 @@ export default function WorkspaceEditorScreen({
     return true;
   };
 
+  // Link cards, rows, and carousel items select their *own* link field.
+  // Legacy links without stable IDs use their source-array position; no
+  // click from the editor may navigate, dial, or send conversion analytics.
+  const pendingLinkFocusRef = React.useRef(null);
+  React.useEffect(() => () => pendingLinkFocusRef.current?.(), []);
+  const editPreviewLinkItem = (id, index) => {
+    if (!canUseBuilder || !editWorkspace || startMode === 'template' || stylePanelProps?.hasPendingStyle
+      || !Number.isInteger(index) || index < 0) return;
+    const block = editPanelProps?.page?.blocks?.find((entry) => entry.id === id && entry.type === 'links');
+    if (!block || block.visible === false || !Array.isArray(block.s?.items) || !block.s.items[index]) return;
+    pendingLinkFocusRef.current?.();
+    onSelectPreviewBlock?.(id);
+    const inspector = document.querySelector('.editor-inspector-panel');
+    if (!inspector || typeof MutationObserver !== 'function') return;
+    let finished = false;
+    let timeoutId = 0;
+    const observer = new MutationObserver(() => focusLink());
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+      observer.disconnect();
+      window.clearTimeout(timeoutId);
+      if (pendingLinkFocusRef.current === cleanup) pendingLinkFocusRef.current = null;
+    };
+    const focusLink = () => {
+      if (finished) return;
+      const settings = document.getElementById(`editor-block-settings-${id}`);
+      if (!settings) return;
+      const tab = [...settings.querySelectorAll('.links-editor-v3 [role="tab"]')]
+        .find((button) => button.textContent.trim() === '링크 목록');
+      if (!tab) return;
+      if (tab.getAttribute('aria-selected') !== 'true') {
+        tab.click();
+        return;
+      }
+      const row = settings.querySelectorAll('.links-editor-v3 .editor-list-v2-items > .editor-list-item-v2')[index];
+      const trigger = row?.querySelector('.editor-list-item-v2-trigger');
+      if (!trigger) return;
+      if (trigger.getAttribute('aria-expanded') !== 'true') {
+        trigger.click();
+        return;
+      }
+      const input = settings.querySelector(`input[data-link-item-label-index="${index}"]`);
+      if (!input) return;
+      cleanup();
+      input.scrollIntoView({ block: 'nearest' });
+      input.focus({ preventScroll: true });
+    };
+    observer.observe(inspector, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected', 'aria-expanded'] });
+    timeoutId = window.setTimeout(cleanup, 5000);
+    requestAnimationFrame(focusLink);
+    pendingLinkFocusRef.current = cleanup;
+  };
+
   // Bottom CTA clicks in an editor must edit the matching button, not follow
   // its URL, dial a phone, scroll to a section, or emit conversion analytics.
   const pendingBottomFocusRef = React.useRef(null);
@@ -228,6 +282,7 @@ export default function WorkspaceEditorScreen({
         onSelectPreviewBlock={selectPreviewBlockWithImage}
         onEditPreviewText={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? editPreviewText : undefined}
         onReplacePreviewImage={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? replacePreviewImage : undefined}
+        onEditPreviewLinkItem={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? editPreviewLinkItem : undefined}
         onEditPreviewBottomButton={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? editPreviewBottomButton : undefined}
       />}
     </div>
