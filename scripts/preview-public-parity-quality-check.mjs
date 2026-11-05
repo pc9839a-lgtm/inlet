@@ -86,7 +86,7 @@ assert(!isEditorPreviewSafeMediaBlock({ type: 'code', s: { widgetMode: 'youtube'
 // Editor draft preview and public landing share the renderer but must NOT
 // share write, delivery, analytics, or publish side effects.
 const previewRenderer = await readFile('src/preview/LandingRenderer.jsx', 'utf8');
-const previewModal = await readFile('src/builder/BuilderFeedback.jsx', 'utf8');
+const previewTabSource = await readFile('src/preview/DraftPreviewTab.jsx', 'utf8');
 const previewWindowSource = await readFile('src/runtime/usePreviewWindow.js', 'utf8');
 const previewSource = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 
@@ -104,22 +104,46 @@ const preview = createPreviewPage({ page: draftPage, stylePreviewTheme: { accent
 assert(preview !== draftPage && getEditorDraftPreviewPage() === preview, 'Current unsaved draft must be available to header preview');
 assert(preview.theme.accent === '#abcdef' && preview.blocks[0].id === 'text-a', 'Pending style and block changes must reach draft preview');
 assert(previewUrlForPage(draftPage).includes('draft-qa'), 'Published URL remains a separate, explicit destination');
-let openedCount = 0;
-let copiedIssue = null;
+const previewToken = '123e4567-e89b-42d3-a456-426614174000';
+const openedTabs = [];
+const posted = [];
+const channels = [];
 let warned = 0;
-const existingWindow = globalThis.window;
-globalThis.window = { open: () => { openedCount += 1; return null; } };
+const originalWindow = globalThis.window;
+const originalBroadcastChannel = globalThis.BroadcastChannel;
+globalThis.BroadcastChannel = class {
+  constructor(name) { this.name = name; this.closed = false; channels.push(this); }
+  postMessage(message) { posted.push(message); }
+  close() { this.closed = true; }
+};
+globalThis.window = {
+  open: (...args) => { openedTabs.push(args); return null; },
+  location: { origin: 'https://pagero.kr' },
+  crypto: { randomUUID: () => previewToken },
+  setTimeout: () => 1,
+  clearTimeout: () => {},
+};
 try {
   usePreviewWindow({
     previewUrl: 'https://pagero.kr/draft-qa',
-    setPreviewCopyIssue: (issue) => { copiedIssue = issue; },
     showToast: () => { warned += 1; },
   }).openPreview();
-  assert(copiedIssue?.kind === 'draft' && copiedIssue.page === preview, 'Header preview must show unsaved draft, not published URL');
-  assert(copiedIssue.publishedUrl === 'https://pagero.kr/draft-qa', 'Published destination must remain separately available');
-  assert(openedCount === 0 && warned === 0, 'Draft action must not open public URL or misdiagnose a noopener null return');
+  assert(openedTabs.length === 1
+    && openedTabs[0][0] === 'https://pagero.kr/?__pagero_preview=' + previewToken
+    && openedTabs[0][1] === '_blank'
+    && openedTabs[0][2] === 'noopener,noreferrer'
+    && warned === 0,
+    'Header preview must open one isolated tab for unsaved draft, not a dialog or public page');
+  assert(channels.length === 1 && channels[0].name === 'pagero-editor-draft-preview:' + previewToken,
+    'Unsaved draft remains in memory until the new tab requests it');
+  channels[0].onmessage({ data: { type: 'ready', token: previewToken } });
+  assert(posted.length === 1 && posted[0].type === 'draft' && posted[0].page === preview,
+    'Current unsaved style and ordered blocks must be transferred only after the tab handshake');
+  channels[0].onmessage({ data: { type: 'received', token: previewToken } });
+  assert(channels[0].closed, 'Preview snapshot transport must release its channel after delivery');
 } finally {
-  globalThis.window = existingWindow;
+  globalThis.window = originalWindow;
+  globalThis.BroadcastChannel = originalBroadcastChannel;
 }
 const lead = { name: '모의 이름', isTest: false };
 const simulated = await simulateEditorPreviewLead(lead);
@@ -139,11 +163,19 @@ for (const html of ['<div>코드 내용</div>', '<!doctype html><html lang="ko">
   assert(isolated.includes("connect-src 'none'") && isolated.includes("form-action 'none'") && isolated.includes("frame-src 'none'"), 'Preview must prohibit API writes, form delivery and nested frames');
 }
 assert(EDITOR_CODE_SANDBOX === 'allow-scripts', 'Preview must allow local widget interaction without inheriting editor origin or navigation permissions');
-assert(previewModal.includes('현재 초안 미리보기') && previewModal.includes('발행본 보기'), 'Draft and published views must be distinguishable');
-assert(previewModal.includes('rel="noopener noreferrer"') && previewModal.includes('target="_blank"'), 'Published links must retain noopener security');
-assert(previewModal.includes("navigator.clipboard.writeText(url)") && previewModal.includes('onClick={copyPreviewUrl}'), 'Retry copy must perform clipboard write rather than open a window');
-assert(!previewWindowSource.includes('window.open('), 'Header preview must not guess popup blocking from noopener null');
-assert(workspacePreviewCss.includes('.editor-draft-preview-dialog'), 'Draft preview overlay must be sized independently of page publishing');
+assert(previewTabSource.includes('<PreviewRenderer page={state.page} leads={[]} editorPreview />')
+  && previewTabSource.includes("type: 'ready', token")
+  && previewTabSource.includes("type: 'received', token"),
+  'Standalone new-tab preview must use safe editor renderer and token handshake');
+assert(!previewWindowSource.includes('setPreviewCopyIssue')
+  && !previewWindowSource.includes('PreviewCopyModal')
+  && previewWindowSource.includes("window.open(url, '_blank', 'noopener,noreferrer')"),
+  'Header preview must open a new tab instead of a popup overlay');
+assert(!workspacePreviewCss.includes('.editor-draft-preview-dialog')
+  && !workspacePreviewCss.includes('.preview-stage-toolbar')
+  && !workspacePreviewCss.includes('.preview-selection-toolbar')
+  && !workspacePreview.includes('PreviewSelectionToolbar'),
+  'Editor canvas must omit redundant controls while retaining the real mobile page');
 
 console.log(JSON.stringify({
   ok: true,
