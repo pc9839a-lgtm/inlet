@@ -132,7 +132,7 @@ function BgEffectLayer({ effect }) {
   );
 }
 
-function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, onEditPreviewText, onReplacePreviewImage, onEditPreviewBottomButton, templatePreview = false, editorPreview = false, publicView = false }) {
+function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, onEditPreviewText, onReplacePreviewImage, onEditPreviewLinkItem, onEditPreviewBottomButton, templatePreview = false, editorPreview = false, publicView = false }) {
   const blocks = visiblePreviewBlocks(page);
   const bottom = blocks.find(b=>b.type==='bottombar');
   // Preserve the editor's exact order, including a HERO placed after text.
@@ -333,7 +333,9 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
     const imageClick = editorPreview && section.classList.contains('image-sec')
       && !!event.target.closest?.('.image-wrap, .image-gallery-grid, .image-placeholder')
       && !event.target.closest?.('button, a, input, textarea, select, label');
-    onSelectBlock?.(id, { imageClick });
+    const slot = imageClick ? event.target.closest?.('[data-preview-gallery-index]')?.getAttribute('data-preview-gallery-index') : null;
+    const galleryIndex = slot != null && /^\d+$/.test(slot) ? Number(slot) : undefined;
+    onSelectBlock?.(id, { imageClick, galleryIndex });
   };
 
   const go = (target, url, labelText) => {
@@ -362,7 +364,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={pageClassName} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,'--page-fixed-top-height':`${fixedUiHeights.top}px`,'--page-fixed-bottom-height':`${fixedUiHeights.bottom}px`,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
-      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={editorPreview ? simulateEditorPreviewLead : addLead} track={editorPreview ? undefined : track} go={go} editorPreview={editorPreview} selectedBlockId={selectedBlockId} onReplacePreviewImage={editorPreview ? onReplacePreviewImage : undefined} onEditPreviewText={editorPreview ? onEditPreviewText : undefined}/>)}</div>
+      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={editorPreview ? simulateEditorPreviewLead : addLead} track={editorPreview ? undefined : track} go={go} editorPreview={editorPreview} selectedBlockId={selectedBlockId} onReplacePreviewImage={editorPreview ? onReplacePreviewImage : undefined} onEditPreviewLinkItem={editorPreview ? onEditPreviewLinkItem : undefined} onEditPreviewText={editorPreview ? onEditPreviewText : undefined}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
       {!editorPreview && page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} />}
       {!publicView && bottomNode}
@@ -418,7 +420,7 @@ function RenderBlock(props) {
   );
 }
 
-function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false, selectedBlockId, onReplacePreviewImage, onEditPreviewText }) {
+function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false, selectedBlockId, onReplacePreviewImage, onEditPreviewLinkItem, onEditPreviewText }) {
   const globalAlign = pickSafe(page?.theme?.globalAlign, ['left','center','right'], '');
   const renderBlock = globalAlign
     ? { ...block, s: { ...(block.s || {}), align: globalAlign, textAlign: globalAlign } }
@@ -431,7 +433,7 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
   if(block.type==='map')return <InfoRenderMap block={renderBlock} page={page}/>;
   if(block.type==='schedule')return <InfoRenderSchedule block={renderBlock}/>;
   if(block.type==='faq')return <InfoRenderFaq block={renderBlock}/>;
-  if(block.type==='links')return <LinkRenderLinks block={renderBlock} track={track} go={go}/>;
+  if(block.type==='links')return <LinkRenderLinks block={renderBlock} track={track} go={go} editorPreview={editorPreview} onEditItem={onEditPreviewLinkItem}/>;
   if(block.type==='download')return <LinkRenderDownload block={renderBlock} track={track}/>;
   if(block.type==='timer')return <SignalRenderTimer block={renderBlock} go={go}/>;
   if(block.type==='activity')return <SignalRenderActivity block={renderBlock} leads={leads}/>;
