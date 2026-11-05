@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { getEditorDraftPreviewPage } from './previewTarget.js';
 import { draftPreviewChannelName, draftPreviewTabUrl } from './draftPreviewTabTransport.js';
 
@@ -6,12 +5,9 @@ import { draftPreviewChannelName, draftPreviewTabUrl } from './draftPreviewTabTr
 // The page snapshot is sent directly tab-to-tab and is never put in a URL,
 // localStorage, sessionStorage, or the public page API.
 export function usePreviewWindow({ previewUrl, showToast }) {
-  const pending = useRef(new Set());
-
-  useEffect(() => () => {
-    for (const close of pending.current) close();
-    pending.current.clear();
-  }, []);
+  // Keep this callback factory usable by non-React preview contract tests.
+  // Pending channels self-expire after 30s even when the editor unmounts.
+  const pending = new Set();
 
   const openPreview = () => {
     if (typeof window === 'undefined') return;
@@ -46,7 +42,7 @@ export function usePreviewWindow({ previewUrl, showToast }) {
     const close = () => {
       window.clearTimeout(expiry);
       channel.close();
-      pending.current.delete(close);
+      pending.delete(close);
     };
     channel.onmessage = (event) => {
       if (event.data?.token !== token) return;
@@ -60,7 +56,7 @@ export function usePreviewWindow({ previewUrl, showToast }) {
         close();
       }
     };
-    pending.current.add(close);
+    pending.add(close);
     expiry = window.setTimeout(close, 30000);
     try {
       openTab(draftPreviewTabUrl(token, window.location.origin));
