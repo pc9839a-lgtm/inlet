@@ -43,7 +43,7 @@ const checks = {
   'recurring commission rate can be changed or paused server-side':
     source.commissions.includes('readCallTagReferralProgramConfig')
       && source.commissions.includes('CALLTAG_COMMISSION_PAUSED')
-      && source.commissions.includes('callTagProgram?.commissionRateBps'),
+      && source.commissions.includes('resolveCallTagCommissionRateBps(callTagProgram)'),
   'client summary exposes runtime program fields through existing endpoint':
     source.summary.includes('programEnabled: program.enabled')
       && source.summary.includes('commissionRatePercent: program.commissionRatePercent')
