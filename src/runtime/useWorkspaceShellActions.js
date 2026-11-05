@@ -56,8 +56,15 @@ export function useWorkspaceShellActions({
       if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => {
           const settings = document.getElementById(`editor-block-settings-${id}`);
-          const editorTarget = settings || document.getElementById(`editor-block-${id}`);
-          editorTarget?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          const inspector = document.querySelector('.canvas-editor-shell .editor-inspector-panel');
+          if (settings && inspector?.contains(settings)) {
+            settings.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+          }
+          const row = document.getElementById(`editor-block-${id}`);
+          const list = document.querySelector('.canvas-editor-shell .editor-composition-content');
+          if (row && list?.contains(row) && row.getClientRects().length) {
+            row.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+          }
         });
       }
     };
