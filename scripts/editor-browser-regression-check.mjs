@@ -1173,6 +1173,17 @@ async function run() {
     assert((await evaluate(client, "document.querySelector('.phone-frame #block-editor-text p')?.textContent || ''")).includes('페이지 선택, 블록 편집'),
       'cancel must keep the previously saved draft text');
 
+    // Clicking the real phone image (including empty-image state) must choose
+    // the exact ImageBlock and focus its existing safe upload control.
+    await clickPointer(client, '.phone-frame #block-editor-image .image-placeholder');
+    await waitForBrowser(client,
+      "!!document.querySelector('#editor-block-settings-editor-image .image-input-upload-action')",
+      'preview image selects existing Inspector image uploader');
+    await waitForBrowser(client,
+      "document.activeElement === document.querySelector('#editor-block-settings-editor-image .image-input-upload-action')",
+      'preview image focuses its existing photo replacement action');
+    assert(apiState.saveCount === 0, 'preview image selection must not publish');
+
     // Custom HTML/CSS/JS must be visible and interactive in the actual editor,
     // while the iframe cannot inherit editor credentials or submit live leads.
     await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-code iframe.custom-code-frame')`, 'custom code iframe in editor preview');
@@ -2126,10 +2137,14 @@ async function run() {
     assert(apiState.saveCount === 0, 'D03 row identities must not trigger server saves');
 
     // E2E-02 / E2E-03: the block-add dock is intentionally simple: open it and add a block directly.
+    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
+    await waitForBrowser(client, "!!document.querySelector('#editor-block-settings-editor-text')", 'selected text before insertion');
     const initialNormalBlockCount = await normalBlockCount(client);
     const normalOrderBeforeAdd = await normalBlockOrder(client);
     await clickSelector(client, '.add-toggle');
-    await waitForBrowser(client, `!!document.querySelector('.add-panel .widget-group-grid')`, 'simple block add panel');
+    await waitForBrowser(client, `!!document.querySelector('.add-panel .widget-group-grid')`, 'simple block add panel');    assert(await evaluate(client, "document.querySelector('.editor-add-block-location')?.textContent === '선택한 블록 아래에 추가'"),
+      'catalog must announce insertion immediately below selected content');
+
     assert(!(await evaluate(client, `!!document.querySelector('.section-add-modes')`)), 'block add panel must not expose recommendation/industry mode tabs');
     assert(!(await evaluate(client, `!!document.querySelector('#pagero-widget-search')`)), 'block add panel must not expose the removed search field');
     assert(!(await evaluate(client, `!!document.querySelector('.section-pattern-card')`)), 'block add panel must not expose recommended section cards');
@@ -2137,6 +2152,10 @@ async function run() {
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'added divider row');
     const addedDividerId = (await normalBlockOrder(client)).find((id) => !normalOrderBeforeAdd.includes(id));
     assert(addedDividerId, 'added divider block id was not resolved');
+    const selectedInsertionOrder = await normalBlockOrder(client);
+    assert(selectedInsertionOrder.indexOf(addedDividerId) === selectedInsertionOrder.indexOf('editor-block-editor-text') + 1,
+      'new divider must be immediately below selected text in navigator order: ' + JSON.stringify(selectedInsertionOrder));
+
     assert(apiState.saveCount === 0, 'adding a block must remain local before publish');
 
     await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
