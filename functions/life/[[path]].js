@@ -1,8 +1,9 @@
-// Read from an immutable verified content deployment. The legacy hostname now
-// issues a 301 redirect and must never be used as the reverse-proxy upstream.
-// 2026-11-05: LIFE main 27420743 includes sitewide campaigns and unique editorial images; Cloudflare deploy d4770504 succeeded.
-// The origin returns noindex; prepareHeaders removes that header on canonical pagero.kr/life.
-const LIFE_UPSTREAM_ORIGIN = 'https://d4770504.life-pagero.pages.dev';
+// Read from the LIFE project's production deployment alias. The legacy hostname
+// issues a 301 redirect, so never use life.pagero.kr as the proxy upstream.
+// This must follow life-pagero's current production build: the old immutable
+// d4770504 snapshot prevented newly merged posts and ads from ever appearing.
+// The origin returns noindex; prepareHeaders removes it on canonical pagero.kr/life.
+const LIFE_UPSTREAM_ORIGIN = 'https://life-pagero.pages.dev';
 const LIFE_PUBLIC_ORIGIN = 'https://pagero.kr/life';
 const LIFE_PREFIX = '/life';
 
@@ -97,7 +98,7 @@ function prepareHeaders(sourceHeaders) {
   // on continuation pages, so public SEO semantics remain page-specific.
   headers.delete('X-Robots-Tag');
   headers.set('X-Pagero-Life-Proxy', '1');
-  headers.set('X-Pagero-Life-Upstream', 'verified-immutable-life-snapshot');
+  headers.set('X-Pagero-Life-Upstream', 'life-production-alias');
   return headers;
 }
 
@@ -164,6 +165,12 @@ export async function onRequest(context) {
   }
 
   const contentType = headers.get('content-type') || '';
+  if (contentType.toLowerCase().includes('text/html')) {
+    // Never cache a stale HTML document while LIFE follows new main deployments.
+    headers.set('Cache-Control', 'no-store, max-age=0');
+    headers.set('CDN-Cache-Control', 'no-store');
+    headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+  }
   if (!isRewritableText(contentType)) {
     return new Response(upstreamResponse.body, {
       status: upstreamResponse.status,
