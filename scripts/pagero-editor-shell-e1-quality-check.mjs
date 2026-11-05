@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { createInspectorBlockNavigation } from '../src/editor/editPanelParts/inspectorBlockNavigationModel.js';
 import { createScreenOrderIdentities } from '../src/editor/editPanelParts/screenOrderIdentityModel.js';
 import { findBlockNavigationMatches } from '../src/editor/editPanelParts/blockNavigatorSearchModel.js';
+import { validDraftPreviewToken, draftPreviewTabUrl, draftPreviewChannelName } from '../src/runtime/draftPreviewTabTransport.js';
 import { themeAlignmentMode, isTextColorOverride, describeTextColorSource, describeBottomButtonColorSource, countTextColorSources } from '../src/editor/ui/themeInheritanceModel.js';
 
 function assert(condition, message) {
@@ -194,6 +195,10 @@ const operationsWorkspaceCss = await readFile('src/screens/workspace/OperationsW
 const addDockCss = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const previewPaneCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
 const previewSelectionPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
+const newPreviewHook = await readFile('src/runtime/usePreviewWindow.js', 'utf8');
+const previewNewTab = await readFile('src/preview/DraftPreviewTab.jsx', 'utf8');
+const rootEntrypoint = await readFile('src/main.jsx', 'utf8');
+const appRoot = await readFile('src/App.jsx', 'utf8');
 
 assert(!navigation.includes("['style', '스타일'"), 'editor navigation must not expose a duplicate style workspace tab');
 assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 'legacy style routes must still normalize into edit');
@@ -400,6 +405,28 @@ assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') 
 assert(!workspaceCss.includes('body .builder-shell .panel-header {') && !workspaceCss.includes('body .builder-shell .top-tabs {'), 'workspace shell must not own PanelHeader or top-tabs presentation');
 assert(workspaceScreen.includes("import './workspace/OperationsWorkspace.css';") && operationsWorkspaceCss.includes('.inbox-workspace-shell') && operationsWorkspaceCss.includes('.stats-dashboard-shell') && operationsWorkspaceCss.includes('.settings-workspace-shell') && !workspaceCss.includes('.inbox-workspace-shell'), 'desktop operations geometry must be isolated from the common workspace shell');
 
+// 21st patch: preview opens a new standalone tab with current draft in
+// memory, not a second phone toolbar or a portal-based overlay.
+const previewToken = '123e4567-e89b-42d3-a456-426614174000';
+assert(validDraftPreviewToken(previewToken)
+  && !validDraftPreviewToken('not-a-token')
+  && !validDraftPreviewToken('../app')
+  && draftPreviewTabUrl(previewToken, 'https://pagero.kr').includes('/?__pagero_preview=' + previewToken)
+  && draftPreviewChannelName(previewToken) === 'pagero-editor-draft-preview:' + previewToken,
+  'new tab requires a random opaque preview token with no HTML or page content in the URL');
+assert(newPreviewHook.includes("window.open(url, '_blank', 'noopener,noreferrer')")
+  && newPreviewHook.includes("type: 'draft', token, page: draft")
+  && newPreviewHook.includes("type === 'ready'")
+  && !newPreviewHook.includes('setPreviewCopyIssue')
+  && !newPreviewHook.includes('localStorage')
+  && !newPreviewHook.includes('sessionStorage')
+  && previewNewTab.includes('<PreviewRenderer page={state.page} leads={[]} editorPreview />')
+  && previewNewTab.includes("type: 'ready', token")
+  && previewNewTab.includes("type: 'received', token")
+  && rootEntrypoint.includes('renderDraftPreviewTab()')
+  && !appRoot.includes('PreviewCopyModal')
+  && !appRoot.includes('previewCopyIssue'),
+  'header draft preview must open a real tab and transport its snapshot only via ephemeral channel');
 assert(!previewSelectionPane.includes('<PreviewSelectionToolbar')
   && !previewSelectionPane.includes('preview-stage-toolbar')
   && !previewSelectionPane.includes('미리보기 배율')
