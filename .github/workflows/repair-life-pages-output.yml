@@ -1,4 +1,5 @@
 name: Repair LIFE Pages output directory and rebuild
+# 2026-11-05: verified main commit with editorial image de-duplication.
 on:
   push:
     branches: [main]
@@ -47,10 +48,10 @@ jobs:
           print('AFTER_OUTPUT_DIR',(updated.get('build_config') or {}).get('destination_dir'))
           if (updated.get('build_config') or {}).get('destination_dir')!='dist':sys.exit('Output directory did not persist')
           if (updated.get('build_config') or {}).get('build_command')!='npm run build':sys.exit('Build command changed unexpectedly')
-          deployment_id='b2e42882-7a56-41e6-9525-b9ca2c597539'
+          deployment_id='9f712a12-c0c0-46ff-b603-2c12c22e5691'
           latest=api('/deployments/'+deployment_id)
           metadata=((latest.get('deployment_trigger') or {}).get('metadata') or {})
-          if metadata.get('commit_hash')!='550caa4aa1e982cd910d95c727eca591b4d7183b' or metadata.get('branch')!='main':
+          if metadata.get('commit_hash')!='27420743aa8e61ceb735544720190e9e721a5482' or metadata.get('branch')!='main':
               sys.exit('Unexpected source commit; refusing retry')
           retry=api('/deployments/'+deployment_id+'/retry','POST',{})
           print('RETRY_RESPONSE',json.dumps({'id':(retry or {}).get('id'),'url':(retry or {}).get('url'),'stage':(retry or {}).get('latest_stage')},ensure_ascii=False))
