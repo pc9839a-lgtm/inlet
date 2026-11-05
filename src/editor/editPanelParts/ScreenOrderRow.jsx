@@ -2,6 +2,7 @@ import React from 'react';
 import { ScreenOrderRowActions } from './ScreenOrderRowActions.jsx';
 import { ScreenOrderRowIdentity } from './ScreenOrderRowIdentity.jsx';
 import { createScreenOrderRowInteraction } from './screenOrderRowInteraction.js';
+import { isExplicitlyHidden } from './screenOrderIdentityModel.js';
 
 export function ScreenOrderRow({
   block,
@@ -22,11 +23,12 @@ export function ScreenOrderRow({
   onDragEnd,
 }) {
   const { selectRow, selectRowByKey } = createScreenOrderRowInteraction({ onSelectRow });
+  const hidden = isExplicitlyHidden(block);
 
   return (
     <div
       id={`editor-block-${block.id}`}
-      className={`screen-order-v2-item${open ? ' is-open' : ''}${!block.visible ? ' is-hidden' : ''}${dragId === block.id ? ' is-dragging' : ''}`}
+      className={`screen-order-v2-item${open ? ' is-open' : ''}${hidden ? ' is-hidden' : ''}${dragId === block.id ? ' is-dragging' : ''}`}
       data-order={index + 1}
       data-block-type={block.type}
       data-selected={open ? 'true' : 'false'}
