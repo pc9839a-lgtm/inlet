@@ -3443,7 +3443,9 @@ async function run() {
     await capture(longPageClient, 'editor-vnext-36-blocks-900');
     assert(longState.saveCount === 0 && longState.unexpectedApis.length === 0
       && longState.externalRequests.length === 0 && !longState.interceptError,
-      'long-page flow must not save or call unauthorized endpoints');
+      'long-page flow must not save or call unauthorized endpoints: '
+      + JSON.stringify({ saves: longState.saveCount, unexpected: longState.unexpectedApis,
+        external: longState.externalRequests, interceptError: longState.interceptError?.message }));
 
     assert(!apiState.interceptError, `API interception failed: ${apiState.interceptError?.message || apiState.interceptError}`);
     assert(apiState.unexpectedApis.length === 0, `Unexpected API requests: ${apiState.unexpectedApis.join(', ')}`);
