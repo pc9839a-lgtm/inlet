@@ -1,4 +1,5 @@
-/* Standalone read-only draft preview tab. No editor chrome or phone bezel. */
+/* Full-page draft preview, with the same runtime containment as the 390px
+   editor phone. No editor tools, device bezel, or publishing controls. */
 .pagero-draft-preview-tab {
   box-sizing: border-box;
   min-height: 100dvh;
@@ -6,17 +7,29 @@
   justify-content: center;
   background: #f4f6f9;
 }
-.pagero-draft-preview-content {
+.pagero-draft-preview-tab > .phone-frame.pagero-draft-preview-content {
+  --landing-runtime-width: 390px;
   box-sizing: border-box;
-  width: min(390px, 100%);
-  min-height: 100dvh;
+  flex: 0 0 auto;
+  width: min(390px, 100vw);
+  max-width: 390px;
+  height: 100dvh;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   background: #fff;
+  overflow: hidden;
 }
-.pagero-draft-preview-content > .landing-page {
+.pagero-draft-preview-tab .pagero-draft-preview-content > .landing-page {
   box-sizing: border-box;
   width: 100%;
-  min-height: 100dvh;
-  height: auto;
+  height: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 .pagero-draft-preview-message {
   align-self: flex-start;

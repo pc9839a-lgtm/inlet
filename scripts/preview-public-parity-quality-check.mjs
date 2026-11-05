@@ -108,6 +108,8 @@ const previewToken = '123e4567-e89b-42d3-a456-426614174000';
 const openedTabs = [];
 const posted = [];
 const channels = [];
+const notifications = [];
+const timeoutCallbacks = [];
 let warned = 0;
 const originalWindow = globalThis.window;
 const originalBroadcastChannel = globalThis.BroadcastChannel;
@@ -120,13 +122,13 @@ globalThis.window = {
   open: (...args) => { openedTabs.push(args); return null; },
   location: { origin: 'https://pagero.kr' },
   crypto: { randomUUID: () => previewToken },
-  setTimeout: () => 1,
+  setTimeout: (callback) => { timeoutCallbacks.push(callback); return timeoutCallbacks.length; },
   clearTimeout: () => {},
 };
 try {
   usePreviewWindow({
     previewUrl: 'https://pagero.kr/draft-qa',
-    showToast: () => { warned += 1; },
+    showToast: (message, tone) => { warned += 1; notifications.push({ message, tone }); },
   }).openPreview();
   assert(openedTabs.length === 1
     && openedTabs[0][0] === 'https://pagero.kr/?__pagero_preview=' + previewToken
@@ -141,6 +143,32 @@ try {
     'Current unsaved style and ordered blocks must be transferred only after the tab handshake');
   channels[0].onmessage({ data: { type: 'received', token: previewToken } });
   assert(channels[0].closed, 'Preview snapshot transport must release its channel after delivery');
+  // A null return from noopener window.open is not proof of blocking.
+  // A missing handshake must report a popup/connectivity issue instead of
+  // claiming success or silently showing a stale published page.
+  usePreviewWindow({
+    previewUrl: 'https://pagero.kr/draft-qa',
+    showToast: (message, tone) => { warned += 1; notifications.push({ message, tone }); },
+  }).openPreview();
+  assert(warned === 0 && openedTabs.length === 2 && channels.length === 2,
+    'null noopener handle alone must not cause a false popup-block warning');
+  timeoutCallbacks.at(-1)();
+  assert(channels[1].closed && warned === 1
+    && notifications.at(-1).message.includes('팝업 차단'),
+    'unconnected popup or closed tab must produce actionable feedback after handshake timeout');
+
+  // The new tab cannot receive a snapshot when BroadcastChannel is missing;
+  // refuse to open an older published page as if it were the current draft.
+  const broadcast = globalThis.BroadcastChannel;
+  globalThis.BroadcastChannel = undefined;
+  usePreviewWindow({
+    previewUrl: 'https://pagero.kr/draft-qa',
+    showToast: (message, tone) => { warned += 1; notifications.push({ message, tone }); },
+  }).openPreview();
+  assert(openedTabs.length === 2 && warned === 2
+    && notifications.at(-1).message.includes('지원하지 않습니다'),
+    'unsupported browser must not silently open a stale published URL');
+  globalThis.BroadcastChannel = broadcast;
 } finally {
   globalThis.window = originalWindow;
   globalThis.BroadcastChannel = originalBroadcastChannel;
@@ -165,11 +193,12 @@ for (const html of ['<div>코드 내용</div>', '<!doctype html><html lang="ko">
 assert(EDITOR_CODE_SANDBOX === 'allow-scripts', 'Preview must allow local widget interaction without inheriting editor origin or navigation permissions');
 assert(previewTabSource.includes('<PreviewRenderer page={state.page} leads={[]} editorPreview />')
   && previewTabSource.includes("type: 'ready', token")
-  && previewTabSource.includes("type: 'received', token"),
+  && previewTabSource.includes("type: 'received', token")
+  && previewTabSource.includes('phone-frame pagero-draft-preview-content'),
   'Standalone new-tab preview must use safe editor renderer and token handshake');
 assert(!previewWindowSource.includes('setPreviewCopyIssue')
   && !previewWindowSource.includes('PreviewCopyModal')
-  && previewWindowSource.includes("window.open(url, '_blank', 'noopener,noreferrer')"),
+  && previewWindowSource.includes("window.open(draftPreviewTabUrl(token, window.location.origin), '_blank', 'noopener,noreferrer')"),
   'Header preview must open a new tab instead of a popup overlay');
 assert(!workspacePreviewCss.includes('.editor-draft-preview-dialog')
   && !workspacePreviewCss.includes('.preview-stage-toolbar')
