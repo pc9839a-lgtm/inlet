@@ -1043,6 +1043,7 @@ async function run() {
   let child = null;
   let client = null;
   let secondClient = null;
+  let draftTabClient = null;
 
   try {
     qaStep('starting Chrome');
@@ -2428,46 +2429,77 @@ async function run() {
     await openBlockSettings(client, 'editor-hero');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
 
-    // E2E-13: Preview opens a browser tab, not a modal, and transfers the
-    // current unpublished snapshot without public writes or storing page data.
-    await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => {
-      window.__pageroQaPreviewCalls.push(args); return null;
-    };`);
+    // E2E-13 / 23rd patch: open a real Chromium tab, not a window.open mock.
+    // Inspect its rendered image, mobile 390px content and fixed CTA while
+    // proving that the editor stays open and no draft is published.
+    const targetsBeforePreview = new Set((await fetchJson(`http://127.0.0.1:${debugPort}/json/list`)).map(item => item.id));
+    const saveCountBeforeTab = apiState.saveCount;
+    const publicChecksBeforeTab = apiState.publicVerifyCount;
     await clickButtonByText(client, '.panel-actions', '미리보기');
-    await waitForBrowser(client, `window.__pageroQaPreviewCalls?.length === 1`,
-      'header preview opens a new tab exactly once');
-    const tabRequest = await evaluate(client, `(() => {
-      const call = window.__pageroQaPreviewCalls[0];
-      const url = new URL(call[0]);
-      const token = url.searchParams.get('__pagero_preview');
-      if (!token) return null;
-      window.__pageroQaPreviewSnapshot = null;
-      const receiver = new BroadcastChannel('pagero-editor-draft-preview:' + token);
-      receiver.onmessage = (event) => {
-        if (event.data?.type !== 'draft' || event.data?.token !== token) return;
-        window.__pageroQaPreviewSnapshot = event.data.page;
-        receiver.postMessage({ type: 'received', token });
-        receiver.close();
+
+    let draftTarget = null;
+    for (let attempt = 0; attempt < 70; attempt += 1) {
+      const tabs = await fetchJson(`http://127.0.0.1:${debugPort}/json/list`);
+      draftTarget = tabs.find(item => item.type === 'page'
+        && !targetsBeforePreview.has(item.id)
+        && item.url?.startsWith(`${origin}/?__pagero_preview=`)
+        && item.webSocketDebuggerUrl);
+      if (draftTarget) break;
+      await wait(200);
+    }
+    assert(draftTarget, 'preview button must create a real separate Chrome tab with an opaque token');
+    const draftAddress = new URL(draftTarget.url);
+    assert(draftAddress.pathname === '/' && draftAddress.searchParams.get('__pagero_preview')?.length === 36
+      && draftAddress.searchParams.size === 1,
+      'new tab address must contain only the opaque handshake token, not page data: ' + draftTarget.url);
+
+    draftTabClient = createCdp(draftTarget.webSocketDebuggerUrl);
+    await draftTabClient.send('Runtime.enable');
+    await draftTabClient.send('Page.enable');
+    await setViewport(draftTabClient, 390, 844, false);
+    await waitForBrowser(draftTabClient, `!!document.querySelector('.pagero-draft-preview-tab .phone-frame .landing-page #block-editor-hero')`,
+      'real new tab receives the current unpublished HERO without an intermediate modal');
+    const draftTabMetrics = await evaluate(draftTabClient, `(() => {
+      const wrap = document.querySelector('.pagero-draft-preview-content');
+      const page = wrap?.querySelector('.landing-page');
+      const hero = page?.querySelector('#block-editor-hero');
+      const cta = page?.querySelector('.bottom-bar');
+      const image = hero?.querySelector('img');
+      const r = element => element?.getBoundingClientRect();
+      const frame = r(wrap), fixed = r(cta);
+      return {
+        width: page?.clientWidth,
+        containerWidth: frame?.width,
+        heroImage: !!hero && (hero.outerHTML.includes('data:image/svg') || (image?.complete && image.naturalWidth > 0)),
+        heroText: hero?.innerText || '',
+        ctaButtons: cta?.querySelectorAll('button').length || 0,
+        ctaWithinFrame: !!fixed && fixed.left >= frame.left - 2 && fixed.right <= frame.right + 2,
+        editorChrome: !!document.querySelector('.panel-header,.editor-draft-preview-dialog,.preview-stage-toolbar'),
+        pageRoute: location.pathname,
+        hasPreviewToken: new URLSearchParams(location.search).has('__pagero_preview'),
+        visibleIds: [...(page?.querySelectorAll('.landing-content > [id^="block-"]') || [])]
+          .map(element => element.id.replace(/^block-/, '')),
       };
-      receiver.postMessage({ type: 'ready', token });
-      return { path:url.pathname, origin:url.origin,
-        target:call[1], features:call[2], tokenLength:token.length,
-        hasModal:!!document.querySelector('.editor-draft-preview-dialog,.editor-draft-preview-backdrop') };
     })()`);
-    assert(tabRequest && tabRequest.path === '/' && tabRequest.target === '_blank'
-      && tabRequest.features.includes('noopener') && tabRequest.features.includes('noreferrer')
-      && tabRequest.tokenLength === 36 && !tabRequest.hasModal,
-      'preview must open a standalone same-origin tab without a draft modal: '+JSON.stringify(tabRequest));
-    await waitForBrowser(client, `!!window.__pageroQaPreviewSnapshot?.blocks`,
-      'new tab receives the in-memory unpublished preview through its token channel');
-    const f05HeaderPreviewOrder = await evaluate(client, `window.__pageroQaPreviewSnapshot.blocks
-      .filter(block => block.visible !== false && !['topnav','bottombar','footer'].includes(block.type))
-      .map(block => block.id)`);
-    assert(JSON.stringify(f05HeaderPreviewOrder) === JSON.stringify(f05Order.visibleIds),
-      'new-tab snapshot must retain current draft block order: '+ JSON.stringify(f05HeaderPreviewOrder));
+    const actualDraftIds = draftTabMetrics.visibleIds.filter(id => f05Order.visibleIds.includes(id));
+    assert(draftTabMetrics.width === 390 && draftTabMetrics.containerWidth === 390
+      && draftTabMetrics.heroImage && draftTabMetrics.ctaButtons >= 1
+      && draftTabMetrics.ctaWithinFrame && !draftTabMetrics.editorChrome
+      && draftTabMetrics.pageRoute === '/' && draftTabMetrics.hasPreviewToken
+      && JSON.stringify(actualDraftIds) === JSON.stringify(f05Order.visibleIds),
+      'actual new tab must render current draft images, ordered blocks and contained CTA at 390px: '
+        + JSON.stringify({ draftTabMetrics, expectedOrder: f05Order.visibleIds }));
+    await capture(draftTabClient, 'real-draft-preview-new-tab-390');
+    assert(apiState.saveCount === saveCountBeforeTab
+      && apiState.publicVerifyCount === publicChecksBeforeTab,
+      'new-tab preview must not publish, save, or publicly verify the unpublished draft');
     assert((await evaluate(client, 'location.pathname')) === '/app'
       && !(await evaluate(client, '!!document.querySelector(".editor-draft-preview-dialog")')),
-      'new-tab preview must leave the editor mounted with no modal overlay');
+      'new-tab preview must leave the editable page mounted without an overlay');
+    await evaluate(draftTabClient, 'window.close()');
+    await draftTabClient.close();
+    draftTabClient = null;
+
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`,
       'hero editor after new-tab preview');
@@ -3168,6 +3200,7 @@ async function run() {
     throw error;
   } finally {
     console.log('[editor-qa] cleanup at:', activeQaStep);
+    await draftTabClient?.close().catch(() => {});
     await secondClient?.close().catch(() => {});
     await client?.close().catch(() => {});
     if (child && !child.killed) child.kill('SIGTERM');
