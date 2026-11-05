@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { AddBlockDockToggle } from './AddBlockDockToggle.jsx';
 import { AddBlockPanel } from './AddBlockPanel.jsx';
 
-export function AddBlockDock({ addOpen, setAddOpen, addBlock, addSectionPattern, embedded = false, compact = false }) {
+export function AddBlockDock({ addOpen, setAddOpen, addBlock, addSectionPattern, afterSelected = false, embedded = false, compact = false }) {
   const panelOpen = embedded || addOpen;
   const ref = useRef(null);
   useEffect(() => {
@@ -22,7 +22,10 @@ export function AddBlockDock({ addOpen, setAddOpen, addBlock, addSectionPattern,
   return (
     <section ref={ref} className={`add-dock fixed-add-dock ${panelOpen ? 'open' : ''}${compact ? ' add-dock-compact' : ''}`}>
       {!embedded && <AddBlockDockToggle open={addOpen} compact={compact} onToggle={() => setAddOpen(!addOpen)} />}
-      {panelOpen && <AddBlockPanel onAdd={addBlock} onAddPattern={addSectionPattern} />}
+      {panelOpen && <div className="editor-add-block-panel">
+        <p className="editor-add-block-location">{afterSelected ? '선택한 블록 아래에 추가' : '마지막 콘텐츠 뒤에 추가'}</p>
+        <AddBlockPanel onAdd={addBlock} onAddPattern={addSectionPattern} />
+      </div>}
     </section>
   );
 }
