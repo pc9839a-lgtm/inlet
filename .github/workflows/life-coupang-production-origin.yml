@@ -1,0 +1,41 @@
+name: Verify LIFE Coupang production origin
+on:
+  pull_request:
+    paths:
+      - "functions/life/**"
+      - ".github/workflows/life-coupang-production-origin.yml"
+  workflow_dispatch:
+
+jobs:
+  verify-origin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm live LIFE Pages production alias includes Coupang units
+        run: |
+          node --input-type=module <<'NODE'
+          const origin = 'https://life-pagero.pages.dev';
+          async function request(path) {
+            const url = origin + path;
+            const response = await fetch(url, { redirect: 'follow' });
+            const content = await response.text();
+            console.log(url + ' -> ' + response.status + ' ' + response.url + ', ' + content.length + ' chars');
+            if (!response.ok || !response.url.startsWith(origin)) {
+              throw new Error('Unexpected LIFE production response: ' + response.status + ' ' + response.url);
+            }
+            return content;
+          }
+          const home = await request('/');
+          const expected = [
+            'data-life-coupang-banner="sitewide-v3"',
+            'ads-partners.coupang.com/g.js',
+            'AF2358798',
+            '1046806',
+            'options.height="250"',
+          ];
+          for (const value of expected) {
+            if (!home.includes(value)) throw new Error('LIFE production origin lacks ' + value);
+          }
+          const css = await request('/coupang-banner.css');
+          if (!css.includes('.life-coupang-placement')) throw new Error('Coupang stylesheet missing');
+          console.log('Verified LIFE production origin includes real Coupang banner code.');
+          NODE
