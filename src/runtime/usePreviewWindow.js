@@ -1,22 +1,73 @@
+import { useEffect, useRef } from 'react';
 import { getEditorDraftPreviewPage } from './previewTarget.js';
+import { draftPreviewChannelName, draftPreviewTabUrl } from './draftPreviewTabTransport.js';
 
-export function usePreviewWindow({ previewUrl, setPreviewCopyIssue, showToast }) {
+// Open the current (even unpublished) editor draft in a real browser tab.
+// The page snapshot is sent directly tab-to-tab and is never put in a URL,
+// localStorage, sessionStorage, or the public page API.
+export function usePreviewWindow({ previewUrl, showToast }) {
+  const pending = useRef(new Set());
+
+  useEffect(() => () => {
+    for (const close of pending.current) close();
+    pending.current.clear();
+  }, []);
+
   const openPreview = () => {
     if (typeof window === 'undefined') return;
     const draft = getEditorDraftPreviewPage();
+    const openTab = (url) => window.open(url, '_blank', 'noopener,noreferrer');
+
     if (!draft || !Array.isArray(draft.blocks)) {
-      setPreviewCopyIssue({
-        kind: 'unavailable',
-        url: previewUrl,
-        message: '현재 초안을 불러올 수 없습니다. 발행 주소는 아래에서 별도로 확인할 수 있습니다.',
-      });
-      showToast?.('현재 초안 미리보기를 불러오지 못했습니다.', 'warning');
+      if (previewUrl) openTab(previewUrl);
+      else showToast?.('미리보기를 열 수 없습니다. 페이지를 먼저 선택해주세요.', 'warning');
       return;
     }
 
-    // The existing editor route stays mounted; no publish or network request is
-    // needed to inspect unsaved changes. The public URL is a separate action.
-    setPreviewCopyIssue({ kind: 'draft', page: draft, publishedUrl: previewUrl });
+    // Older browsers without BroadcastChannel can still open the published
+    // URL, but must not misrepresent it as the unpublished page.
+    if (typeof BroadcastChannel === 'undefined' || !window.crypto?.randomUUID) {
+      if (previewUrl) openTab(previewUrl);
+      showToast?.('이 브라우저에서는 미발행 초안을 새 탭으로 전달할 수 없어 발행본을 열었습니다.', 'warning');
+      return;
+    }
+
+    const token = window.crypto.randomUUID();
+    let channel;
+    try {
+      channel = new BroadcastChannel(draftPreviewChannelName(token));
+    } catch {
+      if (previewUrl) openTab(previewUrl);
+      showToast?.('초안 미리보기 연결을 만들 수 없어 발행본을 열었습니다.', 'warning');
+      return;
+    }
+
+    let expiry;
+    const close = () => {
+      window.clearTimeout(expiry);
+      channel.close();
+      pending.current.delete(close);
+    };
+    channel.onmessage = (event) => {
+      if (event.data?.token !== token) return;
+      if (event.data?.type === 'ready') {
+        try { channel.postMessage({ type: 'draft', token, page: draft }); }
+        catch {
+          showToast?.('미리보기 데이터를 전달하지 못했습니다.', 'error');
+          close();
+        }
+      } else if (event.data?.type === 'received') {
+        close();
+      }
+    };
+    pending.current.add(close);
+    expiry = window.setTimeout(close, 30000);
+    try {
+      openTab(draftPreviewTabUrl(token, window.location.origin));
+    } catch {
+      close();
+      showToast?.('새 탭을 열지 못했습니다. 팝업 차단 설정을 확인해주세요.', 'warning');
+    }
   };
 
   return { openPreview };
