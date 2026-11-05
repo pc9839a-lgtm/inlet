@@ -870,137 +870,60 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
     'reference editor must show a balanced right-stage phone and one shared editing scrollbar: ' + JSON.stringify(geometry));
 
-  // UX-027/030: 390px public-layout parity with a light, low-noise frame
-  // and a single compact toolbar. Check normal/narrow desktop widths without
-  // modifying the page or using a separate fake preview.
+  // 21st patch: preview stage is the page itself. No redundant resolution,
+  // zoom, fullscreen, or floating block-action toolbars above the phone.
   for (const width of [900, 1024, 1440, 1672]) {
     await setViewport(client, width, 941, false);
     const chrome = await evaluate(client, `(() => {
       const preview = document.querySelector('.preview-workspace');
       const stage = preview.querySelector('.preview-sticky');
-      const toolbar = preview.querySelector('.preview-stage-toolbar');
-      const label = preview.querySelector('.preview-width-toolbar');
-      const controls = preview.querySelector('.preview-view-tools');
-      const select = controls.querySelector('select[aria-label="미리보기 배율"]');
-      const full = controls.querySelector('button[aria-label="미리보기 전체 화면"]');
-      const frame = preview.querySelector('.phone-frame');
+      const frame = stage.querySelector('.phone-frame');
       const page = frame.querySelector('.landing-page');
       const box = (el) => el.getBoundingClientRect();
       const css = getComputedStyle(frame);
-      const outer = box(frame), top = box(toolbar), left = box(label), right = box(controls);
-      const buttons = [select, full].map(box);
       return {
-        contentWidth: page.clientWidth, frameWidth: outer.width, frameBorder: css.borderTopWidth,
-        frameRadius: css.borderTopLeftRadius, frameShadow: css.boxShadow,
-        stageBackground: getComputedStyle(preview).backgroundColor,
-        labelBackground: getComputedStyle(label).backgroundColor,
-        labelText: label.textContent.trim(), labelSize: getComputedStyle(label).fontSize,
-        toolbarHeight: top.height, toolbarBottom: top.bottom, frameTop: outer.top,
-        controlsInside: buttons.every(b => b.left >= right.left - 2 && b.right <= right.right + 2),
-        toolbarSeparated: left.right <= right.left + 3,
-        stageCentered: Math.abs((box(stage).left + box(stage).right) / 2 - (outer.left + outer.right) / 2) <= 4,
-        zoomOptions: [...select.options].map(o => Number(o.value)), fullscreenLabel: full.getAttribute('aria-label'),
-        frameInsideStage: outer.left >= box(preview).left - 2 && outer.right <= box(preview).right + 2,
+        contentWidth: page.clientWidth, frameWidth: box(frame).width,
+        frameBorder: css.borderTopWidth, radius: css.borderTopLeftRadius,
+        stageCentered: Math.abs((box(stage).left + box(stage).right) / 2 - (box(frame).left + box(frame).right) / 2) <= 4,
+        frameInside: box(frame).left >= box(preview).left - 2 && box(frame).right <= box(preview).right + 2,
+        children: stage.children.length,
+        hasToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
+        selectedBlocks: frame.querySelectorAll('[data-preview-selected="true"]').length,
       };
     })()`);
     const expectedWidth = width <= 950 ? 392 : 394;
-    const expectedBorder = width <= 950 ? '1px' : '2px';
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
-      && chrome.frameBorder === expectedBorder && parseInt(chrome.frameRadius, 10) <= 20
-      && chrome.labelBackground === 'rgba(0, 0, 0, 0)'
-      && chrome.labelSize === '12px' && chrome.labelText.includes('390px')
-      && chrome.toolbarHeight <= 38 && chrome.controlsInside && chrome.toolbarSeparated
-      && chrome.stageCentered && chrome.frameInsideStage
-      && chrome.zoomOptions.join(',') === '75,100,125'
-      && chrome.fullscreenLabel === '미리보기 전체 화면',
-      'preview frame and compact toolbar must retain accurate dimensions at ' + width + ': ' + JSON.stringify(chrome));
-    if (width === 900 || width === 1440) await capture(client, 'light-preview-frame-' + width);
+      && parseInt(chrome.radius, 10) <= 20 && chrome.stageCentered && chrome.frameInside
+      && chrome.children === 1 && !chrome.hasToolbar,
+      'mobile editor preview must contain only the 390px phone without auxiliary bars at ' + width + ': ' + JSON.stringify(chrome));
+    if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
   }
   await setViewport(client, 1672, 941, false);
 
-  // Zoom changes only the viewing scale; the page's layout width stays 390px.
-  await evaluate(client, `(() => { const el = document.querySelector('select[aria-label="미리보기 배율"]'); el.value='75'; el.dispatchEvent(new Event('change',{bubbles:true})); })()`);
-  await waitForBrowser(client, `document.querySelector('.phone-frame').getBoundingClientRect().width < 310 && document.querySelector('.phone-frame .landing-page').clientWidth === 390`, 'preview zoom scales the view without changing page layout');
-  await evaluate(client, `(() => { const el = document.querySelector('select[aria-label="미리보기 배율"]'); el.value='100'; el.dispatchEvent(new Event('change',{bubbles:true})); })()`);
-  await waitForBrowser(client, `document.querySelector('.phone-frame').getBoundingClientRect().width >= 392`, 'preview zoom reset');
-
-  // UX-025/026/029: an editor action dock belongs to the stage ABOVE the
-  // phone. It must not cover any headline, form input, submit or fixed CTA at
-  // 75/100/125% regardless of which block is selected.
-  for (const scale of [75, 100, 125]) {
-    await evaluate(client, `(() => {
-      const select = document.querySelector('select[aria-label="미리보기 배율"]');
-      select.value = '${scale}';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    })()`);
+  // Selection continues to use the same block ID in the left list and the
+  // phone, but edits/visibility/reordering remain in the existing inspector.
+  for (const [blockId, selector] of [
+    ['editor-hero', '#editor-block-editor-hero .screen-order-v2-head'],
+    ['editor-form', '#editor-block-editor-form .screen-order-v2-head'],
+    ['editor-bottom', '#editor-block-editor-bottom .fixed-block-head'],
+  ]) {
+    await clickPointer(client, selector);
     await waitForBrowser(client,
-      `Math.abs(document.querySelector('.phone-frame').getBoundingClientRect().width - 394 * ${scale}/100) <= 3
-        && document.querySelector('.phone-frame .landing-page').clientWidth === 390`,
-      'preview keeps logical 390px canvas at ' + scale + '%');
-    for (const [blockId, selector] of [
-      ['editor-hero', '#editor-block-editor-hero .screen-order-v2-head'],
-      ['editor-form', '#editor-block-editor-form .screen-order-v2-head'],
-      ['editor-bottom', '#editor-block-editor-bottom .fixed-block-head'],
-    ]) {
-      await clickPointer(client, selector);
-      await waitForBrowser(client, `document.querySelector('.preview-selection-toolbar')?.dataset.selectedBlockId === '${blockId}'`,
-        'stage dock follows selected block ' + blockId);
-      const separation = await evaluate(client, `(() => {
-        const dock = document.querySelector('.preview-selection-toolbar');
-        const stage = document.querySelector('.preview-sticky');
-        const phone = document.querySelector('.phone-frame');
-        const landing = phone?.querySelector('.landing-page');
-        const rect = e => e?.getBoundingClientRect();
-        const area = rect(dock), frame = rect(phone), parent = rect(stage);
-        const controls = [...dock.querySelectorAll('button')];
-        const text = dock.querySelector('.preview-selection-identity strong');
-        const overlapping = controls.some(el => {
-          const b = rect(el);
-          return b.right > area.right + .75 || b.left < area.left - .75 || b.top < area.top - .75 || b.bottom > area.bottom + .75;
-        });
-        return {
-          position: getComputedStyle(dock).position,
-          dockBottom: area.bottom, phoneTop: frame.top,
-          dockLeft: area.left, dockRight: area.right, stageLeft: parent.left, stageRight: parent.right,
-          phoneWidth: frame.width, logicalWidth: landing.clientWidth,
-          visibleTitle: !!text && rect(text).width >= 22,
-          controls: controls.length, hasOverflow: dock.scrollWidth > dock.clientWidth + 1,
-          overlapping, hidden: dock.dataset.previewHidden,
-          selection: dock.dataset.selectedBlockId,
-          canvasSelection: document.querySelector('.screen-order-v2-item[data-selected="true"],.fixed-composition-row[data-selected="true"]')?.id || '',
-        };
-      })()`);
-      assert(separation.position !== 'absolute' && separation.dockBottom + 1 <= separation.phoneTop
-        && separation.dockLeft >= separation.stageLeft - 2 && separation.dockRight <= separation.stageRight + 2
-        && separation.logicalWidth === 390 && separation.visibleTitle
-        && separation.controls >= 1 && !separation.hasOverflow && !separation.overlapping
-        && separation.hidden === 'false' && separation.selection === blockId
-        && separation.canvasSelection === 'editor-block-' + blockId,
-        'selected stage dock cannot obscure the phone at ' + scale + '% ' + blockId + ': ' + JSON.stringify(separation));
-      if ((scale === 75 && blockId === 'editor-hero') || (scale === 100 && blockId === 'editor-form') || (scale === 125 && blockId === 'editor-bottom')) {
-        await capture(client, 'stage-selection-' + scale + '-' + blockId);
-      }
-    }
+      `!!document.querySelector('#editor-block-${blockId}[data-selected="true"]')`,
+      'left navigation retains the selected block ID: ' + blockId);
+    const stage = await evaluate(client, `(() => {
+      const phone = document.querySelector('.preview-workspace .phone-frame');
+      const picked = phone.querySelector('[data-preview-selected="true"]');
+      return { width: phone.querySelector('.landing-page')?.clientWidth,
+        picked: picked?.id || '', noDock: !document.querySelector('.preview-selection-toolbar') };
+    })()`);
+    assert(stage.width === 390 && stage.noDock,
+      'selected block must not create an action row above the 390px page: ' + JSON.stringify(stage));
   }
-  await clickPointer(client, '.preview-selection-toolbar button[aria-label="블록 숨기기"]');
-  await waitForBrowser(client,
-    `document.querySelector('.preview-selection-toolbar')?.dataset.previewHidden === 'true'
-       && !!document.querySelector('.preview-selection-toolbar button[aria-label="블록 표시"]')`,
-    'hidden fixed CTA still has a visible restore action outside the phone');
-  await capture(client, 'stage-selection-hidden-fixed-cta');
-  await clickPointer(client, '.preview-selection-toolbar button[aria-label="블록 표시"]');
-  await waitForBrowser(client,
-    `document.querySelector('.preview-selection-toolbar')?.dataset.previewHidden === 'false'
-       && !!document.querySelector('.preview-selection-toolbar button[aria-label="블록 숨기기"]')`,
-    'fixed CTA restored without editor page reload');
-  assert(apiState.saveCount === 0, 'selection, zoom and show/hide QA must never publish a page');
-  await evaluate(client, `(() => {
-    const select = document.querySelector('select[aria-label="미리보기 배율"]');
-    select.value = '100'; select.dispatchEvent(new Event('change', { bubbles: true }));
-  })()`);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
-  await waitForBrowser(client, `document.querySelector('.preview-selection-toolbar')?.dataset.selectedBlockId === 'editor-text'`,
-    'return to reference selected text before remaining editor regression');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
+    'return to selected text without stage actions');
+  assert(apiState.saveCount === 0, 'preview selections never publish or mutate the saved page');
 
   const menu = '.workspace-editor-nav > summary';
   await focusSelector(client, menu);
@@ -1017,11 +940,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await evaluate(client, `document.querySelector('.work-panel').scrollTop = 0`);
   await waitForBrowser(client, `document.querySelector('.work-panel').scrollTop === 0`, 'shared editor scroll remains available without a second group navigator');
 
-  await waitForBrowser(client, `getComputedStyle(document.querySelector('.preview-selection-toolbar')).visibility === 'visible'`, 'selected preview action bar');
-  await clickPointer(client, '.preview-selection-toolbar button[aria-label="블록 위로 이동"]');
-  await waitForBrowser(client, `document.querySelector('.screen-order-v2-list .screen-order-v2-item')?.id === 'editor-block-editor-text'`, 'preview action moves the actual block up');
-  await clickPointer(client, '.preview-selection-toolbar button[aria-label="블록 아래로 이동"]');
-  await waitForBrowser(client, `document.querySelector('.screen-order-v2-list .screen-order-v2-item')?.id === 'editor-block-editor-hero'`, 'preview action restores the actual block order');
+  assert(await evaluate(client, `!document.querySelector('.preview-selection-toolbar,.preview-stage-toolbar')`),
+    'removed preview chrome must stay absent after editing and selection');
 
   await setInputValue(client, title, before[0]);
   await focusSelector(client, 'input[aria-label="제목 크기 (px)"]');
