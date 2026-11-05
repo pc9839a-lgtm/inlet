@@ -2425,28 +2425,49 @@ async function run() {
     await openBlockSettings(client, 'editor-hero');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-list')`, 'screen order after style apply');
 
-    // E2E-13: the header shows the latest draft without opening the live
-    // published slug, and the editor remains editable after closing it.
-    await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => { window.__pageroQaPreviewCalls.push(args); return null; };`);
+    // E2E-13: Preview opens a browser tab, not a modal, and transfers the
+    // current unpublished snapshot without public writes or storing page data.
+    await evaluate(client, `window.__pageroQaPreviewCalls = []; window.open = (...args) => {
+      window.__pageroQaPreviewCalls.push(args); return null;
+    };`);
     await clickButtonByText(client, '.panel-actions', '미리보기');
-    await waitForBrowser(client, `!!document.querySelector('.editor-draft-preview-dialog')`, 'unsaved draft preview dialog');
-    const draftPreviewState = await evaluate(client, `(() => ({
-      visible: !!document.querySelector('.editor-draft-preview-phone .landing-page'),
-      publishedLink: document.querySelector('.editor-draft-preview-actions a')?.getAttribute('rel') || '',
-      openedCount: window.__pageroQaPreviewCalls?.length || 0,
-    }))()`);
-    assert(draftPreviewState.visible && draftPreviewState.publishedLink.includes('noopener') && draftPreviewState.openedCount === 0, 'draft must be shown without opening the live URL');
-    const f05HeaderPreviewOrder = await evaluate(client, `[...document.querySelectorAll(
-      '.editor-draft-preview-phone .landing-content > [id^="block-"]'
-    )].map((el) => el.id.replace(/^block-/, '')).filter((id) => ${JSON.stringify(f05Order.visibleIds)}.includes(id))`);
+    await waitForBrowser(client, `window.__pageroQaPreviewCalls?.length === 1`,
+      'header preview opens a new tab exactly once');
+    const tabRequest = await evaluate(client, `(() => {
+      const call = window.__pageroQaPreviewCalls[0];
+      const url = new URL(call[0]);
+      const token = url.searchParams.get('__pagero_preview');
+      if (!token) return null;
+      window.__pageroQaPreviewSnapshot = null;
+      const receiver = new BroadcastChannel('pagero-editor-draft-preview:' + token);
+      receiver.onmessage = (event) => {
+        if (event.data?.type !== 'draft' || event.data?.token !== token) return;
+        window.__pageroQaPreviewSnapshot = event.data.page;
+        receiver.postMessage({ type: 'received', token });
+        receiver.close();
+      };
+      receiver.postMessage({ type: 'ready', token });
+      return { path:url.pathname, origin:url.origin,
+        target:call[1], features:call[2], tokenLength:token.length,
+        hasModal:!!document.querySelector('.editor-draft-preview-dialog,.editor-draft-preview-backdrop') };
+    })()`);
+    assert(tabRequest && tabRequest.path === '/' && tabRequest.target === '_blank'
+      && tabRequest.features.includes('noopener') && tabRequest.features.includes('noreferrer')
+      && tabRequest.tokenLength === 36 && !tabRequest.hasModal,
+      'preview must open a standalone same-origin tab without a draft modal: '+JSON.stringify(tabRequest));
+    await waitForBrowser(client, `!!window.__pageroQaPreviewSnapshot?.blocks`,
+      'new tab receives the in-memory unpublished preview through its token channel');
+    const f05HeaderPreviewOrder = await evaluate(client, `window.__pageroQaPreviewSnapshot.blocks
+      .filter(block => block.visible !== false && !['topnav','bottombar','footer'].includes(block.type))
+      .map(block => block.id)`);
     assert(JSON.stringify(f05HeaderPreviewOrder) === JSON.stringify(f05Order.visibleIds),
-      'F05 header draft renderer must retain HERO below form and match editor order: '
-        + JSON.stringify(f05HeaderPreviewOrder));
-
-    await clickButtonByText(client, '.editor-draft-preview-actions', '닫기');
-    assert((await evaluate(client, 'location.pathname')) === '/app', 'preview action must keep the editor page active');
+      'new-tab snapshot must retain current draft block order: '+ JSON.stringify(f05HeaderPreviewOrder));
+    assert((await evaluate(client, 'location.pathname')) === '/app'
+      && !(await evaluate(client, '!!document.querySelector(".editor-draft-preview-dialog")')),
+      'new-tab preview must leave the editor mounted with no modal overlay');
     await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
-    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'hero editor after preview');
+    await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`,
+      'hero editor after new-tab preview');
     await setInputValue(client, heroEditorSelector, updatedHeroTitle);
 
     // E2E-14: delay the first publish response, edit again while it is in-flight, and ensure late response does not erase the newer local draft.
