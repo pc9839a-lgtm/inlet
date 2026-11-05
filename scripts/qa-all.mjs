@@ -88,6 +88,7 @@ const steps = [
   ['editor:selected-insertion-image-focus:qa', ['scripts/editor-selected-insertion-image-focus-quality-check.mjs']],
   ['editor:preview-media-cta-actions:qa', ['scripts/editor-preview-media-cta-actions-quality-check.mjs']],
   ['editor:gallery-link-longpage:qa', ['scripts/editor-gallery-link-longpage-quality-check.mjs']],
+  ['editor:reference-independent-scroll:qa', ['scripts/editor-reference-independent-scroll-quality-check.mjs']],
   ['browser:landing:contract:qa', ['scripts/landing-browser-regression-contract-check.mjs']],
   ['browser:editor:contract:qa', ['scripts/editor-browser-regression-contract-check.mjs']],
   ['browser:forms:contract:qa', ['scripts/form-reservation-browser-regression-contract-check.mjs']],

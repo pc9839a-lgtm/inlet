@@ -34,29 +34,61 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout {
   --editor-ui-disabled-bg: #f2f4f7;
   --editor-ui-disabled-text: #667085;
   grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;
-  grid-template-rows: auto;
+  grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
   gap: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
-  min-height: 100%;
-  height: auto !important;
+  min-height: 0;
+  height: 100% !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel,
 html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
   min-width: 0;
   min-height: 0;
-  height: auto;
-  max-height: none;
-  /* One shared scroll in .work-panel; nested scrollbars caused duplicate UI. */
-  overflow: visible !important;
+  height: 100%;
+  max-height: 100%;
   background: #fff;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel { padding: 0 10px 24px; }
+/* Two independent editors: pinned composition controls, scrollable rows;
+   scrollable Inspector properties. Neither scrolls the outer shell. */
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px;
+  overflow: hidden !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain;
+  scroll-padding-top: 12px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-content:focus-visible {
+  outline: 2px solid var(--editor-ui-accent);
+  outline-offset: -2px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-footer {
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  flex: 0 0 auto;
+  padding: 8px 4px;
+  border-top: 1px solid #eef0f6;
+  background: #fff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain;
+  scroll-padding-top: 12px;
+}
 html body #root .builder-shell.canvas-editor-shell .editor-composition-heading {
   position: sticky; top: 0; z-index: 8;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  min-height: 76px; padding: 16px 10px; border-bottom: 1px solid #eef0f6; background: #fff;
+  min-height: 76px; flex: 0 0 auto; padding: 16px 10px; border-bottom: 1px solid #eef0f6; background: #fff;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 { flex: 1; white-space: nowrap !important; margin: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size); font-weight: var(--editor-ui-strong); }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-content { padding: 4px 0 12px; }
@@ -109,7 +141,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-fixed-group-toggle[ar
 html body #root .builder-shell.canvas-editor-shell .editor-fixed-group-content[hidden] {
   display: none;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-heading > .editor-page-settings-button {
+html body #root .builder-shell.canvas-editor-shell .editor-composition-footer > .editor-page-settings-button {
   display: inline-flex !important;
   flex: 0 0 auto;
   align-items: center;
@@ -129,12 +161,12 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-heading >
   white-space: nowrap;
   cursor: pointer;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-heading > .editor-page-settings-button:is(:hover,[aria-pressed='true']) {
+html body #root .builder-shell.canvas-editor-shell .editor-composition-footer > .editor-page-settings-button:is(:hover,[aria-pressed='true']) {
   border-color: #aebfff;
   background: #e9efff;
   color: #2454ff;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-heading > .editor-page-settings-button:focus-visible {
+html body #root .builder-shell.canvas-editor-shell .editor-composition-footer > .editor-page-settings-button:focus-visible {
   outline: 2px solid #2454ff;
   outline-offset: 2px;
 }
@@ -148,6 +180,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-search {
   gap: var(--editor-ui-space-1);
   min-width: 0;
   min-height: 42px;
+  flex: 0 0 auto;
   padding: 5px 8px;
   border-bottom: 1px solid #eef0f6;
   color: #667085;
@@ -194,9 +227,8 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-search > 
   color: var(--editor-ui-accent);
 }
 html body #root .builder-shell.canvas-editor-shell .editor-search-count { flex: 0 0 auto; font-size: var(--editor-ui-helper-size); font-variant-numeric: tabular-nums; color: var(--editor-ui-muted); }
-html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel { padding: 0 16px 32px; border-left: 1px solid #e7eaf2; container: editor-inspector / inline-size; scroll-padding-top: 140px; }
-/* Keep the selected inspector as tall as the list without creating a second scrollbar.
-   Its sticky header remains reachable even after scrolling deep into 30+ blocks. */
+html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel { padding: 0 16px 32px; border-left: 1px solid #e7eaf2; container: editor-inspector / inline-size; scroll-padding-top: 12px; }
+/* Selected Inspector keeps its own scroll and sticky properties header. */
 html body #root .canvas-editor-shell .editor-inspector-panel {
   display: flex;
   flex-direction: column;
@@ -285,7 +317,13 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel { wi
   html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel { padding-inline: 8px; }
   html body #root .builder-shell.canvas-editor-shell .editor-composition-panel { padding-inline: 8px; }
 }
-@media (max-width: 899px) { html body #root .canvas-editor-shell .edit-layout { height: auto; min-height: 640px; } html body #root .canvas-editor-shell .editor-composition-panel, html body #root .canvas-editor-shell .editor-inspector-panel { height: auto; max-height: none; overflow: visible !important; } html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: static; } }
+@media (max-width: 899px) {
+  html body #root .canvas-editor-shell .edit-layout { height: auto !important; min-height: 640px; }
+  html body #root .canvas-editor-shell .editor-composition-panel,
+  html body #root .canvas-editor-shell .editor-inspector-panel { height: auto; max-height: none; overflow: visible !important; }
+  html body #root .canvas-editor-shell .editor-composition-content { overflow: visible !important; }
+  html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: static; }
+}
 
 
 /* Inspector owns a single native disclosure hierarchy instead of redundant

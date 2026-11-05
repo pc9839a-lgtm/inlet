@@ -2,10 +2,10 @@
 html body #root .builder-shell.canvas-editor-shell {
   /* Reference: enough space for navigator AND editable properties.
      Keep the 390px phone fully visible on narrow desktops. */
-  --editor-list-width: clamp(220px, 16vw, 240px);
-  /* At 900px reserve exactly 400px for the 392px phone and 4px gutters;
-     keep the full editor capped at 700px on wide monitors. */
-  --editor-edit-width: clamp(500px, calc(100vw - 410px), 700px);
+  --editor-list-width: clamp(220px, 16.5vw, 276px);
+  /* 1672px reference: 276px navigator + 394px settings.
+     Reserve >=400px for a 390px content phone at 900px. */
+  --editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 394px)), 670px);
   --editor-settings-width: calc(var(--editor-edit-width) - var(--editor-list-width));
   display: grid;
   grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;
@@ -16,7 +16,7 @@ html body #root .builder-shell.canvas-editor-shell {
   overflow: clip !important;
 }
 html body #root .canvas-editor-shell > .left-workspace { display: contents !important; }
-html body #root .canvas-editor-shell #workspace-panel-edit { height: auto; min-height: 100%; padding: 0; margin: 0; overflow: visible; }
+html body #root .canvas-editor-shell #workspace-panel-edit { height: 100%; min-height: 0; padding: 0; margin: 0; overflow: hidden; }
 html body #root .canvas-editor-shell .work-panel {
   grid-column: 1;
   grid-row: 2;
@@ -26,9 +26,8 @@ html body #root .canvas-editor-shell .work-panel {
   height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-  /* Only this outer editing workspace owns a vertical scrollbar. */
-  overflow: hidden auto !important;
-  overscroll-behavior-y: contain;
+  /* The navigator and Inspector own independent scroll; the shell stays put. */
+  overflow: hidden !important;
   border-right: 1px solid #e7eaf2;
   background: #fff;
 }

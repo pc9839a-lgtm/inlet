@@ -14,13 +14,13 @@ export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selec
     getBlockLabel: (block) => META[block.s?.widgetMode === 'youtube' ? 'youtube' : block.type]?.label || block.type,
   }), [blocks, fixedDescriptors, query]);
 
-  // Locate a search result or the selected block without adding another
-  // scrollbar or changing the user's stored block list.
+  // Locate a row inside the existing independent block-list scroller, without
+  // resetting the selected Inspector or changing saved page order.
   const revealRow = (id, focus = false) => {
     // Fixed rows may be hidden while their group expands after selection.
     // Retry a few animation frames without changing the selected page data.
     const locate = (remaining) => requestAnimationFrame(() => {
-      const scroller = document.querySelector('.canvas-editor-shell .work-panel');
+      const scroller = document.querySelector('.canvas-editor-shell .editor-composition-content');
       const target = document.getElementById(`editor-block-${id}`);
       if (!scroller || !target || !scroller.contains(target)) return;
       if (!target.getClientRects().length) {
@@ -29,8 +29,8 @@ export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selec
       }
       const view = scroller.getBoundingClientRect();
       const row = target.getBoundingClientRect();
-      // Leave room for the sticky heading and search bar.
-      const top = scroller.scrollTop + row.top - view.top - 136;
+      // Heading and search live outside the scrolling list itself.
+      const top = scroller.scrollTop + row.top - view.top - 12;
       scroller.scrollTo({ top: Math.max(0, top), behavior: focus ? 'instant' : 'smooth' });
       if (focus) target.querySelector('.screen-order-v2-title-wrap')?.focus({ preventScroll: true });
     });
