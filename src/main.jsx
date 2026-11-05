@@ -178,7 +178,23 @@ async function renderWorkspaceApp() {
   root.render(<AppErrorBoundary><App /></AppErrorBoundary>);
 }
 
-if (window.location.pathname.startsWith('/embed/')) {
+// Temporary same-origin draft preview: render only the page, not the editor
+// or authentication UI. The token never contains page data.
+async function renderDraftPreviewTab() {
+  try {
+    await import('./app-styles.css');
+    const { default: DraftPreviewTab } = await import('./preview/DraftPreviewTab.jsx');
+    const token = new URLSearchParams(window.location.search).get('__pagero_preview');
+    root.render(<AppErrorBoundary><DraftPreviewTab token={token} /></AppErrorBoundary>);
+  } catch (error) {
+    if (recoverRuntimeAssetFailure(error)) return;
+    throw error;
+  }
+}
+
+if (new URLSearchParams(window.location.search).has('__pagero_preview')) {
+  void renderDraftPreviewTab();
+} else if (window.location.pathname.startsWith('/embed/')) {
   root.render(<AppErrorBoundary><MapEmbedApp /></AppErrorBoundary>);
 } else {
   void renderWorkspaceApp();

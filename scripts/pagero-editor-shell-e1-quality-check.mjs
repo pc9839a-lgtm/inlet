@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { createInspectorBlockNavigation } from '../src/editor/editPanelParts/inspectorBlockNavigationModel.js';
 import { createScreenOrderIdentities } from '../src/editor/editPanelParts/screenOrderIdentityModel.js';
 import { findBlockNavigationMatches } from '../src/editor/editPanelParts/blockNavigatorSearchModel.js';
+import { validDraftPreviewToken, draftPreviewTabUrl, draftPreviewChannelName } from '../src/runtime/draftPreviewTabTransport.js';
 import { themeAlignmentMode, isTextColorOverride, describeTextColorSource, describeBottomButtonColorSource, countTextColorSources } from '../src/editor/ui/themeInheritanceModel.js';
 
 function assert(condition, message) {
@@ -193,8 +194,11 @@ const workspaceScreen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 
 const operationsWorkspaceCss = await readFile('src/screens/workspace/OperationsWorkspace.css', 'utf8');
 const addDockCss = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const previewPaneCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
-const previewSelectionToolbar = await readFile('src/screens/workspace/PreviewSelectionToolbar.jsx', 'utf8');
 const previewSelectionPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
+const newPreviewHook = await readFile('src/runtime/usePreviewWindow.js', 'utf8');
+const previewNewTab = await readFile('src/preview/DraftPreviewTab.jsx', 'utf8');
+const rootEntrypoint = await readFile('src/main.jsx', 'utf8');
+const appRoot = await readFile('src/App.jsx', 'utf8');
 
 assert(!navigation.includes("['style', '스타일'"), 'editor navigation must not expose a duplicate style workspace tab');
 assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 'legacy style routes must still normalize into edit');
@@ -391,31 +395,47 @@ assert(previewPaneCss.includes('border: 2px solid #cbd5e1')
   && previewPaneCss.includes('border-radius: 20px')
   && previewPaneCss.includes('box-shadow: 0 5px 18px #17203912')
   && previewPaneCss.includes('background: #f8f9fc')
-  && previewPaneCss.includes('.preview-width-toolbar')
-  && previewPaneCss.includes('background: transparent; color: #667085; font-size: 12px')
+  && !previewPaneCss.includes('.preview-width-toolbar')
+  && !previewPaneCss.includes('.preview-selection-toolbar')
   && !previewPaneCss.includes('border: 6px solid #242934')
   && !previewPaneCss.includes('border-radius: 46px'),
-  'preview must retain 390px content with a slim shell and neutral non-promotional toolbar');
+  'preview must retain 390px content without redundant editor controls');
 assert(previewPaneCss.includes('WorkspacePreviewPane — owns editor preview presentation') && previewPaneCss.includes('.preview-workspace') && previewPaneCss.includes('.preview-sticky') && previewPaneCss.includes('.phone-frame') && previewPaneCss.includes('scroll-margin-block: 120px') && !css.includes('.preview-workspace') && !css.includes('.preview-sticky') && !css.includes('.phone-frame'), 'WorkspacePreviewPane.css must own preview presentation while editor-workspace.css stays geometry-only');
 assert(pageOptionsCss.includes('body .builder-shell .page-global-options-card') && pageOptionsCss.includes('padding: 0;') && pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('background: transparent;') && !css.includes('page-global-options'), 'page options base contract must live in PageGlobalOptions.css and stay out of editor-workspace.css');
 assert(!workspaceCss.includes('body .builder-shell .panel-header {') && !workspaceCss.includes('body .builder-shell .top-tabs {'), 'workspace shell must not own PanelHeader or top-tabs presentation');
 assert(workspaceScreen.includes("import './workspace/OperationsWorkspace.css';") && operationsWorkspaceCss.includes('.inbox-workspace-shell') && operationsWorkspaceCss.includes('.stats-dashboard-shell') && operationsWorkspaceCss.includes('.settings-workspace-shell') && !workspaceCss.includes('.inbox-workspace-shell'), 'desktop operations geometry must be isolated from the common workspace shell');
 
-assert(previewSelectionToolbar.includes('createScreenOrderMovement')
-  && previewSelectionToolbar.includes('canDuplicateScreenOrderBlock')
-  && previewSelectionToolbar.includes('data-preview-hidden={hidden')
-  && previewSelectionToolbar.includes("aria-label={hidden ? '블록 표시' : '블록 숨기기'}")
-  && previewSelectionToolbar.includes('preview-selection-actions')
-  && !previewSelectionToolbar.includes('getBoundingClientRect')
-  && !previewSelectionToolbar.includes('frameRef')
-  && !previewSelectionToolbar.includes('ResizeObserver')
-  && previewSelectionPane.indexOf('<PreviewSelectionToolbar') < previewSelectionPane.indexOf('<div className="phone-frame"')
-  && previewPaneCss.includes('.preview-selection-toolbar {\n  position: relative;')
-  && !previewPaneCss.includes('.preview-selection-toolbar { position: absolute')
-  && previewPaneCss.includes('.preview-selection-actions > button:focus-visible')
+// 21st patch: preview opens a new standalone tab with current draft in
+// memory, not a second phone toolbar or a portal-based overlay.
+const previewToken = '123e4567-e89b-42d3-a456-426614174000';
+assert(validDraftPreviewToken(previewToken)
+  && !validDraftPreviewToken('not-a-token')
+  && !validDraftPreviewToken('../app')
+  && draftPreviewTabUrl(previewToken, 'https://pagero.kr').includes('/?__pagero_preview=' + previewToken)
+  && draftPreviewChannelName(previewToken) === 'pagero-editor-draft-preview:' + previewToken,
+  'new tab requires a random opaque preview token with no HTML or page content in the URL');
+assert(newPreviewHook.includes("window.open(url, '_blank', 'noopener,noreferrer')")
+  && newPreviewHook.includes("type: 'draft', token, page: draft")
+  && newPreviewHook.includes("type === 'ready'")
+  && !newPreviewHook.includes('setPreviewCopyIssue')
+  && !newPreviewHook.includes('localStorage.setItem')
+  && !newPreviewHook.includes('sessionStorage.setItem')
+  && previewNewTab.includes('<PreviewRenderer page={state.page} leads={[]} editorPreview />')
+  && previewNewTab.includes("type: 'ready', token")
+  && previewNewTab.includes("type: 'received', token")
+  && rootEntrypoint.includes('renderDraftPreviewTab()')
+  && !appRoot.includes('PreviewCopyModal')
+  && !appRoot.includes('previewCopyIssue'),
+  'header draft preview must open a real tab and transport its snapshot only via ephemeral channel');
+assert(!previewSelectionPane.includes('<PreviewSelectionToolbar')
+  && !previewSelectionPane.includes('preview-stage-toolbar')
+  && !previewSelectionPane.includes('미리보기 배율')
+  && !previewSelectionPane.includes('requestFullscreen')
+  && previewSelectionPane.includes('selectedBlockId={selectedBlockId}')
+  && previewSelectionPane.includes('onSelectBlock={onSelectPreviewBlock}')
   && previewPaneCss.includes('.preview-selected-block { outline: 2px solid #2454ff')
   && previewPaneCss.includes('.landing-section:hover:not(.preview-selected-block)'),
-  'preview selection actions must occupy a safe outside-phone stage row with hidden CTA recovery and distinct hover/selection/focus');
+  'editor phone must keep selection linkage but expose no duplicate stage chrome or action dock');
 console.log(JSON.stringify({
   ok: true,
   checks: 23,

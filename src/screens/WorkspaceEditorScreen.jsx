@@ -88,7 +88,6 @@ export default function WorkspaceEditorScreen({
         track={track}
         selectedBlockId={selectedBlockId}
         onSelectPreviewBlock={onSelectPreviewBlock}
-        blockActions={editPanelProps}
       />}
     </div>
   );

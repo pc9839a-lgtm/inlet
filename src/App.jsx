@@ -7,7 +7,7 @@ import {
   Upload,
 } from 'lucide-react';
 import PanelHeader from './builder/PanelHeader.jsx';
-import { ConfirmModal, PageConflictModal, PreviewCopyModal, ToastNotice } from './builder/BuilderFeedback.jsx';
+import { ConfirmModal, PageConflictModal, ToastNotice } from './builder/BuilderFeedback.jsx';
 import { createBlockWriteGuard } from './runtime/createBlockWriteGuard.js';
 import { createDuplicatePageAction } from './runtime/createDuplicatePageAction.js';
 import { isLeadConflictError } from './builder/conflictUtils.js';
@@ -507,7 +507,6 @@ function App() {
     detail: '편집 내용이 바뀌면 브라우저에 자동 저장됩니다.',
   });
   const [pageConflict, setPageConflict] = useState(null);
-  const [previewCopyIssue, setPreviewCopyIssue] = useState(null);
   const saveErrorNoticeRef = useRef('');
   const sessionRefreshRef = useRef('');
   const accountPageLoadRef = useRef('');
@@ -1058,11 +1057,7 @@ function App() {
     workspaceOpen,
     showToast,
   });
-  const { openPreview } = usePreviewWindow({
-    previewUrl,
-    setPreviewCopyIssue,
-    showToast,
-  });
+  const { openPreview } = usePreviewWindow({ previewUrl, showToast });
   const { checkCreatePageUrl } = useCreatePageUrlCheck({
     page,
     authUser,
@@ -1453,13 +1448,6 @@ function App() {
         <ConfirmModal
           dialog={confirmDialog}
           onClose={() => setConfirmDialog(null)}
-        />
-      )}
-      {previewCopyIssue && (
-        <PreviewCopyModal
-          issue={previewCopyIssue}
-          onClose={() => setPreviewCopyIssue(null)}
-          onRetry={openPreview}
         />
       )}
       {toast && <ToastNotice toast={toast} onClose={() => setToast(null)} />}
