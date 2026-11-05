@@ -51,6 +51,7 @@ export function createEditPanelSectionProps({
       addOpen,
       setAddOpen,
       openId,
+      normalBlocks: selection.normalBlocks,
       addBlock,
       addSectionPattern,
     }),
