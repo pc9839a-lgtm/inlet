@@ -8,10 +8,13 @@ function isGalleryControlTarget(target) {
 
 export function RenderImage({ block, editorPreview = false, selected = false, onReplaceImage }) {
   const s = block.s || {};
-  const gallery = (Array.isArray(s.gallery) ? s.gallery : []).filter(Boolean).slice(0, 4);
+  // Retain raw slot indices: a blank middle slot must not redirect uploads.
+  const galleryItems = (Array.isArray(s.gallery) ? s.gallery : [])
+    .map((src, index) => ({ src, index })).filter((item) => !!item.src).slice(0, 4);
+  const gallery = galleryItems.map((item) => item.src);
   const isGridGallery = s.mode === 'gallery' && s.galleryLayout === 'grid';
   const gridCount = Number(s.galleryGridCount) === 2 ? 2 : 4;
-  const visibleGallery = isGridGallery ? gallery.slice(0, gridCount) : gallery;
+  const visibleGallery = isGridGallery ? galleryItems.slice(0, gridCount) : galleryItems;
   const [idx, setIdx] = useState(0);
   const [failedSrc, setFailedSrc] = useState('');
   const swipeRef = useRef(null);
@@ -80,15 +83,20 @@ export function RenderImage({ block, editorPreview = false, selected = false, on
     <section id={`block-${block.id}`} className="landing-section image-sec" style={blockStyle}>
       {isGridGallery && visibleGallery.length ? (
         <div className={`image-gallery-grid image-gallery-grid-${visibleGallery.length} ${s.rounded ? 'rounded' : ''}`}>
-          {visibleGallery.map((gallerySrc, index) => (
-            <div className="image-gallery-grid-item" key={`${gallerySrc}-${index}`}>
-              <img src={gallerySrc} alt="" draggable="false" title={editorPreview ? '클릭하면 사진 변경 설정으로 이동' : undefined} />
+          {visibleGallery.map((galleryItem) => (
+            <div className="image-gallery-grid-item" key={`${galleryItem.src}-${galleryItem.index}`} data-preview-gallery-index={editorPreview ? galleryItem.index : undefined}>
+              <img src={galleryItem.src} alt="" draggable="false" title={editorPreview ? '클릭하면 사진 변경 설정으로 이동' : undefined} />
+              {editorPreview && selected && typeof onReplaceImage === 'function' && (
+                <button type="button" className="editor-preview-image-replace" aria-label={`이미지 ${galleryItem.index + 1} 바꾸기`}
+                  onClick={(event) => { event.stopPropagation(); onReplaceImage(block.id, galleryItem.index); }}>사진 바꾸기</button>
+              )}
             </div>
           ))}
         </div>
       ) : src ? (
         <div
           data-crop-block={block.id}
+          data-preview-gallery-index={editorPreview && s.mode === 'gallery' ? galleryItems[idx]?.index : undefined}
           className={`image-wrap image-${display} ${s.mode === 'gallery' && gallery.length > 1 ? 'is-swipeable' : ''} ${s.rounded ? 'rounded' : ''}`}
           style={style}
           onPointerDown={onSwipeStart}
@@ -105,6 +113,10 @@ export function RenderImage({ block, editorPreview = false, selected = false, on
               if (src && src !== fallbackSrc) setFailedSrc(src);
             }}
           />
+          {editorPreview && selected && s.mode === 'gallery' && galleryItems[idx] && typeof onReplaceImage === 'function' && (
+            <button type="button" className="editor-preview-image-replace" aria-label={`이미지 ${galleryItems[idx].index + 1} 바꾸기`}
+              onClick={(event) => { event.stopPropagation(); onReplaceImage(block.id, galleryItems[idx].index); }}>사진 바꾸기</button>
+          )}
           {s.mode === 'gallery' && gallery.length > 1 && (
             <>
               {(s.galleryShowArrows ?? true) && (
