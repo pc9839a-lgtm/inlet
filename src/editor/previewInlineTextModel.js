@@ -45,7 +45,7 @@ export function encodeInlineTextMarkup(text) {
 export function patchInlineTextBlock(page, { blockId, field, previousHtml, nextHtml } = {}) {
   if (!page || !Array.isArray(page.blocks) || !EDITABLE_FIELDS.has(field)
     || typeof nextHtml !== 'string' || !canInlineEditTextMarkup(previousHtml)
-    || !canInlineEditTextMarkup(nextHtml)) return page;
+    || (nextHtml !== '' && !canInlineEditTextMarkup(nextHtml))) return page;
   const index = page.blocks.findIndex((block) => block?.id === blockId && block?.type === 'text');
   if (index < 0) return page;
   const previous = page.blocks[index];
