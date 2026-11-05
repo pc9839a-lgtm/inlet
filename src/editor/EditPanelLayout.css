@@ -281,7 +281,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings[data-scroll-regio
 body .builder-shell.edit-mode-shell .editor-page-options-stack { width: 100%; min-width: 0; display: grid; gap: var(--editor-ui-space-3, 12px); }
 body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel { width: 100% !important; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
 @media (min-width: 900px) and (max-width: 1100px) {
-  html body #root .canvas-editor-shell .editor-inspector-panel { padding-inline: 12px; }
+  html body #root .canvas-editor-shell .editor-inspector-panel { padding-inline: 8px; }
   html body #root .canvas-editor-shell .editor-composition-panel { padding-inline: 8px; }
 }
 @media (max-width: 899px) { html body #root .canvas-editor-shell .edit-layout { height: auto; min-height: 640px; } html body #root .canvas-editor-shell .editor-composition-panel, html body #root .canvas-editor-shell .editor-inspector-panel { height: auto; max-height: none; overflow: visible !important; } html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: static; } }
