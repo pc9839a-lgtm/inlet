@@ -55,9 +55,11 @@ assert(browserSource.includes("`${origin}/login`") && browserSource.includes("in
 assert(browserSource.includes("pathname === '/api/auth/login'") && browserSource.includes("pathname === '/api/auth/session'"), 'browser QA must mock login and session refresh APIs');
 assert(browserSource.includes("pathname === '/api/projects'") && browserSource.includes(".service-landing-card"), 'browser QA must load and select a dashboard page');
 assert(workspacePreviewSource.includes('PREVIEW_CONTENT_WIDTH = 390')
-  && workspacePreviewSource.includes('className="preview-width-value"')
+  && workspacePreviewSource.includes('className="phone-frame"')
+  && !workspacePreviewSource.includes('preview-stage-toolbar')
+  && !workspacePreviewSource.includes('PreviewSelectionToolbar')
   && !workspacePreviewSource.includes('ResizeObserver') && !workspacePreviewSource.includes('preview-width-option'),
-  'D04 editor preview must expose exactly one fixed 390px width without selection state');
+  'D04 editor preview must retain one 390px phone without redundant view or action toolbars');
 assert(workspacePreviewCssSource.includes('var(--editor-preview-content-width, 390px)')
   && workspacePreviewCssSource.includes('.builder-shell.edit-mode-shell .preview-workspace .phone-frame'),
   'D04 fixed preview geometry must be scoped to editor mode, never public landing');
