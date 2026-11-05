@@ -14,10 +14,24 @@ export default function DraftPreviewTab({ token }) {
       return undefined;
     }
 
-    const channel = new BroadcastChannel(draftPreviewChannelName(token));
+    let channel;
+    try {
+      channel = new BroadcastChannel(draftPreviewChannelName(token));
+    } catch {
+      setState({ page: null, error: '새 탭 미리보기 연결을 만들 수 없습니다. 편집기에서 다시 열어주세요.' });
+      return undefined;
+    }
     let finished = false;
     const request = () => {
-      if (!finished) channel.postMessage({ type: 'ready', token });
+      if (finished) return;
+      try { channel.postMessage({ type: 'ready', token }); }
+      catch {
+        finished = true;
+        setState({ page: null, error: '미리보기 연결이 끊어졌습니다. 편집기에서 다시 열어주세요.' });
+        window.clearInterval(retry);
+        window.clearTimeout(expiry);
+        channel.close();
+      }
     };
     channel.onmessage = (event) => {
       const message = event.data;
@@ -25,7 +39,8 @@ export default function DraftPreviewTab({ token }) {
         || !message.page || !Array.isArray(message.page.blocks)) return;
       finished = true;
       setState({ page: message.page, error: '' });
-      channel.postMessage({ type: 'received', token });
+      try { channel.postMessage({ type: 'received', token }); }
+      catch { /* The draft has already been received in this tab. */ }
       window.clearInterval(retry);
       window.clearTimeout(expiry);
       channel.close();
@@ -56,7 +71,7 @@ export default function DraftPreviewTab({ token }) {
   return (
     <main className="pagero-draft-preview-tab">
       {state.page ? (
-        <div className="pagero-draft-preview-content">
+        <div className="phone-frame pagero-draft-preview-content">
           <PreviewRenderer page={state.page} leads={[]} editorPreview />
         </div>
       ) : (
