@@ -64,6 +64,32 @@ export default function WorkspaceEditorScreen({
     return true;
   };
 
+  // An image click keeps the existing preview selection and directs attention
+  // to the current ImageInput uploader. Never opens a native picker implicitly,
+  // bypasses the existing media library, or writes image content itself.
+  const selectPreviewBlockWithImage = (id, interaction) => {
+    onSelectPreviewBlock?.(id);
+    if (!interaction?.imageClick || !canUseBuilder || !editWorkspace || startMode === 'template'
+      || stylePanelProps?.hasPendingStyle || typeof requestAnimationFrame !== 'function') return;
+    const selectedImage = editPanelProps?.page?.blocks?.find((block) => block.id === id && block.type === 'image');
+    if (!selectedImage || selectedImage.visible === false) return;
+    const focusUpload = (attempts) => {
+      const settings = document.getElementById(`editor-block-settings-${id}`);
+      const button = settings?.querySelector(
+        '.image-input-upload-action:not([disabled]), .gallery-multi-upload button:not([disabled]), .image-input-library-action:not([disabled])'
+      );
+      if (!button && attempts > 0) {
+        requestAnimationFrame(() => focusUpload(attempts - 1));
+        return;
+      }
+      if (button) {
+        button.scrollIntoView({ block: 'nearest' });
+        button.focus({ preventScroll: true });
+      }
+    };
+    requestAnimationFrame(() => focusUpload(5));
+  };
+
   return (
     <div className={`builder-shell${previewWorkspace ? ' preview-workspace-shell' : ''}${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ` edit-mode-shell${startMode !== 'template' ? ' canvas-editor-shell' : ''}` : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
 
@@ -99,7 +125,7 @@ export default function WorkspaceEditorScreen({
         addLead={addLead}
         track={track}
         selectedBlockId={selectedBlockId}
-        onSelectPreviewBlock={onSelectPreviewBlock}
+        onSelectPreviewBlock={selectPreviewBlockWithImage}
         onEditPreviewText={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? editPreviewText : undefined}
       />}
     </div>
