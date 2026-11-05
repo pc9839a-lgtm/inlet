@@ -73,21 +73,34 @@ export default function WorkspaceEditorScreen({
       || stylePanelProps?.hasPendingStyle || typeof requestAnimationFrame !== 'function') return;
     const selectedImage = editPanelProps?.page?.blocks?.find((block) => block.id === id && block.type === 'image');
     if (!selectedImage || selectedImage.visible === false) return;
-    const focusUpload = (attempts) => {
+    // ImageEditor is lazy-loaded; five animation frames can expire before
+    // its uploader appears. Observe only the selected inspector and stop on
+    // success or after a bounded timeout, without opening file dialogs.
+    const inspector = document.querySelector('.editor-inspector-panel');
+    if (!inspector || typeof MutationObserver !== 'function') return;
+    let finished = false;
+    let timeoutId = 0;
+    const observer = new MutationObserver(() => focusUpload());
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+      observer.disconnect();
+      window.clearTimeout(timeoutId);
+    };
+    const focusUpload = () => {
+      if (finished) return;
       const settings = document.getElementById(`editor-block-settings-${id}`);
       const button = settings?.querySelector(
         '.image-input-upload-action:not([disabled]), .gallery-multi-upload button:not([disabled]), .image-input-library-action:not([disabled])'
       );
-      if (!button && attempts > 0) {
-        requestAnimationFrame(() => focusUpload(attempts - 1));
-        return;
-      }
-      if (button) {
-        button.scrollIntoView({ block: 'nearest' });
-        button.focus({ preventScroll: true });
-      }
+      if (!button) return;
+      cleanup();
+      button.scrollIntoView({ block: 'nearest' });
+      button.focus({ preventScroll: true });
     };
-    requestAnimationFrame(() => focusUpload(5));
+    observer.observe(inspector, { childList: true, subtree: true });
+    timeoutId = window.setTimeout(cleanup, 5000);
+    requestAnimationFrame(focusUpload);
   };
 
   return (
