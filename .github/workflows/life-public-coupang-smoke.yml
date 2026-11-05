@@ -9,44 +9,59 @@ on:
 jobs:
   public-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     steps:
-      - name: Confirm actual pagero.kr/life site serves latest coupons
+      - name: Verify large body and right sidebar ads on public LIFE pages
         run: |
           node --input-type=module <<'NODE'
           const base = 'https://pagero.kr/life';
-          const required = [
-            'data-life-coupang-banner="sitewide-v3"',
-            'AF2358798',
-            '1046806',
-            'ads-partners.coupang.com/g.js',
-            'options.height="250"',
+          const marker = 'data-life-coupang-banner="sitewide-v4"';
+          const routes = [
+            ['/', 3],
+            ['/car/', 3],
+            ['/support/', 3],
+            ['/car/car-inspection-period/', 3],
           ];
+          async function fetchPage(url) {
+            const response = await fetch(url, {
+              redirect: 'follow',
+              headers: { 'cache-control': 'no-cache' },
+              signal: AbortSignal.timeout(20000),
+            });
+            const content = await response.text();
+            return { response, content };
+          }
           async function check() {
-            const response = await fetch(base + '/?verify=20261105', {redirect: 'follow', headers: {'cache-control': 'no-cache'}});
-            const html = await response.text();
-            console.log('LIVE', response.status, response.url, response.headers.get('X-Pagero-Life-Proxy'), response.headers.get('X-Pagero-Life-Upstream'));
-            if (response.status !== 200 || response.headers.get('X-Pagero-Life-Proxy') !== '1'
-                || response.headers.get('X-Pagero-Life-Upstream') !== 'life-production-alias') return false;
-            if (required.some(phrase => !html.includes(phrase))) return false;
-            if ((html.match(/data-life-coupang-banner="sitewide-v3"/g) || []).length !== 2) return false;
-            const asset = await fetch(base + '/coupang-banner.css?verify=20261105', {redirect: 'follow'});
-            const css = await asset.text();
-            console.log('CSS', asset.status, asset.url);
-            if (asset.status !== 200 || !css.includes('.life-coupang-placement')) return false;
-            const article = await fetch(base + '/car/car-inspection-period/?verify=20261105', {redirect:'follow'});
-            const body = await article.text();
-            console.log('ARTICLE', article.status, article.url);
-            if (article.status !== 200 || (body.match(/data-life-coupang-banner="sitewide-v3"/g) || []).length !== 2) return false;
+            const {response: cssResponse, content: css} = await fetchPage(base + '/coupang-banner.css?v=20261105-expanded');
+            if (!cssResponse.ok || !css.includes('1320px') || !css.includes('max-width:300px')
+              || !css.includes('max-width:320px') || !css.includes('.life-coupang-placement--rail{display:none}')) return false;
+            for (const [route, expected] of routes) {
+              const { response, content: html } = await fetchPage(base + route + '?v=20261105-expanded');
+              const counts = [...html.matchAll(/data-life-coupang-banner="sitewide-v4"/g)].length;
+              const rail = [...html.matchAll(/data-life-coupang-kind="rail"/g)].length;
+              const body = [...html.matchAll(/data-life-coupang-kind="(?:body|middle)"/g)].length;
+              console.log('LIVE', route, response.status, response.headers.get('x-pagero-life-upstream'), counts, rail, body);
+              if (response.status !== 200
+                || response.headers.get('x-pagero-life-upstream') !== 'life-production-alias'
+                || !html.includes('<aside class="sidebar">')
+                || counts !== expected || rail !== 1 || body !== 2) return false;
+              if (!html.includes('AF2358798') || !html.includes('1046806')
+                || !html.includes('"height":"500"')
+                || !html.includes('"height":"300"')
+                || !html.includes('options.height="250"')
+                || !html.includes('https://ads-partners.coupang.com/g.js')) return false;
+            }
+            console.log('LIFE_PUBLIC_LARGE_SIDEBAR_ADS_VERIFIED');
             return true;
           }
-          let ok = false;
-          for (let i=1; i<=8; i++) {
-            try { ok=await check(); } catch(e) { console.warn('Attempt', i, String(e)); }
-            if(ok) break;
-            console.log('Live Pages deployment not yet updated, retry', i);
-            await new Promise(resolve=>setTimeout(resolve,10000));
+          for (let attempt = 1; attempt <= 16; attempt++) {
+            try {
+              if (await check()) process.exit(0);
+            } catch(error) {
+              console.warn('Attempt ' + attempt + ': ' + String(error));
+            }
+            console.log('Live site has not promoted larger sidebar ads, retry', attempt);
+            await new Promise(resolve => setTimeout(resolve, 10000));
           }
-          if (!ok) process.exitCode = 1;
-          else console.log('PUBLIC_COUPANG_LIVE_VERIFIED');
+          throw new Error('Latest LIFE advertisement layout is not yet visible on canonical pages');
           NODE
