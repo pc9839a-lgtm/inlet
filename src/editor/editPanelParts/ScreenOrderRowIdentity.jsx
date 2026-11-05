@@ -1,5 +1,5 @@
 import React from 'react';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, ImageOff } from 'lucide-react';
 import { T } from './editorLabels.js';
 import { stop } from './editorEvents.js';
 
@@ -8,9 +8,14 @@ import { stop } from './editorEvents.js';
 function BlockTypeThumbnail({ Icon, src }) {
   const [imageState, setImageState] = React.useState('loading');
   const ready = Boolean(src && imageState === 'ready');
+  const failed = Boolean(src && imageState === 'error');
   return (
-    <span className={`screen-order-v2-type-icon${ready ? ' has-thumbnail' : ''}`} aria-hidden="true">
-      <Icon size={16} />
+    <span
+      className={`screen-order-v2-type-icon${ready ? ' has-thumbnail' : ''}${failed ? ' thumbnail-error' : ''}`}
+      aria-hidden="true"
+      title={failed ? '이미지를 불러오지 못했습니다' : undefined}
+    >
+      {failed ? <ImageOff size={16} /> : <Icon size={16} />}
       {src && imageState !== 'error' && (
         <img
           className="screen-order-v2-thumbnail"
