@@ -75,7 +75,12 @@ assert(browserSource.includes("#editor-block-editor-text .screen-order-v2-visibi
 assert(browserSource.includes("Input.dispatchMouseEvent") && browserSource.includes("pointer drag moved divider to first position") && browserSource.includes(".screen-order-v2-drag"), 'browser QA must verify reorder through real Chrome mouse input, not only menu actions');
 assert(screenOrderMovementSource.includes('const moveUp = () =>') && screenOrderMovementSource.includes('const moveDown = () =>') && !screenOrderMovementSource.includes('event.stopPropagation'), 'screen-order move actions must stay event-independent because the overflow menu invokes them without an event');
 assert(browserSource.includes("clickSelector(client, '.editor-page-settings-button')") && browserSource.includes("updatedAccent") && browserSource.includes(".style-apply-btn"), 'browser QA must preview and apply a page theme change from the restored left editor before publish');
-assert(browserSource.includes("window.__pageroQaPreviewCalls") && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')"), 'browser QA must verify preview can open without interrupting continued editing');
+assert(browserSource.includes("draftTarget = tabs.find(item => item.type === 'page'")
+  && browserSource.includes("clickButtonByText(client, '.panel-actions', '미리보기')")
+  && browserSource.includes('real-draft-preview-new-tab-390')
+  && browserSource.includes('draftTabMetrics.heroImage')
+  && browserSource.includes('draftTabMetrics.ctaWithinFrame'),
+  'browser QA must inspect a real opened draft tab, image and contained CTA without interrupting editing');
 assert(browserSource.includes("saveDelayMs = 900") && browserSource.includes("continuedHeroTitle") && browserSource.includes("newer local draft after delayed publish response"), 'browser QA must cover edits made while a publish response is in flight');
 assert(browserSource.includes("revisionHeroTitle") && browserSource.includes("finalHeroTitle") && browserSource.includes("'버전 기록'") && browserSource.includes("clickPointer(client, '.page-revision-history-section .page-revision-history-row .ghost-btn')"), 'browser QA must restore a prior revision through real Chrome pointer input in the settings UI');
 assert(browserSource.includes("'undo revision restore'") && browserSource.includes("'redo revision restore'") && browserSource.includes("'publish restored revision with additional edit'"), 'browser QA must verify revision restore undo/redo and republish transition');
