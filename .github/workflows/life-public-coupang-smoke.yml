@@ -1,0 +1,52 @@
+name: LIFE public Coupang smoke
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/life-public-coupang-smoke.yml"
+      - "functions/life/**"
+  workflow_dispatch:
+
+jobs:
+  public-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm actual pagero.kr/life site serves latest coupons
+        run: |
+          node --input-type=module <<'NODE'
+          const base = 'https://pagero.kr/life';
+          const required = [
+            'data-life-coupang-banner="sitewide-v3"',
+            'AF2358798',
+            '1046806',
+            'ads-partners.coupang.com/g.js',
+            'options.height="250"',
+          ];
+          async function check() {
+            const response = await fetch(base + '/?verify=20261105', {redirect: 'follow', headers: {'cache-control': 'no-cache'}});
+            const html = await response.text();
+            console.log('LIVE', response.status, response.url, response.headers.get('X-Pagero-Life-Proxy'), response.headers.get('X-Pagero-Life-Upstream'));
+            if (response.status !== 200 || response.headers.get('X-Pagero-Life-Proxy') !== '1'
+                || response.headers.get('X-Pagero-Life-Upstream') !== 'life-production-alias') return false;
+            if (required.some(phrase => !html.includes(phrase))) return false;
+            if ((html.match(/data-life-coupang-banner="sitewide-v3"/g) || []).length !== 2) return false;
+            const asset = await fetch(base + '/coupang-banner.css?verify=20261105', {redirect: 'follow'});
+            const css = await asset.text();
+            console.log('CSS', asset.status, asset.url);
+            if (asset.status !== 200 || !css.includes('.life-coupang-placement')) return false;
+            const article = await fetch(base + '/car/car-inspection-period/?verify=20261105', {redirect:'follow'});
+            const body = await article.text();
+            console.log('ARTICLE', article.status, article.url);
+            if (article.status !== 200 || (body.match(/data-life-coupang-banner="sitewide-v3"/g) || []).length !== 2) return false;
+            return true;
+          }
+          let ok = false;
+          for (let i=1; i<=8; i++) {
+            try { ok=await check(); } catch(e) { console.warn('Attempt', i, String(e)); }
+            if(ok) break;
+            console.log('Live Pages deployment not yet updated, retry', i);
+            await new Promise(resolve=>setTimeout(resolve,10000));
+          }
+          if (!ok) process.exitCode = 1;
+          else console.log('PUBLIC_COUPANG_LIVE_VERIFIED');
+          NODE
