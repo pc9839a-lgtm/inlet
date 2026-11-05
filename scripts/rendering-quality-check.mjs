@@ -211,7 +211,7 @@ assert(files.previewCss.includes('.faq-card .faq-list details') && files.preview
 
 assert(files.imageDisplay.includes("value: 'original'") && files.imageDisplay.includes("value: 'fill'") && files.imageEditor.includes('rounded'), 'image display controls missing');
 assert(files.imageGallery.includes('galleryGridCount') && files.imageGallery.includes('galleryShowArrows') && files.imageGallery.includes('galleryShowDots'), 'gallery display controls missing');
-assert(files.media.includes('gallery.slice(0, gridCount)') && files.media.includes('image-gallery-grid-${visibleGallery.length}'), 'gallery renderer contract missing');
+assert(files.media.includes('galleryItems.slice(0, gridCount)') && files.media.includes('galleryItems.map((item) => item.src)') && files.media.includes('image-gallery-grid-${visibleGallery.length}'), 'gallery renderer contract missing');
 assert(files.previewCss.includes('.image-gallery-grid-4') && files.previewCss.includes('.gallery-arrows') && files.previewCss.includes('.dots'), 'gallery CSS missing');
 
 assert(files.widgetStyles.includes('set({ logoSize: value })') && files.widgetStyles.includes('set({ menuStyle: value })') && files.widgetStyles.includes('set({ sticky: value })'), 'topnav editor controls missing');
