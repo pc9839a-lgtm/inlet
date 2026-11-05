@@ -75,6 +75,25 @@ jobs:
             imgstatus,imgheaders,imgbody=read(origin+asset)
             if imgstatus!=200 or '<svg ' not in imgbody or len(imgbody)<800:
               sys.exit('New original SVG infographic missing: '+asset)
+          # Verify real article illustrations, not just the new bundle and HTML.
+          image_hashes=set()
+          for category,slug in (
+              ('car','car-inspection-period'),
+              ('support','child-allowance-2026'),
+              ('support','basic-pension-2026')):
+            asset='/images/editorial/'+category+'-'+slug+'-part-1.svg'
+            imgstatus,imgheaders,imgbody=read(origin+asset)
+            if imgstatus!=200 or '<svg ' not in imgbody or '핵심 정리' not in imgbody:
+              sys.exit('Missing original topic-specific article illustration: '+asset)
+            import hashlib
+            digest=hashlib.sha256(imgbody.encode('utf-8')).hexdigest()
+            if digest in image_hashes:
+              sys.exit('Duplicate infographic pixel source found: '+asset)
+            image_hashes.add(digest)
+            article_status,article_headers,article_body=read(origin+'/'+category+'/'+slug+'/')
+            if article_status!=200 or 'https://pagero.kr/life'+asset not in article_body:
+              sys.exit('Original image missing from published article: '+asset)
+            print('EDITORIAL_IMAGE_VERIFIED',asset,digest[:12],flush=True)
           print('IMMUTABLE_ORIGIN_VERIFIED',origin,'sitemap_urls',sitemap.count('<loc>'),flush=True)
           if os.environ.get('GITHUB_EVENT_NAME')!='push':
             sys.exit(0)
