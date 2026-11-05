@@ -2,6 +2,7 @@ import React from 'react';
 import { GripVertical, ImageOff } from 'lucide-react';
 import { T } from './editorLabels.js';
 import { stop } from './editorEvents.js';
+import { isExplicitlyHidden } from './screenOrderIdentityModel.js';
 
 // Use a real, fixed thumbnail cell. A failed image falls back to the block
 // type icon, and changing the image URL resets the loading/error state.
@@ -34,6 +35,7 @@ function BlockTypeThumbnail({ Icon, src }) {
 
 export function ScreenOrderRowIdentity({ block, identity, meta, open, onDragStart, onDragEnd, onSelectRow, onSelectRowByKey }) {
   const Icon = meta.icon;
+  const hidden = isExplicitlyHidden(block);
   const ordinal = identity?.repeated ? ` ${identity.occurrence}` : '';
   const customLabel = identity?.customLabel ? ` · ${identity.customLabel}` : '';
   const displayLabel = `${meta.label}${ordinal}${customLabel}`;
@@ -42,7 +44,7 @@ export function ScreenOrderRowIdentity({ block, identity, meta, open, onDragStar
   const primaryLabel = identity?.customLabel || typeLabel;
   const secondaryLabel = identity?.customLabel ? typeLabel : detail;
   const thumbnail = identity?.thumbnail || '';
-  const summary = [displayLabel, detail, !block.visible ? '숨김' : ''].filter(Boolean).join(' · ');
+  const summary = [displayLabel, detail, hidden ? '숨김' : ''].filter(Boolean).join(' · ');
   const selectTitle = (event) => {
     stop(event);
     onSelectRow?.();
@@ -75,12 +77,12 @@ export function ScreenOrderRowIdentity({ block, identity, meta, open, onDragStar
         <BlockTypeThumbnail key={thumbnail || 'block-type'} Icon={Icon} src={thumbnail} />
         <span className="screen-order-v2-identity-copy">
           <strong title={primaryLabel}>{primaryLabel}</strong>
-          {(secondaryLabel || !block.visible) && (
+          {(secondaryLabel || hidden) && (
             <span className="screen-order-v2-identity-subline">
               {secondaryLabel && (
                 <small className="screen-order-v2-identity-detail" title={secondaryLabel}>{secondaryLabel}</small>
               )}
-              {!block.visible && <span className="screen-order-v2-hidden-badge">숨김</span>}
+              {hidden && <span className="screen-order-v2-hidden-badge">숨김</span>}
             </span>
           )}
         </span>

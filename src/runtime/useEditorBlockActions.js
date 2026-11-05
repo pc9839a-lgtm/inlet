@@ -24,7 +24,7 @@ export function useEditorBlockActions({
 
   const toggleVisible = (id) => {
     if (blockWrite('edit')) return;
-    setPage((p) => commitLocalPageDraft({ ...p, blocks: p.blocks.map((b) => b.id === id ? { ...b, visible: !b.visible } : b) }));
+    setPage((p) => commitLocalPageDraft({ ...p, blocks: p.blocks.map((b) => b.id === id ? { ...b, visible: b.visible === false } : b) }));
   };
 
   const addBlock = (type) => {

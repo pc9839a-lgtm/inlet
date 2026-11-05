@@ -1,6 +1,7 @@
 import React from 'react';
 import { META } from '../../config/blockMeta.jsx';
 import { InspectorBlockSwitch } from './InspectorBlockSwitch.jsx';
+import { isExplicitlyHidden } from './screenOrderIdentityModel.js';
 
 export function ScreenOrderSettings({ block, identity, renderBlockEditor, actions, navigation }) {
   const backRef = React.useRef(null);
@@ -20,7 +21,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
         <div className="screen-order-v2-settings-title">
           <Icon size={22} aria-hidden="true" />
           <h2 ref={backRef} tabIndex={-1} title={title}>{title}</h2>
-          {!block.visible && <span className="screen-order-settings-hidden">숨김</span>}
+          {isExplicitlyHidden(block) && <span className="screen-order-settings-hidden">숨김</span>}
           {actions}
         </div>
         <InspectorBlockSwitch navigation={navigation} />

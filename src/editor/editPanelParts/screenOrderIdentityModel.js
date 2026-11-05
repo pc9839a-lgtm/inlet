@@ -1,4 +1,8 @@
 // Read-only display identity for ScreenOrder rows. Never writes into page blocks.
+// Page model defaults an absent visible flag to true; only explicit false hides a block.
+export function isExplicitlyHidden(block) {
+  return block?.visible === false;
+}
 function previewText(value) {
   if (typeof value !== 'string') return '';
   return value
