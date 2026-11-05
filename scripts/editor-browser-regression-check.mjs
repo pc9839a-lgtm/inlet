@@ -2219,6 +2219,12 @@ async function run() {
     await clickSelector(client, '#editor-block-editor-form .screen-order-v2-action');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form action menu');
     await clickButtonByText(client, '.screen-order-v2-menu', '위로 이동');
+    // A newly inserted divider is immediately below the selected text.
+    // Move the form past the divider and the text, preserving real one-step
+    // keyboard/menu move semantics instead of assuming it was appended last.
+    await clickSelector(client, '#editor-block-editor-form .screen-order-v2-action');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form menu for second move');
+    await clickButtonByText(client, '.screen-order-v2-menu', '위로 이동');
     await waitForBrowser(client, `(() => {
       const ids = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id);
       return ids.indexOf('editor-block-editor-form') < ids.indexOf('editor-block-editor-text');
