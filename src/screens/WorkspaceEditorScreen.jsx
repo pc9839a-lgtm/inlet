@@ -73,6 +73,8 @@ export default function WorkspaceEditorScreen({
       || stylePanelProps?.hasPendingStyle || typeof requestAnimationFrame !== 'function') return;
     const selectedImage = editPanelProps?.page?.blocks?.find((block) => block.id === id && block.type === 'image');
     if (!selectedImage || selectedImage.visible === false) return;
+    const galleryIndex = Number.isInteger(interaction.galleryIndex) && selectedImage.s?.mode === 'gallery'
+      && selectedImage.s?.gallery?.[interaction.galleryIndex] ? interaction.galleryIndex : undefined;
     // ImageEditor is lazy-loaded; five animation frames can expire before
     // its uploader appears. Observe only the selected inspector and stop on
     // success or after a bounded timeout, without opening file dialogs.
@@ -90,9 +92,24 @@ export default function WorkspaceEditorScreen({
     const focusUpload = () => {
       if (finished) return;
       const settings = document.getElementById(`editor-block-settings-${id}`);
-      const button = settings?.querySelector(
-        '.image-input-upload-action:not([disabled]), .gallery-multi-upload button:not([disabled]), .image-input-library-action:not([disabled])'
-      );
+      if (!settings) return;
+      let button;
+      if (galleryIndex !== undefined) {
+        // ImageGalleryEditor rows retain the *raw* slot index, even with blanks.
+        // Do not fall back to GalleryMultiUpload: that would append, not replace.
+        const row = settings.querySelectorAll('.image-editor-flow .editor-list-v2-items > .editor-list-item-v2')[galleryIndex];
+        const trigger = row?.querySelector('.editor-list-item-v2-trigger');
+        if (!trigger) return;
+        if (trigger.getAttribute('aria-expanded') !== 'true') {
+          trigger.click();
+          return;
+        }
+        button = row.querySelector('[data-editor-gallery-item-index] .image-input-upload-action:not([disabled])');
+      } else {
+        button = settings.querySelector(
+          '.image-input-upload-action:not([disabled]), .gallery-multi-upload button:not([disabled]), .image-input-library-action:not([disabled])'
+        );
+      }
       if (!button) return;
       cleanup();
       button.scrollIntoView({ block: 'nearest' });
@@ -106,15 +123,24 @@ export default function WorkspaceEditorScreen({
   // A second, explicit click on the selected photo invokes the *existing*
   // ImageInput picker synchronously inside the user's activation. First-click
   // selection only focuses settings; no unsolicited file dialog is opened.
-  const replacePreviewImage = (id) => {
+  const replacePreviewImage = (id, galleryIndex) => {
     if (!canUseBuilder || !editWorkspace || startMode === 'template' || stylePanelProps?.hasPendingStyle
       || selectedBlockId !== id) return false;
     const block = editPanelProps?.page?.blocks?.find((entry) => entry.id === id);
-    if (!block || block.type !== 'image' || block.visible === false || block.s?.mode === 'gallery') return false;
-    const button = document.getElementById(`editor-block-settings-${id}`)
-      ?.querySelector('.image-input-upload-action:not([disabled])');
+    if (!block || block.type !== 'image' || block.visible === false) return false;
+    const gallery = block.s?.mode === 'gallery';
+    if (gallery && (!Number.isInteger(galleryIndex) || !block.s?.gallery?.[galleryIndex])) return false;
+    const settings = document.getElementById(`editor-block-settings-${id}`);
+    const row = gallery
+      ? settings?.querySelectorAll('.image-editor-flow .editor-list-v2-items > .editor-list-item-v2')?.[galleryIndex]
+      : null;
+    const button = gallery
+      ? row?.querySelector('[data-editor-gallery-item-index] .image-input-upload-action:not([disabled])')
+      : settings?.querySelector('.image-input-upload-action:not([disabled])');
     if (!button) {
-      selectPreviewBlockWithImage(id, { imageClick: true });
+      // A collapsed/lazy gallery row needs one safe click to reveal its
+      // existing ImageInput. A later explicit user click opens the file picker.
+      selectPreviewBlockWithImage(id, { imageClick: true, galleryIndex });
       return false;
     }
     button.click();
