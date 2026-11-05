@@ -433,7 +433,7 @@ assert(validDraftPreviewToken(previewToken)
   && draftPreviewTabUrl(previewToken, 'https://pagero.kr').includes('/?__pagero_preview=' + previewToken)
   && draftPreviewChannelName(previewToken) === 'pagero-editor-draft-preview:' + previewToken,
   'new tab requires a random opaque preview token with no HTML or page content in the URL');
-assert(newPreviewHook.includes("window.open(url, '_blank', 'noopener,noreferrer')")
+assert(newPreviewHook.includes("window.open(draftPreviewTabUrl(token, window.location.origin), '_blank', 'noopener,noreferrer')")
   && newPreviewHook.includes("type: 'draft', token, page: draft")
   && newPreviewHook.includes("type === 'ready'")
   && !newPreviewHook.includes('setPreviewCopyIssue')
@@ -442,6 +442,9 @@ assert(newPreviewHook.includes("window.open(url, '_blank', 'noopener,noreferrer'
   && previewNewTab.includes('<PreviewRenderer page={state.page} leads={[]} editorPreview />')
   && previewNewTab.includes("type: 'ready', token")
   && previewNewTab.includes("type: 'received', token")
+  && previewNewTab.includes('phone-frame pagero-draft-preview-content')
+  && newPreviewHook.includes('receiverReady')
+  && newPreviewHook.includes('팝업 차단 설정을 확인하고 다시 열어주세요.')
   && rootEntrypoint.includes('renderDraftPreviewTab()')
   && !appRoot.includes('PreviewCopyModal')
   && !appRoot.includes('previewCopyIssue'),
