@@ -362,7 +362,7 @@ assert(css.includes('--editor-list-width: clamp(220px, 16vw, 240px);')
   && css.includes('--editor-edit-width: clamp(500px, calc(100vw - 410px), 700px);')
   && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;')
   && editPanelLayoutCss.includes('.editor-inspector-panel { padding: 0 16px 32px;')
-  && editPanelLayoutCss.includes('.editor-inspector-panel { padding-inline: 12px;')
+  && editPanelLayoutCss.includes('.editor-inspector-panel { padding-inline: 8px;')
   && css.includes('overflow: hidden auto !important;'),
   '24th patch: keep the editor <=700px, reclaim inspector width without narrowing the 390px preview or adding scrollbars');
 assert(!editPanelLayoutCss.includes('.editor-inspector-panel:has(.editor-selection-empty)') && layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;") && layout.includes('{showPageOptions ? ('), 'unselected editor must keep inspector open with useful page settings');
