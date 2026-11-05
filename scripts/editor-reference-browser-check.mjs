@@ -776,8 +776,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'deep inspector regression returns to the original text editor');
   assert(apiState.saveCount === 0, 'inspector navigation must not save or publish the page');
 
-  // A 30+ block list must not push the selected Inspector header out of view
-  // or add a second Inspector scrollbar (DOM fixture; no page data writes).
+  // A long navigator list must not push the Inspector's own header away.
+  // DOM-only clones; no page data writes.
   const longInspector = await evaluate(client, `(() => {
     const list = document.querySelector('.screen-order-v2-list');
     const seed = list?.querySelector('.screen-order-v2-slot');
@@ -795,20 +795,24 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         clones.push(clone);
       }
       scroller.scrollTop = Math.min(420, scroller.scrollHeight - scroller.clientHeight);
-      const surface = scroller.getBoundingClientRect();
+      const inspectorBox = inspector.getBoundingClientRect();
       const title = header.getBoundingClientRect();
       return { scrolled: scroller.scrollTop,
-        titleTop: title.top, scrollTop: surface.top,
+        titleTop: title.top, inspectorTop: inspectorBox.top,
         inspectorOverflow: getComputedStyle(inspector).overflowY,
-        workOverflow: getComputedStyle(scroller).overflowY };
+        navigatorOverflow: getComputedStyle(scroller).overflowY,
+        outerOverflow: getComputedStyle(document.querySelector('.work-panel')).overflowY };
     } finally {
       clones.forEach((clone) => clone.remove());
       scroller.scrollTop = 0;
     }
   })()`);
-  assert(longInspector?.scrolled > 250 && Math.abs(longInspector.titleTop - longInspector.scrollTop) < 4
-    && longInspector.inspectorOverflow === 'visible' && longInspector.workOverflow === 'auto',
-    'long page must keep inspector header pinned with a single shared scrollbar: ' + JSON.stringify(longInspector));
+  assert(longInspector?.scrolled > 250
+    && longInspector.titleTop >= longInspector.inspectorTop
+    && longInspector.titleTop <= longInspector.inspectorTop + 120
+    && longInspector.inspectorOverflow === 'auto'
+    && longInspector.navigatorOverflow === 'auto' && longInspector.outerOverflow === 'hidden',
+    'long navigator scroll must not move the independently scrollable Inspector: ' + JSON.stringify(longInspector));
   const before = await evaluate(client, `[...document.querySelectorAll('.text-editor-flow textarea')].map(el => el.value)`);
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
@@ -850,7 +854,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const inspector = document.querySelector('.editor-inspector-panel');
     return { header: rect(document.querySelector('.workspace-persistent-header')), list:rect(list), inspector:rect(inspector), stage:rect(stage), phone:rect(document.querySelector('.phone-frame')), pageWidth:document.querySelector('.phone-frame .landing-page').clientWidth,
       phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-width-option').length, documentWidth:document.documentElement.scrollWidth,
-      listScroll:getComputedStyle(list).overflowY, inspectorScroll:getComputedStyle(inspector).overflowY,
+      listScroll:getComputedStyle(list).overflowY,
+      navigatorScroll:getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
+      inspectorScroll:getComputedStyle(inspector).overflowY,
       labels:[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy strong')].map(el => ({
         label: el.textContent, whiteSpace:getComputedStyle(el).whiteSpace, height:el.getBoundingClientRect().height,
         lineHeight:parseFloat(getComputedStyle(el).lineHeight), clipped:el.scrollWidth>el.clientWidth
@@ -860,21 +866,21 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 240) <= 1
-    && geometry.inspector.width >= 458 && geometry.inspector.width <= 461,
-    'reference 1672px viewport must give properties 460px while keeping a compact 240px navigator: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 276) <= 1
+    && geometry.inspector.width >= 392 && geometry.inspector.width <= 395,
+    'approved 1672px viewport must preserve 276px navigator and 394px settings: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
-  assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'auto'
-    && geometry.ancestors[1].scrollHeight > geometry.ancestors[1].height.replace('px','') * 1,
-    'only the outer work panel should scroll when selected properties are long: ' + JSON.stringify(geometry));
+  assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
+    && geometry.ancestors[1].scrollTop === 0,
+    'work panel must remain stationary while the two editing regions scroll: ' + JSON.stringify(geometry));
   assert(geometry.labels.length >= 4
     && geometry.labels.every(label => label.whiteSpace === 'normal' && label.height <= label.lineHeight * 2 + 2),
     'long Korean block names must fit within two lines without overlapping actions: ' + JSON.stringify(geometry.labels));
   assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0
-    && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'visible' && geometry.inspectorScroll === 'visible'
+    && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto' && geometry.inspectorScroll === 'auto'
     && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
-    'reference editor must show a balanced right-stage phone and one shared editing scrollbar: ' + JSON.stringify(geometry));
+    'reference editor must show a centered phone alongside independently scrolling edit panels: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
   // zoom, fullscreen, or floating block-action toolbars above the phone.
