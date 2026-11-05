@@ -1045,6 +1045,7 @@ async function run() {
   let client = null;
   let secondClient = null;
   let draftTabClient = null;
+  let longPageClient = null;
 
   try {
     qaStep('starting Chrome');
@@ -3322,6 +3323,140 @@ async function run() {
 
 
 
+
+    // Separate 36-block fixture; its private mock never changes the main
+    // regression's published snapshots or live user data.
+    const longTarget = await client.send('Target.createTarget', { url: 'about:blank' });
+    const longTargets = await fetchJson('http://127.0.0.1:' + debugPort + '/json/list');
+    const longEndpoint = longTargets.find((item) => item.id === longTarget.targetId && item.webSocketDebuggerUrl);
+    assert(longEndpoint, 'long-page Chrome target must be available');
+    longPageClient = createCdp(longEndpoint.webSocketDebuggerUrl);
+    longPageClient.on('Runtime.exceptionThrown', ({ exceptionDetails }) => {
+      browserErrors.push(exceptionDetails?.exception?.description || exceptionDetails?.text || 'Long-page browser exception');
+    });
+    await longPageClient.send('Page.enable');
+    longPageClient.on('Page.javascriptDialogOpening', (dialog) => {
+      if (dialog.type === 'beforeunload') longPageClient.send('Page.handleJavaScriptDialog', { accept: true }).catch(() => {});
+    });
+    await longPageClient.send('Runtime.enable');
+    await longPageClient.send('Network.enable');
+    await longPageClient.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/*', requestStage: 'Request' }] });
+    const longState = createApiMock(longPageClient);
+    const longPage = createQaPage();
+    longPage.id = 'editor-longpage-e2e';
+    longPage.slug = 'editor-long-e2e';
+    const svg = (color) => 'data:image/svg+xml,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160"><rect width="240" height="160" fill="' + color + '"/></svg>');
+    const longBlocks = Array.from({ length: 26 }, (_, index) => ({
+      id: 'editor-long-' + index, type: 'text', visible: true,
+      s: { title: '긴 페이지 섹션 ' + (index + 1), body: '상세 안내 ' + index,
+        layout: 'card', align: 'left', size: 'medium' },
+    }));
+    const galleryBlock = { id: 'editor-gallery', type: 'image', visible: true,
+      s: { mode: 'gallery', galleryLayout: 'grid', galleryGridCount: 4,
+        gallery: [svg('#2563eb'), '', svg('#0f766e')], rounded: false } };
+    const linksBlock = { id: 'editor-links', type: 'links', visible: true,
+      s: { title: '연락 방법', layout: 'list', items: [
+        { id: 'editor-link-a', label: '공식 안내', target: 'url', url: 'https://example.com/info' },
+        { id: 'editor-link-b', label: '전화 문의', target: 'phone', url: 'tel:01000000000' },
+      ] } };
+    longPage.blocks.splice(longPage.blocks.length - 2, 0, ...longBlocks, galleryBlock, linksBlock);
+    longState.currentPage = longPage;
+
+    await setViewport(longPageClient, 1672, 941, false);
+    await longPageClient.send('Page.navigate', { url: origin + '/app' });
+    await waitForBrowser(longPageClient,
+      "document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length >= 32 && !!document.querySelector('.phone-frame #block-editor-gallery')",
+      'Chrome renders 30+ mixed blocks in editable phone and composition');
+    await clickSelector(longPageClient, '.phone-frame #block-editor-gallery [data-preview-gallery-index="2"] img');
+    const galleryRow = '#editor-block-settings-editor-gallery .image-editor-flow .editor-list-v2-items > .editor-list-item-v2:nth-child(3)';
+    await waitForBrowser(longPageClient,
+      'document.activeElement === document.querySelector(' + JSON.stringify(galleryRow + ' .image-input-upload-action') + ')',
+      'third raw gallery slot focuses correct uploader despite blank second slot');
+    const galleryFileStubbed = await evaluate(longPageClient, '(() => { const input = document.querySelector('
+      + JSON.stringify(galleryRow + ' input[type="file"]')
+      + '); if (!input) return false; window.__galleryPickerCount = 0; input.click = () => { window.__galleryPickerCount++; }; return true; })()');
+    assert(galleryFileStubbed, 'gallery slot must reuse existing file input');
+    await clickSelector(longPageClient, '.phone-frame #block-editor-gallery [data-preview-gallery-index="2"] button.editor-preview-image-replace');
+    assert(await evaluate(longPageClient, 'window.__galleryPickerCount === 1'),
+      'selected gallery image directly opens its own uploader');
+    assert(longState.saveCount === 0, 'gallery selection must not publish');
+
+    await evaluate(longPageClient,
+      'window.__longExternalOpens = 0; window.__oldLongOpen = window.open; window.open = () => { window.__longExternalOpens++; };');
+    await clickSelector(longPageClient, '.phone-frame #block-editor-links button[data-preview-link-index="1"]');
+    const linkLabel = '#editor-block-settings-editor-links input[data-link-item-label-index="1"]';
+    await waitForBrowser(longPageClient,
+      'document.activeElement === document.querySelector(' + JSON.stringify(linkLabel) + ')',
+      'second link preview focuses its own Inspector input');
+    assert(await evaluate(longPageClient, 'window.__longExternalOpens === 0'), 'editor link must not navigate or dial');
+    await setInputValue(longPageClient, linkLabel, '전화 문의 바로가기');
+    await waitForBrowser(longPageClient,
+      'document.querySelector(' + JSON.stringify('.phone-frame #block-editor-links button[data-preview-link-index="1"] b')
+      + ')?.textContent === "전화 문의 바로가기"', 'link label change appears in 390px preview');
+    const linkTarget = '#editor-block-settings-editor-links .link-editor-panel-v3 .target-control-v3';
+    await waitForBrowser(longPageClient, '!!document.querySelector(' + JSON.stringify(linkTarget) + ')',
+      'link target options open with label');
+    assert(await evaluate(longPageClient,
+      'document.querySelector(' + JSON.stringify(linkTarget + ' .target-mode-tabs button:nth-child(3)')
+      + ')?.getAttribute("aria-pressed") === "true"'), 'phone mode stays selected');
+    await clickSelector(longPageClient, linkTarget + ' .target-mode-tabs button:nth-child(2)');
+    await waitForBrowser(longPageClient,
+      'document.querySelector(' + JSON.stringify(linkTarget + ' .target-mode-tabs button:nth-child(2)')
+      + ')?.getAttribute("aria-pressed") === "true"', 'link switches to URL mode');
+    await clickSelector(longPageClient, linkTarget + ' .target-mode-tabs button:nth-child(3)');
+    await setInputValue(longPageClient, linkLabel, '전화 문의');
+    await waitForBrowser(longPageClient,
+      'document.querySelector(' + JSON.stringify('.phone-frame #block-editor-links button[data-preview-link-index="1"] b')
+      + ')?.textContent === "전화 문의"', 'link label restores original');
+    assert(longState.saveCount === 0 && await evaluate(longPageClient, 'window.__longExternalOpens === 0'),
+      'preview links never publish or navigate');
+    await evaluate(longPageClient, 'window.open = window.__oldLongOpen; delete window.__oldLongOpen;');
+
+    await clickSelector(longPageClient, '#editor-block-editor-long-25 .screen-order-v2-head');
+    await waitForBrowser(longPageClient,
+      "!!document.querySelector('#editor-block-settings-editor-long-25')",
+      'deep selected text Inspector remains editable');
+    const longMetrics = await evaluate(longPageClient, '(() => {'
+      + ' const frame = document.querySelector(".phone-frame");'
+      + ' const selected = frame?.querySelector("#block-editor-long-25");'
+      + ' const preview = frame?.querySelector(".landing-page");'
+      + ' return { count: document.querySelectorAll(".screen-order-v2-list .screen-order-v2-item").length,'
+      + ' previewCount: frame?.querySelectorAll(".landing-content > [id^=block-]").length,'
+      + ' selected: !!selected?.classList.contains("preview-selected-block"),'
+      + ' scrollTop: preview?.scrollTop || 0, width: preview?.clientWidth || 0,'
+      + ' overflow: document.documentElement.scrollWidth - innerWidth }; })()');
+    assert(longMetrics.count >= 32 && longMetrics.previewCount >= 30 && longMetrics.selected
+      && longMetrics.scrollTop > 0 && Math.abs(longMetrics.width - 390) <= 1 && longMetrics.overflow <= 3,
+      'deep selection stays visible in one 390px phone without page horizontal overflow: ' + JSON.stringify(longMetrics));
+    await capture(longPageClient, 'editor-vnext-36-blocks-1672');
+    await setViewport(longPageClient, 900, 780, false);
+    await waitForBrowser(longPageClient,
+      "!!document.querySelector('.phone-frame #block-editor-long-25')",
+      'narrow desktop retains 36-block mobile preview');
+    const narrow = await evaluate(longPageClient, '(() => {'
+      + ' const frame = document.querySelector(".phone-frame .landing-page");'
+      + ' return { width: frame?.clientWidth, overflow: document.documentElement.scrollWidth - innerWidth,'
+      + ' selected: !!document.querySelector("#editor-block-settings-editor-long-25") }; })()');
+    assert(Math.abs(narrow.width - 390) <= 1 && narrow.overflow <= 3 && narrow.selected,
+      '900px long page preserves 390px preview and inspector: ' + JSON.stringify(narrow));
+    await capture(longPageClient, 'editor-vnext-36-blocks-900');
+    // Shared SPA bootstrap requests AdSense and Pretendard even before a
+    // block is edited; the CDP mock blocks both remote resources. This test
+    // must reject *new* outbound destinations, not confuse existing shell
+    // assets with link-click navigation caused by this editor patch.
+    const unrelatedShellAssets = longState.externalRequests.filter((url) =>
+      url.startsWith('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=')
+      || url === 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
+    );
+    const unexpectedExternal = longState.externalRequests.filter((url) => !unrelatedShellAssets.includes(url));
+    assert(longState.saveCount === 0 && longState.unexpectedApis.length === 0
+      && unexpectedExternal.length === 0 && !longState.interceptError,
+      'long-page flow must not save or navigate outside known bootstrap assets: '
+      + JSON.stringify({ saves: longState.saveCount, unexpected: longState.unexpectedApis,
+        unexpectedExternal, shellAssetsBlocked: unrelatedShellAssets.length,
+        interceptError: longState.interceptError?.message }));
+
     assert(!apiState.interceptError, `API interception failed: ${apiState.interceptError?.message || apiState.interceptError}`);
     assert(apiState.unexpectedApis.length === 0, `Unexpected API requests: ${apiState.unexpectedApis.join(', ')}`);
     if (browserErrors.length) {
@@ -3384,6 +3519,7 @@ async function run() {
     throw error;
   } finally {
     console.log('[editor-qa] cleanup at:', activeQaStep);
+    await longPageClient?.close().catch(() => {});
     await draftTabClient?.close().catch(() => {});
     await secondClient?.close().catch(() => {});
     await client?.close().catch(() => {});
