@@ -21,6 +21,7 @@ const desktopMatrix = [
   { name: 'pc-1024', width: 1024, height: 900, narrow: true },
   { name: 'pc-1180', width: 1180, height: 900, narrow: true },
   { name: 'pc-1440', width: 1440, height: 960, narrow: false },
+  { name: 'pc-1672', width: 1672, height: 960, narrow: false },
 ];
 
 const zoom200Matrix = [
@@ -970,8 +971,8 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  const expectedEdit = Math.min(700, Math.max(490, width - 418));
-  const expectedComposition = Math.min(260, Math.max(220, width * 0.18));
+  const expectedEdit = Math.min(700, Math.max(500, width - 410));
+  const expectedComposition = Math.min(240, Math.max(220, width * 0.16));
   const expectedInspector = expectedEdit - expectedComposition;
   assert(Math.abs(edit - expectedEdit) <= 2,
     `left editor must be wide enough for editing at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
@@ -2741,6 +2742,35 @@ async function run() {
 
       await clickSelector(client, '.editor-page-settings-button');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
+    // The left panel must not consume the 390px phone, and its selected
+    // controls must stay inside the inspector instead of clipping horizontally.
+    const leftGeometry = await evaluate(client, `(() => {
+      const rect = (el) => el?.getBoundingClientRect();
+      const list = document.querySelector('.editor-composition-panel');
+      const inspector = document.querySelector('.editor-inspector-panel');
+      const preview = document.querySelector('.preview-workspace');
+      const phone = preview?.querySelector('.phone-frame');
+      const i = rect(inspector);
+      return {
+        list: rect(list)?.width, inspector: i?.width,
+        inspectorInner: inspector?.clientWidth - parseFloat(getComputedStyle(inspector).paddingLeft)
+          - parseFloat(getComputedStyle(inspector).paddingRight),
+        preview: rect(preview)?.width, phone: rect(phone)?.width,
+        listSpills: (list?.scrollWidth || 0) > (list?.clientWidth || 0) + 2,
+        inspectorSpills: (inspector?.scrollWidth || 0) > (inspector?.clientWidth || 0) + 2,
+        editorScroll: getComputedStyle(document.querySelector('.work-panel')).overflowY,
+        inspectorScroll: getComputedStyle(inspector).overflowY,
+        rightEdge: i?.right, previewLeft: rect(preview)?.left,
+      };
+    })()`);
+    assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
+      && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 252 : 340)
+      && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
+      && leftGeometry.editorScroll === 'auto' && leftGeometry.inspectorScroll === 'visible'
+      && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
+      '24th patch must provide usable inspector width with no clipped controls, second scrollbar or preview overlap: '
+        + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
+
     const pageOptionsShellStyle = await evaluate(client, `(() => {
       const el = document.querySelector('.page-global-options-card');
       const style = getComputedStyle(el);
