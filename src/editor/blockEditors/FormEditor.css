@@ -59,6 +59,14 @@ body .builder-shell .edit-layout .block-editor-v2 .form-question-title {
 .block-editor-v2 .question-compact-row { display: grid; grid-template-columns: minmax(0, 1fr) 100px; gap: 12px; align-items: end; }
 .block-editor-v2 .question-compact-row > label:first-child { display: grid; gap: 7px; min-width: 0; font-size: 12px; }
 .block-editor-v2 .question-compact-row select { min-width: 0; width: 100%; min-height: 36px; padding: 0 8px; border: 1px solid var(--editor-v2-line); border-radius: 5px; background: #fff; }
+/* The selected block inspector can be only ~255px wide at 900px desktop.
+   Stack the question detail and toggle rather than squeezing its text field. */
+@container editor-inspector (max-width: 280px) {
+  .block-editor-v2 .question-compact-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+}
 body .builder-shell .edit-layout .block-editor-v2 .form-editor-flow .question-compact-row > .toggle { min-height: 36px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
 .block-editor-v2 .form-question-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 body .builder-shell .edit-layout .block-editor-v2 .form-question-actions > button {

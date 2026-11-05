@@ -21,6 +21,7 @@ const desktopMatrix = [
   { name: 'pc-1024', width: 1024, height: 900, narrow: true },
   { name: 'pc-1180', width: 1180, height: 900, narrow: true },
   { name: 'pc-1440', width: 1440, height: 960, narrow: false },
+  { name: 'pc-1672', width: 1672, height: 960, narrow: false },
 ];
 
 const zoom200Matrix = [
@@ -970,8 +971,8 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  const expectedEdit = Math.min(700, Math.max(490, width - 418));
-  const expectedComposition = Math.min(260, Math.max(220, width * 0.18));
+  const expectedEdit = Math.min(700, Math.max(500, width - 410));
+  const expectedComposition = Math.min(240, Math.max(220, width * 0.16));
   const expectedInspector = expectedEdit - expectedComposition;
   assert(Math.abs(edit - expectedEdit) <= 2,
     `left editor must be wide enough for editing at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
@@ -2741,6 +2742,40 @@ async function run() {
 
       await clickSelector(client, '.editor-page-settings-button');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
+    // The left panel must not consume the 390px phone, and its selected
+    // controls must stay inside the inspector instead of clipping horizontally.
+    const leftGeometry = await evaluate(client, `(() => {
+      const rect = (el) => el?.getBoundingClientRect();
+      const list = document.querySelector('.editor-composition-panel');
+      const inspector = document.querySelector('.editor-inspector-panel');
+      const preview = document.querySelector('.preview-workspace');
+      const phone = preview?.querySelector('.phone-frame');
+      const i = rect(inspector);
+      return {
+        list: rect(list)?.width, inspector: i?.width,
+        inspectorInner: inspector?.clientWidth - parseFloat(getComputedStyle(inspector).paddingLeft)
+          - parseFloat(getComputedStyle(inspector).paddingRight),
+        inspectorPadding: getComputedStyle(inspector).paddingLeft,
+        compositionPadding: getComputedStyle(list).paddingLeft,
+        preview: rect(preview)?.width, phone: rect(phone)?.width,
+        listSpills: (list?.scrollWidth || 0) > (list?.clientWidth || 0) + 2,
+        inspectorSpills: (inspector?.scrollWidth || 0) > (inspector?.clientWidth || 0) + 2,
+        editorScroll: getComputedStyle(document.querySelector('.work-panel')).overflowY,
+        inspectorScroll: getComputedStyle(inspector).overflowY,
+        rightEdge: i?.right, previewLeft: rect(preview)?.left,
+      };
+    })()`);
+    assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
+      && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 252 : 340)
+      && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
+      && leftGeometry.editorScroll === 'auto' && leftGeometry.inspectorScroll === 'visible'
+      && (desktopViewport.width <= 1100
+        ? leftGeometry.inspectorPadding === '8px' && leftGeometry.compositionPadding === '8px'
+        : leftGeometry.inspectorPadding === '16px')
+      && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
+      '24th patch must provide usable inspector width with no clipped controls, second scrollbar or preview overlap: '
+        + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
+
     const pageOptionsShellStyle = await evaluate(client, `(() => {
       const el = document.querySelector('.page-global-options-card');
       const style = getComputedStyle(el);
@@ -2781,6 +2816,43 @@ async function run() {
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.rowRadius === '8px' && screenOrderShellStyle?.rowBorder === '0px', `reference list must keep flat rows at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(255, 255, 255)', `compact add action must keep its reference neutral surface: ${JSON.stringify(screenOrderShellStyle)}`);
+
+      if (desktopViewport.width === 900 || desktopViewport.width === 1024) {
+        await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
+        await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-form .form-question-title')`,
+          'narrow inspector form question available');
+        const firstQuestion = '#editor-block-settings-editor-form .form-question-title';
+        if (!(await evaluate(client, `document.querySelector(${JSON.stringify(firstQuestion)})?.getAttribute('aria-expanded') === 'true'`))) {
+          await clickSelector(client, firstQuestion);
+        }
+        await waitForBrowser(client,
+          `!!document.querySelector('#editor-block-settings-editor-form .question-compact-row')`,
+          'narrow inspector question controls expanded');
+        const questionLayout = await evaluate(client, `(() => {
+          const inspector = document.querySelector('.editor-inspector-panel');
+          const row = document.querySelector('#editor-block-settings-editor-form .question-compact-row');
+          const bounds = row?.getBoundingClientRect();
+          const left = row?.children[0]?.getBoundingClientRect();
+          const right = row?.children[1]?.getBoundingClientRect();
+          const control = row?.querySelector('input,textarea,select')?.getBoundingClientRect();
+          return {
+            columns: getComputedStyle(row).gridTemplateColumns.trim().split(/\\s+/).length,
+            rowWidth: bounds?.width,
+            leftWidth: left?.width,
+            leftRight: left?.right,
+            rightLeft: right?.left,
+            controlFits: !!control && control.left >= bounds.left - 1 && control.right <= bounds.right + 1,
+            inner: inspector.clientWidth - parseFloat(getComputedStyle(inspector).paddingLeft)
+              - parseFloat(getComputedStyle(inspector).paddingRight),
+          };
+        })()`);
+        assert(questionLayout.controlFits && questionLayout.leftWidth >= 100
+          && questionLayout.columns === (desktopViewport.width === 900 ? 1 : 2),
+          'narrow form editor must stack at 900px and retain usable controls at 1024px: '
+            + JSON.stringify({ width:desktopViewport.width, questionLayout }));
+        await capture(client, `inspector-form-width-${desktopViewport.width}`);
+        await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+      }
 
       if (desktopViewport.width === 1180) {
         await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');

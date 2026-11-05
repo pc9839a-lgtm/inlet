@@ -358,7 +358,13 @@ assert(!headerSource.includes('panel-save-status operations-save-status')
 
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('--editor-list-width: clamp(220px, 18vw, 260px);') && css.includes('--editor-edit-width: clamp(490px, calc(100vw - 418px), 700px);') && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;') && css.includes('grid-column: 1;'), 'reference inspector requires a genuinely usable left editor up to 700px');
+assert(css.includes('--editor-list-width: clamp(220px, 16vw, 240px);')
+  && css.includes('--editor-edit-width: clamp(500px, calc(100vw - 410px), 700px);')
+  && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;')
+  && editPanelLayoutCss.includes('.editor-inspector-panel { padding: 0 16px 32px;')
+  && editPanelLayoutCss.includes('.builder-shell.canvas-editor-shell .editor-inspector-panel { padding-inline: 8px;')
+  && css.includes('overflow: hidden auto !important;'),
+  '24th patch: keep the editor <=700px, reclaim inspector width without narrowing the 390px preview or adding scrollbars');
 assert(!editPanelLayoutCss.includes('.editor-inspector-panel:has(.editor-selection-empty)') && layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;") && layout.includes('{showPageOptions ? ('), 'unselected editor must keep inspector open with useful page settings');
 assert(layout.includes('editor-composition-heading') && editPanelLayoutCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;'), 'block list and inspector must share compact editor space');
 assert(css.includes('overflow: hidden auto !important;') && editPanelLayoutCss.includes('overflow: visible !important;'), 'edit workspace must have one scrollbar and no nested scrolling panels');
