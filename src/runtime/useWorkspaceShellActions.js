@@ -56,6 +56,12 @@ export function useWorkspaceShellActions({
       if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => {
           const settings = document.getElementById(`editor-block-settings-${id}`);
+          // Non-browser shells and offline accessibility tests expose only
+          // getElementById; keep the original safe selection fallback there.
+          if (typeof document.querySelector !== 'function') {
+            (settings || document.getElementById(`editor-block-${id}`))?.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+            return;
+          }
           const inspector = document.querySelector('.canvas-editor-shell .editor-inspector-panel');
           if (settings && inspector?.contains(settings)) {
             settings.scrollIntoView({ behavior: 'instant', block: 'nearest' });
