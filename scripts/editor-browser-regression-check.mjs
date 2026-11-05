@@ -2812,6 +2812,43 @@ async function run() {
     assert(screenOrderShellStyle?.rowRadius === '8px' && screenOrderShellStyle?.rowBorder === '0px', `reference list must keep flat rows at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(255, 255, 255)', `compact add action must keep its reference neutral surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
+      if (desktopViewport.width === 900 || desktopViewport.width === 1024) {
+        await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
+        await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-form .form-question-title')`,
+          'narrow inspector form question available');
+        const firstQuestion = '#editor-block-settings-editor-form .form-question-title';
+        if (!(await evaluate(client, `document.querySelector(${JSON.stringify(firstQuestion)})?.getAttribute('aria-expanded') === 'true'`))) {
+          await clickSelector(client, firstQuestion);
+        }
+        await waitForBrowser(client,
+          `!!document.querySelector('#editor-block-settings-editor-form .question-compact-row')`,
+          'narrow inspector question controls expanded');
+        const questionLayout = await evaluate(client, `(() => {
+          const inspector = document.querySelector('.editor-inspector-panel');
+          const row = document.querySelector('#editor-block-settings-editor-form .question-compact-row');
+          const bounds = row?.getBoundingClientRect();
+          const left = row?.children[0]?.getBoundingClientRect();
+          const right = row?.children[1]?.getBoundingClientRect();
+          const control = row?.querySelector('input,textarea,select')?.getBoundingClientRect();
+          return {
+            columns: getComputedStyle(row).gridTemplateColumns.trim().split(/\\s+/).length,
+            rowWidth: bounds?.width,
+            leftWidth: left?.width,
+            leftRight: left?.right,
+            rightLeft: right?.left,
+            controlFits: !!control && control.left >= bounds.left - 1 && control.right <= bounds.right + 1,
+            inner: inspector.clientWidth - parseFloat(getComputedStyle(inspector).paddingLeft)
+              - parseFloat(getComputedStyle(inspector).paddingRight),
+          };
+        })()`);
+        assert(questionLayout.controlFits && questionLayout.leftWidth >= 100
+          && questionLayout.columns === (desktopViewport.width === 900 ? 1 : 2),
+          'narrow form editor must stack at 900px and retain usable controls at 1024px: '
+            + JSON.stringify({ width:desktopViewport.width, questionLayout }));
+        await capture(client, `inspector-form-width-${desktopViewport.width}`);
+        await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
+      }
+
       if (desktopViewport.width === 1180) {
         await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
         await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .text-editor-flow')`, 'narrow desktop inline text editor');
