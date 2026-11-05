@@ -175,7 +175,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         if (rect(head).height < 55) problems.push('height-'+index);
         if (actions.some(el => intersect(rect(title), rect(el)) || intersect(rect(badge), rect(el)))) problems.push('actions-'+index);
         if (intersect(rect(title), rect(icon)) || intersect(rect(badge), rect(icon))) problems.push('icon-'+index);
-        if (getComputedStyle(title).whiteSpace !== 'nowrap') problems.push('wrap-'+index);
+        const labelStyle = getComputedStyle(title);
+        if (labelStyle.whiteSpace !== 'normal' || labelStyle.webkitLineClamp !== '2') problems.push('wrap-'+index);
+        if (rect(title).height > parseFloat(labelStyle.lineHeight) * 2 + 3) problems.push('lines-'+index);
         if (slot.scrollWidth > slot.clientWidth + 1) problems.push('overflow-'+index);
       });
       const fixed = composition.querySelector('.fixed-composition-row .fixed-block-head');
@@ -865,8 +867,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'auto'
     && geometry.ancestors[1].scrollHeight > geometry.ancestors[1].height.replace('px','') * 1,
     'only the outer work panel should scroll when selected properties are long: ' + JSON.stringify(geometry));
-  assert(geometry.labels.length >= 4 && geometry.labels.every(label => label.whiteSpace === 'nowrap' && label.height <= label.lineHeight + 2),
-    'real-page list must keep every Korean block name in a horizontal line: ' + JSON.stringify(geometry.labels));
+  assert(geometry.labels.length >= 4
+    && geometry.labels.every(label => label.whiteSpace === 'normal' && label.height <= label.lineHeight * 2 + 2),
+    'long Korean block names must fit within two lines without overlapping actions: ' + JSON.stringify(geometry.labels));
   assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0
     && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'visible' && geometry.inspectorScroll === 'visible'
     && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
