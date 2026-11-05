@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { createScreenOrderIdentities } from '../src/editor/editPanelParts/screenOrderIdentityModel.js';
+import { readFileSync } from 'node:fs';
+import { createScreenOrderIdentities, isExplicitlyHidden } from '../src/editor/editPanelParts/screenOrderIdentityModel.js';
 
 const blocks = [
   { id: 'text-a', type: 'text', s: { title: '<strong>첫 번째 소개</strong>' } },
@@ -39,4 +40,19 @@ assert.ok(result[0].thumbnail.startsWith('https://'));
 assert.ok(result[1].thumbnail.startsWith('data:image/png;'));
 assert.equal(result[2].thumbnail, '', 'protocol-relative image sources are not rendered as thumbnails');
 assert.equal(result[3].thumbnail, '', 'SVG data images are not previewed in the editor row');
+// Legacy/imported blocks may omit visible. Match sanitizeBlock's default
+// and the existing action menu: only explicit false means hidden.
+assert.equal(isExplicitlyHidden({ id: 'legacy' }), false);
+assert.equal(isExplicitlyHidden({ visible: true }), false);
+assert.equal(isExplicitlyHidden({ visible: false }), true);
+assert.equal(isExplicitlyHidden({ visible: null }), false);
+for (const file of ['ScreenOrderRowIdentity.jsx', 'ScreenOrderRow.jsx', 'ScreenOrderSettings.jsx']) {
+  const source = readFileSync('src/editor/editPanelParts/' + file, 'utf8');
+  assert.ok(source.includes('isExplicitlyHidden'), file + ' must use the canonical hidden-state rule');
+  assert.ok(!source.includes('!block.visible'), file + ' must not treat absent visible as hidden');
+}
+const blockActions = readFileSync('src/runtime/useEditorBlockActions.js', 'utf8');
+assert.ok(blockActions.includes('visible: b.visible === false'), 'first toggle must hide a default-visible block');
+assert.ok(!blockActions.includes('visible: !b.visible'), 'legacy missing visible must not toggle to visible');
+console.log('Visibility default: missing/true remain shown, explicit false hidden, toggle consistency passed');
 console.log('D03 block identity: repeated labels, rich-text titles, safe thumbnails, live order and no page mutation passed');
