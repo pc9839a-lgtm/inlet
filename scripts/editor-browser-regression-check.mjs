@@ -3450,6 +3450,47 @@ async function run() {
     assert(longMetrics.count >= 32 && longMetrics.previewCount >= 30 && longMetrics.selected
       && longMetrics.scrollTop > 0 && Math.abs(longMetrics.width - 390) <= 1 && longMetrics.overflow <= 3,
       'deep selection stays visible in one 390px phone without page horizontal overflow: ' + JSON.stringify(longMetrics));
+    // Real 36-block page: changing properties must leave the navigator's
+    // deep selection in place, and the page-settings footer stays visible.
+    const longScroll = await evaluate(longPageClient, `(() => {
+      const list = document.querySelector('.editor-composition-content');
+      const inspector = document.querySelector('.editor-inspector-panel');
+      const composition = document.querySelector('.editor-composition-panel');
+      const settings = document.querySelector('#editor-block-settings-editor-long-25 .block-editor-v2');
+      const outer = document.querySelector('.work-panel');
+      if (!list || !inspector || !composition || !settings || !outer) return null;
+      const previousMinHeight = settings.style.minHeight;
+      const listBefore = list.scrollTop;
+      let metrics;
+      try {
+        settings.style.minHeight = '1200px';
+        inspector.scrollTop = 240;
+        metrics = {
+          navigatorOverflowY: getComputedStyle(list).overflowY,
+          inspectorOverflowY: getComputedStyle(inspector).overflowY,
+          workOverflowY: getComputedStyle(outer).overflowY,
+          navigatorScrollTop: list.scrollTop,
+          inspectorScrollTop: inspector.scrollTop,
+          independent: list.scrollTop === listBefore,
+          outerTop: outer.scrollTop,
+          footerVisible: (() => {
+            const footer = composition.querySelector('.editor-composition-footer');
+            const rect = footer?.getBoundingClientRect();
+            const box = composition.getBoundingClientRect();
+            return !!rect && Math.abs(rect.bottom - box.bottom) <= 2;
+          })(),
+        };
+      } finally {
+        settings.style.minHeight = previousMinHeight;
+        inspector.scrollTop = 0;
+      }
+      return metrics;
+    })()`);
+    assert(longScroll?.navigatorOverflowY === 'auto'
+      && longScroll.inspectorOverflowY === 'auto' && longScroll.workOverflowY === 'hidden'
+      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop > 0
+      && longScroll.independent && longScroll.footerVisible && longScroll.outerTop === 0,
+      'long-page navigator and Inspector must remain isolated: ' + JSON.stringify(longScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-1672');
     await setViewport(longPageClient, 900, 780, false);
     await waitForBrowser(longPageClient,
@@ -3461,6 +3502,24 @@ async function run() {
       + ' selected: !!document.querySelector("#editor-block-settings-editor-long-25") }; })()');
     assert(Math.abs(narrow.width - 390) <= 1 && narrow.overflow <= 3 && narrow.selected,
       '900px long page preserves 390px preview and inspector: ' + JSON.stringify(narrow));
+    const narrowScroll = await evaluate(longPageClient, `(() => {
+      const list = document.querySelector('.editor-composition-content');
+      const inspector = document.querySelector('.editor-inspector-panel');
+      const footer = document.querySelector('.editor-composition-footer');
+      const panel = document.querySelector('.editor-composition-panel');
+      return {
+        listHeight: list?.clientHeight,
+        listScrollHeight: list?.scrollHeight,
+        listOverflowY: list ? getComputedStyle(list).overflowY : '',
+        inspectorOverflowY: inspector ? getComputedStyle(inspector).overflowY : '',
+        footerPinned: !!footer && !!panel
+          && Math.abs(footer.getBoundingClientRect().bottom - panel.getBoundingClientRect().bottom) <= 2,
+      };
+    })()`);
+    assert(narrowScroll.listHeight > 150 && narrowScroll.listScrollHeight > narrowScroll.listHeight
+      && narrowScroll.listOverflowY === 'auto'
+      && narrowScroll.inspectorOverflowY === 'auto' && narrowScroll.footerPinned,
+      '900px long-page keeps two independently reachable editing regions: ' + JSON.stringify(narrowScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-900');
     // Shared SPA bootstrap requests AdSense and Pretendard even before a
     // block is edited; the CDP mock blocks both remote resources. This test
