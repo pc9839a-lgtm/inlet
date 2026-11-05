@@ -78,17 +78,18 @@ function linkSubLabel(item = {}) {
   return linkHostLabel(item.url) || '';
 }
 
-function renderLinkItem(item, layout, track, go) {
+function renderLinkItem(item, layout, track, go, editorPreview, onEditItem, blockId, itemIndex) {
   const subLabel = linkSubLabel(item);
   const className = `link-item link-item-${layout} link-icon-${item.iconMode || 'emoji'} ${(!item.iconMode || item.iconMode === 'none') ? 'link-no-visual' : ''}`;
   const onClick = () => {
+    if (editorPreview) { onEditItem?.(blockId, itemIndex); return; }
     track?.({ type: 'link_click', label: item.label });
     go(item.target || 'url', item.url, item.label);
   };
 
   if (layout === 'card' || layout === 'carousel') {
     return (
-      <button key={item.id} type="button" className={className} onClick={onClick}>
+      <button key={item.id} type="button" className={className} data-preview-link-index={editorPreview ? itemIndex : undefined} title={editorPreview ? '이 링크의 문구와 연결 대상 수정' : undefined} onClick={onClick}>
         {renderLinkVisual(item, layout)}
         <div className="link-card-body">
           <b>{item.label}</b>
@@ -100,7 +101,7 @@ function renderLinkItem(item, layout, track, go) {
 
   if (layout === 'list') {
     return (
-      <button key={item.id} type="button" className={className} onClick={onClick}>
+      <button key={item.id} type="button" className={className} data-preview-link-index={editorPreview ? itemIndex : undefined} title={editorPreview ? '이 링크의 문구와 연결 대상 수정' : undefined} onClick={onClick}>
         {renderLinkVisual(item, layout)}
         <div className="link-list-body">
           <b>{item.label}</b>
@@ -112,7 +113,7 @@ function renderLinkItem(item, layout, track, go) {
   }
 
   return (
-    <button key={item.id} type="button" className={className} onClick={onClick}>
+    <button key={item.id} type="button" className={className} data-preview-link-index={editorPreview ? itemIndex : undefined} title={editorPreview ? '이 링크의 문구와 연결 대상 수정' : undefined} onClick={onClick}>
       {renderLinkVisual(item, layout)}
       <b>{item.label}</b>
       <i>›</i>
@@ -120,7 +121,7 @@ function renderLinkItem(item, layout, track, go) {
   );
 }
 
-export function RenderLinks({ block, track, go }) {
+export function RenderLinks({ block, track, go, editorPreview = false, onEditItem }) {
   const s = block.s || {};
   const layout = pickSafe(s.layout === 'link' ? 'list' : (s.layout || 'list'), ['list', 'card', 'carousel'], 'list');
   const align = pickSafe(s.align, ['left', 'center', 'right'], 'left');
@@ -193,7 +194,7 @@ export function RenderLinks({ block, track, go }) {
         onPointerLeave={finishCarouselDrag}
         onClickCapture={blockDragClick}
       >
-        {items.map((item) => renderLinkItem(item, layout, track, go))}
+        {items.map((item, index) => renderLinkItem(item, layout, track, go, editorPreview, onEditItem, block.id, index))}
       </div>
     </section>
   );
