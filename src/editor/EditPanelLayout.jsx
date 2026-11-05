@@ -91,7 +91,7 @@ export function EditPanelLayout({
   });
   const revealInspectorSelection = (id, attempts = 5) => {
     requestAnimationFrame(() => {
-      const scroller = document.querySelector('.canvas-editor-shell .work-panel');
+      const scroller = document.querySelector('.canvas-editor-shell .editor-composition-content');
       const row = document.getElementById(`editor-block-${id}`);
       if (!scroller || !row || !scroller.contains(row)) return;
       if (!row.getClientRects().length) {
@@ -101,9 +101,8 @@ export function EditPanelLayout({
         return;
       }
       const viewport = scroller.getBoundingClientRect();
-      const stickySearch = scroller.querySelector('.editor-composition-search');
-      const searchBottom = stickySearch?.getBoundingClientRect().bottom ?? viewport.top;
-      const safeTop = Math.max(viewport.top + 8, searchBottom + 12);
+      // Header and search live outside the scrolling block list.
+      const safeTop = viewport.top + 12;
       const safeBottom = viewport.bottom - 12;
       const bounds = row.getBoundingClientRect();
       if (bounds.top >= safeTop && bounds.bottom <= safeBottom) return;
@@ -126,6 +125,13 @@ export function EditPanelLayout({
   React.useEffect(() => {
     if (selectedBlockId) setSection('order');
   }, [selectedBlockId]);
+
+  // Replacing the selected widget should start at the beginning of its own
+  // settings, without resetting the user's position in the block navigator.
+  React.useEffect(() => {
+    const inspector = document.querySelector('.canvas-editor-shell .editor-inspector-panel');
+    if (inspector) inspector.scrollTop = 0;
+  }, [selectedBlockId, showPageOptions]);
 
   const openPageOptions = () => {
     if (screenOrderListProps?.selectedId) screenOrderListProps.selectBlock(screenOrderListProps.selectedId);
@@ -151,26 +157,10 @@ export function EditPanelLayout({
         <div className="editor-composition-heading">
           <h2>블록</h2>
           <AddBlockDock {...addBlockDockProps} compact />
-          <button
-            className="editor-page-settings-button"
-            type="button"
-            aria-pressed={showPageOptions}
-            aria-controls="editor-selection-panel"
-            onClick={openPageOptions}
-            title={stylePanelProps?.hasPendingStyle ? '페이지 설정 · 미적용' : '페이지 설정'}
-          >
-            <Settings2 size={15} aria-hidden="true" />
-            <span>페이지 설정</span>
-            {stylePanelProps?.hasPendingStyle && (
-              <>
-                <span className="editor-settings-pending" aria-hidden="true" />
-                <span className="editor-visually-hidden"> · 미적용</span>
-              </>
-            )}
-          </button>
+
         </div>
         <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} fixedDescriptors={fixedDescriptors} selectedId={selectedBlockId} onSelect={chooseSearchResult} onRevealSelected={revealFixedSearch} />
-        <div className="editor-composition-content">
+        <div className="editor-composition-content" role="region" aria-label="블록 목록" tabIndex={0}>
           <FixedCompositionGroup
             groupId="top" title="상단 고정" keys={['topnav']}
             descriptors={fixedDescriptors} selectedId={fixedBlocksProps.openId} revealRequest={fixedSearchReveal}
@@ -184,6 +174,25 @@ export function EditPanelLayout({
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
           </FixedCompositionGroup>
+        </div>
+        <div className="editor-composition-footer">
+            <button
+              className="editor-page-settings-button"
+              type="button"
+              aria-pressed={showPageOptions}
+              aria-controls="editor-selection-panel"
+              onClick={openPageOptions}
+              title={stylePanelProps?.hasPendingStyle ? '페이지 설정 · 미적용' : '페이지 설정'}
+            >
+              <Settings2 size={15} aria-hidden="true" />
+              <span>페이지 설정</span>
+              {stylePanelProps?.hasPendingStyle && (
+                <>
+                  <span className="editor-settings-pending" aria-hidden="true" />
+                  <span className="editor-visually-hidden"> · 미적용</span>
+                </>
+              )}
+            </button>
         </div>
       </aside>
       <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>
