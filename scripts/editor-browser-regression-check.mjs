@@ -1175,10 +1175,13 @@ async function run() {
 
     // Clicking the real phone image (including empty-image state) must choose
     // the exact ImageBlock and focus its existing safe upload control.
-    await clickPointer(client, '.phone-frame #block-editor-image .image-placeholder');
+    await clickSelector(client, '.phone-frame #block-editor-image .image-placeholder');
+    await waitForBrowser(client,
+      "!!document.querySelector('#editor-block-settings-editor-image')",
+      'preview image selects matching Inspector');
     await waitForBrowser(client,
       "!!document.querySelector('#editor-block-settings-editor-image .image-input-upload-action')",
-      'preview image selects existing Inspector image uploader');
+      'preview image loads existing Inspector image uploader');
     await waitForBrowser(client,
       "document.activeElement === document.querySelector('#editor-block-settings-editor-image .image-input-upload-action')",
       'preview image focuses its existing photo replacement action');
