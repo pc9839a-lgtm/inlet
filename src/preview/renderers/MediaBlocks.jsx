@@ -6,7 +6,7 @@ function isGalleryControlTarget(target) {
   return !!target?.closest?.(GALLERY_CONTROL_SELECTOR);
 }
 
-export function RenderImage({ block }) {
+export function RenderImage({ block, editorPreview = false }) {
   const s = block.s || {};
   const gallery = (Array.isArray(s.gallery) ? s.gallery : []).filter(Boolean).slice(0, 4);
   const isGridGallery = s.mode === 'gallery' && s.galleryLayout === 'grid';
@@ -82,7 +82,7 @@ export function RenderImage({ block }) {
         <div className={`image-gallery-grid image-gallery-grid-${visibleGallery.length} ${s.rounded ? 'rounded' : ''}`}>
           {visibleGallery.map((gallerySrc, index) => (
             <div className="image-gallery-grid-item" key={`${gallerySrc}-${index}`}>
-              <img src={gallerySrc} alt="" draggable="false" />
+              <img src={gallerySrc} alt="" draggable="false" title={editorPreview ? '클릭하면 사진 변경 설정으로 이동' : undefined} />
             </div>
           ))}
         </div>
@@ -100,6 +100,7 @@ export function RenderImage({ block }) {
             alt=""
             style={imgStyle}
             draggable="false"
+            title={editorPreview ? '클릭하면 사진 변경 설정으로 이동' : undefined}
             onError={() => {
               if (src && src !== fallbackSrc) setFailedSrc(src);
             }}
