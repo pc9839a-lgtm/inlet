@@ -83,7 +83,7 @@ assert(editLayout.includes('groupId="top" title="상단 고정"')
   'fixed blocks must keep labeled, keyboard-accessible top/bottom groups, and reveal selected fixed blocks');
 assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row') && fixedBlocksCss.includes('.fixed-composition-row .fixed-block-head'), 'fixed region section must own inline row geometry');
-assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px 30px !important') && fixedBlocksCss.includes('overflow-wrap: anywhere'), 'fixed block rows must align with normal block controls and wrap long Korean names');
+assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px !important') && fixedBlocksCss.includes('grid-template-columns: 14px minmax(0, 1fr) 28px !important') && fixedBlocksCss.includes('overflow-wrap: anywhere'), 'fixed block rows must align with normal block controls and wrap long Korean names');
 assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share option must not repeat an explanatory subtitle');
 assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'mobile share position choices must use a readable 2x2 grid');
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
@@ -98,7 +98,7 @@ assert(/\.screen-order-v2-visibility-button,[\s\S]*?\.screen-order-v2-action\s*\
 assert(fixedBlockCard.includes('<ScreenOrderRowVisibility visible={visible}') && fixedBlockCard.includes('data-fixed-position="true"') && fixedBlockCard.includes('aria-pressed={selected}'), 'fixed rows must share normal visibility and selection semantics without drag affordances');
 assert(editorControls.includes("className = ''") && editorControls.includes('className ?'), 'shared Switch must accept an optional scoped class without changing other switch callers');
 assert(fixedBlocksCss.includes('min-height: 44px !important') && fixedBlocksCss.includes('.fixed-composition-select'), 'fixed rows must remain at least 44px high with a reachable selection button');
-assert(fixedBlocksCss.includes('.screen-order-v2-visibility-button') && fixedBlocksCss.includes('.fixed-open-button'), 'fixed row eye and edit actions must retain their own CSS owner');
+assert(fixedBlocksCss.includes('.screen-order-v2-visibility-button') && !fixedBlocksCss.includes('.fixed-open-button') && !fixedBlockCard.includes('fixed-open-button'), 'fixed row must retain visibility and a single selection button without duplicate edit actions');
 assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includes('.screen-order-v2-head') && screenOrderCss.includes('.screen-order-v2-menu'), 'screen order V2 stylesheet must remain the normal-block layout owner');
 assert(screenOrderList.includes('<ScreenOrderSettings') && !screenOrderList.includes('hidden={!!selectedBlock}') && editLayout.includes('editor-composition-panel') && !screenOrderItem.includes('renderBlockEditor'), 'selected settings must render beside the persistent block list');
 assert(!editLayout.includes('selectedBlockSettingsProps') && !screenOrderItem.includes('SelectedBlockSettings'), 'redundant selected block settings component must stay removed');
