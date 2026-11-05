@@ -1,4 +1,5 @@
 name: Diagnose LIFE Cloudflare Pages builds
+# Recheck 2026-11-05 LIFE editorial-image deployment; read-only Cloudflare API.
 on:
   push:
     branches: [main]
