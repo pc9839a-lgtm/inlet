@@ -1,7 +1,6 @@
 import React from 'react';
 import { ScreenOrderRowActions } from './ScreenOrderRowActions.jsx';
 import { ScreenOrderRowIdentity } from './ScreenOrderRowIdentity.jsx';
-import { ScreenOrderRowVisibility } from './ScreenOrderRowVisibility.jsx';
 import { createScreenOrderRowInteraction } from './screenOrderRowInteraction.js';
 
 export function ScreenOrderRow({
@@ -45,8 +44,6 @@ export function ScreenOrderRow({
           onSelectRowByKey={selectRowByKey}
         />
 
-        <ScreenOrderRowVisibility visible={block.visible} onToggleVisible={onToggleVisible} />
-
         <ScreenOrderRowActions
           block={block}
           meta={meta}
@@ -57,6 +54,7 @@ export function ScreenOrderRow({
           onMoveDown={onMoveDown}
           onDuplicate={onDuplicate}
           onRemove={onRemove}
+          onToggleVisible={onToggleVisible}
         />
       </div>
 

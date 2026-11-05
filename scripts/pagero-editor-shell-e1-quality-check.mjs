@@ -187,6 +187,9 @@ const fixedBlocksCss = await readFile('src/editor/editPanelParts/FixedBlocksSect
 const rowIdentity = await readFile('src/editor/editPanelParts/ScreenOrderRowIdentity.jsx', 'utf8');
 const rowCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8');
 const fixedCard = await readFile('src/editor/editPanelParts/FixedBlockCard.jsx', 'utf8');
+const compactRowSource = await readFile('src/editor/editPanelParts/ScreenOrderRow.jsx', 'utf8');
+const compactRowActions = await readFile('src/editor/editPanelParts/ScreenOrderRowActions.jsx', 'utf8');
+
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const chromeCss = await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8');
 const headerSource = await readFile('src/builder/PanelHeader.jsx', 'utf8');
@@ -324,7 +327,7 @@ assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card
 assert(!css.includes('.block-editor-v2-header') && !css.includes('.editor-field-v2') && !css.includes('.editor-section-v2-trigger') && !css.includes('.editor-segmented-v2') && !css.includes('.image-mode-toolbar'), 'workspace geometry must not own block editor internals');
 assert(editPanelLayoutCss.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack owned by EditPanelLayout.css');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row')
-  && fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px 30px !important')
+  && fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px !important')
   && fixedBlocksCss.includes('.fixed-composition-select')
   && !css.includes('.screen-order-fixed-blocks'),
   'fixed areas must use aligned compact rows under FixedBlocksSection.css ownership');
@@ -339,6 +342,21 @@ assert(rowIdentity.includes('function BlockTypeThumbnail({ Icon, src })')
   && fixedBlocksCss.includes('/* Pinned regions share the navigator row geometry')
   && !fixedBlocksCss.includes('One-line fixed labels match regular blocks in the 180px list.'),
   'persistent list must have a single row system, stable thumbnail fallback, visible hidden state and full-name tooltip');
+// 25th patch: one actions menu per normal row, visibility stays keyboard
+// accessible, and pinned rows have one select button without duplicate edit.
+assert(!compactRowSource.includes('<ScreenOrderRowVisibility')
+  && compactRowSource.includes('onToggleVisible={onToggleVisible}')
+  && compactRowActions.includes('role="switch"')
+  && compactRowActions.includes('onClick={() => run(onToggleVisible)}')
+  && compactRowActions.includes("block.visible === false ? '표시하기' : '숨기기'")
+  && !fixedCard.includes('fixed-open-button')
+  && !fixedBlocksCss.includes('.fixed-open-button')
+  && rowCss.includes('grid-template-columns: 14px minmax(0, 1fr) 28px !important;')
+  && rowCss.includes('-webkit-line-clamp: 2;')
+  && fixedBlocksCss.includes('grid-template-columns: 14px minmax(0, 1fr) 28px !important;')
+  && rowIdentity.includes("failed ? <ImageOff size={16} />")
+  && rowCss.includes('screen-order-v2-type-icon.thumbnail-error'),
+  'compact layer navigator must retain hide/show functionality without duplicate icons, fit long names, and flag failed thumbnails');
 // 22nd patch: visible public/draft status card is gone, but separate
 // status computation, accessible announcement and actionable publish state stay.
 assert(!headerSource.includes('panel-save-status operations-save-status')

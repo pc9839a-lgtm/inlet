@@ -6,7 +6,7 @@ import { T } from './editorLabels.js';
 import { stop } from './editorEvents.js';
 
 const MENU_WIDTH = 146;
-const MENU_HEIGHT = 154;
+const MENU_HEIGHT = 190;
 const MENU_GAP = 4;
 const VIEWPORT_GUTTER = 8;
 const MENU_OPEN_EVENT = 'pagero:screen-order-menu-open';
@@ -21,6 +21,7 @@ export function ScreenOrderRowActions({
   onMoveDown,
   onDuplicate,
   onRemove,
+  onToggleVisible,
   instance = '',
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -174,6 +175,14 @@ export function ScreenOrderRowActions({
         <ArrowDown size={14} /> {T.moveDown}
       </button>
       <div className="screen-order-v2-menu-divider" aria-hidden="true" />
+      <button
+        type="button"
+        role="switch"
+        aria-checked={block.visible !== false}
+        onClick={() => run(onToggleVisible)}
+      >
+        {block.visible === false ? '표시하기' : '숨기기'}
+      </button>
       <button type="button" disabled={!canDuplicate} onClick={() => run(onDuplicate)}>
         <Copy size={14} /> 복제
       </button>

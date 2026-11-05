@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pencil, Pin } from 'lucide-react';
+import { Pin } from 'lucide-react';
 import { META } from '../../config/blockMeta.jsx';
 import { ScreenOrderRowVisibility } from './ScreenOrderRowVisibility.jsx';
 import { FixedBlockCardBody } from './FixedBlockCardBody.jsx';
@@ -40,16 +40,7 @@ export function FixedBlockCard({
             </span>
           </button>
           <ScreenOrderRowVisibility visible={visible} onToggleVisible={onToggleVisible} />
-          <button
-            type="button"
-            className="screen-order-v2-action fixed-open-button"
-            onClick={onToggleOpen}
-            aria-pressed={selected}
-            aria-label={`${title} 편집`}
-            title="편집"
-          >
-            <Pencil size={15} aria-hidden="true" />
-          </button>
+
         </div>
       </div>
     );

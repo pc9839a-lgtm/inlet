@@ -1417,7 +1417,7 @@ async function run() {
     assert(fixedRows.length === 3
       && fixedRows.every((row) => row.fixed === 'true' && !row.draggable
         && row.headHeight >= 44 && row.labelOverflow === 'ellipsis'
-        && row.labelWhiteSpace === 'nowrap' && row.selectionIsButton === 'BUTTON'
+        && row.labelWhiteSpace === 'normal' && row.selectionIsButton === 'BUTTON'
         && row.visibleIsSwitch === 'switch'),
       'fixed list entries must show plain readable rows without false drag affordances: ' + JSON.stringify(fixedRows));
     const fixedEyeChecked = await evaluate(client, `document.querySelector(${JSON.stringify(fixedEyeSelector)})?.getAttribute('aria-checked')`);
@@ -1432,7 +1432,7 @@ async function run() {
 
     // P9-1: real keyboard-only operation for editor rows and overflow dropdown.
     const heroTitleSelector = '#editor-block-editor-hero .screen-order-v2-title-wrap';
-    const heroVisibilitySelector = '#editor-block-editor-hero .screen-order-v2-visibility-button';
+    const heroActionSelector = '#editor-block-editor-hero .screen-order-v2-action';
     const formActionSelector = '#editor-block-editor-form .screen-order-v2-action';
 
     await showBlockList(client);
@@ -1460,11 +1460,20 @@ async function run() {
       'mobile block selection must use a clear 2px outline without a covering badge: ' + JSON.stringify(canvasSelectionStyle));
 
 
-    await focusSelector(client, heroVisibilitySelector);
+    await focusSelector(client, heroActionSelector);
     await pressKeyboardKey(client, 'Space');
-    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroVisibilitySelector)})?.getAttribute('aria-checked') === 'false'`, 'hero visibility Space activation off');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu [role="switch"][aria-checked="true"]')`,
+      'hero visibility switch opens in actions menu');
+    await clickSelector(client, '.screen-order-v2-menu [role="switch"]');
+    await waitForBrowser(client, `document.querySelector('#editor-block-editor-hero')?.classList.contains('is-hidden')`,
+      'hero visibility disabled through existing actions menu');
+    await focusSelector(client, heroActionSelector);
     await pressKeyboardKey(client, 'Space');
-    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroVisibilitySelector)})?.getAttribute('aria-checked') === 'true'`, 'hero visibility Space activation on');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu [role="switch"][aria-checked="false"]')`,
+      'hero hidden state exposed in menu');
+    await clickSelector(client, '.screen-order-v2-menu [role="switch"]');
+    await waitForBrowser(client, `!document.querySelector('#editor-block-editor-hero')?.classList.contains('is-hidden')`,
+      'hero visibility restored through existing actions menu');
 
     await focusSelector(client, formActionSelector);
     await pressKeyboardKey(client, 'Enter');
@@ -1710,7 +1719,7 @@ async function run() {
       'D02 advanced anchor must close without dropping its value');
     // Fixed top-navigation blocks use a separate renderer and must share
     // the same disclosure placement and genuinely collapsed anchor controls.
-    await clickSelector(client, '.topnav-fixed-card .fixed-open-button');
+    await clickSelector(client, '.topnav-fixed-card .fixed-composition-select');
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')
         && document.querySelector('#editor-block-editor-topnav')?.dataset.selected === 'true'
@@ -1720,13 +1729,15 @@ async function run() {
       const selected = document.querySelector('#editor-block-editor-topnav');
       const body = document.querySelector('#editor-block-settings-editor-topnav');
       return {
-        editButtonPressed: selected?.querySelector('.fixed-open-button')?.getAttribute('aria-pressed'),
+        selectPressed: selected?.querySelector('.fixed-composition-select')?.getAttribute('aria-pressed'),
+        duplicateEditButton: !!selected?.querySelector('.fixed-open-button'),
         rowEditors: document.querySelectorAll('.screen-order-fixed-blocks .fixed-block-editor').length,
         inspectorOutsideList: !!body && !body.closest('.screen-order-fixed-blocks'),
         inspectorTitle: document.querySelector('.screen-order-v2-settings-title h2')?.textContent,
       };
     })()`);
-    assert(fixedSelection.editButtonPressed === 'true' && fixedSelection.rowEditors === 0
+    assert(fixedSelection.selectPressed === 'true' && !fixedSelection.duplicateEditButton
+      && fixedSelection.rowEditors === 0
       && fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
       'fixed selection must behave as a normal row with settings only in the shared inspector: ' + JSON.stringify(fixedSelection));
     const fixedAdvancedState = await evaluate(client, `(() => {
@@ -1808,7 +1819,7 @@ async function run() {
     assert(apiState.saveCount === 0, 'stage4 shared controls must not publish');
 
     // D09: bottom CTA buttons open directly without the former buttons/timer/style tabs.
-    await clickSelector(client, '.bottom-cta-card .fixed-open-button');
+    await clickSelector(client, '.bottom-cta-card .fixed-composition-select');
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-editor-bottom .bottom-bar-editor-flow')`,
       'D09 bottom CTA direct editor lazy-loaded');
@@ -1941,7 +1952,8 @@ async function run() {
         height: head.height,
         titleWhiteSpace: getComputedStyle(item.querySelector('.screen-order-v2-identity-copy strong')).whiteSpace,
         chevrons: document.querySelectorAll('.screen-order-v2-chevron').length,
-        visibility: !!item.querySelector('.screen-order-v2-visibility-button'),
+        visibilityInMenu: !item.querySelector('.screen-order-v2-visibility-button'),
+        actionCount: item.querySelectorAll('.screen-order-v2-action').length,
         actions: !!item.querySelector('.screen-order-v2-action'),
         paneWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
         panelWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
@@ -1952,9 +1964,10 @@ async function run() {
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '2px' && stageOneList.rowBorder === '0px'
       && stageOneList.rowRadius === '8px' && stageOneList.height >= 55
-      && stageOneList.titleWhiteSpace === 'nowrap'
-      && stageOneList.chevrons === 0 && stageOneList.visibility && stageOneList.actions,
-      'compact block list must show single-line names and reachable controls: ' + JSON.stringify(stageOneList));
+      && stageOneList.titleWhiteSpace === 'normal'
+      && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
+      && stageOneList.actionCount === 1 && stageOneList.actions,
+      'compact block list must show two-line-ready names and one reachable actions menu: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
       && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
@@ -2138,8 +2151,12 @@ async function run() {
     assert(apiState.saveCount === 0, 'direct divider numeric edits must remain unpublished');
 
     // E2E-04: visibility toggle must update the preview without publishing.
-    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-visibility-button');
-    await waitForBrowser(client, `document.querySelector('#editor-block-editor-text .screen-order-v2-visibility-button')?.getAttribute('aria-checked') === 'false'`, 'text visibility off');
+    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-action');
+    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu [role="switch"]')`,
+      'text visibility control opens inside the action menu');
+    await clickSelector(client, '.screen-order-v2-menu [role="switch"]');
+    await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.classList.contains('is-hidden')`,
+      'text visibility off');
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-text .screen-order-v2-hidden-badge')?.textContent || '').trim() === '숨김'`, 'hidden row carries a readable state label');
     await waitForBrowser(client, `!(document.querySelector('.phone-frame')?.innerText || '').includes('편집기 회귀 방지')`, 'hidden text removed from preview');
 
