@@ -132,7 +132,7 @@ function BgEffectLayer({ effect }) {
   );
 }
 
-function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, templatePreview = false, editorPreview = false, publicView = false }) {
+function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, onEditPreviewText, templatePreview = false, editorPreview = false, publicView = false }) {
   const blocks = visiblePreviewBlocks(page);
   const bottom = blocks.find(b=>b.type==='bottombar');
   // Preserve the editor's exact order, including a HERO placed after text.
@@ -326,6 +326,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   }, [selectedBlockId, blocks.length]);
 
   const handlePreviewSelect = (event) => {
+    if (editorPreview && event.target.closest?.('.editor-inline-text-edit')) return;
     const section = event.target.closest?.('[id^="block-"]');
     if (!section) return;
     const id = section.id.replace('block-', '');
@@ -358,7 +359,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={pageClassName} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,'--page-fixed-top-height':`${fixedUiHeights.top}px`,'--page-fixed-bottom-height':`${fixedUiHeights.bottom}px`,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
-      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={editorPreview ? simulateEditorPreviewLead : addLead} track={editorPreview ? undefined : track} go={go} editorPreview={editorPreview}/>)}</div>
+      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={editorPreview ? simulateEditorPreviewLead : addLead} track={editorPreview ? undefined : track} go={go} editorPreview={editorPreview} onEditPreviewText={editorPreview ? onEditPreviewText : undefined}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
       {!editorPreview && page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} />}
       {!publicView && bottomNode}
@@ -414,7 +415,7 @@ function RenderBlock(props) {
   );
 }
 
-function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false }) {
+function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false, onEditPreviewText }) {
   const globalAlign = pickSafe(page?.theme?.globalAlign, ['left','center','right'], '');
   const renderBlock = globalAlign
     ? { ...block, s: { ...(block.s || {}), align: globalAlign, textAlign: globalAlign } }
@@ -422,7 +423,7 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
   if(block.type==='topnav')return <LayoutRenderTopNav block={renderBlock} blocks={blocks} go={go}/>;
   if(block.type==='hero')return <ContentRenderHero block={renderBlock}/>;
   if(block.type==='image')return <MediaRenderImage block={renderBlock}/>;
-  if(block.type==='text')return <ContentRenderText block={renderBlock}/>;
+  if(block.type==='text')return <ContentRenderText block={renderBlock} editorPreview={editorPreview} onEditPreviewText={onEditPreviewText}/>;
   if(block.type==='cards')return <ContentRenderCards block={renderBlock}/>;
   if(block.type==='map')return <InfoRenderMap block={renderBlock} page={page}/>;
   if(block.type==='schedule')return <InfoRenderSchedule block={renderBlock}/>;

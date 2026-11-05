@@ -9,6 +9,7 @@ export function WorkspacePreviewPane({
   leads,
   selectedBlockId,
   onSelectPreviewBlock,
+  onEditPreviewText,
 }) {
   const previewRef = useRef(null);
   const frameRef = useRef(null);
@@ -47,6 +48,7 @@ export function WorkspacePreviewPane({
             editorPreview
             selectedBlockId={selectedBlockId}
             onSelectBlock={onSelectPreviewBlock}
+            onEditPreviewText={onEditPreviewText}
           />
         </div>
       </div>

@@ -1141,6 +1141,38 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+
+    // Real mobile preview quick edit must use the same draft as Inspector,
+    // without silently submitting, navigating or publishing.
+    const inlineTitle = '.phone-frame #block-editor-text h2.editor-inline-text-trigger';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTitle) + ')', 'preview text quick-edit trigger');
+    await clickSelector(client, inlineTitle);
+    await waitForBrowser(client, "!!document.querySelector('#editor-block-settings-editor-text')", 'preview selected text inspector');
+    const doubleClicked = await evaluate(client, '(() => { const title = document.querySelector(' + JSON.stringify(inlineTitle) + '); if (!title) return false; title.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true, view: window })); return true; })()');
+    assert(doubleClicked, 'preview heading should support double click');
+    const inlineTextarea = '.phone-frame #block-editor-text textarea[aria-label="제목 바로 수정"]';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTextarea) + ')', 'preview inline title editor');
+    await setInputValue(client, inlineTextarea, '모바일 화면에서 직접 바꾼 제목');
+    await clickSelector(client, '.phone-frame #block-editor-text .editor-inline-text-actions button:last-child');
+    await waitForBrowser(client, "document.querySelector('.phone-frame #block-editor-text h2')?.textContent === '모바일 화면에서 직접 바꾼 제목'", 'preview direct edit applied');
+    await waitForBrowser(client, "document.querySelector('#editor-block-settings-editor-text textarea[placeholder=\"제목을 입력하세요\"]')?.value === '모바일 화면에서 직접 바꾼 제목'", 'direct edit synchronized to Inspector');
+    // Revert through the same workflow so later fixture assertions stay valid.
+    await focusSelector(client, inlineTitle);
+    await pressKeyboardKey(client, 'Enter');
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTextarea) + ')', 'preview keyboard quick-edit entry');
+    await setInputValue(client, inlineTextarea, '편집기 회귀 방지');
+    await clickSelector(client, '.phone-frame #block-editor-text .editor-inline-text-actions button:last-child');
+    await waitForBrowser(client, "document.querySelector('.phone-frame #block-editor-text h2')?.textContent === '편집기 회귀 방지'", 'quick edit restored original title');
+    await focusSelector(client, '.phone-frame #block-editor-text p.editor-inline-text-trigger');
+    await pressKeyboardKey(client, 'Enter');
+    const inlineBody = '.phone-frame #block-editor-text textarea[aria-label="본문 바로 수정"]';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineBody) + ')', 'preview inline body editor');
+    await setInputValue(client, inlineBody, '취소해야 할 내용');
+    await pressKeyboardKey(client, 'Escape');
+    await waitForBrowser(client, "!document.querySelector('.phone-frame #block-editor-text textarea[aria-label=\"본문 바로 수정\"]')", 'preview inline Escape cancel');
+    assert((await evaluate(client, "document.querySelector('.phone-frame #block-editor-text p')?.textContent || ''")).includes('페이지 선택, 블록 편집'),
+      'cancel must keep the previously saved draft text');
+
     // Custom HTML/CSS/JS must be visible and interactive in the actual editor,
     // while the iframe cannot inherit editor credentials or submit live leads.
     await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-code iframe.custom-code-frame')`, 'custom code iframe in editor preview');
