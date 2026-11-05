@@ -6,7 +6,7 @@ function isGalleryControlTarget(target) {
   return !!target?.closest?.(GALLERY_CONTROL_SELECTOR);
 }
 
-export function RenderImage({ block, editorPreview = false }) {
+export function RenderImage({ block, editorPreview = false, selected = false, onReplaceImage }) {
   const s = block.s || {};
   const gallery = (Array.isArray(s.gallery) ? s.gallery : []).filter(Boolean).slice(0, 4);
   const isGridGallery = s.mode === 'gallery' && s.galleryLayout === 'grid';
@@ -131,6 +131,19 @@ export function RenderImage({ block, editorPreview = false }) {
         </div>
       ) : (
         <div className="image-placeholder">이미지를 업로드하세요</div>
+      )}
+      {editorPreview && selected && s.mode !== 'gallery' && typeof onReplaceImage === 'function' && (
+        <button
+          type="button"
+          className="editor-preview-image-replace"
+          aria-label="선택한 사진 바꾸기"
+          onClick={(event) => {
+            event.stopPropagation();
+            onReplaceImage(block.id);
+          }}
+        >
+          사진 바꾸기
+        </button>
       )}
       {s.caption && <p className="caption">{s.caption}</p>}
     </section>

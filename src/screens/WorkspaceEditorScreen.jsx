@@ -103,6 +103,67 @@ export default function WorkspaceEditorScreen({
     requestAnimationFrame(focusUpload);
   };
 
+  // A second, explicit click on the selected photo invokes the *existing*
+  // ImageInput picker synchronously inside the user's activation. First-click
+  // selection only focuses settings; no unsolicited file dialog is opened.
+  const replacePreviewImage = (id) => {
+    if (!canUseBuilder || !editWorkspace || startMode === 'template' || stylePanelProps?.hasPendingStyle
+      || selectedBlockId !== id) return false;
+    const block = editPanelProps?.page?.blocks?.find((entry) => entry.id === id);
+    if (!block || block.type !== 'image' || block.visible === false || block.s?.mode === 'gallery') return false;
+    const button = document.getElementById(`editor-block-settings-${id}`)
+      ?.querySelector('.image-input-upload-action:not([disabled])');
+    if (!button) {
+      selectPreviewBlockWithImage(id, { imageClick: true });
+      return false;
+    }
+    button.click();
+    return true;
+  };
+
+  // Bottom CTA clicks in an editor must edit the matching button, not follow
+  // its URL, dial a phone, scroll to a section, or emit conversion analytics.
+  const pendingBottomFocusRef = React.useRef(null);
+  React.useEffect(() => () => pendingBottomFocusRef.current?.(), []);
+  const editPreviewBottomButton = (id, index) => {
+    if (!canUseBuilder || !editWorkspace || startMode === 'template' || stylePanelProps?.hasPendingStyle
+      || !Number.isInteger(index) || index < 0 || index > 2) return;
+    const bottom = editPanelProps?.page?.blocks?.find((entry) => entry.id === id && entry.type === 'bottombar');
+    if (!bottom || bottom.visible === false || bottom.s?.buttons?.[index]?.enabled === false) return;
+    pendingBottomFocusRef.current?.();
+    onSelectPreviewBlock?.(id);
+    const inspector = document.querySelector('.editor-inspector-panel');
+    if (!inspector || typeof MutationObserver !== 'function') return;
+    let finished = false;
+    let timeoutId = 0;
+    const observer = new MutationObserver(() => focusTarget());
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+      observer.disconnect();
+      window.clearTimeout(timeoutId);
+      if (pendingBottomFocusRef.current === cleanup) pendingBottomFocusRef.current = null;
+    };
+    const focusTarget = () => {
+      if (finished) return;
+      const settings = document.getElementById(`editor-block-settings-${id}`);
+      const trigger = settings?.querySelectorAll('.bottom-bar-editor-buttons .editor-list-item-v2-trigger')?.[index];
+      if (!trigger) return;
+      if (trigger.getAttribute('aria-expanded') !== 'true') {
+        trigger.click();
+        return;
+      }
+      const input = settings.querySelector(`input[data-bottom-button-label-index="${index}"]`);
+      if (!input) return;
+      cleanup();
+      input.scrollIntoView({ block: 'nearest' });
+      input.focus({ preventScroll: true });
+    };
+    observer.observe(inspector, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-expanded'] });
+    timeoutId = window.setTimeout(cleanup, 5000);
+    requestAnimationFrame(focusTarget);
+  };
+
   return (
     <div className={`builder-shell${previewWorkspace ? ' preview-workspace-shell' : ''}${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ` edit-mode-shell${startMode !== 'template' ? ' canvas-editor-shell' : ''}` : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
 
@@ -140,6 +201,8 @@ export default function WorkspaceEditorScreen({
         selectedBlockId={selectedBlockId}
         onSelectPreviewBlock={selectPreviewBlockWithImage}
         onEditPreviewText={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? editPreviewText : undefined}
+        onReplacePreviewImage={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? replacePreviewImage : undefined}
+        onEditPreviewBottomButton={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? editPreviewBottomButton : undefined}
       />}
     </div>
   );
