@@ -1339,15 +1339,14 @@ async function run() {
     await waitForBrowser(client, `Math.round(document.querySelector('.preview-workspace .phone-frame > .landing-page')?.getBoundingClientRect().width || 0) === 390`, 'D04 actual content width 390');
     const d04FixedWidth = await evaluate(client, `(() => ({
       labels: document.querySelectorAll('.preview-width-value').length,
-      label: document.querySelector('.preview-width-value')?.textContent,
-      width: document.querySelector('.preview-width-toolbar')?.dataset.previewWidth,
+      bars: document.querySelectorAll('.preview-stage-toolbar,.preview-selection-toolbar').length,
       options: document.querySelectorAll('.preview-width-option, .preview-width-measured').length,
       actual: Math.round(document.querySelector('.preview-workspace .phone-frame > .landing-page').getBoundingClientRect().width),
       frame: Math.round(document.querySelector('.preview-workspace .phone-frame').getBoundingClientRect().width),
     }))()`);
-    assert(d04FixedWidth.labels === 1 && d04FixedWidth.label === '390px' && d04FixedWidth.width === '390'
+    assert(d04FixedWidth.labels === 0 && d04FixedWidth.bars === 0
       && d04FixedWidth.options === 0 && d04FixedWidth.actual === 390 && d04FixedWidth.frame >= 392,
-      'D04 editor must expose one fixed width without counting frame borders: ' + JSON.stringify(d04FixedWidth));
+      'D04 editor must retain one 390px page without obsolete measurement or selection toolbars: ' + JSON.stringify(d04FixedWidth));
     assert(apiState.saveCount === 0, 'D04 preview setup must never publish a page');
 
     const editorNavigation = await evaluate(client, `(() => {
