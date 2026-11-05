@@ -100,7 +100,7 @@ export default function WorkspaceEditorScreen({
         track={track}
         selectedBlockId={selectedBlockId}
         onSelectPreviewBlock={onSelectPreviewBlock}
-        onEditPreviewText={canUseBuilder ? editPreviewText : undefined}
+        onEditPreviewText={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? editPreviewText : undefined}
       />}
     </div>
   );
