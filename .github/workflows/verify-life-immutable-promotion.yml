@@ -25,7 +25,7 @@ jobs:
           python - <<'PY'
           import pathlib, re, urllib.request, sys, os, time
           src=pathlib.Path('functions/life/[[path]].js').read_text(encoding='utf-8')
-          found=re.search(r"const LIFE_UPSTREAM_ORIGIN = '(https://[0-9a-f]+\.life-pagero\.pages\.dev)';",src)
+          found=re.search(r"const LIFE_UPSTREAM_ORIGIN = '(https://life-pagero\.pages\.dev)';",src)
           if not found:sys.exit('LIFE production alias missing')
           origin=found.group(1)
           expected={
@@ -36,9 +36,9 @@ jobs:
             '/support/energy-voucher-2026/':['11월 에너지바우처: 신청·사용·재신청 구분'],
             '/support/earned-income-tax-credit-late-2026/':['2026년 11월 근로장려금 기한 후 신청'],
             '/support/year-end-tax-precheck-2026/':['2026 연말정산 미리보기','12월 18일','900만원 + 300만원 = 1,200만원'],
-            '/':['data-offer-group="three-life-offers-2026"','data-affiliate="tenping-auto-lease-202610"','data-affiliate="tenping-pon-gabi-2026"','data-affiliate="tenping-mbti-relationship-2026"','data-affiliate="tenping-elementary-education-2026"','data-life-affiliate-layout="wide-v2"'],
-            '/car/':['data-life-affiliate-layout="wide-v2"','data-affiliate="tenping-auto-lease-202610"','data-affiliate="tenping-pon-gabi-2026"'],
-            '/support/':['data-life-affiliate-layout="wide-v2"','data-affiliate="tenping-elementary-education-2026"','data-affiliate="tenping-mbti-relationship-2026"'],
+            '/':['data-offer-group="three-life-offers-2026"','data-affiliate="tenping-auto-lease-202610"','data-affiliate="tenping-pon-gabi-2026"','data-affiliate="tenping-mbti-relationship-2026"','data-affiliate="tenping-elementary-education-2026"','data-life-affiliate-layout="wide-v2"','data-life-coupang-banner="sitewide-v3"','ads-partners.coupang.com/g.js','AF2358798','1046806'],
+            '/car/':['data-life-affiliate-layout="wide-v2"','data-affiliate="tenping-auto-lease-202610"','data-affiliate="tenping-pon-gabi-2026"','data-life-coupang-banner="sitewide-v3"'],
+            '/support/':['data-life-affiliate-layout="wide-v2"','data-affiliate="tenping-elementary-education-2026"','data-affiliate="tenping-mbti-relationship-2026"','data-life-coupang-banner="sitewide-v3"'],
             '/car/used-car-transfer-cost/':['data-affiliate="tenping-auto-lease-202610"','life-article-sponsor--early','life-article-sponsor--mid'],
             '/car/car-inspection-reservation/':['data-affiliate="tenping-auto-lease-202610"','life-article-sponsor--early','life-article-sponsor--mid'],
             '/support/energy-voucher-2026/':['life-article-sponsor--early','life-article-sponsor--mid'],
