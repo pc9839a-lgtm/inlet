@@ -17,8 +17,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 698 && unselected.listWidth >= 238 && unselected.listWidth <= 241
-    && unselected.inspectorWidth >= 458,
+    && unselected.editorWidth >= 669 && unselected.editorWidth <= 671
+    && unselected.listWidth >= 275 && unselected.listWidth <= 277
+    && unselected.inspectorWidth >= 392 && unselected.inspectorWidth <= 395,
     'no-selection must show actual page controls in the wide left editor: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
@@ -70,7 +71,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // and removed in the same task; no app data, draft or publishing state changes.
   const longPage = await evaluate(client, `(() => {
     const list = document.querySelector('.screen-order-v2-list');
-    const owner = document.querySelector('.work-panel');
+    const owner = document.querySelector('.editor-composition-content');
     const originalRows = [...list.querySelectorAll('.screen-order-v2-slot')];
     const seed = originalRows[0];
     if (!seed || !owner) return null;
@@ -640,7 +641,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'selected normal block exposes locate control');
   const locateBefore = await evaluate(client, `(() => {
     const list = document.querySelector('.screen-order-v2-list');
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const seed = list?.querySelector('.screen-order-v2-slot');
     if (!list || !scroller || !seed) return null;
     for (let i = 0; i < 34; i++) {
@@ -671,7 +672,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: locatePoint.x, y: locatePoint.y, button: 'left', buttons: 1, clickCount: 1 });
   await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: locatePoint.x, y: locatePoint.y, button: 'left', buttons: 0, clickCount: 1 });
   await waitForBrowser(client, `(() => {
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const selected = document.querySelector('#editor-block-editor-text');
     const row = selected?.getBoundingClientRect();
     const view = scroller?.getBoundingClientRect();
@@ -680,7 +681,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && row.bottom <= view.bottom + 2 && selected.dataset.selected === 'true';
   })()`, 'selected block appears below sticky navigator');
   const locateAfter = await evaluate(client, `(() => {
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const selected = document.querySelector('#editor-block-editor-text');
     return { focused: document.activeElement === selected?.querySelector('.screen-order-v2-title-wrap'),
       overflow: getComputedStyle(scroller).overflowY,
@@ -691,7 +692,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'selected row must have keyboard focus without changing page order: ' + JSON.stringify(locateAfter));
   await evaluate(client, `(() => {
     document.querySelectorAll('[data-qa-locate-clone]').forEach((element) => element.remove());
-    document.querySelector('.work-panel').scrollTop = 0;
+    document.querySelector('.editor-composition-content').scrollTop = 0;
   })()`);
   assert(apiState.saveCount === 0, 'locating the selected block must never save or publish');
 
@@ -712,7 +713,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const inspectorDepth = await evaluate(client, `(() => {
     const list = document.querySelector('.screen-order-v2-list');
     const image = document.querySelector('#editor-block-editor-image')?.closest('.screen-order-v2-slot');
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const seed = list?.querySelector('.screen-order-v2-slot');
     if (!list || !image || !seed || !scroller) return null;
     const addClone = (placement, i) => {
@@ -743,7 +744,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'inspector next moves from form to code');
   await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
   await waitForBrowser(client, `(() => {
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const row = document.querySelector('#editor-block-editor-image');
     const search = document.querySelector('.editor-composition-search');
     const bounds = row?.getBoundingClientRect();
@@ -752,10 +753,10 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && bounds.bottom < scroller.getBoundingClientRect().bottom
       && scroller.scrollTop > 350;
   })()`, 'deep inspector next locates the selected image row without jumping to top');
-  const imageScroll = await evaluate(client, `document.querySelector('.work-panel').scrollTop`);
+  const imageScroll = await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop`);
   await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
   await waitForBrowser(client, `(() => {
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const row = document.querySelector('#editor-block-editor-bottom');
     const search = document.querySelector('.editor-composition-search');
     const bounds = row?.getBoundingClientRect();
@@ -764,11 +765,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && bounds.bottom < scroller.getBoundingClientRect().bottom
       && scroller.scrollTop > 350;
   })()`, 'deep inspector next finds the lower fixed CTA instead of losing its list position');
-  const bottomScroll = await evaluate(client, `document.querySelector('.work-panel').scrollTop`);
+  const bottomScroll = await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop`);
   assert(imageScroll > 350 && bottomScroll > 350, 'deep navigation must never reset to the list start');
   await evaluate(client, `(() => {
     document.querySelectorAll('[data-qa-deep-switch-clone]').forEach((node) => node.remove());
-    document.querySelector('.work-panel').scrollTop = 0;
+    document.querySelector('.editor-composition-content').scrollTop = 0;
   })()`);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
@@ -780,7 +781,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const longInspector = await evaluate(client, `(() => {
     const list = document.querySelector('.screen-order-v2-list');
     const seed = list?.querySelector('.screen-order-v2-slot');
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const header = document.querySelector('.screen-order-v2-settings-header');
     const inspector = document.querySelector('.editor-inspector-panel');
     if (!seed || !header || !scroller) return null;
@@ -840,7 +841,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'text without override follows page-wide text color');
   await capture(client, 'text-color-inheritance-reset');
   assert(apiState.saveCount === 0, 'text color source/reset must remain in the unpublished editor draft');
-  await evaluate(client, `document.querySelector('.work-panel').scrollTop = 0`);
+  await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop = 0`);
 
   const geometry = await evaluate(client, `(() => {
     const rect = el => { const r = el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width,top:r.top,height:r.height}; };
@@ -942,8 +943,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `!document.querySelector('.add-panel')`, 'compact add catalog Escape');
   await clickPointer(client, '#editor-block-settings-editor-text .block-editor-advanced-settings > summary');
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .block-editor-advanced-settings').open`, 'single advanced group opens the anchor control');
-  await evaluate(client, `document.querySelector('.work-panel').scrollTop = 0`);
-  await waitForBrowser(client, `document.querySelector('.work-panel').scrollTop === 0`, 'shared editor scroll remains available without a second group navigator');
+  await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop = 0`);
+  await waitForBrowser(client, `document.querySelector('.editor-composition-content').scrollTop === 0`, 'navigator scroll remains independently available');
 
   assert(await evaluate(client, `!document.querySelector('.preview-selection-toolbar,.preview-stage-toolbar')`),
     'removed preview chrome must stay absent after editing and selection');
