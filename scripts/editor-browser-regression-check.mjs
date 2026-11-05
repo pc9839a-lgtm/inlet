@@ -776,19 +776,13 @@ async function assertEditorHeader(client, label) {
     const header = document.querySelector('.editor-panel-header');
     const heading = header?.querySelector('.panel-editor-heading');
     const title = heading?.querySelector('h1');
-    const status = header?.querySelector('.panel-save-status');
-    if (!header || !title || !status) return null;
+    if (!header || !title || !heading) return null;
     const box = header.getBoundingClientRect();
     const titleBox = title.getBoundingClientRect();
-    const statusBox = status.getBoundingClientRect();
     const actionsBox = header.querySelector('.panel-actions').getBoundingClientRect();
     const controls = [...header.querySelectorAll('button, summary')].filter((item) => item.getClientRects().length);
     return { title: title.textContent, titleAttribute: title.title, titleWidth: titleBox.width,
-      status: status.textContent,
-      publicState: status.dataset.publicState,
-      draftState: status.dataset.draftState,
-      stateTracks: status.querySelectorAll('.panel-status-track').length,
-      statusFits: statusBox.right <= heading.getBoundingClientRect().right + 2,
+      redundantStatusCard: !!header.querySelector('.panel-save-status,.operations-save-status,.panel-status-track'),
       fullTitle: titleBox.right <= box.right + 2 && (titleBox.right <= actionsBox.left - 4 || titleBox.bottom <= actionsBox.top),
       controlsFit: controls.every((item) => { const rect = item.getBoundingClientRect(); return rect.left >= box.left && rect.right <= box.right + 2; }),
       duplicateHeading: !!header.querySelector('.operations-panel-title-row'),
@@ -797,10 +791,9 @@ async function assertEditorHeader(client, label) {
       back: !!header.querySelector('[aria-label="페이지 목록으로"]') };
   })()`);
   assert(metrics && metrics.title === createQaPage().title && metrics.titleAttribute === metrics.title
-    && metrics.titleWidth >= 130 && metrics.fullTitle && metrics.status && metrics.statusFits
-    && metrics.publicState && metrics.draftState && metrics.stateTracks === 2
+    && metrics.titleWidth >= 130 && metrics.fullTitle && !metrics.redundantStatusCard
     && metrics.controlsFit && !metrics.duplicateHeading && metrics.preview && metrics.publish && metrics.back,
-    label + ' must retain readable page identity, save state and primary actions: ' + JSON.stringify(metrics));
+    label + ' must retain page identity and publish actions without a redundant status card: ' + JSON.stringify(metrics));
   await clickPointer(client, '.panel-backup-action summary');
   const menuFits = await evaluate(client, `(() => {
     const button = document.querySelector('.panel-backup-dropdown button');
@@ -2300,11 +2293,10 @@ async function run() {
     await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled`, 'style apply enabled');
     assert(await evaluate(client, `(document.querySelector('.style-apply-bar span')?.innerText || '').includes('스타일 미적용')`),
       'D06 pending style must say it is preview-only until applied');
-    await waitForBrowser(client, `document.querySelector('.panel-save-status')?.dataset.draftState === 'unapplied'
-      && document.querySelector('.panel-save-status')?.dataset.publicState === 'unapplied'
-      && (document.querySelector('.panel-actions .primary-btn')?.textContent || '').includes('적용 후 발행')`,
-      'UX-034 unapplied theme must identify both local editor draft and unpublished public change without a server write');
-    await capture(client, 'status-unapplied-theme-and-public');
+    await waitForBrowser(client, `(document.querySelector('.panel-actions .primary-btn')?.textContent || '').includes('적용 후 발행')
+      && !document.querySelector('.editor-panel-header .panel-save-status')`,
+      'UX-034 unapplied style must update publish button without a redundant status card');
+    await capture(client, 'header-unapplied-theme-no-status-card');
     assert(apiState.saveCount === 0, 'style preview must not publish automatically');
 
     // Page behavior updates must merge into an existing style draft without
@@ -3008,10 +3000,10 @@ async function run() {
     await clickSelector(client, '.panel-actions .primary-btn');
     await waitForState(() => apiState.saveCount === 4, 'tab A newer publish');
     await waitForBrowser(client, "(document.querySelector('.panel-actions .primary-btn')?.textContent || '').includes('발행됨')", 'tab A scoped save success');
-    await waitForBrowser(client, `document.querySelector('.panel-save-status')?.dataset.publicState === 'published'
-      && document.querySelector('.panel-save-status')?.dataset.draftState === 'published'`,
-      'UX-034 published current page displays independent editor and public success');
-    await capture(client, 'status-current-page-published');
+    await waitForBrowser(client, `(document.querySelector('.editor-panel-header .panel-actions .primary-btn')?.textContent || '').includes('발행됨')
+      && !document.querySelector('.editor-panel-header .panel-save-status')`,
+      'UX-034 published button remains truthful without restoring the removed status card');
+    await capture(client, 'header-published-no-status-card');
     assert(apiState.currentPage.blocks.find((block) => block.id === 'editor-hero')?.s?.title === tabASuccessTitle, 'tab A must become authoritative');
 
     await clickSelector(secondClient, '.panel-actions .primary-btn');
