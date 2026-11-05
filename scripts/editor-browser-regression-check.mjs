@@ -2755,6 +2755,8 @@ async function run() {
         list: rect(list)?.width, inspector: i?.width,
         inspectorInner: inspector?.clientWidth - parseFloat(getComputedStyle(inspector).paddingLeft)
           - parseFloat(getComputedStyle(inspector).paddingRight),
+        inspectorPadding: getComputedStyle(inspector).paddingLeft,
+        compositionPadding: getComputedStyle(list).paddingLeft,
         preview: rect(preview)?.width, phone: rect(phone)?.width,
         listSpills: (list?.scrollWidth || 0) > (list?.clientWidth || 0) + 2,
         inspectorSpills: (inspector?.scrollWidth || 0) > (inspector?.clientWidth || 0) + 2,
@@ -2767,6 +2769,9 @@ async function run() {
       && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 252 : 340)
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
       && leftGeometry.editorScroll === 'auto' && leftGeometry.inspectorScroll === 'visible'
+      && (desktopViewport.width <= 1100
+        ? leftGeometry.inspectorPadding === '8px' && leftGeometry.compositionPadding === '8px'
+        : leftGeometry.inspectorPadding === '16px')
       && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
       '24th patch must provide usable inspector width with no clipped controls, second scrollbar or preview overlap: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
