@@ -1,6 +1,7 @@
 import React from 'react';
 import { WorkspaceLeftPanel } from './workspace/WorkspaceLeftPanel.jsx';
 import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
+import { patchInlineTextBlock } from '../editor/previewInlineTextModel.js';
 import '../styles/product-ui-tokens.css';
 import '../styles/workspace-shell.css';
 import './workspace/OperationsWorkspace.css';
@@ -52,6 +53,17 @@ export default function WorkspaceEditorScreen({
   const operationsWorkspace = inboxWorkspace || statsWorkspace || settingsWorkspace;
   const previewWorkspace = !mobileOperationsOnly && !operationsWorkspace;
 
+  // Apply preview edits through the same functional draft setter as the Inspector.
+  // A changed/deleted source block fails closed instead of overwriting newer data.
+  const editPreviewText = (blockId, field, nextHtml, previousHtml) => {
+    if (!canUseBuilder || !editWorkspace || startMode === 'template' || stylePanelProps?.hasPendingStyle
+      || typeof settingsPanelProps?.setPage !== 'function') return false;
+    const currentPage = editPanelProps?.page;
+    if (!currentPage || patchInlineTextBlock(currentPage, { blockId, field, previousHtml, nextHtml }) === currentPage) return false;
+    settingsPanelProps.setPage((latest) => patchInlineTextBlock(latest, { blockId, field, previousHtml, nextHtml }));
+    return true;
+  };
+
   return (
     <div className={`builder-shell${previewWorkspace ? ' preview-workspace-shell' : ''}${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ` edit-mode-shell${startMode !== 'template' ? ' canvas-editor-shell' : ''}` : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
 
@@ -88,6 +100,7 @@ export default function WorkspaceEditorScreen({
         track={track}
         selectedBlockId={selectedBlockId}
         onSelectPreviewBlock={onSelectPreviewBlock}
+        onEditPreviewText={canUseBuilder ? editPreviewText : undefined}
       />}
     </div>
   );
