@@ -195,6 +195,8 @@ const operationsWorkspaceCss = await readFile('src/screens/workspace/OperationsW
 const addDockCss = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
 const previewPaneCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
 const previewSelectionPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
+const panelHeader = await readFile('src/builder/PanelHeader.jsx', 'utf8');
+const panelHeaderCss = await readFile('src/builder/PanelHeader.css', 'utf8');
 const newPreviewHook = await readFile('src/runtime/usePreviewWindow.js', 'utf8');
 const previewNewTab = await readFile('src/preview/DraftPreviewTab.jsx', 'utf8');
 const rootEntrypoint = await readFile('src/main.jsx', 'utf8');
@@ -427,6 +429,20 @@ assert(newPreviewHook.includes("window.open(url, '_blank', 'noopener,noreferrer'
   && !appRoot.includes('PreviewCopyModal')
   && !appRoot.includes('previewCopyIssue'),
   'header draft preview must open a real tab and transport its snapshot only via ephemeral channel');
+// 22nd patch: discard only the decorative editor status card. Keep the
+// operations header readout, publish action state and unsaved change guards.
+const editorHeading = panelHeader.split('<div className="panel-editor-heading">')[1]?.split('</div>\n          </>')[0] || '';
+assert(editorHeading.includes('className="panel-page-name"')
+  && !editorHeading.includes('{status}')
+  && panelHeader.includes('const publishState = visibleEditorPublishState')
+  && panelHeader.includes('const draftState = visibleEditorDraftState')
+  && panelHeader.includes("aria-busy={publishing}")
+  && panelHeader.includes("editorHeader ? publishState.actionLabel")
+  && panelHeader.includes('<div className="operations-panel-title-row">')
+  && panelHeader.includes('{status}')
+  && !panelHeaderCss.includes('canvas-editor-shell .panel-save-status')
+  && !panelHeaderCss.includes('editor-panel-header .panel-save-status'),
+  'editor header must not draw public/draft state card while publishing and operations feedback remain intact');
 assert(!previewSelectionPane.includes('<PreviewSelectionToolbar')
   && !previewSelectionPane.includes('preview-stage-toolbar')
   && !previewSelectionPane.includes('미리보기 배율')

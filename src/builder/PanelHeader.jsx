@@ -135,7 +135,6 @@ export default function PanelHeader({ page, tab, saved, saveStatus, hasUnapplied
                   {navigation}
                 </details>}
               </div>
-              {status}
             </div>
           </>
         ) : (
