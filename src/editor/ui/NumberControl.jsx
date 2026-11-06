@@ -26,11 +26,9 @@ export function NumberControl({ label, value, min = 0, max = 100, step = 1, unit
             onChange={(event) => {
               const raw = event.target.value;
               setDraft(raw);
-              const number = Number(raw);
               // Keep the field and caret stable while typing. Commit on blur or Enter;
               // a parent draft update can otherwise remount the lazy Inspector
               // after the first digit and discard the rest of a multi-digit edit.
-              void number;
             }}
             onBlur={finish}
             onKeyDown={(event) => {
