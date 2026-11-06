@@ -2133,6 +2133,18 @@ async function run() {
     const outerSpacing = '#editor-block-settings-editor-text input[aria-label="블록 사이 (px)"]';
     await focusSelector(client, innerSpacing);
     await setInputValue(client, innerSpacing, '0');
+    const disclosureState = await evaluate(client, `(() => {
+      const d = document.querySelector('#editor-block-settings-editor-text .text-editor-design');
+      const input = document.querySelector('#editor-block-settings-editor-text input[aria-label="블록 사이 (px)"]');
+      const panel = document.querySelector('#editor-block-settings-editor-text');
+      return { open: d?.open, remember: d?.dataset.rememberedExpanded,
+        expanded: d?.dataset.uiExpanded, key: d?.dataset.uiKey,
+        inputPresent: !!input, inputVisible: !!input?.getClientRects().length,
+        selectedPanel: panel?.dataset.blockSettingsId,
+        selectedRow: document.querySelector('.screen-order-v2-item[data-selected="true"]')?.id };
+    })()`);
+    assert(disclosureState?.open && disclosureState.inputVisible,
+      'editing inner spacing must preserve outer spacing controls: ' + JSON.stringify(disclosureState));
     await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '16');
     await waitForBrowser(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return style.paddingTop === '0px' && style.marginTop === '16px'; })()`, 'exact zero padding and numeric outer spacing render without publishing').catch(async (error) => {
