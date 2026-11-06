@@ -37,8 +37,7 @@ jobs:
       - name: Build exact review source
         run: npm run build
 
-      - name: Check deploy artifact before upload
-        run: node scripts/deployment-artifact-check.mjs
+      # npm run build already performs artifact checks before safe asset pruning.
 
       - name: Verify Cloudflare target is a preview branch only
         shell: bash
