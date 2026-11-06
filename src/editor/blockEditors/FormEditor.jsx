@@ -36,10 +36,10 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
         onDragEnd={questionState.endQuestionDrag}
       />
       <Field label="버튼 문구" value={s.submit} onChange={(value) => set({ submit: value })} />
-      <InspectorDisclosure label="디자인 조정" className="form-basic-detail form-design-detail">
+      <InspectorDisclosure label="디자인 조정" className="form-basic-detail form-design-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-design` : ''}>
         <FormDesignSection s={s} set={set} direct />
       </InspectorDisclosure>
-      <InspectorDisclosure label="제출 후 동작과 연동" className="form-behavior-detail">
+      <InspectorDisclosure label="제출 후 동작과 연동" className="form-behavior-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-behavior` : ''}>
         <div className="form-editor-settings">
           <FormPrivacySettings s={s} set={set} />
           <FormSuccessSettings s={s} set={set} />
