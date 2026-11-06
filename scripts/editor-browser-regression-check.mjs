@@ -709,6 +709,36 @@ async function clickPointer(client, selector) {
   await wait(150);
 }
 
+// Click the matching row's portal action rather than whichever menu happens
+// to be mounted while focus is transferring between the list and Inspector.
+async function clickRowMenuAction(client, blockId, label) {
+  const trigger = `#editor-block-${blockId} .screen-order-v2-action`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ready = await evaluate(client, `(() => {
+      const button = document.querySelector(${JSON.stringify(trigger)});
+      const menu = button?.getAttribute('aria-expanded') === 'true'
+        ? document.getElementById(button.getAttribute('aria-controls') || '')
+        : null;
+      return !!menu && [...menu.querySelectorAll('button')].some((b) =>
+        b.textContent.trim() === ${JSON.stringify(label)} && !b.disabled);
+    })()`);
+    if (!ready) await clickSelector(client, trigger);
+    const clicked = await evaluate(client, `(() => {
+      const trigger = document.querySelector(${JSON.stringify(trigger)});
+      const menu = trigger?.getAttribute('aria-expanded') === 'true'
+        ? document.getElementById(trigger.getAttribute('aria-controls') || '')
+        : null;
+      const action = [...(menu?.querySelectorAll('button') || [])]
+        .find((item) => item.textContent.trim() === ${JSON.stringify(label)} && !item.disabled);
+      if (!action) return false;
+      action.click();
+      return true;
+    })()`);
+    if (clicked) return;
+  }
+  throw new Error(`Could not activate ${label} for exact row ${blockId}`);
+}
+
 async function normalBlockOrder(client) {
   return evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id)`);
 }
@@ -2281,15 +2311,11 @@ async function run() {
 
     // E2E-03: move the form above the text row through the real overflow menu.
     const orderBeforeMove = await normalBlockOrder(client);
-    await clickSelector(client, '#editor-block-editor-form .screen-order-v2-action');
-    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form action menu');
-    await clickButtonByText(client, '.screen-order-v2-menu', '위로 이동');
+    await clickRowMenuAction(client, 'editor-form', '위로 이동');
     // A newly inserted divider is immediately below the selected text.
     // Move the form past the divider and the text, preserving real one-step
     // keyboard/menu move semantics instead of assuming it was appended last.
-    await clickSelector(client, '#editor-block-editor-form .screen-order-v2-action');
-    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form menu for second move');
-    await clickButtonByText(client, '.screen-order-v2-menu', '위로 이동');
+    await clickRowMenuAction(client, 'editor-form', '위로 이동');
     await waitForBrowser(client, `(() => {
       const ids = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id);
       return ids.indexOf('editor-block-editor-form') < ids.indexOf('editor-block-editor-text');
@@ -2761,7 +2787,7 @@ async function run() {
     await setInputValue(client, '#editor-block-settings-editor-code input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
 
-    await waitForBrowser(client, `document.querySelector('.screen-order-v2-settings-title > h2')?.textContent === ${JSON.stringify(persistedCodeLabel)}`,
+    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-code .editor-inspector-selected-copy > h2')?.textContent === ${JSON.stringify(persistedCodeLabel)}`,
       'code list name updates the selected inspector immediately');
 
     await focusSelector(client, '#editor-block-settings-editor-code .code-editor-options > summary');
