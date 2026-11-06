@@ -190,8 +190,6 @@
 
 /* Code remains the primary surface; the name uses the shared editor field,
    while only display height remains in the secondary disclosure. */
-.code-editor-head { justify-content: space-between; }
-.code-editor-head strong { color: #344054; font-size: 13px; font-weight: 700; }
 .code-editor-box textarea { min-height: 290px; height: 350px; font-size: 13px; background: #f9fafc; border-color: #dce3ef; }
 .code-editor-box textarea:focus { background: #fff; border-color: #6385f6; }
 
