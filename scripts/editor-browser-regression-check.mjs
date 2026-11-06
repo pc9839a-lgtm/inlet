@@ -2175,6 +2175,7 @@ async function run() {
       'text styling remains expanded after changing its inner spacing');
     await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '16');
+    await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return style.paddingTop === '0px' && style.marginTop === '16px'; })()`, 'exact zero padding and numeric outer spacing render without publishing').catch(async (error) => {
       const actual = await evaluate(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return { padding: style.paddingTop, margin: style.marginTop, paddingValue: style.getPropertyValue('--widget-padding'), marginValue: style.getPropertyValue('--widget-margin') }; })()`);
       throw new Error(error.message + ': ' + JSON.stringify(actual));
@@ -2211,8 +2212,12 @@ async function run() {
     await setInputValue(client, outerSpacing, '');
     await focusSelector(client, innerSpacing);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(outerSpacing)})?.value === '48'`, 'empty number input keeps the previous spacing');
+    await focusSelector(client, innerSpacing);
     await setInputValue(client, innerSpacing, '22');
+    await pressKeyboardKey(client, 'Enter');
+    await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '24');
+    await pressKeyboardKey(client, 'Enter');
     assert(apiState.saveCount === 0, 'number and spacing changes must not publish');
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-action');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'D03 text duplicate menu');
