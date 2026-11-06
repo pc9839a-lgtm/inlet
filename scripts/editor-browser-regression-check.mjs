@@ -2357,6 +2357,14 @@ async function run() {
     assert(stageFourLegacyField.radius === stageFourField.radius && stageFourLegacyField.size === stageFourField.size
       && stageFourLegacyField.minHeight === '42px',
       'stage4 legacy form fields must match modern fields: ' + JSON.stringify(stageFourLegacyField));
+    // Content-first form groups keep consent / duplicate rules behind the
+    // optional submission panel. Open the parent before nested legacy controls.
+    if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open`))) {
+      await clickSelector(client, '#editor-block-settings-editor-form .form-behavior-detail > summary');
+    }
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open === true`,
+      'form consent/duplicate controls available after explicit behavior expansion');
     await clickSelector(client, '#editor-block-settings-editor-form details:has(.privacy-compact-panel) > summary');
     const stageFourLegacyToggle = '#editor-block-settings-editor-form .privacy-compact-panel .toggle [role="switch"]';
     const stageFourLegacyChecked = await evaluate(client, `document.querySelector(${JSON.stringify(stageFourLegacyToggle)}).getAttribute('aria-checked')`);
