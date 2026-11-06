@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 
 const read = (path) => readFileSync(path, 'utf8');
 const text = read('src/editor/blockEditors/TextEditor.jsx');
@@ -51,4 +52,14 @@ assert(disclosure.includes('expandedByBlock = new Map()')
 assert(browser.includes('inspector-content-first-') && browser.includes('firstView.secondaryClosed')
   && browser.includes('optionalText.spacingVisible') && browser.includes('optionalText.colorVisible'),
   'real Chrome verifies first-view design and hidden style controls reopening');
+// Parse all browser entrypoints cheaply during offline QA, before running the
+// full authenticated Chrome flow (which also exercises media library paths).
+for (const entry of [
+  'scripts/editor-browser-regression-check.mjs',
+  'scripts/editor-image-library-browser-check.mjs',
+  'scripts/editor-video-library-browser-check.mjs',
+  'scripts/media-library-settings-browser-check.mjs',
+]) {
+  execFileSync(process.execPath, ['--check', entry], { stdio: 'pipe' });
+}
 console.log('Content-first selected inspector design contract passed');
