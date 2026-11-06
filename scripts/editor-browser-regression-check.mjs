@@ -2133,33 +2133,10 @@ async function run() {
     const outerSpacing = '#editor-block-settings-editor-text input[aria-label="블록 사이 (px)"]';
     await focusSelector(client, innerSpacing);
     await setInputValue(client, innerSpacing, '0');
-    const disclosureState = await evaluate(client, `(() => {
-      const d = document.querySelector('#editor-block-settings-editor-text .text-editor-design');
-      const input = document.querySelector('#editor-block-settings-editor-text input[aria-label="블록 사이 (px)"]');
-      const panel = document.querySelector('#editor-block-settings-editor-text');
-      return { open: d?.open, remember: d?.dataset.rememberedExpanded,
-        expanded: d?.dataset.uiExpanded, key: d?.dataset.uiKey,
-        inputPresent: !!input, inputVisible: !!input?.getClientRects().length,
-        selectedPanel: panel?.dataset.blockSettingsId,
-        selectedRow: document.querySelector('.screen-order-v2-item[data-selected="true"]')?.id };
-    })()`);
-    assert(disclosureState?.open && disclosureState.inputVisible,
-      'editing inner spacing must preserve outer spacing controls: ' + JSON.stringify(disclosureState));
-    try {
-      await focusSelector(client, outerSpacing);
-    } catch (error) {
-      const afterFocus = await evaluate(client, `(() => {
-        const d = document.querySelector('#editor-block-settings-editor-text .text-editor-design');
-        const input = document.querySelector('#editor-block-settings-editor-text input[aria-label="블록 사이 (px)"]');
-        const panel = document.querySelector('#editor-block-settings-editor-text');
-        return { open: d?.open, remember: d?.dataset.rememberedExpanded,
-          expanded: d?.dataset.uiExpanded, key: d?.dataset.uiKey,
-          inputPresent: !!input, inputVisible: !!input?.getClientRects().length,
-          active: document.activeElement?.outerHTML.slice(0, 160),
-          selectedPanel: panel?.dataset.blockSettingsId };
-      })()`);
-      throw new Error(error.message + ': ' + JSON.stringify({ before: disclosureState, afterFocus }));
-    }
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+      'text styling remains expanded after changing its inner spacing');
+    await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '16');
     await waitForBrowser(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return style.paddingTop === '0px' && style.marginTop === '16px'; })()`, 'exact zero padding and numeric outer spacing render without publishing').catch(async (error) => {
       const actual = await evaluate(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return { padding: style.paddingTop, margin: style.marginTop, paddingValue: style.getPropertyValue('--widget-padding'), marginValue: style.getPropertyValue('--widget-margin') }; })()`);
@@ -2182,6 +2159,12 @@ async function run() {
     await focusSelector(client, textDesignSummary);
     await pressKeyboardKey(client, 'Space');
     await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === false`, 'text design closes without replacing content');
+    // The compact inspector hides secondary spacing while closed. Reopen it
+    // before the numeric range and blur scenarios instead of focusing hidden fields.
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+      'text spacing remains reachable after explicitly reopening design');
 
     await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '999');
