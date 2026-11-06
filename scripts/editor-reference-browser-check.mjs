@@ -712,7 +712,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `(() => {
     const row = document.querySelector('#editor-block-editor-image');
     return row?.querySelector('.screen-order-v2-identity-copy strong')?.textContent === '본식 사진 QA'
-      && document.querySelector('.screen-order-v2-settings-title > h2')?.textContent === '본식 사진 QA';
+      && document.querySelector('.editor-inspector-selected-copy > h2')?.textContent === '본식 사진 QA';
   })()`, 'image nickname synchronizes list and inspector');
   await capture(client, 'image-label-editor-1672');
   assert(await evaluate(client, `document.querySelector('#editor-block-settings-editor-image input[placeholder="이미지 설명을 입력하세요"]')?.value`) === originalCaption,
