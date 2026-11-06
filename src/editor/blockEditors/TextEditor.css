@@ -52,6 +52,35 @@ html body #root .canvas-editor-shell .text-editor-design-controls .color-main > 
 html body #root .canvas-editor-shell .text-editor-flow .widget-spacing-controls { display: grid; gap: var(--editor-ui-space-3, 12px); border: 0; }
 html body #root .canvas-editor-shell .text-editor-flow .widget-spacing-controls > h3 { margin: 0 0 var(--editor-ui-space-1, 4px); color: var(--editor-ui-text, #182230); font-size: var(--editor-ui-section-size, 13px); font-weight: var(--editor-ui-strong, 650); }
 
+/* The first view now resembles a content editor, not a wall of settings.
+   Existing rich-text value conversion, IME and undo path remain unchanged. */
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-control textarea {
+  padding: 13px 14px !important;
+  border: 1px solid #dce3ef !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2--compact-text .editor-field-v2-control textarea {
+  min-height: 82px !important;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2--body-text .editor-field-v2-control textarea {
+  min-height: 128px !important;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-control textarea:focus-visible {
+  border-color: #6385f6 !important;
+  outline: 2px solid #dce5ff !important;
+  outline-offset: 0;
+}
+html body #root .canvas-editor-shell .text-editor-flow .text-editor-design {
+  margin-top: 12px;
+}
+
 /* Keep editable text and property values legible at the reference viewport. */
 html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-label strong { color: var(--editor-ui-text, #182230) !important; font-size: var(--editor-ui-label-size, 13px) !important; font-weight: var(--editor-ui-label-weight, 600) !important; }
 html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-control textarea { min-height: 78px !important; font-size: 16px !important; line-height: 1.6 !important; }
