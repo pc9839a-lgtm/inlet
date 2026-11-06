@@ -2,7 +2,6 @@ export default function CodeEditorBox({ draft, onDraftChange, onOpenModal, onApp
   return (
     <div className="code-editor-box">
       <div className="code-editor-head">
-        <strong>HTML 코드</strong>
         <button type="button" onClick={onOpenModal}>크게 편집</button>
       </div>
       <textarea
