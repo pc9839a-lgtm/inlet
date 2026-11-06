@@ -77,6 +77,11 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   assert(await evaluate(client, `document.querySelector('.form-basic-grid input')?.value === '상담 신청 · 변경 확인' && document.querySelectorAll('.form-design-detail [aria-expanded]').length === 0`), 'design disclosure must preserve primary fields without nested disclosure controls');
   await capture(client, 'desktop-form-design');
   await clickPointer(client, '.form-design-detail > summary');
+  // The new content-first form intentionally keeps submission/consent
+  // settings behind the separate optional behavior group.
+  await clickPointer(client, '.form-behavior-detail > summary');
+  await waitForBrowser(client, `document.querySelector('.form-behavior-detail')?.open === true`,
+    'optional submission and integration settings open after primary form fields');
   await clickPointer(client, '.form-basic-detail:has(.privacy-compact-panel) > summary');
   await waitForBrowser(client, `document.querySelector('.privacy-compact-panel')?.getClientRects().length > 0`, 'privacy controls reachable');
   await clickPointer(client, '.privacy-compact-panel [role="switch"]');
@@ -86,6 +91,8 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   await clickPointer(client, '.form-duplicate-detail > summary');
   await waitForBrowser(client, `document.querySelector('.form-duplicate-detail')?.open`, 'duplicate policy reachable');
   await clickPointer(client, '.form-duplicate-detail > summary');
+  await waitForBrowser(client, `document.querySelector('.form-behavior-detail')?.open === true`,
+    'editing nested privacy options preserves expanded submission settings');
   await clickPointer(client, '.form-embed-button');
   await waitForBrowser(client, `!!document.querySelector('.inlet-html-modal[role="dialog"]')`, 'external embed dialog');
   await pressKeyboardKey(client, 'Escape');
