@@ -2365,7 +2365,7 @@ async function run() {
     await waitForBrowser(client,
       `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open === true`,
       'form consent/duplicate controls available after explicit behavior expansion');
-    await clickSelector(client, '#editor-block-settings-editor-form details:has(.privacy-compact-panel) > summary');
+    await clickSelector(client, '#editor-block-settings-editor-form .form-basic-detail:has(.privacy-compact-panel) > summary');
     const stageFourLegacyToggle = '#editor-block-settings-editor-form .privacy-compact-panel .toggle [role="switch"]';
     const stageFourLegacyChecked = await evaluate(client, `document.querySelector(${JSON.stringify(stageFourLegacyToggle)}).getAttribute('aria-checked')`);
     await focusSelector(client, stageFourLegacyToggle);
@@ -2384,7 +2384,7 @@ async function run() {
       && stageFourLegacyTrack.thumb === '22px',
       'stage4 legacy active styles must not paint a second switch background: ' + JSON.stringify(stageFourLegacyTrack));
     await capture(client, 'desktop-shared-form-stage4');
-    await clickSelector(client, '#editor-block-settings-editor-form details:has(.privacy-compact-panel) > summary');
+    await clickSelector(client, '#editor-block-settings-editor-form .form-basic-detail:has(.privacy-compact-panel) > summary');
     await clickSelector(client, '#editor-block-settings-editor-form .form-duplicate-detail > summary');
     const stageFourLegacyChoice = '#editor-block-settings-editor-form .choice[aria-label="연락처"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourLegacyChoice)})`, 'stage4 legacy contact choice');
