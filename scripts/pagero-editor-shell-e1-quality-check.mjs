@@ -226,7 +226,7 @@ const typographyTokens = [
   '--editor-ui-section-size: 13px;',
   '--editor-ui-label-size: 13px;',
   '--editor-ui-value-size: 14px;',
-  '--editor-ui-row-size: 12px;',
+  '--editor-ui-row-size: 13px;',
   '--editor-ui-helper-size: 11px;',
   '--editor-ui-space-1: 4px;',
   '--editor-ui-space-2: 8px;',
