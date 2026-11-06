@@ -26,11 +26,11 @@ const LEAD_BRIDGE = Object.freeze({
     phone: ['phone', 'phone_number', 'mobile', 'tel', '전화번호', '연락처', '휴대폰번호', 'DATAS_phone'],
     email: ['email', '이메일', 'DATAS_email'],
     job: ['job', '직업', 'DATAS_job'],
-    area: ['area', 'region', '거주지역', '지역', 'DATAS_area'],
-    money: ['money', 'debt', '채무금액', '채무', 'DATAS_money'],
+    area: ['area', 'region', '거주지역', '거주지역을_입력해주세요', '지역', 'DATAS_area'],
+    money: ['money', 'debt', '채무금액', '총_채무액_선택_(2,000미만_불가)', '채무', 'DATAS_money'],
     calldate: ['calldate', '상담가능시간', '상담시간', 'DATAS_calldate'],
     age: ['age', '나이', 'DATAS_age'],
-    data: ['data', 'content', 'message', '문의내용', '상담내용', 'DATAS_data'],
+    data: ['data', 'content', 'message', '문의내용', '문의내용_(ex.개인회생/파산_등)', '상담내용', 'DATAS_data'],
     gtype: ['gtype', '업종', 'DATAS_gtype'],
     insert_ad: ['insert_ad', '유입경로', '광고출처', 'DATAS_insert_ad'],
     partner_id: ['partner_id', '접수인아이디', '접수인id', 'DATAS_partner_id'],
@@ -259,7 +259,8 @@ function leadBridgeSendCallTag_(endpoint, source, eventId) {
 function leadBridgeSendAdvertiser_(endpoint, item, source) {
   const form = { ITEM: item };
   Object.keys(LEAD_BRIDGE.AD_FIELDS).forEach(key => {
-    if (source[key]) form[LEAD_BRIDGE.AD_FIELDS[key]] = source[key];
+    if (source[key]) form[LEAD_BRIDGE.AD_FIELDS[key]] = key === 'phone'
+      ? leadBridgeFormatAdvertiserPhone_(source.phone) : source[key];
   });
   const body = Object.keys(form).map(k =>
     encodeURIComponent(k) + '=' + encodeURIComponent(String(form[k]))).join('&');
@@ -364,6 +365,17 @@ function leadBridgeNormalizePhone_(value) {
   return digits;
 }
 
+// Mirrors the working Make HTTP scenario: 010-1234-5678 rather than raw digits.
+// CallTag receives normalized digits independently.
+function leadBridgeFormatAdvertiserPhone_(value) {
+  const phone = leadBridgeNormalizePhone_(value);
+  return /^010\d{8}$/.test(phone)
+    ? phone.slice(0, 3) + '-' + phone.slice(3, 7) + '-' + phone.slice(7)
+    : /^01\d\d{7,8}$/.test(phone)
+      ? phone.slice(0, 3) + '-' + phone.slice(3, phone.length - 4) + '-' + phone.slice(-4)
+      : phone;
+}
+
 function leadBridgeHeader_(value) {
   return String(value == null ? '' : value).normalize('NFKC')
     .toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
@@ -389,12 +401,13 @@ function leadBridgeSheet_() {
 function leadBridgeEndpoints_() {
   const p = PropertiesService.getScriptProperties();
   const calltag = p.getProperty('CALLTAG_WEBHOOK_URL') || '';
-  const advertiser = p.getProperty('ADVERTISER_URL') || '';
+  // HTTPS endpoint confirmed in the user-provided working Make HTTP module configuration.
+  const advertiser = p.getProperty('ADVERTISER_URL') || 'https://ollymkt.shop/dbapi/';
   if (!/^https:\/\/[^/]+\/api\/calltag\/v1\/hooks\/ctwh_[\w-]+$/.test(calltag)) {
     throw new Error('콜태그 Webhook HTTPS 주소를 CALLTAG_WEBHOOK_URL에 설정하세요.');
   }
   if (!/^https:\/\/[^/]+\/.+/.test(advertiser)) {
-    throw new Error('광고주가 HTTPS를 지원하는지 확인하고 ADVERTISER_URL에 넣으세요. HTTP 전송은 금지합니다.');
+    throw new Error('ADVERTISER_URL은 HTTPS 주소여야 합니다. 일반 HTTP 전송은 금지합니다.');
   }
   const item = p.getProperty('ADVERTISER_ITEM') || '64';
   if (!/^\d+$/.test(item)) throw new Error('ADVERTISER_ITEM은 숫자여야 합니다.');
