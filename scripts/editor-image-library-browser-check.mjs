@@ -398,7 +398,7 @@ async function run() {
     await clickSelector(client, '.image-editor-more > summary');
     await waitForBrowser(client, `document.querySelector('.image-editor-more')?.open === true && document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`,
       'saved image height restored after expanding optional design');
-    await waitForBrowser(client, `document.querySelector('.image-editor-flow input[placeholder="이미지 설명을 입력하세요"]')?.value === '사진 설명 수정 확인'` 'saved image caption restored');
+    await waitForBrowser(client, `document.querySelector('.image-editor-flow input[placeholder="이미지 설명을 입력하세요"]')?.value === '사진 설명 수정 확인'`, 'saved image caption restored');
     const hasRecoveryDialog = await evaluate(client, `!!document.querySelector('[role="dialog"], [role="alertdialog"]')`);
     if (hasRecoveryDialog) {
       const candidates = await evaluate(client, `Object.entries(localStorage).filter(([key]) => key.startsWith('inlet-page-drafts-v1')).flatMap(([key, raw]) => {
