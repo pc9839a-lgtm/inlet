@@ -476,6 +476,38 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
     'optional text design is opened for control geometry tests');
 
+  // A multi-digit size edit must keep input focus until explicit commit.
+  // The lazy Inspector can remount after draft updates, so never emit every
+  // intermediate digit to the page model while typing.
+  const sizeInput = '#editor-block-settings-editor-text .text-editor-design .editor-number-value > input';
+  const originalSize = await evaluate(client, `document.querySelector(${JSON.stringify(sizeInput)})?.value`);
+  await focusSelector(client, sizeInput);
+  await client.send('Input.dispatchKeyEvent', {
+    type: 'keyDown', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2,
+  });
+  await client.send('Input.dispatchKeyEvent', {
+    type: 'keyUp', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2,
+  });
+  await client.send('Input.insertText', { text: '36' });
+  await waitForBrowser(client, `(() => {
+    const el = document.querySelector(${JSON.stringify(sizeInput)});
+    return document.activeElement === el && el?.value === '36';
+  })()`, 'multi-digit size edit keeps the active numeric input focused');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector(${JSON.stringify(sizeInput)})?.value === '36'`,
+    'Enter commits the full numeric value');
+  await focusSelector(client, sizeInput);
+  await client.send('Input.dispatchKeyEvent', {
+    type: 'keyDown', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2,
+  });
+  await client.send('Input.dispatchKeyEvent', {
+    type: 'keyUp', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2,
+  });
+  await client.send('Input.insertText', { text: String(originalSize) });
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector(${JSON.stringify(sizeInput)})?.value === ${JSON.stringify(String(originalSize))}`,
+    'size edit restores the original value without touching published content');
+
   // UX-032: 42px native fields / 36px compact fields / 44px toggle hit area.
   // Check computed styles at compact and wide inspector widths. Keep model
   // values unchanged; disabled states below are DOM-only and immediately reset.
