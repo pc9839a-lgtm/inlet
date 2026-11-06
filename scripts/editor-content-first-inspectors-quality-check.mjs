@@ -8,6 +8,7 @@ const form = read('src/editor/blockEditors/FormEditor.jsx');
 const code = read('src/editor/blockEditors/CodeEditor.jsx');
 const codeBox = read('src/editor/blockEditors/CodeEditorBox.jsx');
 const inspector = read('src/editor/editPanelParts/ScreenOrderSettings.jsx');
+const disclosure = read('src/editor/ui/InspectorDisclosure.jsx');
 const css = read('src/editor/EditPanelLayout.css');
 const browser = read('scripts/editor-reference-browser-check.mjs');
 
@@ -38,6 +39,8 @@ assert(inspector.includes('editor-inspector-selected-copy') && inspector.include
 assert(css.includes('.editor-inspector-kind-icon') && css.includes('.editor-inspector-selected-copy')
   && css.includes('margin: 4px 0 17px;'),
   'inspector styles are owned by existing layout stylesheet');
+assert(disclosure.includes('useState(defaultOpen)') && disclosure.includes('onToggle={(event) => setExpanded(event.currentTarget.open)}'),
+  'native disclosure must persist the user-expanded state across edits');
 assert(browser.includes('inspector-content-first-') && browser.includes('firstView.secondaryClosed')
   && browser.includes('optionalText.spacingVisible') && browser.includes('optionalText.colorVisible'),
   'real Chrome verifies first-view design and hidden style controls reopening');
