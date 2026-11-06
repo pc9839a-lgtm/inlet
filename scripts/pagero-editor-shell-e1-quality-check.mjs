@@ -426,7 +426,7 @@ assert(disclosure.includes('<details') && disclosure.includes('<summary>') && di
   && !settingsHeader.includes('InspectorNavigation')
   && !editPanelLayoutCss.includes('.inspector-navigation')
   && [heroEditor, textEditor, imageEditor, formEditor, advanced].every(source => source.includes('<InspectorDisclosure'))
-  && formEditor.includes('inspector-subgroup-heading')
+  && formEditor.includes('label="제출 후 동작과 연동"') && formEditor.includes('<FormPrivacySettings')
   && editPanelLayoutCss.includes('.screen-order-v2-settings .inspector-disclosure'),
   'inspector must use one shared content/behavior/design/advanced native disclosure hierarchy without duplicate shortcuts');
 assert(editPanelLayoutCss.includes('.editor-composition-footer > .editor-page-settings-button')
