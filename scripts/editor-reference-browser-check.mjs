@@ -467,6 +467,15 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('.inspector-primary-heading') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy text inspector');
 
+  // The redesigned first view keeps design closed. Open it deliberately for
+  // secondary-control sizing and focus tests, rather than treating hidden
+  // fields as a visual regression.
+  if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
+    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  }
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'optional text design is opened for control geometry tests');
+
   // UX-032: 42px native fields / 36px compact fields / 44px toggle hit area.
   // Check computed styles at compact and wide inspector widths. Keep model
   // values unchanged; disabled states below are DOM-only and immediately reset.
@@ -911,10 +920,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
   await setInputValue(client, title, '더 나은 세상을 만드는\n당신의 아이디어');
-  // Styling is intentionally hidden until the user opens Design.
-  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  // Styling is initially hidden, but may already be expanded by a prior
+  // control-focus test. Preserve either state without closing it accidentally.
+  if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
+    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  }
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
-    'text visual styling can still be opened explicitly');
+    'text design controls remain reachable explicitly');
   await clickPointer(client, 'input[aria-label="제목 크기 (px)"]');
   await setInputValue(client, 'input[aria-label="제목 크기 (px)"]', '48');
   await focusSelector(client, 'input[aria-label="본문 크기 (px)"]');
