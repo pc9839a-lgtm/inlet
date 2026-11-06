@@ -69,7 +69,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         primaryHeight: primary?.getBoundingClientRect().height || 0,
         secondaryClosed: secondary?.tagName === 'DETAILS' && secondary.open === false,
         bodyVisible: !!body?.getClientRects().length,
-        directCode: id === 'editor-code' ? code?.getBoundingClientRect().height >= 290 : true,
+        directCode: ${JSON.stringify(id)} === 'editor-code' ? code?.getBoundingClientRect().height >= 290 : true,
       };
     })()`);
     assert(firstView.heading === heading && firstView.identityVisible && firstView.primaryVisible
