@@ -28,7 +28,11 @@ html body #root .builder-shell .image-editor-flow .crop-open-button { justify-se
 .builder-shell .image-editor-more-controls { display: grid; gap: var(--editor-ui-space-3, 12px); padding: var(--editor-ui-space-1, 4px) 0 var(--editor-ui-space-3, 12px); }
 .builder-shell .image-editor-more:not([open]) > .image-editor-more-controls { display: none; }
 .builder-shell .image-editor-storage:not([open]) > .image-storage-cleanup { display: none !important; }
-.builder-shell .image-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: var(--editor-ui-space-4, 16px); }
+.builder-shell .image-editor-more-controls > .widget-spacing-controls {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #edf0f5;
+}
 .builder-shell .image-editor-flow summary:focus-visible { outline: 2px solid var(--editor-ui-accent, #2454ff); outline-offset: 2px; border-radius: var(--editor-ui-space-1, 4px); }
 
 /* Keep the complete photo inside the short thumbnail despite legacy image rules. */
