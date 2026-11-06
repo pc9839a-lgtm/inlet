@@ -12,7 +12,7 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout {
   --editor-ui-section-size: 13px;
   --editor-ui-label-size: 13px;
   --editor-ui-value-size: 14px;
-  --editor-ui-row-size: 12px;
+  --editor-ui-row-size: 13px;
   --editor-ui-helper-size: 11px;
   --editor-ui-text: #182230;
   --editor-ui-muted: #667085;
@@ -259,7 +259,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-view {
   flex-direction: column;
   min-width: 0;
 }
-html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: sticky; top: 0; z-index: 6; padding: 22px 0 16px; margin: 0 0 18px; border-bottom: 1px solid #eef0f6; background: #fff; }
+html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: sticky; top: 0; z-index: 6; padding: 14px 0 12px; margin: 0 0 14px; border-bottom: 1px solid #eef0f6; background: #fff; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title { display: flex; align-items: center; gap: 10px; min-height: 30px; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > h2 { margin: 0; min-width: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size) !important; line-height: 1.4; font-weight: var(--editor-ui-strong); overflow-wrap: anywhere; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > svg { flex: 0 0 auto; color: #2454ff; }
