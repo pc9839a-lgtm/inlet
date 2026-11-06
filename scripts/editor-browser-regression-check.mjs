@@ -2145,7 +2145,21 @@ async function run() {
     })()`);
     assert(disclosureState?.open && disclosureState.inputVisible,
       'editing inner spacing must preserve outer spacing controls: ' + JSON.stringify(disclosureState));
-    await focusSelector(client, outerSpacing);
+    try {
+      await focusSelector(client, outerSpacing);
+    } catch (error) {
+      const afterFocus = await evaluate(client, `(() => {
+        const d = document.querySelector('#editor-block-settings-editor-text .text-editor-design');
+        const input = document.querySelector('#editor-block-settings-editor-text input[aria-label="블록 사이 (px)"]');
+        const panel = document.querySelector('#editor-block-settings-editor-text');
+        return { open: d?.open, remember: d?.dataset.rememberedExpanded,
+          expanded: d?.dataset.uiExpanded, key: d?.dataset.uiKey,
+          inputPresent: !!input, inputVisible: !!input?.getClientRects().length,
+          active: document.activeElement?.outerHTML.slice(0, 160),
+          selectedPanel: panel?.dataset.blockSettingsId };
+      })()`);
+      throw new Error(error.message + ': ' + JSON.stringify({ before: disclosureState, afterFocus }));
+    }
     await setInputValue(client, outerSpacing, '16');
     await waitForBrowser(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return style.paddingTop === '0px' && style.marginTop === '16px'; })()`, 'exact zero padding and numeric outer spacing render without publishing').catch(async (error) => {
       const actual = await evaluate(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return { padding: style.paddingTop, margin: style.marginTop, paddingValue: style.getPropertyValue('--widget-padding'), marginValue: style.getPropertyValue('--widget-margin') }; })()`);
