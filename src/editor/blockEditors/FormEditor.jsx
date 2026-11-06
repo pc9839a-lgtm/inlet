@@ -36,23 +36,24 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
         onDragEnd={questionState.endQuestionDrag}
       />
       <Field label="버튼 문구" value={s.submit} onChange={(value) => set({ submit: value })} />
-      <div className="form-editor-settings">
-        <h3 className="inspector-subgroup-heading">동작</h3>
-        <FormPrivacySettings s={s} set={set} />
-        <FormSuccessSettings s={s} set={set} />
-        <FormSubmissionSection s={s} set={set} />
-      </div>
-      <InspectorDisclosure label="디자인" className="form-basic-detail form-design-detail">
+      <InspectorDisclosure label="디자인 조정" className="form-basic-detail form-design-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-design` : ''}>
         <FormDesignSection s={s} set={set} direct />
       </InspectorDisclosure>
-      <FormExternalSection
-        s={s}
-        page={page}
-        blockId={blockId}
-        htmlOpen={htmlOpen}
-        setHtmlOpen={setHtmlOpen}
-        generateStandaloneFormHtml={generateStandaloneFormHtml}
-      />
+      <InspectorDisclosure label="제출 후 동작과 연동" className="form-behavior-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-behavior` : ''}>
+        <div className="form-editor-settings">
+          <FormPrivacySettings s={s} set={set} />
+          <FormSuccessSettings s={s} set={set} />
+          <FormSubmissionSection s={s} set={set} />
+        </div>
+        <FormExternalSection
+          s={s}
+          page={page}
+          blockId={blockId}
+          htmlOpen={htmlOpen}
+          setHtmlOpen={setHtmlOpen}
+          generateStandaloneFormHtml={generateStandaloneFormHtml}
+        />
+      </InspectorDisclosure>
     </div>
   );
 }

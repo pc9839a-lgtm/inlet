@@ -129,3 +129,33 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .
     max-height: none !important;
   }
 }
+
+/* Image clicks use the existing Inspector media picker in editor mode only. */
+.editor-preview .image-sec img { cursor: pointer; }
+
+/* Only the selected editor-only photo offers direct replacement. */
+.editor-preview .image-sec { position: relative; }
+.editor-preview .editor-preview-image-replace {
+  position: absolute;
+  z-index: 5;
+  top: 10px;
+  right: 10px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #182230;
+  box-shadow: 0 1px 5px #1018281f;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.editor-preview .editor-preview-image-replace:focus-visible { outline: 2px solid #2454ff; outline-offset: 2px; }
+
+/* Exact gallery slot actions appear only inside a selected editor preview. */
+.editor-preview .image-gallery-grid-item { position: relative; }
+.editor-preview .image-gallery-grid-item .editor-preview-image-replace { top: 6px; right: 6px; padding: 6px 8px; font-size: 11px; }
+.editor-preview .image-wrap > .editor-preview-image-replace { top: 10px; right: 10px; }

@@ -25,13 +25,15 @@ export default function ImageGalleryEditor({ gallery, set, updateGallery, remove
         getTitle={(item) => `이미지 ${item.index + 1}`}
         getBadge={(item) => (item.src ? '등록됨' : '비어 있음')}
         renderItem={(item) => (
-          <ImageInput
-            label="이미지"
+          <div data-editor-gallery-item-index={item.index}>
+            <ImageInput
+            label={`이미지 ${item.index + 1}`}
             compact
             value={item.src}
             duplicateValues={gallery.filter((_, index) => index !== item.index)}
             onChange={(value) => updateGallery(item.index, value)}
-          />
+            />
+          </div>
         )}
         onAdd={gallery.length < 4 ? () => set({ gallery: [...gallery, ''] }) : undefined}
         addLabel="이미지 추가"

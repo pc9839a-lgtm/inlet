@@ -32,6 +32,17 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   await enterText('.form-editor-flow > .field input', '상담 예약하기');
   await waitForBrowser(client, `(document.querySelector('.phone-frame #block-editor-form')?.innerText || '').includes('상담 신청 · 변경 확인') && document.querySelector('.phone-frame #block-editor-form button[type="submit"]')?.textContent.includes('상담 예약하기')`, 'form title and submit text update preview without tabs');
 
+  // Most common form question is one click: existing picker remains for other types.
+  await clickPointer(client, '.form-question-add-primary');
+  await waitForBrowser(client, `document.querySelectorAll('.form-question-card').length === 3
+    && !!document.querySelector('.form-question-card.open .form-question-body > .field input')`,
+    'one-click default text question opens immediately');
+  await waitForBrowser(client, `document.activeElement === document.querySelector('.form-question-card.open .form-question-body > .field input')`,
+    'one-click question focuses its editable label');
+  await clickPointer(client, '.form-question-card.open .form-question-actions .danger');
+  await waitForBrowser(client, `document.querySelectorAll('.form-question-card').length === 2`,
+    'one-click temporary question can be removed without changing original questions');
+
   const addSummary = '.form-question-add > summary';
   await focusSelector(client, addSummary);
   await pressKeyboardKey(client, 'Enter');
@@ -77,6 +88,11 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   assert(await evaluate(client, `document.querySelector('.form-basic-grid input')?.value === '상담 신청 · 변경 확인' && document.querySelectorAll('.form-design-detail [aria-expanded]').length === 0`), 'design disclosure must preserve primary fields without nested disclosure controls');
   await capture(client, 'desktop-form-design');
   await clickPointer(client, '.form-design-detail > summary');
+  // The new content-first form intentionally keeps submission/consent
+  // settings behind the separate optional behavior group.
+  await clickPointer(client, '.form-behavior-detail > summary');
+  await waitForBrowser(client, `document.querySelector('.form-behavior-detail')?.open === true`,
+    'optional submission and integration settings open after primary form fields');
   await clickPointer(client, '.form-basic-detail:has(.privacy-compact-panel) > summary');
   await waitForBrowser(client, `document.querySelector('.privacy-compact-panel')?.getClientRects().length > 0`, 'privacy controls reachable');
   await clickPointer(client, '.privacy-compact-panel [role="switch"]');
@@ -86,6 +102,8 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   await clickPointer(client, '.form-duplicate-detail > summary');
   await waitForBrowser(client, `document.querySelector('.form-duplicate-detail')?.open`, 'duplicate policy reachable');
   await clickPointer(client, '.form-duplicate-detail > summary');
+  await waitForBrowser(client, `document.querySelector('.form-behavior-detail')?.open === true`,
+    'editing nested privacy options preserves expanded submission settings');
   await clickPointer(client, '.form-embed-button');
   await waitForBrowser(client, `!!document.querySelector('.inlet-html-modal[role="dialog"]')`, 'external embed dialog');
   await pressKeyboardKey(client, 'Escape');

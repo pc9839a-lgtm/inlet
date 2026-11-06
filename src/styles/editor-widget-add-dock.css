@@ -457,8 +457,64 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-add-dock.
   max-height: none !important;
 }
 
-/* Reference heading add button and bounded catalog. */
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact { position: static !important; flex: 0 0 36px !important; padding: 0 !important; border: 0 !important; background: transparent !important; inset: auto !important; transform: none !important; width: 36px !important; max-width: 36px !important; margin: 0 !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle { display: inline-flex !important; justify-content: center !important; width: 36px !important; min-width: 36px !important; height: 36px !important; min-height: 36px !important; padding: 0 !important; border: 1px solid #e2e7f2 !important; border-radius: 9px !important; background: #fff !important; color: #172039 !important; box-shadow: none !important; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .add-dock-compact.open .add-panel { position: absolute !important; top: 66px !important; left: 0 !important; right: 0 !important; width: 100% !important; min-width: 0 !important; max-height: calc(100dvh - 150px) !important; overflow-y: auto !important; border: 1px solid #e2e7f2 !important; border-radius: 10px !important; background: #fff !important; box-shadow: 0 12px 32px #17203918 !important; z-index: 10; }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .add-dock-compact .widget-group-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+/* Full-width add entry from the selected 1672px layout.
+   The existing catalog stays anchored to the heading, not a new drawer. */
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact {
+  position: static !important;
+  flex: initial !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 40px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  transform: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 10px !important;
+  border: 1px solid #cfddff !important;
+  border-radius: 8px !important;
+  background: #edf2ff !important;
+  color: #2454ff !important;
+  box-shadow: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle strong {
+  display: inline !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  font-weight: 650 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle:is(:hover,:focus-visible),
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle[aria-expanded='true'] {
+  border-color: #aabfff !important;
+  background: #e3ebff !important;
+  color: #1746d2 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .add-dock-compact.open .add-panel {
+  position: absolute !important;
+  top: calc(100% - 2px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-height: min(62dvh, 620px) !important;
+  overflow-y: auto !important;
+  border: 1px solid #d8e3f4 !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  box-shadow: 0 12px 32px #17203918 !important;
+  z-index: 10;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .add-dock-compact .widget-group-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}

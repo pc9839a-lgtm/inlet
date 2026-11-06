@@ -30,7 +30,7 @@ export default function LinksEditor({ s, set, page, TargetControl }) {
                 getTitle={(item, index) => item.label || `링크 ${index + 1}`}
                 getIcon={(item) => getLinkIcon(item)}
                 getBadge={(item) => getLinkBadge(item)}
-                renderItem={(item) => <LinkItemFields item={item} page={page} TargetControl={TargetControl} onUpdate={(patch) => updateItem(item.id, patch)} />}
+                renderItem={(item, index) => <LinkItemFields item={item} index={index} page={page} TargetControl={TargetControl} onUpdate={(patch) => updateItem(item.id, patch)} />}
                 onRemove={(item) => removeItem(item.id)}
                 onAdd={addItem}
                 addLabel="링크 추가"

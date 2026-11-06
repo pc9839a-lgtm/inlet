@@ -290,6 +290,17 @@ body .builder-shell .edit-layout .block-editor-v2 .form-embed-button { display: 
   }
 }
 
+/* The question builder is the default task. Advanced submission policy is
+   still available through one named, keyboard-accessible native disclosure. */
+html body #root .canvas-editor-shell .form-editor-flow .form-behavior-detail .form-editor-settings {
+  display: grid;
+  gap: 12px;
+  padding-top: 4px;
+}
+html body #root .canvas-editor-shell .form-editor-flow .form-behavior-detail .form-embed-button {
+  margin-top: 12px;
+}
+
 /* Mobile form builder: questions read as editable items, not a dense table. */
 body .builder-shell.canvas-editor-shell .edit-layout .form-editor-flow {
   gap: var(--editor-ui-space-4, 16px);
@@ -317,4 +328,44 @@ body .builder-shell.canvas-editor-shell .edit-layout .form-question-body {
 body .builder-shell.canvas-editor-shell .edit-layout .form-question-identity strong {
   font-size: 13px;
   font-weight: 600;
+}
+
+/* One-click primary question creation; optional types retain the existing picker. */
+.block-editor-v2 .form-question-add-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  min-width: 0;
+}
+body .builder-shell .edit-layout .block-editor-v2 .form-question-add-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px !important;
+  padding: 0 12px !important;
+  border: 1px solid #c8d6ff !important;
+  border-radius: 7px !important;
+  background: #eff3ff !important;
+  color: #2454ff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+.block-editor-v2 .form-question-add-actions .form-question-add { min-width: 0; }
+.block-editor-v2 .form-question-add-actions .form-question-add > summary {
+  min-height: 40px;
+  padding: 0 6px;
+  color: #475467;
+}
+.block-editor-v2 .form-question-add-actions .form-question-tools {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.block-editor-v2 .form-question-add-primary:focus-visible { outline: 2px solid #2454ff; outline-offset: 2px; }
+@container editor-inspector (max-width: 280px) {
+  .block-editor-v2 .form-question-add-actions { grid-template-columns: minmax(0, 1fr); }
+  .block-editor-v2 .form-question-add-actions .form-question-add > summary { justify-content: center; }
 }

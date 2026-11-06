@@ -226,7 +226,7 @@ const typographyTokens = [
   '--editor-ui-section-size: 13px;',
   '--editor-ui-label-size: 13px;',
   '--editor-ui-value-size: 14px;',
-  '--editor-ui-row-size: 12px;',
+  '--editor-ui-row-size: 13px;',
   '--editor-ui-helper-size: 11px;',
   '--editor-ui-space-1: 4px;',
   '--editor-ui-space-2: 8px;',
@@ -376,16 +376,16 @@ assert(!headerSource.includes('panel-save-status operations-save-status')
 
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('--editor-list-width: clamp(220px, 16vw, 240px);')
-  && css.includes('--editor-edit-width: clamp(500px, calc(100vw - 410px), 700px);')
+assert(css.includes('--editor-list-width: clamp(220px, 16.5vw, 276px);')
+  && css.includes('--editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 394px)), 670px);')
   && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;')
   && editPanelLayoutCss.includes('.editor-inspector-panel { padding: 0 16px 32px;')
   && editPanelLayoutCss.includes('.builder-shell.canvas-editor-shell .editor-inspector-panel { padding-inline: 8px;')
-  && css.includes('overflow: hidden auto !important;'),
-  '24th patch: keep the editor <=700px, reclaim inspector width without narrowing the 390px preview or adding scrollbars');
+  && css.includes('overflow: hidden !important;'),
+  'selected reference: 276px list, 394px Inspector, 390px phone without adding outer scroll');
 assert(!editPanelLayoutCss.includes('.editor-inspector-panel:has(.editor-selection-empty)') && layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;") && layout.includes('{showPageOptions ? ('), 'unselected editor must keep inspector open with useful page settings');
 assert(layout.includes('editor-composition-heading') && editPanelLayoutCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;'), 'block list and inspector must share compact editor space');
-assert(css.includes('overflow: hidden auto !important;') && editPanelLayoutCss.includes('overflow: visible !important;'), 'edit workspace must have one scrollbar and no nested scrolling panels');
+assert(css.includes('overflow: hidden !important;') && editPanelLayoutCss.includes('.editor-composition-content {') && editPanelLayoutCss.includes('overflow-y: auto !important;') && editPanelLayoutCss.includes('.editor-inspector-panel {') && editPanelLayoutCss.includes('overflow-x: hidden !important;'), 'edit workspace must keep independent navigator and Inspector scrolls without outer scroll');
 assert(previewPaneCss.includes('width: 394px !important;') && previewPaneCss.includes('width: 392px !important;') && previewPaneCss.includes('--landing-runtime-width: 390px;') && previewPaneCss.includes('justify-content: center !important;'), 'single 390px phone must be centered in its right-side stage, not pushed to the browser edge');
 assert(addDockCss.includes('/* Active editor dock geometry.')
   && addDockCss.includes('position: static !important;')
@@ -410,7 +410,7 @@ assert(settingsView.includes('<InspectorBlockSwitch navigation={navigation} />')
   && inspectorSwitch.includes('aria-label="다음 블록"')
   && editPanelLayoutCss.includes('.editor-inspector-panel .screen-order-v2-card')
   && editPanelLayoutCss.includes('.editor-block-switch'),
-  'inspector must keep non-destructive previous/next controls available with the shared scrollbar');
+  'inspector must keep previous/next controls with independent list scrolling');
 assert(stylePanel.includes("globalAlign: next === 'block' ? '' : next")
   && stylePanel.includes("[ 'block', '블록별' ]")
   && stylePanel.includes('countTextColorSources(page?.blocks)')
@@ -421,18 +421,18 @@ assert(stylePanel.includes("globalAlign: next === 'block' ? '' : next")
   && sharedControlsCss.includes('.editor-theme-source')
   && !layout.includes('data-page-theme-inheritance-override'),
   'page and block theme UI must use existing schema fields, explicit text reset and accurate bottom preset vs accent status');
-assert(disclosure.includes('<details') && disclosure.includes('<summary>') && disclosure.includes('inspector-disclosure-body')
+assert(disclosure.includes('<details') && disclosure.includes('<summary onClick={onActivate}>') && disclosure.includes('inspector-disclosure-body')
   && settingsHeader.includes('inspector-primary-heading')
   && !settingsHeader.includes('InspectorNavigation')
   && !editPanelLayoutCss.includes('.inspector-navigation')
   && [heroEditor, textEditor, imageEditor, formEditor, advanced].every(source => source.includes('<InspectorDisclosure'))
-  && formEditor.includes('inspector-subgroup-heading')
+  && formEditor.includes('label="제출 후 동작과 연동"') && formEditor.includes('<FormPrivacySettings')
   && editPanelLayoutCss.includes('.screen-order-v2-settings .inspector-disclosure'),
   'inspector must use one shared content/behavior/design/advanced native disclosure hierarchy without duplicate shortcuts');
-assert(editPanelLayoutCss.includes('.editor-composition-heading > .editor-page-settings-button')
+assert(editPanelLayoutCss.includes('.editor-composition-footer > .editor-page-settings-button')
   && editPanelLayoutCss.includes('min-height: 40px;')
   && layout.includes('<BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} fixedDescriptors={fixedDescriptors} selectedId={selectedBlockId} onSelect={chooseSearchResult} onRevealSelected={revealFixedSearch} />'),
-  'page settings and non-destructive block search must remain reachable in the composition header');
+  'page settings stay pinned below the list while search remains visible above scrollable rows');
 assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
 assert(previewPaneCss.includes('border: 2px solid #cbd5e1')
   && previewPaneCss.includes('border-radius: 20px')

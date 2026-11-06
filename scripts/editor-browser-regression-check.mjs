@@ -709,6 +709,36 @@ async function clickPointer(client, selector) {
   await wait(150);
 }
 
+// Click the matching row's portal action rather than whichever menu happens
+// to be mounted while focus is transferring between the list and Inspector.
+async function clickRowMenuAction(client, blockId, label) {
+  const trigger = `#editor-block-${blockId} .screen-order-v2-action`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ready = await evaluate(client, `(() => {
+      const button = document.querySelector(${JSON.stringify(trigger)});
+      const menu = button?.getAttribute('aria-expanded') === 'true'
+        ? document.getElementById(button.getAttribute('aria-controls') || '')
+        : null;
+      return !!menu && [...menu.querySelectorAll('button')].some((b) =>
+        b.textContent.trim() === ${JSON.stringify(label)} && !b.disabled);
+    })()`);
+    if (!ready) await clickSelector(client, trigger);
+    const clicked = await evaluate(client, `(() => {
+      const trigger = document.querySelector(${JSON.stringify(trigger)});
+      const menu = trigger?.getAttribute('aria-expanded') === 'true'
+        ? document.getElementById(trigger.getAttribute('aria-controls') || '')
+        : null;
+      const action = [...(menu?.querySelectorAll('button') || [])]
+        .find((item) => item.textContent.trim() === ${JSON.stringify(label)} && !item.disabled);
+      if (!action) return false;
+      action.click();
+      return true;
+    })()`);
+    if (clicked) return;
+  }
+  throw new Error(`Could not activate ${label} for exact row ${blockId}`);
+}
+
 async function normalBlockOrder(client) {
   return evaluate(client, `[...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id)`);
 }
@@ -971,8 +1001,9 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  const expectedEdit = Math.min(700, Math.max(500, width - 410));
-  const expectedComposition = Math.min(240, Math.max(220, width * 0.16));
+  // Selected 1672px reference: 276px list + 394px Inspector.
+  const expectedComposition = Math.min(276, Math.max(220, width * 0.165));
+  const expectedEdit = Math.min(670, Math.max(500, Math.min(width - 410, expectedComposition + 394)));
   const expectedInspector = expectedEdit - expectedComposition;
   assert(Math.abs(edit - expectedEdit) <= 2,
     `left editor must be wide enough for editing at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
@@ -1045,6 +1076,7 @@ async function run() {
   let client = null;
   let secondClient = null;
   let draftTabClient = null;
+  let longPageClient = null;
 
   try {
     qaStep('starting Chrome');
@@ -1141,6 +1173,87 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+
+    // Real mobile preview quick edit must use the same draft as Inspector,
+    // without silently submitting, navigating or publishing.
+    const inlineTitle = '.phone-frame #block-editor-text h2.editor-inline-text-trigger';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTitle) + ')', 'preview text quick-edit trigger');
+    await clickSelector(client, inlineTitle);
+    await waitForBrowser(client, "!!document.querySelector('#editor-block-settings-editor-text')", 'preview selected text inspector');
+    const doubleClicked = await evaluate(client, '(() => { const title = document.querySelector(' + JSON.stringify(inlineTitle) + '); if (!title) return false; title.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true, view: window })); return true; })()');
+    assert(doubleClicked, 'preview heading should support double click');
+    const inlineTextarea = '.phone-frame #block-editor-text textarea[aria-label="제목 바로 수정"]';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTextarea) + ')', 'preview inline title editor');
+    await setInputValue(client, inlineTextarea, '모바일 화면에서 직접 바꾼 제목');
+    await clickSelector(client, '.phone-frame #block-editor-text .editor-inline-text-actions button:last-child');
+    await waitForBrowser(client, "document.querySelector('.phone-frame #block-editor-text h2')?.textContent === '모바일 화면에서 직접 바꾼 제목'", 'preview direct edit applied');
+    await waitForBrowser(client, "document.querySelector('#editor-block-settings-editor-text textarea[placeholder=\"제목을 입력하세요\"]')?.value === '모바일 화면에서 직접 바꾼 제목'", 'direct edit synchronized to Inspector');
+    // Revert through the same workflow so later fixture assertions stay valid.
+    await focusSelector(client, inlineTitle);
+    await pressKeyboardKey(client, 'Enter');
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTextarea) + ')', 'preview keyboard quick-edit entry');
+    await setInputValue(client, inlineTextarea, '편집기 회귀 방지');
+    await clickSelector(client, '.phone-frame #block-editor-text .editor-inline-text-actions button:last-child');
+    await waitForBrowser(client, "document.querySelector('.phone-frame #block-editor-text h2')?.textContent === '편집기 회귀 방지'", 'quick edit restored original title');
+    await focusSelector(client, '.phone-frame #block-editor-text p.editor-inline-text-trigger');
+    await pressKeyboardKey(client, 'Enter');
+    const inlineBody = '.phone-frame #block-editor-text textarea[aria-label="본문 바로 수정"]';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineBody) + ')', 'preview inline body editor');
+    await setInputValue(client, inlineBody, '취소해야 할 내용');
+    await pressKeyboardKey(client, 'Escape');
+    await waitForBrowser(client, "!document.querySelector('.phone-frame #block-editor-text textarea[aria-label=\"본문 바로 수정\"]')", 'preview inline Escape cancel');
+    assert((await evaluate(client, "document.querySelector('.phone-frame #block-editor-text p')?.textContent || ''")).includes('페이지 선택, 블록 편집'),
+      'cancel must keep the previously saved draft text');
+
+    // Clicking the real phone image (including empty-image state) must choose
+    // the exact ImageBlock and focus its existing safe upload control.
+    await clickSelector(client, '.phone-frame #block-editor-image .image-placeholder');
+    await waitForBrowser(client,
+      "!!document.querySelector('#editor-block-settings-editor-image')",
+      'preview image selects matching Inspector');
+    await waitForBrowser(client,
+      "!!document.querySelector('#editor-block-settings-editor-image .image-input-upload-action')",
+      'preview image loads existing Inspector image uploader');
+    await waitForBrowser(client,
+      "document.activeElement === document.querySelector('#editor-block-settings-editor-image .image-input-upload-action')",
+      'preview image focuses its existing photo replacement action');
+    assert(apiState.saveCount === 0, 'preview image selection must not publish');
+    // Clicking the selected photo runs the existing ImageInput picker.
+    // Stub the native input click to avoid opening the OS file dialog.
+    await waitForBrowser(client, "!!document.querySelector('.phone-frame #block-editor-image button.editor-preview-image-replace')", 'selected image displays replace action');
+    const imagePickerStubbed = await evaluate(client, '(() => { const input = document.querySelector("#editor-block-settings-editor-image .image-input input[type=file]"); if (!input) return false; window.__previewImageFileOpenCount = 0; input.click = () => { window.__previewImageFileOpenCount += 1; }; return true; })()');
+    assert(imagePickerStubbed, 'existing ImageInput file input must exist');
+    await clickSelector(client, '.phone-frame #block-editor-image button.editor-preview-image-replace');
+    assert(await evaluate(client, 'window.__previewImageFileOpenCount === 1'), 'photo action invokes current upload input exactly once');
+    assert(apiState.saveCount === 0, 'image action must not publish before choosing a file');
+
+    // Clicking the second fixed CTA selects the exact Inspector button;
+    // neither phone nor outbound link is executed from the editor preview.
+    await evaluate(client, 'window.__previewBottomWindowOpens = 0; window.__previousBottomWindowOpen = window.open; window.open = () => { window.__previewBottomWindowOpens += 1; };');
+    const secondPreviewBottomButton = '.phone-frame .bottom-bar-buttons button[data-preview-bottom-index="1"]';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(secondPreviewBottomButton) + ')', 'second bottom CTA is editable');
+    await clickSelector(client, secondPreviewBottomButton);
+    const bottomLabelInput = '#editor-block-settings-editor-bottom input[data-bottom-button-label-index="1"]';
+    await waitForBrowser(client, 'document.activeElement === document.querySelector(' + JSON.stringify(bottomLabelInput) + ')', 'selected CTA opens exact button label setting');
+    assert(await evaluate(client, 'window.__previewBottomWindowOpens === 0'), 'CTA must never open phone or link from editor');
+    const originalBottomLabel = await evaluate(client, 'document.querySelector(' + JSON.stringify(bottomLabelInput) + ')?.value');
+    await setInputValue(client, bottomLabelInput, '전화 상담 바로 연결');
+    await waitForBrowser(client, 'document.querySelector(' + JSON.stringify(secondPreviewBottomButton + ' b') + ')?.textContent === "전화 상담 바로 연결"', 'edited CTA label renders in preview');
+    const targetControls = '#editor-block-settings-editor-bottom .bottom-link-compact[data-bottom-button-target-index="1"]';
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(targetControls) + ')', 'matching CTA target controls appear');
+    assert(await evaluate(client, 'document.querySelector(' + JSON.stringify(targetControls + ' .bottom-link-modes button:nth-child(3)') + ')?.getAttribute("aria-pressed") === "true"'), 'phone target must not be shown as first widget');
+    await clickSelector(client, targetControls + ' .bottom-link-modes button:nth-child(2)');
+    await waitForBrowser(client, 'document.querySelector(' + JSON.stringify(targetControls + ' .bottom-link-modes button:nth-child(2)') + ')?.getAttribute("aria-pressed") === "true"', 'CTA changes to URL target mode');
+    await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(targetControls + ' input[aria-label="링크 URL"]') + ')', 'URL setting appears');
+    await clickSelector(client, targetControls + ' .bottom-link-modes button:nth-child(3)');
+    await waitForBrowser(client, 'document.querySelector(' + JSON.stringify(targetControls + ' .bottom-link-modes button:nth-child(3)') + ')?.getAttribute("aria-pressed") === "true"', 'CTA restores phone mode');
+    await setInputValue(client, bottomLabelInput, originalBottomLabel);
+    await waitForBrowser(client, 'document.querySelector(' + JSON.stringify(secondPreviewBottomButton + ' b') + ')?.textContent === ' + JSON.stringify(originalBottomLabel), 'CTA label restored');
+    assert(await evaluate(client, 'window.__previewBottomWindowOpens === 0'), 'CTA editing never creates external window');
+    await evaluate(client, 'window.open = window.__previousBottomWindowOpen; delete window.__previousBottomWindowOpen;');
+    assert(apiState.saveCount === 0, 'CTA edits stay local until save');
+
+
     // Custom HTML/CSS/JS must be visible and interactive in the actual editor,
     // while the iframe cannot inherit editor credentials or submit live leads.
     await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-code iframe.custom-code-frame')`, 'custom code iframe in editor preview');
@@ -1584,19 +1697,26 @@ async function run() {
     qaStep('stage6 hero image controls');
     const stageSixHero = '#editor-block-settings-editor-hero';
     const heroHeightNumber = `${stageSixHero} input[aria-label="이미지 높이 (px)"]`;
+    // Numeric text is buffered until blur or Enter so multi-digit edits keep
+    // their focus even if the editor remounts after model changes.
+    const setCommittedNumber = async (selector, value) => {
+      await setInputValue(client, selector, value);
+      await focusSelector(client, selector);
+      await pressKeyboardKey(client, 'Enter');
+    };
     const heroFilterNumber = `${stageSixHero} input[aria-label="필터 진하기 (%)"]`;
     const heroPlacement = `${stageSixHero} .editor-segmented-v2[aria-label="이미지 배치"]`;
-    await setInputValue(client, heroHeightNumber, '360');
+    await setCommittedNumber(heroHeightNumber, '360');
     await waitForBrowser(client, `document.querySelector('.phone-frame #block-editor-hero')?.style.getPropertyValue('--hero-image-height') === '360px'`, 'stage6 height numeric preview');
     await focusSelector(client, heroHeightNumber);
-    await setInputValue(client, heroHeightNumber, '');
+    await setCommittedNumber(heroHeightNumber, '');
     await focusSelector(client, `${heroPlacement} button:first-child`);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '360'`, 'stage6 empty height restores its value');
     await focusSelector(client, heroHeightNumber);
-    await setInputValue(client, heroHeightNumber, '999');
+    await setCommittedNumber(heroHeightNumber, '999');
     await focusSelector(client, `${heroPlacement} button:first-child`);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '720'`, 'stage6 height upper bound');
-    await setInputValue(client, heroHeightNumber, '360');
+    await setCommittedNumber(heroHeightNumber, '360');
     // A separate slider gesture must start outside the existing 350ms history group.
     await wait(400);
     await setInputValue(client, `${stageSixHero} .hero-image-range input[type="range"]`, '420');
@@ -1605,7 +1725,7 @@ async function run() {
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '360'`, 'stage6 number follows undo');
     await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '420'`, 'stage6 number follows redo');
-    await setInputValue(client, heroHeightNumber, '360');
+    await setCommittedNumber(heroHeightNumber, '360');
     await clickSelector(client, `${heroPlacement} button:nth-child(3)`);
     await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-hero.hero-full .hero-full-content')`, 'stage6 full image with text');
     const heroTextSwitch = `${stageSixHero} [role="switch"][aria-label="글자 표시"]`;
@@ -1614,7 +1734,7 @@ async function run() {
     assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'stage6 hiding preview text must preserve the continuously visible editor title');
     await clickSelector(client, heroTextSwitch);
     await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-hero .hero-full-content') && !!document.querySelector(${JSON.stringify(heroFilterNumber)})`, 'stage6 text on restores content');
-    await setInputValue(client, heroFilterNumber, '25');
+    await setCommittedNumber(heroFilterNumber, '25');
     const heroFilterSwitch = `${stageSixHero} [role="switch"][aria-label="사진 필터"]`;
     await clickSelector(client, heroFilterSwitch);
     await waitForBrowser(client, `!document.querySelector('.phone-frame #block-editor-hero .hero-full-media > i') && !document.querySelector(${JSON.stringify(heroFilterNumber)})`, 'stage6 filter off');
@@ -1631,51 +1751,70 @@ async function run() {
     assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
     await capture(client, 'desktop-hero-background-stage6');
     assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'content must stay available alongside background-image settings');
-    // Single shared scrollbar: block list and selected inspector stay in the
-    // same editor workspace, without two competing vertical scroll tracks.
+    // Independent navigator and Inspector scrolling, pinned page options.
     const inspectorScroll = await evaluate(client, `(() => {
       const settings = document.querySelector('#editor-block-settings-editor-hero');
       const panel = settings?.closest('.editor-inspector-panel');
       const composition = document.querySelector('.editor-composition-panel');
+      const list = document.querySelector('.editor-composition-content');
       const workPanel = document.querySelector('.work-panel');
       const content = settings?.querySelector('.block-editor-v2');
-      if (!panel || !composition || !workPanel || !content) return null;
-      const original = content.style.minHeight;
+      const order = list?.querySelector('.screen-order-v2-list-view');
+      if (!panel || !composition || !list || !workPanel || !content || !order) return null;
+      const previousMinHeight = content.style.minHeight;
+      const previousOrderHeight = order.style.minHeight;
+      const previousListTop = list.scrollTop;
+      const previousInspectorTop = panel.scrollTop;
       let result;
       try {
         content.style.minHeight = '1600px';
+        order.style.minHeight = '1500px';
+        list.scrollTop = 270;
+        const listBeforeInspectorScroll = list.scrollTop;
+        panel.scrollTop = 320;
         workPanel.scrollTop = 320;
+        const footer = composition.querySelector('.editor-composition-footer');
+        const footerBox = footer?.getBoundingClientRect();
+        const panelBox = composition.getBoundingClientRect();
         result = {
-          role: panel.getAttribute('role'),
-          label: panel.getAttribute('aria-label'),
-          tabIndex: panel.tabIndex,
+          role: panel.getAttribute('role'), label: panel.getAttribute('aria-label'),
+          tabIndex: panel.tabIndex, listRole: list.getAttribute('role'),
+          listLabel: list.getAttribute('aria-label'), listTabIndex: list.tabIndex,
           inspectorOverflowY: getComputedStyle(panel).overflowY,
           compositionOverflowY: getComputedStyle(composition).overflowY,
+          navigatorOverflowY: getComputedStyle(list).overflowY,
           workOverflowY: getComputedStyle(workPanel).overflowY,
-          workHeight: workPanel.clientHeight,
-          workContentHeight: workPanel.scrollHeight,
-          workScrollTop: workPanel.scrollTop,
-          inspectorScrollTop: panel.scrollTop,
-          compositionScrollTop: composition.scrollTop,
+          inspectorScrollHeight: panel.scrollHeight, inspectorHeight: panel.clientHeight,
+          navigatorScrollHeight: list.scrollHeight, navigatorHeight: list.clientHeight,
+          workScrollTop: workPanel.scrollTop, inspectorScrollTop: panel.scrollTop,
+          navigatorScrollTop: list.scrollTop,
+          independentScroll: list.scrollTop === listBeforeInspectorScroll,
+          footerPinned: !!footer && Math.abs(footerBox.bottom - panelBox.bottom) <= 2,
           innerOverflowY: getComputedStyle(settings).overflowY,
         };
       } finally {
-        workPanel.scrollTop = 0;
-        content.style.minHeight = original;
+        content.style.minHeight = previousMinHeight;
+        order.style.minHeight = previousOrderHeight;
+        list.scrollTop = previousListTop;
+        panel.scrollTop = previousInspectorTop;
       }
       return result;
     })()`);
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
-      && inspectorScroll.label?.includes('선택 항목 편집'), `D01 selected property region must stay keyboard accessible: ${JSON.stringify(inspectorScroll)}`);
-    assert(inspectorScroll.inspectorOverflowY === 'visible'
-      && inspectorScroll.compositionOverflowY === 'visible'
-      && inspectorScroll.workOverflowY === 'auto'
-      && inspectorScroll.workContentHeight > inspectorScroll.workHeight
-      && inspectorScroll.workScrollTop > 0
-      && inspectorScroll.inspectorScrollTop === 0
-      && inspectorScroll.compositionScrollTop === 0
-      && inspectorScroll.innerOverflowY === 'visible',
-      `D01 long settings must scroll the one shared editor workspace: ${JSON.stringify(inspectorScroll)}`);
+      && inspectorScroll.label?.includes('선택 항목 편집')
+      && inspectorScroll.listRole === 'region' && inspectorScroll.listTabIndex === 0
+      && inspectorScroll.listLabel === '블록 목록',
+      'D01 list and Inspector must remain keyboard-accessible regions: ' + JSON.stringify(inspectorScroll));
+    assert(inspectorScroll.inspectorOverflowY === 'auto'
+      && inspectorScroll.compositionOverflowY === 'hidden'
+      && inspectorScroll.navigatorOverflowY === 'auto'
+      && inspectorScroll.workOverflowY === 'hidden'
+      && inspectorScroll.inspectorScrollHeight > inspectorScroll.inspectorHeight
+      && inspectorScroll.navigatorScrollHeight > inspectorScroll.navigatorHeight
+      && inspectorScroll.workScrollTop === 0 && inspectorScroll.inspectorScrollTop > 0
+      && inspectorScroll.navigatorScrollTop > 0 && inspectorScroll.independentScroll
+      && inspectorScroll.footerPinned && inspectorScroll.innerOverflowY === 'visible',
+      'D01 navigator and Inspector independently scroll with pinned page settings: ' + JSON.stringify(inspectorScroll));
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
@@ -1992,11 +2131,11 @@ async function run() {
     assert(addCatalogScroll?.dockPosition === 'static'
       && addCatalogScroll.catalogOverflowY === 'auto'
       && addCatalogScroll.catalogMaxHeight !== 'none'
-      && addCatalogScroll.workOverflowY === 'auto'
+      && addCatalogScroll.workOverflowY === 'hidden'
       && addCatalogScroll.catalogHeight > 0
       && addCatalogScroll.catalogBottom <= addCatalogScroll.viewportHeight
       && addCatalogScroll.catalogInComposition,
-      'compact block picker stays bounded; only the open popover scrolls inside the shared editor workspace: ' + JSON.stringify(addCatalogScroll));
+      'compact catalog stays inside the pinned composition while the outer shell does not scroll: ' + JSON.stringify(addCatalogScroll));
     await clickPointer(client, '.phone-frame #block-editor-hero');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview click opens focused settings with the existing content');
     await clickPointer(client, '.phone-frame #block-editor-hero');
@@ -2031,8 +2170,12 @@ async function run() {
     const outerSpacing = '#editor-block-settings-editor-text input[aria-label="블록 사이 (px)"]';
     await focusSelector(client, innerSpacing);
     await setInputValue(client, innerSpacing, '0');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+      'text styling remains expanded after changing its inner spacing');
     await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '16');
+    await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return style.paddingTop === '0px' && style.marginTop === '16px'; })()`, 'exact zero padding and numeric outer spacing render without publishing').catch(async (error) => {
       const actual = await evaluate(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return { padding: style.paddingTop, margin: style.marginTop, paddingValue: style.getPropertyValue('--widget-padding'), marginValue: style.getPropertyValue('--widget-margin') }; })()`);
       throw new Error(error.message + ': ' + JSON.stringify(actual));
@@ -2054,6 +2197,12 @@ async function run() {
     await focusSelector(client, textDesignSummary);
     await pressKeyboardKey(client, 'Space');
     await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === false`, 'text design closes without replacing content');
+    // The compact inspector hides secondary spacing while closed. Reopen it
+    // before the numeric range and blur scenarios instead of focusing hidden fields.
+    await pressKeyboardKey(client, 'Space');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+      'text spacing remains reachable after explicitly reopening design');
 
     await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '999');
@@ -2063,8 +2212,12 @@ async function run() {
     await setInputValue(client, outerSpacing, '');
     await focusSelector(client, innerSpacing);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(outerSpacing)})?.value === '48'`, 'empty number input keeps the previous spacing');
+    await focusSelector(client, innerSpacing);
     await setInputValue(client, innerSpacing, '22');
+    await pressKeyboardKey(client, 'Enter');
+    await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '24');
+    await pressKeyboardKey(client, 'Enter');
     assert(apiState.saveCount === 0, 'number and spacing changes must not publish');
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-action');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'D03 text duplicate menu');
@@ -2094,10 +2247,14 @@ async function run() {
     assert(apiState.saveCount === 0, 'D03 row identities must not trigger server saves');
 
     // E2E-02 / E2E-03: the block-add dock is intentionally simple: open it and add a block directly.
+    await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
+    await waitForBrowser(client, "!!document.querySelector('#editor-block-settings-editor-text')", 'selected text before insertion');
     const initialNormalBlockCount = await normalBlockCount(client);
     const normalOrderBeforeAdd = await normalBlockOrder(client);
     await clickSelector(client, '.add-toggle');
-    await waitForBrowser(client, `!!document.querySelector('.add-panel .widget-group-grid')`, 'simple block add panel');
+    await waitForBrowser(client, `!!document.querySelector('.add-panel .widget-group-grid')`, 'simple block add panel');    assert(await evaluate(client, "document.querySelector('.editor-add-block-location')?.textContent === '선택한 블록 아래에 추가'"),
+      'catalog must announce insertion immediately below selected content');
+
     assert(!(await evaluate(client, `!!document.querySelector('.section-add-modes')`)), 'block add panel must not expose recommendation/industry mode tabs');
     assert(!(await evaluate(client, `!!document.querySelector('#pagero-widget-search')`)), 'block add panel must not expose the removed search field');
     assert(!(await evaluate(client, `!!document.querySelector('.section-pattern-card')`)), 'block add panel must not expose recommended section cards');
@@ -2105,6 +2262,10 @@ async function run() {
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'added divider row');
     const addedDividerId = (await normalBlockOrder(client)).find((id) => !normalOrderBeforeAdd.includes(id));
     assert(addedDividerId, 'added divider block id was not resolved');
+    const selectedInsertionOrder = await normalBlockOrder(client);
+    assert(selectedInsertionOrder.indexOf(addedDividerId) === selectedInsertionOrder.indexOf('editor-block-editor-text') + 1,
+      'new divider must be immediately below selected text in navigator order: ' + JSON.stringify(selectedInsertionOrder));
+
     assert(apiState.saveCount === 0, 'adding a block must remain local before publish');
 
     await clickSelector(client, '.panel-history-btn[aria-label="실행 취소"]');
@@ -2139,15 +2300,23 @@ async function run() {
     const initialDividerSpacing = await evaluate(client, `document.querySelector(${JSON.stringify(dividerSpacing)})?.value`);
     const initialDividerWidth = await evaluate(client, `document.querySelector(${JSON.stringify(dividerLength)})?.value`);
     await setInputValue(client, dividerSpacing, '16');
+    await focusSelector(client, dividerSpacing);
+    await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)})).marginTop === '16px'
       && getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)})).marginBottom === '16px'`,
       'divider single spacing input updates both visible preview margins');
     await setInputValue(client, dividerSpacing, String(initialDividerSpacing));
+    await focusSelector(client, dividerSpacing);
+    await pressKeyboardKey(client, 'Enter');
     await setInputValue(client, dividerLength, '60');
+    await focusSelector(client, dividerLength);
+    await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(dividerSettingsRoot)})?.querySelector('[aria-label="정렬"]') !== null
       && getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)} + ' > div')).width !== '0px'`,
       'divider narrow line exposes alignment while remaining visible');
     await setInputValue(client, dividerLength, String(initialDividerWidth));
+    await focusSelector(client, dividerLength);
+    await pressKeyboardKey(client, 'Enter');
     assert(apiState.saveCount === 0, 'direct divider numeric edits must remain unpublished');
 
     // E2E-04: visibility toggle must update the preview without publishing.
@@ -2162,9 +2331,11 @@ async function run() {
 
     // E2E-03: move the form above the text row through the real overflow menu.
     const orderBeforeMove = await normalBlockOrder(client);
-    await clickSelector(client, '#editor-block-editor-form .screen-order-v2-action');
-    await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form action menu');
-    await clickButtonByText(client, '.screen-order-v2-menu', '위로 이동');
+    await clickRowMenuAction(client, 'editor-form', '위로 이동');
+    // A newly inserted divider is immediately below the selected text.
+    // Move the form past the divider and the text, preserving real one-step
+    // keyboard/menu move semantics instead of assuming it was appended last.
+    await clickRowMenuAction(client, 'editor-form', '위로 이동');
     await waitForBrowser(client, `(() => {
       const ids = [...document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item')].map((item) => item.id);
       return ids.indexOf('editor-block-editor-form') < ids.indexOf('editor-block-editor-text');
@@ -2232,7 +2403,15 @@ async function run() {
     assert(stageFourLegacyField.radius === stageFourField.radius && stageFourLegacyField.size === stageFourField.size
       && stageFourLegacyField.minHeight === '42px',
       'stage4 legacy form fields must match modern fields: ' + JSON.stringify(stageFourLegacyField));
-    await clickSelector(client, '#editor-block-settings-editor-form details:has(.privacy-compact-panel) > summary');
+    // Content-first form groups keep consent / duplicate rules behind the
+    // optional submission panel. Open the parent before nested legacy controls.
+    if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open`))) {
+      await clickSelector(client, '#editor-block-settings-editor-form .form-behavior-detail > summary');
+    }
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open === true`,
+      'form consent/duplicate controls available after explicit behavior expansion');
+    await clickSelector(client, '#editor-block-settings-editor-form .form-basic-detail:has(.privacy-compact-panel) > summary');
     const stageFourLegacyToggle = '#editor-block-settings-editor-form .privacy-compact-panel .toggle [role="switch"]';
     const stageFourLegacyChecked = await evaluate(client, `document.querySelector(${JSON.stringify(stageFourLegacyToggle)}).getAttribute('aria-checked')`);
     await focusSelector(client, stageFourLegacyToggle);
@@ -2251,7 +2430,7 @@ async function run() {
       && stageFourLegacyTrack.thumb === '22px',
       'stage4 legacy active styles must not paint a second switch background: ' + JSON.stringify(stageFourLegacyTrack));
     await capture(client, 'desktop-shared-form-stage4');
-    await clickSelector(client, '#editor-block-settings-editor-form details:has(.privacy-compact-panel) > summary');
+    await clickSelector(client, '#editor-block-settings-editor-form .form-basic-detail:has(.privacy-compact-panel) > summary');
     await clickSelector(client, '#editor-block-settings-editor-form .form-duplicate-detail > summary');
     const stageFourLegacyChoice = '#editor-block-settings-editor-form .choice[aria-label="연락처"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourLegacyChoice)})`, 'stage4 legacy contact choice');
@@ -2628,7 +2807,7 @@ async function run() {
     await setInputValue(client, '#editor-block-settings-editor-code input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
 
-    await waitForBrowser(client, `document.querySelector('.screen-order-v2-settings-title > h2')?.textContent === ${JSON.stringify(persistedCodeLabel)}`,
+    await waitForBrowser(client, `document.querySelector('.editor-inspector-panel .editor-inspector-selected-copy > h2')?.textContent === ${JSON.stringify(persistedCodeLabel)}`,
       'code list name updates the selected inspector immediately');
 
     await focusSelector(client, '#editor-block-settings-editor-code .code-editor-options > summary');
@@ -2779,18 +2958,19 @@ async function run() {
         inspectorSpills: (inspector?.scrollWidth || 0) > (inspector?.clientWidth || 0) + 2,
         editorScroll: getComputedStyle(document.querySelector('.work-panel')).overflowY,
         inspectorScroll: getComputedStyle(inspector).overflowY,
+        navigatorScroll: getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
         rightEdge: i?.right, previewLeft: rect(preview)?.left,
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
       && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 252 : 340)
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
-      && leftGeometry.editorScroll === 'auto' && leftGeometry.inspectorScroll === 'visible'
+      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && (desktopViewport.width <= 1100
         ? leftGeometry.inspectorPadding === '8px' && leftGeometry.compositionPadding === '8px'
         : leftGeometry.inspectorPadding === '16px')
       && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
-      '24th patch must provide usable inspector width with no clipped controls, second scrollbar or preview overlap: '
+      'reference-width independent panels must fit without clipped controls or preview overlap: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
     const pageOptionsShellStyle = await evaluate(client, `(() => {
@@ -2832,7 +3012,7 @@ async function run() {
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.rowRadius === '8px' && screenOrderShellStyle?.rowBorder === '0px', `reference list must keep flat rows at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.addBackground === 'rgb(255, 255, 255)', `compact add action must keep its reference neutral surface: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.addBackground === 'rgb(237, 242, 255)', `reference full-width add action must keep the light-blue primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 900 || desktopViewport.width === 1024) {
         await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
@@ -3227,6 +3407,199 @@ async function run() {
 
 
 
+
+    // Separate 36-block fixture; its private mock never changes the main
+    // regression's published snapshots or live user data.
+    const longTarget = await client.send('Target.createTarget', { url: 'about:blank' });
+    const longTargets = await fetchJson('http://127.0.0.1:' + debugPort + '/json/list');
+    const longEndpoint = longTargets.find((item) => item.id === longTarget.targetId && item.webSocketDebuggerUrl);
+    assert(longEndpoint, 'long-page Chrome target must be available');
+    longPageClient = createCdp(longEndpoint.webSocketDebuggerUrl);
+    longPageClient.on('Runtime.exceptionThrown', ({ exceptionDetails }) => {
+      browserErrors.push(exceptionDetails?.exception?.description || exceptionDetails?.text || 'Long-page browser exception');
+    });
+    await longPageClient.send('Page.enable');
+    longPageClient.on('Page.javascriptDialogOpening', (dialog) => {
+      if (dialog.type === 'beforeunload') longPageClient.send('Page.handleJavaScriptDialog', { accept: true }).catch(() => {});
+    });
+    await longPageClient.send('Runtime.enable');
+    await longPageClient.send('Network.enable');
+    await longPageClient.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/*', requestStage: 'Request' }] });
+    const longState = createApiMock(longPageClient);
+    const longPage = createQaPage();
+    longPage.id = 'editor-longpage-e2e';
+    longPage.slug = 'editor-long-e2e';
+    const svg = (color) => 'data:image/svg+xml,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160"><rect width="240" height="160" fill="' + color + '"/></svg>');
+    const longBlocks = Array.from({ length: 26 }, (_, index) => ({
+      id: 'editor-long-' + index, type: 'text', visible: true,
+      s: { title: '긴 페이지 섹션 ' + (index + 1), body: '상세 안내 ' + index,
+        layout: 'card', align: 'left', size: 'medium' },
+    }));
+    const galleryBlock = { id: 'editor-gallery', type: 'image', visible: true,
+      s: { mode: 'gallery', galleryLayout: 'grid', galleryGridCount: 4,
+        gallery: [svg('#2563eb'), '', svg('#0f766e')], rounded: false } };
+    const linksBlock = { id: 'editor-links', type: 'links', visible: true,
+      s: { title: '연락 방법', layout: 'list', items: [
+        { id: 'editor-link-a', label: '공식 안내', target: 'url', url: 'https://example.com/info' },
+        { id: 'editor-link-b', label: '전화 문의', target: 'phone', url: 'tel:01000000000' },
+      ] } };
+    longPage.blocks.splice(longPage.blocks.length - 2, 0, ...longBlocks, galleryBlock, linksBlock);
+    longState.currentPage = longPage;
+
+    await setViewport(longPageClient, 1672, 941, false);
+    await longPageClient.send('Page.navigate', { url: origin + '/app' });
+    await waitForBrowser(longPageClient,
+      "document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length >= 32 && !!document.querySelector('.phone-frame #block-editor-gallery')",
+      'Chrome renders 30+ mixed blocks in editable phone and composition');
+    await clickSelector(longPageClient, '.phone-frame #block-editor-gallery [data-preview-gallery-index="2"] img');
+    const galleryRow = '#editor-block-settings-editor-gallery .image-editor-flow .editor-list-v2-items > .editor-list-item-v2:nth-child(3)';
+    await waitForBrowser(longPageClient,
+      'document.activeElement === document.querySelector(' + JSON.stringify(galleryRow + ' .image-input-upload-action') + ')',
+      'third raw gallery slot focuses correct uploader despite blank second slot');
+    const galleryFileStubbed = await evaluate(longPageClient, '(() => { const input = document.querySelector('
+      + JSON.stringify(galleryRow + ' input[type="file"]')
+      + '); if (!input) return false; window.__galleryPickerCount = 0; input.click = () => { window.__galleryPickerCount++; }; return true; })()');
+    assert(galleryFileStubbed, 'gallery slot must reuse existing file input');
+    await clickSelector(longPageClient, '.phone-frame #block-editor-gallery [data-preview-gallery-index="2"] button.editor-preview-image-replace');
+    assert(await evaluate(longPageClient, 'window.__galleryPickerCount === 1'),
+      'selected gallery image directly opens its own uploader');
+    assert(longState.saveCount === 0, 'gallery selection must not publish');
+
+    await evaluate(longPageClient,
+      'window.__longExternalOpens = 0; window.__oldLongOpen = window.open; window.open = () => { window.__longExternalOpens++; };');
+    await clickSelector(longPageClient, '.phone-frame #block-editor-links button[data-preview-link-index="1"]');
+    const linkLabel = '#editor-block-settings-editor-links input[data-link-item-label-index="1"]';
+    await waitForBrowser(longPageClient,
+      'document.activeElement === document.querySelector(' + JSON.stringify(linkLabel) + ')',
+      'second link preview focuses its own Inspector input');
+    assert(await evaluate(longPageClient, 'window.__longExternalOpens === 0'), 'editor link must not navigate or dial');
+    await setInputValue(longPageClient, linkLabel, '전화 문의 바로가기');
+    await waitForBrowser(longPageClient,
+      'document.querySelector(' + JSON.stringify('.phone-frame #block-editor-links button[data-preview-link-index="1"] b')
+      + ')?.textContent === "전화 문의 바로가기"', 'link label change appears in 390px preview');
+    const linkTarget = '#editor-block-settings-editor-links .link-editor-panel-v3 .target-control-v3';
+    await waitForBrowser(longPageClient, '!!document.querySelector(' + JSON.stringify(linkTarget) + ')',
+      'link target options open with label');
+    assert(await evaluate(longPageClient,
+      'document.querySelector(' + JSON.stringify(linkTarget + ' .target-mode-tabs button:nth-child(3)')
+      + ')?.getAttribute("aria-pressed") === "true"'), 'phone mode stays selected');
+    await clickSelector(longPageClient, linkTarget + ' .target-mode-tabs button:nth-child(2)');
+    await waitForBrowser(longPageClient,
+      'document.querySelector(' + JSON.stringify(linkTarget + ' .target-mode-tabs button:nth-child(2)')
+      + ')?.getAttribute("aria-pressed") === "true"', 'link switches to URL mode');
+    await clickSelector(longPageClient, linkTarget + ' .target-mode-tabs button:nth-child(3)');
+    await setInputValue(longPageClient, linkLabel, '전화 문의');
+    await waitForBrowser(longPageClient,
+      'document.querySelector(' + JSON.stringify('.phone-frame #block-editor-links button[data-preview-link-index="1"] b')
+      + ')?.textContent === "전화 문의"', 'link label restores original');
+    assert(longState.saveCount === 0 && await evaluate(longPageClient, 'window.__longExternalOpens === 0'),
+      'preview links never publish or navigate');
+    await evaluate(longPageClient, 'window.open = window.__oldLongOpen; delete window.__oldLongOpen;');
+
+    await clickSelector(longPageClient, '#editor-block-editor-long-25 .screen-order-v2-head');
+    await waitForBrowser(longPageClient,
+      "!!document.querySelector('#editor-block-settings-editor-long-25')",
+      'deep selected text Inspector remains editable');
+    const longMetrics = await evaluate(longPageClient, '(() => {'
+      + ' const frame = document.querySelector(".phone-frame");'
+      + ' const selected = frame?.querySelector("#block-editor-long-25");'
+      + ' const preview = frame?.querySelector(".landing-page");'
+      + ' return { count: document.querySelectorAll(".screen-order-v2-list .screen-order-v2-item").length,'
+      + ' previewCount: frame?.querySelectorAll(".landing-content > [id^=block-]").length,'
+      + ' selected: !!selected?.classList.contains("preview-selected-block"),'
+      + ' scrollTop: preview?.scrollTop || 0, width: preview?.clientWidth || 0,'
+      + ' overflow: document.documentElement.scrollWidth - innerWidth }; })()');
+    assert(longMetrics.count >= 32 && longMetrics.previewCount >= 30 && longMetrics.selected
+      && longMetrics.scrollTop > 0 && Math.abs(longMetrics.width - 390) <= 1 && longMetrics.overflow <= 3,
+      'deep selection stays visible in one 390px phone without page horizontal overflow: ' + JSON.stringify(longMetrics));
+    // Real 36-block page: changing properties must leave the navigator's
+    // deep selection in place, and the page-settings footer stays visible.
+    const longScroll = await evaluate(longPageClient, `(() => {
+      const list = document.querySelector('.editor-composition-content');
+      const inspector = document.querySelector('.editor-inspector-panel');
+      const composition = document.querySelector('.editor-composition-panel');
+      const settings = document.querySelector('#editor-block-settings-editor-long-25 .block-editor-v2');
+      const outer = document.querySelector('.work-panel');
+      if (!list || !inspector || !composition || !settings || !outer) return null;
+      const previousMinHeight = settings.style.minHeight;
+      const listBefore = list.scrollTop;
+      let metrics;
+      try {
+        settings.style.minHeight = '1200px';
+        inspector.scrollTop = 240;
+        metrics = {
+          navigatorOverflowY: getComputedStyle(list).overflowY,
+          inspectorOverflowY: getComputedStyle(inspector).overflowY,
+          workOverflowY: getComputedStyle(outer).overflowY,
+          navigatorScrollTop: list.scrollTop,
+          inspectorScrollTop: inspector.scrollTop,
+          independent: list.scrollTop === listBefore,
+          outerTop: outer.scrollTop,
+          footerVisible: (() => {
+            const footer = composition.querySelector('.editor-composition-footer');
+            const rect = footer?.getBoundingClientRect();
+            const box = composition.getBoundingClientRect();
+            return !!rect && Math.abs(rect.bottom - box.bottom) <= 2;
+          })(),
+        };
+      } finally {
+        settings.style.minHeight = previousMinHeight;
+        inspector.scrollTop = 0;
+      }
+      return metrics;
+    })()`);
+    assert(longScroll?.navigatorOverflowY === 'auto'
+      && longScroll.inspectorOverflowY === 'auto' && longScroll.workOverflowY === 'hidden'
+      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop > 0
+      && longScroll.independent && longScroll.footerVisible && longScroll.outerTop === 0,
+      'long-page navigator and Inspector must remain isolated: ' + JSON.stringify(longScroll));
+    await capture(longPageClient, 'editor-vnext-36-blocks-1672');
+    await setViewport(longPageClient, 900, 780, false);
+    await waitForBrowser(longPageClient,
+      "!!document.querySelector('.phone-frame #block-editor-long-25')",
+      'narrow desktop retains 36-block mobile preview');
+    const narrow = await evaluate(longPageClient, '(() => {'
+      + ' const frame = document.querySelector(".phone-frame .landing-page");'
+      + ' return { width: frame?.clientWidth, overflow: document.documentElement.scrollWidth - innerWidth,'
+      + ' selected: !!document.querySelector("#editor-block-settings-editor-long-25") }; })()');
+    assert(Math.abs(narrow.width - 390) <= 1 && narrow.overflow <= 3 && narrow.selected,
+      '900px long page preserves 390px preview and inspector: ' + JSON.stringify(narrow));
+    const narrowScroll = await evaluate(longPageClient, `(() => {
+      const list = document.querySelector('.editor-composition-content');
+      const inspector = document.querySelector('.editor-inspector-panel');
+      const footer = document.querySelector('.editor-composition-footer');
+      const panel = document.querySelector('.editor-composition-panel');
+      return {
+        listHeight: list?.clientHeight,
+        listScrollHeight: list?.scrollHeight,
+        listOverflowY: list ? getComputedStyle(list).overflowY : '',
+        inspectorOverflowY: inspector ? getComputedStyle(inspector).overflowY : '',
+        footerPinned: !!footer && !!panel
+          && Math.abs(footer.getBoundingClientRect().bottom - panel.getBoundingClientRect().bottom) <= 2,
+      };
+    })()`);
+    assert(narrowScroll.listHeight > 150 && narrowScroll.listScrollHeight > narrowScroll.listHeight
+      && narrowScroll.listOverflowY === 'auto'
+      && narrowScroll.inspectorOverflowY === 'auto' && narrowScroll.footerPinned,
+      '900px long-page keeps two independently reachable editing regions: ' + JSON.stringify(narrowScroll));
+    await capture(longPageClient, 'editor-vnext-36-blocks-900');
+    // Shared SPA bootstrap requests AdSense and Pretendard even before a
+    // block is edited; the CDP mock blocks both remote resources. This test
+    // must reject *new* outbound destinations, not confuse existing shell
+    // assets with link-click navigation caused by this editor patch.
+    const unrelatedShellAssets = longState.externalRequests.filter((url) =>
+      url.startsWith('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=')
+      || url === 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
+    );
+    const unexpectedExternal = longState.externalRequests.filter((url) => !unrelatedShellAssets.includes(url));
+    assert(longState.saveCount === 0 && longState.unexpectedApis.length === 0
+      && unexpectedExternal.length === 0 && !longState.interceptError,
+      'long-page flow must not save or navigate outside known bootstrap assets: '
+      + JSON.stringify({ saves: longState.saveCount, unexpected: longState.unexpectedApis,
+        unexpectedExternal, shellAssetsBlocked: unrelatedShellAssets.length,
+        interceptError: longState.interceptError?.message }));
+
     assert(!apiState.interceptError, `API interception failed: ${apiState.interceptError?.message || apiState.interceptError}`);
     assert(apiState.unexpectedApis.length === 0, `Unexpected API requests: ${apiState.unexpectedApis.join(', ')}`);
     if (browserErrors.length) {
@@ -3289,6 +3662,7 @@ async function run() {
     throw error;
   } finally {
     console.log('[editor-qa] cleanup at:', activeQaStep);
+    await longPageClient?.close().catch(() => {});
     await draftTabClient?.close().catch(() => {});
     await secondClient?.close().catch(() => {});
     await client?.close().catch(() => {});

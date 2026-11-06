@@ -1,6 +1,99 @@
 // The owner reference defines the chrome. Content below is a disposable QA page.
 export async function checkReferenceEditor({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState }) {
+  // Visual reference: a named, full-width add action and readable flat
+  // composition rows at both the chosen 1672px size and narrow 900px PC.
+  for (const referenceWidth of [1672, 900]) {
+    await setViewport(client, referenceWidth, 941, false);
+    const visual = await evaluate(client, `(() => {
+      const heading = document.querySelector('.editor-composition-heading');
+      const button = heading?.querySelector('.add-dock-compact .add-toggle');
+      const label = button?.querySelector('strong');
+      const search = document.querySelector('.editor-composition-search');
+      const row = document.querySelector('.editor-composition-panel .screen-order-v2-identity-copy strong');
+      const fixedRow = document.querySelector('.fixed-composition-row .screen-order-v2-identity-copy strong');
+      const frame = document.querySelector('.phone-frame .landing-page');
+      if (!heading || !button || !label || !search || !row || !fixedRow || !frame) return null;
+      const rect = (node) => node.getBoundingClientRect();
+      return {
+        heading: heading.querySelector('h2')?.textContent.trim(),
+        buttonText: label.textContent.trim(),
+        ariaLabel: button.getAttribute('aria-label'),
+        buttonWidth: rect(button).width,
+        buttonHeight: rect(button).height,
+        headingWidth: rect(heading).width,
+        buttonBackground: getComputedStyle(button).backgroundColor,
+        labelVisible: rect(label).width > 50 && rect(label).height > 10,
+        searchBelowButton: rect(search).top >= rect(button).bottom,
+        listNameSize: getComputedStyle(row).fontSize,
+        fixedNameSize: getComputedStyle(fixedRow).fontSize,
+        phoneWidth: frame.clientWidth,
+        overflow: document.documentElement.scrollWidth - innerWidth,
+      };
+    })()`);
+    assert(visual?.heading === '페이지 구성' && visual.buttonText === '블록 추가'
+      && visual.ariaLabel === '블록 추가' && visual.labelVisible
+      && visual.buttonWidth >= visual.headingWidth - 24
+      && visual.buttonHeight >= 39 && visual.searchBelowButton
+      && ['rgb(237, 242, 255)', 'rgb(227, 235, 255)'].includes(visual.buttonBackground)
+      && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
+      && visual.phoneWidth === 390 && visual.overflow <= 3,
+      'reference 1672/900 visual hierarchy must keep visible add, legible rows and 390px phone: '
+      + JSON.stringify({ referenceWidth, visual }));
+    await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
+  }
   await setViewport(client, 1672, 941, false);
+  // A visual redesign must change the *first visible task*, not just CSS
+  // tokens. Verify real editor settings and capture each of four block types.
+  for (const [id, heading, primarySelector, advancedSelector] of [
+    ['editor-text', '내용 수정', '.text-editor-flow > .editor-field-v2--body-text textarea', '.text-editor-design'],
+    ['editor-image', '사진 변경', '.image-editor-flow .image-input-upload-action', '.image-editor-more'],
+    ['editor-form', '문의 폼 편집', '.form-editor-flow .form-question-title', '.form-behavior-detail'],
+    ['editor-code', '코드 편집', '.code-editor-box textarea', '.code-editor-options'],
+  ]) {
+    await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+    await waitForBrowser(client,
+      `!!document.querySelector('#editor-block-settings-${id} ${primarySelector}')`,
+      'content-first primary task loads for ' + id);
+    const firstView = await evaluate(client, `(() => {
+      const scope = document.querySelector('#editor-block-settings-${id}');
+      const primary = scope?.querySelector('${primarySelector}');
+      const secondary = scope?.querySelector('${advancedSelector}');
+      const heading = scope?.querySelector('.inspector-primary-heading');
+      const identity = document.querySelector('.editor-inspector-selected-copy');
+      const code = scope?.querySelector('.code-editor-box textarea');
+      const body = scope?.querySelector('.text-editor-flow > .editor-field-v2--body-text textarea');
+      return {
+        heading: heading?.textContent.trim(),
+        identityVisible: !!identity && identity.getBoundingClientRect().height >= 30,
+        primaryVisible: !!primary?.getClientRects().length,
+        primaryHeight: primary?.getBoundingClientRect().height || 0,
+        secondaryClosed: secondary?.tagName === 'DETAILS' && secondary.open === false,
+        bodyVisible: !!body?.getClientRects().length,
+        directCode: ${JSON.stringify(id)} === 'editor-code' ? code?.getBoundingClientRect().height >= 290 : true,
+      };
+    })()`);
+    assert(firstView.heading === heading && firstView.identityVisible && firstView.primaryVisible
+      && firstView.primaryHeight >= 30 && firstView.secondaryClosed && firstView.directCode
+      && (id !== 'editor-text' || firstView.bodyVisible),
+      'redesigned inspector exposes actual content before optional settings: ' + JSON.stringify({ id, firstView }));
+    if (id === 'editor-text' || id === 'editor-image' || id === 'editor-form' || id === 'editor-code') {
+      await capture(client, 'inspector-content-first-' + id);
+    }
+  }
+  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  const optionalText = await evaluate(client, `(() => {
+    const panel = document.querySelector('#editor-block-settings-editor-text');
+    return {
+      open: panel?.querySelector('.text-editor-design')?.open,
+      spacingVisible: !!panel?.querySelector('.widget-spacing-controls')?.getClientRects().length,
+      colorVisible: !!panel?.querySelector('input[aria-label="글자색 HEX"]')?.getClientRects().length,
+    };
+  })()`);
+  assert(optionalText.open && optionalText.spacingVisible && optionalText.colorVisible,
+    'one optional text design disclosure must reveal original text style and spacing actions: '
+    + JSON.stringify(optionalText));
+  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
   // Prior QA scenarios may leave a block selected. Explicitly enter page-level
   // editing to verify that clearing the selected block never hides the inspector.
   await clickPointer(client, '.editor-page-settings-button');
@@ -17,8 +110,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 698 && unselected.listWidth >= 238 && unselected.listWidth <= 241
-    && unselected.inspectorWidth >= 458,
+    && unselected.editorWidth >= 669 && unselected.editorWidth <= 671
+    && unselected.listWidth >= 275 && unselected.listWidth <= 277
+    && unselected.inspectorWidth >= 392 && unselected.inspectorWidth <= 395,
     'no-selection must show actual page controls in the wide left editor: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
@@ -70,7 +164,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // and removed in the same task; no app data, draft or publishing state changes.
   const longPage = await evaluate(client, `(() => {
     const list = document.querySelector('.screen-order-v2-list');
-    const owner = document.querySelector('.work-panel');
+    const owner = document.querySelector('.editor-composition-content');
     const originalRows = [...list.querySelectorAll('.screen-order-v2-slot')];
     const seed = originalRows[0];
     if (!seed || !owner) return null;
@@ -199,19 +293,19 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // (not a second row of shortcuts pointing at nested design controls).
   for (const width of [900, 1024, 1440, 1672]) {
     await setViewport(client, width, 941, false);
-    for (const [id, designClass, behavior] of [
-      ['editor-hero', 'hero-editor-design', false],
-      ['editor-text', 'text-editor-design', false],
-      ['editor-form', 'form-design-detail', true],
+    for (const [id, designClass, expectedHeading, expectedDesign, expectedBehavior] of [
+      ['editor-hero', 'hero-editor-design', '내용 수정', '디자인', ''],
+      ['editor-text', 'text-editor-design', '내용 수정', '디자인 조정', ''],
+      ['editor-form', 'form-design-detail', '문의 폼 편집', '디자인 조정', '제출 후 동작과 연동'],
     ]) {
       await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
-      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .inspector-primary-heading')?.textContent?.trim() === '내용'`, 'inspector content heading for ' + id);
-      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .${designClass} > summary > strong')?.textContent?.trim() === '디자인'`, 'lazy inspector design group for ' + id);
+      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .inspector-primary-heading')?.textContent?.trim() === ${JSON.stringify(expectedHeading)}`, 'content-first heading for ' + id);
+      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .${designClass} > summary > strong')?.textContent?.trim() === ${JSON.stringify(expectedDesign)}`, 'optional inspector design group for ' + id);
       const hierarchy = await evaluate(client, `(() => {
         const panel = document.querySelector('#editor-block-settings-${id}');
         const design = panel?.querySelector('.${designClass}');
         const label = design?.querySelector(':scope > summary > strong');
-        const behavior = panel?.querySelector('.inspector-subgroup-heading');
+        const behavior = panel?.querySelector('.form-behavior-detail > summary > strong');
         const body = panel?.querySelector('.block-editor-v2');
         const box = el => el?.getBoundingClientRect();
         return { hasDuplicate: !!document.querySelector('.inspector-navigation'),
@@ -223,8 +317,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           inspectorRight: box(panel)?.right,
           innerWidth: box(body)?.width };
       })()`);
-      assert(!hierarchy.hasDuplicate && hierarchy.content === '내용' && hierarchy.design === '디자인'
-        && (behavior ? hierarchy.behavior === '동작' : !hierarchy.behavior)
+      assert(!hierarchy.hasDuplicate && hierarchy.content === expectedHeading && hierarchy.design === expectedDesign
+        && hierarchy.behavior === expectedBehavior
+        && (id === 'editor-hero' || hierarchy.designOpen === false)
         && hierarchy.groupRight <= hierarchy.inspectorRight + 2
         && hierarchy.innerWidth > 210,
         'inspector hierarchy at ' + width + ' for ' + id + ': ' + JSON.stringify(hierarchy));
@@ -242,7 +337,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         const field = firstLabel ? getComputedStyle(firstLabel) : null;
         return {
           listTitle: style('.editor-composition-heading h2'),
-          detailTitle: style('.screen-order-v2-settings-title > h2'),
+          detailTitle: style('.editor-inspector-selected-copy > h2'),
           contentHeading: style('.screen-order-v2-settings .inspector-primary-heading'),
           disclosure: style('.screen-order-v2-settings .inspector-disclosure > summary > strong'),
           normalRow: style('.editor-composition-panel .screen-order-v2-identity-copy strong'),
@@ -254,11 +349,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         };
       })()`);
       assert(uiType.listTitle?.size === '16px' && uiType.listTitle?.weight === '650'
-        && uiType.detailTitle?.size === '16px' && uiType.detailTitle?.weight === '650'
-        && uiType.contentHeading?.size === '13px' && uiType.contentHeading?.weight === '650'
+        && uiType.detailTitle?.size === '16px' && uiType.detailTitle?.weight === '700'
+        && uiType.contentHeading?.size === '13px' && uiType.contentHeading?.weight === '700'
         && uiType.disclosure?.size === '13px' && uiType.disclosure?.weight === '650'
-        && uiType.normalRow?.size === '12px' && uiType.normalRow?.weight === '600'
-        && uiType.fixedRow?.size === '12px' && uiType.fixedRow?.weight === '600'
+        && uiType.normalRow?.size === '13px' && uiType.normalRow?.weight === '600'
+        && uiType.fixedRow?.size === '13px' && uiType.fixedRow?.weight === '600'
         && uiType.normalDetail?.size === '11px' && uiType.normalDetail?.weight === '500'
         && uiType.label?.size === '13px' && uiType.label?.weight === '600'
         && uiType.editor?.gap === '16px'
@@ -363,7 +458,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     assert(pageType.status?.size === '14px' && pageType.status?.weight === '650'
       && pageType.heading?.size === '13px' && pageType.heading?.weight === '650'
-      && pageType.label?.size === '12px' && pageType.label?.weight === '600'
+      && pageType.label?.size === '13px' && pageType.label?.weight === '600'
       && pageType.panel?.gap === '16px' && pageType.group?.gap === '12px',
       'page-level design inspector matches editor type and spacing at ' + width + ': ' + JSON.stringify(pageType));
     await capture(client, 'unified-page-design-type-' + width);
@@ -371,6 +466,47 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await setViewport(client, 1672, 941, false);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('.inspector-primary-heading') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy text inspector');
+
+  // The redesigned first view keeps design closed. Open it deliberately for
+  // secondary-control sizing and focus tests, rather than treating hidden
+  // fields as a visual regression.
+  if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
+    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  }
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'optional text design is opened for control geometry tests');
+
+  // A multi-digit size edit must keep input focus until explicit commit.
+  // The lazy Inspector can remount after draft updates, so never emit every
+  // intermediate digit to the page model while typing.
+  const sizeInput = '#editor-block-settings-editor-text .text-editor-design .editor-number-value > input';
+  const originalSize = await evaluate(client, `document.querySelector(${JSON.stringify(sizeInput)})?.value`);
+  await focusSelector(client, sizeInput);
+  await client.send('Input.dispatchKeyEvent', {
+    type: 'keyDown', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2,
+  });
+  await client.send('Input.dispatchKeyEvent', {
+    type: 'keyUp', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2,
+  });
+  await client.send('Input.insertText', { text: '36' });
+  await waitForBrowser(client, `(() => {
+    const el = document.querySelector(${JSON.stringify(sizeInput)});
+    return document.activeElement === el && el?.value === '36';
+  })()`, 'multi-digit size edit keeps the active numeric input focused');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector(${JSON.stringify(sizeInput)})?.value === '36'`,
+    'Enter commits the full numeric value');
+  await focusSelector(client, sizeInput);
+  await client.send('Input.dispatchKeyEvent', {
+    type: 'keyDown', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2,
+  });
+  await client.send('Input.dispatchKeyEvent', {
+    type: 'keyUp', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 2,
+  });
+  await client.send('Input.insertText', { text: String(originalSize) });
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector(${JSON.stringify(sizeInput)})?.value === ${JSON.stringify(String(originalSize))}`,
+    'size edit restores the original value without touching published content');
 
   // UX-032: 42px native fields / 36px compact fields / 44px toggle hit area.
   // Check computed styles at compact and wide inspector widths. Keep model
@@ -608,7 +744,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `(() => {
     const row = document.querySelector('#editor-block-editor-image');
     return row?.querySelector('.screen-order-v2-identity-copy strong')?.textContent === '본식 사진 QA'
-      && document.querySelector('.screen-order-v2-settings-title > h2')?.textContent === '본식 사진 QA';
+      && document.querySelector('.editor-inspector-selected-copy > h2')?.textContent === '본식 사진 QA';
   })()`, 'image nickname synchronizes list and inspector');
   await capture(client, 'image-label-editor-1672');
   assert(await evaluate(client, `document.querySelector('#editor-block-settings-editor-image input[placeholder="이미지 설명을 입력하세요"]')?.value`) === originalCaption,
@@ -640,7 +776,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'selected normal block exposes locate control');
   const locateBefore = await evaluate(client, `(() => {
     const list = document.querySelector('.screen-order-v2-list');
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const seed = list?.querySelector('.screen-order-v2-slot');
     if (!list || !scroller || !seed) return null;
     for (let i = 0; i < 34; i++) {
@@ -671,7 +807,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: locatePoint.x, y: locatePoint.y, button: 'left', buttons: 1, clickCount: 1 });
   await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: locatePoint.x, y: locatePoint.y, button: 'left', buttons: 0, clickCount: 1 });
   await waitForBrowser(client, `(() => {
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const selected = document.querySelector('#editor-block-editor-text');
     const row = selected?.getBoundingClientRect();
     const view = scroller?.getBoundingClientRect();
@@ -680,7 +816,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && row.bottom <= view.bottom + 2 && selected.dataset.selected === 'true';
   })()`, 'selected block appears below sticky navigator');
   const locateAfter = await evaluate(client, `(() => {
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const selected = document.querySelector('#editor-block-editor-text');
     return { focused: document.activeElement === selected?.querySelector('.screen-order-v2-title-wrap'),
       overflow: getComputedStyle(scroller).overflowY,
@@ -691,7 +827,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'selected row must have keyboard focus without changing page order: ' + JSON.stringify(locateAfter));
   await evaluate(client, `(() => {
     document.querySelectorAll('[data-qa-locate-clone]').forEach((element) => element.remove());
-    document.querySelector('.work-panel').scrollTop = 0;
+    document.querySelector('.editor-composition-content').scrollTop = 0;
   })()`);
   assert(apiState.saveCount === 0, 'locating the selected block must never save or publish');
 
@@ -712,7 +848,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const inspectorDepth = await evaluate(client, `(() => {
     const list = document.querySelector('.screen-order-v2-list');
     const image = document.querySelector('#editor-block-editor-image')?.closest('.screen-order-v2-slot');
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const seed = list?.querySelector('.screen-order-v2-slot');
     if (!list || !image || !seed || !scroller) return null;
     const addClone = (placement, i) => {
@@ -743,7 +879,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'inspector next moves from form to code');
   await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
   await waitForBrowser(client, `(() => {
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const row = document.querySelector('#editor-block-editor-image');
     const search = document.querySelector('.editor-composition-search');
     const bounds = row?.getBoundingClientRect();
@@ -752,10 +888,10 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && bounds.bottom < scroller.getBoundingClientRect().bottom
       && scroller.scrollTop > 350;
   })()`, 'deep inspector next locates the selected image row without jumping to top');
-  const imageScroll = await evaluate(client, `document.querySelector('.work-panel').scrollTop`);
+  const imageScroll = await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop`);
   await evaluate(client, `document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]').click()`);
   await waitForBrowser(client, `(() => {
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const row = document.querySelector('#editor-block-editor-bottom');
     const search = document.querySelector('.editor-composition-search');
     const bounds = row?.getBoundingClientRect();
@@ -764,23 +900,23 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && bounds.bottom < scroller.getBoundingClientRect().bottom
       && scroller.scrollTop > 350;
   })()`, 'deep inspector next finds the lower fixed CTA instead of losing its list position');
-  const bottomScroll = await evaluate(client, `document.querySelector('.work-panel').scrollTop`);
+  const bottomScroll = await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop`);
   assert(imageScroll > 350 && bottomScroll > 350, 'deep navigation must never reset to the list start');
   await evaluate(client, `(() => {
     document.querySelectorAll('[data-qa-deep-switch-clone]').forEach((node) => node.remove());
-    document.querySelector('.work-panel').scrollTop = 0;
+    document.querySelector('.editor-composition-content').scrollTop = 0;
   })()`);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
     'deep inspector regression returns to the original text editor');
   assert(apiState.saveCount === 0, 'inspector navigation must not save or publish the page');
 
-  // A 30+ block list must not push the selected Inspector header out of view
-  // or add a second Inspector scrollbar (DOM fixture; no page data writes).
+  // A long navigator list must not push the Inspector's own header away.
+  // DOM-only clones; no page data writes.
   const longInspector = await evaluate(client, `(() => {
     const list = document.querySelector('.screen-order-v2-list');
     const seed = list?.querySelector('.screen-order-v2-slot');
-    const scroller = document.querySelector('.work-panel');
+    const scroller = document.querySelector('.editor-composition-content');
     const header = document.querySelector('.screen-order-v2-settings-header');
     const inspector = document.querySelector('.editor-inspector-panel');
     if (!seed || !header || !scroller) return null;
@@ -794,24 +930,37 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         clones.push(clone);
       }
       scroller.scrollTop = Math.min(420, scroller.scrollHeight - scroller.clientHeight);
-      const surface = scroller.getBoundingClientRect();
+      const inspectorBox = inspector.getBoundingClientRect();
       const title = header.getBoundingClientRect();
       return { scrolled: scroller.scrollTop,
-        titleTop: title.top, scrollTop: surface.top,
+        titleTop: title.top, inspectorTop: inspectorBox.top,
         inspectorOverflow: getComputedStyle(inspector).overflowY,
-        workOverflow: getComputedStyle(scroller).overflowY };
+        navigatorOverflow: getComputedStyle(scroller).overflowY,
+        outerOverflow: getComputedStyle(document.querySelector('.work-panel')).overflowY };
     } finally {
       clones.forEach((clone) => clone.remove());
       scroller.scrollTop = 0;
     }
   })()`);
-  assert(longInspector?.scrolled > 250 && Math.abs(longInspector.titleTop - longInspector.scrollTop) < 4
-    && longInspector.inspectorOverflow === 'visible' && longInspector.workOverflow === 'auto',
-    'long page must keep inspector header pinned with a single shared scrollbar: ' + JSON.stringify(longInspector));
+  assert(longInspector?.scrolled > 250
+    && longInspector.titleTop >= longInspector.inspectorTop
+    && longInspector.titleTop <= longInspector.inspectorTop + 120
+    && longInspector.inspectorOverflow === 'auto'
+    && longInspector.navigatorOverflow === 'auto' && longInspector.outerOverflow === 'hidden',
+    'long navigator scroll must not move the independently scrollable Inspector: ' + JSON.stringify(longInspector));
   const before = await evaluate(client, `[...document.querySelectorAll('.text-editor-flow textarea')].map(el => el.value)`);
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
   await setInputValue(client, title, '더 나은 세상을 만드는\n당신의 아이디어');
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'typing content must not close a user-opened design group');
+  // Styling is initially hidden, but may already be expanded by a prior
+  // control-focus test. Preserve either state without closing it accidentally.
+  if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
+    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  }
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'text design controls remain reachable explicitly');
   await clickPointer(client, 'input[aria-label="제목 크기 (px)"]');
   await setInputValue(client, 'input[aria-label="제목 크기 (px)"]', '48');
   await focusSelector(client, 'input[aria-label="본문 크기 (px)"]');
@@ -840,7 +989,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'text without override follows page-wide text color');
   await capture(client, 'text-color-inheritance-reset');
   assert(apiState.saveCount === 0, 'text color source/reset must remain in the unpublished editor draft');
-  await evaluate(client, `document.querySelector('.work-panel').scrollTop = 0`);
+  await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop = 0`);
 
   const geometry = await evaluate(client, `(() => {
     const rect = el => { const r = el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width,top:r.top,height:r.height}; };
@@ -849,7 +998,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const inspector = document.querySelector('.editor-inspector-panel');
     return { header: rect(document.querySelector('.workspace-persistent-header')), list:rect(list), inspector:rect(inspector), stage:rect(stage), phone:rect(document.querySelector('.phone-frame')), pageWidth:document.querySelector('.phone-frame .landing-page').clientWidth,
       phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-width-option').length, documentWidth:document.documentElement.scrollWidth,
-      listScroll:getComputedStyle(list).overflowY, inspectorScroll:getComputedStyle(inspector).overflowY,
+      listScroll:getComputedStyle(list).overflowY,
+      navigatorScroll:getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
+      inspectorScroll:getComputedStyle(inspector).overflowY,
       labels:[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy strong')].map(el => ({
         label: el.textContent, whiteSpace:getComputedStyle(el).whiteSpace, height:el.getBoundingClientRect().height,
         lineHeight:parseFloat(getComputedStyle(el).lineHeight), clipped:el.scrollWidth>el.clientWidth
@@ -859,21 +1010,21 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 240) <= 1
-    && geometry.inspector.width >= 458 && geometry.inspector.width <= 461,
-    'reference 1672px viewport must give properties 460px while keeping a compact 240px navigator: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 276) <= 1
+    && geometry.inspector.width >= 392 && geometry.inspector.width <= 395,
+    'approved 1672px viewport must preserve 276px navigator and 394px settings: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
-  assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'auto'
-    && geometry.ancestors[1].scrollHeight > geometry.ancestors[1].height.replace('px','') * 1,
-    'only the outer work panel should scroll when selected properties are long: ' + JSON.stringify(geometry));
+  assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
+    && geometry.ancestors[1].scrollTop === 0,
+    'work panel must remain stationary while the two editing regions scroll: ' + JSON.stringify(geometry));
   assert(geometry.labels.length >= 4
     && geometry.labels.every(label => label.whiteSpace === 'normal' && label.height <= label.lineHeight * 2 + 2),
     'long Korean block names must fit within two lines without overlapping actions: ' + JSON.stringify(geometry.labels));
   assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0
-    && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'visible' && geometry.inspectorScroll === 'visible'
+    && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto' && geometry.inspectorScroll === 'auto'
     && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
-    'reference editor must show a balanced right-stage phone and one shared editing scrollbar: ' + JSON.stringify(geometry));
+    'reference editor must show a centered phone alongside independently scrolling edit panels: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
   // zoom, fullscreen, or floating block-action toolbars above the phone.
@@ -942,8 +1093,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `!document.querySelector('.add-panel')`, 'compact add catalog Escape');
   await clickPointer(client, '#editor-block-settings-editor-text .block-editor-advanced-settings > summary');
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .block-editor-advanced-settings').open`, 'single advanced group opens the anchor control');
-  await evaluate(client, `document.querySelector('.work-panel').scrollTop = 0`);
-  await waitForBrowser(client, `document.querySelector('.work-panel').scrollTop === 0`, 'shared editor scroll remains available without a second group navigator');
+  await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop = 0`);
+  await waitForBrowser(client, `document.querySelector('.editor-composition-content').scrollTop === 0`, 'navigator scroll remains independently available');
 
   assert(await evaluate(client, `!document.querySelector('.preview-selection-toolbar,.preview-stage-toolbar')`),
     'removed preview chrome must stay absent after editing and selection');

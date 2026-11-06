@@ -2,6 +2,7 @@ import { SINGLETON_BLOCK_TYPES } from '../config/blockMeta.jsx';
 import { clone, ensureUniqueAnchors, newBlock, sanitizeBlock, uid } from '../lib/pageModel.js';
 import { createVideoCodeSettings } from '../lib/youtubeEmbed.js';
 import { createSectionPatternBlocks } from '../editor/editPanelParts/sectionPatternCatalog.js';
+import { insertBlocksAfterSelection } from './insertEditorBlocks.js';
 
 const FIXED_BLOCK_TYPES = ['topnav', 'bottombar', 'footer'];
 
@@ -45,7 +46,7 @@ export function useEditorBlockActions({
         s: { anchorId: 'video', ...createVideoCodeSettings('') },
       })
       : newBlock(type);
-    setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors([...p.blocks, block]) }));
+    setPage((p) => commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(insertBlocksAfterSelection(p.blocks, [block], openId)) }));
     setOpenId(block.id);
     setAddOpen(false);
   };
@@ -55,10 +56,7 @@ export function useEditorBlockActions({
     const blocks = createSectionPatternBlocks(patternId);
     if (!blocks.length) return;
     setPage((p) => {
-      const next = [...p.blocks];
-      const trailingFixedIndex = next.findIndex((item) => ['bottombar', 'footer'].includes(item.type));
-      if (trailingFixedIndex >= 0) next.splice(trailingFixedIndex, 0, ...blocks);
-      else next.push(...blocks);
+      const next = insertBlocksAfterSelection(p.blocks, blocks, openId);
       return commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchors(next) });
     });
     setOpenId(blocks[0].id);

@@ -1,4 +1,6 @@
 import { hexToRgb, pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previewUtils.jsx';
+import { EditorInlineTextField } from '../EditorInlineTextField.jsx';
+import { canInlineEditTextMarkup } from '../../editor/previewInlineTextModel.js';
 
 function HeroContent({ s }) {
   const badges = Array.isArray(s.badges) ? s.badges.filter(Boolean).slice(0, 3) : [];
@@ -76,7 +78,7 @@ export function RenderHero({ block }) {
   );
 }
 
-export function RenderText({ block }) {
+export function RenderText({ block, editorPreview = false, onEditPreviewText }) {
   const s = block.s || {};
   const layout = pickSafe(s.layout, ['plain','card','notice'], 'plain');
   const align = pickSafe(s.align, ['left','center','right'], 'left');
@@ -86,6 +88,7 @@ export function RenderText({ block }) {
   const customTitleSize = Number.isFinite(s.titleFontSizePx) ? Math.max(12, Math.min(72, s.titleFontSizePx)) : null;
   const customBodySize = Number.isFinite(s.bodyFontSizePx) ? Math.max(10, Math.min(48, s.bodyFontSizePx)) : null;
   const customTextColor = /^#[0-9a-f]{6}$/i.test(s.textColor || '') ? s.textColor : null;
+  const canQuickEdit = editorPreview && typeof onEditPreviewText === 'function';
 
   return (
     <section
@@ -97,8 +100,12 @@ export function RenderText({ block }) {
       className={`landing-section text text-${layout} align-${align} text-size-${size} ${s.bold ? 'is-bold' : ''} ${s.underline ? 'is-underline' : ''} ${widgetBoxClass(s)}`}
       style={{ ...widgetBoxVars(s), ...(customTitleSize ? { '--text-title-size': `${customTitleSize}px` } : {}), ...(customBodySize ? { '--text-body-size': `${customBodySize}px` } : {}), ...(customTextColor ? { '--text-block-color': customTextColor } : {}) }}
     >
-      {title ? <h2>{rich(title)}</h2> : null}
-      {body ? <p>{rich(body)}</p> : null}
+      {title ? (canQuickEdit && canInlineEditTextMarkup(s.title)
+        ? <EditorInlineTextField as="h2" blockId={block.id} field="title" label="제목" htmlValue={s.title} onCommit={onEditPreviewText} />
+        : <h2>{rich(title)}</h2>) : null}
+      {body ? (canQuickEdit && canInlineEditTextMarkup(s.body)
+        ? <EditorInlineTextField as="p" blockId={block.id} field="body" label="본문" htmlValue={s.body} onCommit={onEditPreviewText} />
+        : <p>{rich(body)}</p>) : null}
     </section>
   );
 }
