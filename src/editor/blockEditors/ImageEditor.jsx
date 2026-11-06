@@ -8,7 +8,7 @@ import useImageEditorState from './useImageEditorState.js';
 import { WidgetSpacingControls } from './WidgetSpacingControls.jsx';
 import './ImageEditor.css';
 
-export default function ImageEditor({ s, set, block }) {
+export default function ImageEditor({ s, set, block, page, blockId }) {
   const imageState = useImageEditorState({ s, set });
   const gridGallery = s.mode === 'gallery' && s.galleryLayout === 'grid';
 
@@ -24,7 +24,7 @@ export default function ImageEditor({ s, set, block }) {
         updateSingleImage={imageState.updateSingleImage}
       />
       <ImageCaptionSection s={s} set={set} />
-      <InspectorDisclosure label="사진 맞춤과 디자인" className="image-editor-more" bodyClassName="image-editor-more-controls">
+      <InspectorDisclosure label="사진 맞춤과 디자인" className="image-editor-more" bodyClassName="image-editor-more-controls" persistKey={(blockId || block?.id) ? `${page?.id || 'draft'}:${blockId || block.id}:image-design` : ''}>
         {!gridGallery && <ImageDisplayControls
           display={imageState.display}
           s={s}
