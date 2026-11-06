@@ -21,10 +21,10 @@ export default function TextEditor({ s, set, page }) {
         value={s.body}
         onChange={(value) => set({ body: value })}
       />
-      <InspectorDisclosure label="디자인" className="text-editor-design" bodyClassName="text-editor-design-controls" defaultOpen>
+      <InspectorDisclosure label="디자인 조정" className="text-editor-design" bodyClassName="text-editor-design-controls">
         <TextStylePanel s={s} set={set} theme={page?.theme} />
+        <WidgetSpacingControls s={s} set={set} />
       </InspectorDisclosure>
-      <WidgetSpacingControls s={s} set={set} />
     </div>
   );
 }
