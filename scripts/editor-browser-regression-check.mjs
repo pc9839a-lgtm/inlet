@@ -1697,19 +1697,26 @@ async function run() {
     qaStep('stage6 hero image controls');
     const stageSixHero = '#editor-block-settings-editor-hero';
     const heroHeightNumber = `${stageSixHero} input[aria-label="이미지 높이 (px)"]`;
+    // Numeric text is buffered until blur or Enter so multi-digit edits keep
+    // their focus even if the editor remounts after model changes.
+    const setCommittedNumber = async (selector, value) => {
+      await setInputValue(client, selector, value);
+      await focusSelector(client, selector);
+      await pressKeyboardKey(client, 'Enter');
+    };
     const heroFilterNumber = `${stageSixHero} input[aria-label="필터 진하기 (%)"]`;
     const heroPlacement = `${stageSixHero} .editor-segmented-v2[aria-label="이미지 배치"]`;
-    await setInputValue(client, heroHeightNumber, '360');
+    await setCommittedNumber(heroHeightNumber, '360');
     await waitForBrowser(client, `document.querySelector('.phone-frame #block-editor-hero')?.style.getPropertyValue('--hero-image-height') === '360px'`, 'stage6 height numeric preview');
     await focusSelector(client, heroHeightNumber);
-    await setInputValue(client, heroHeightNumber, '');
+    await setCommittedNumber(heroHeightNumber, '');
     await focusSelector(client, `${heroPlacement} button:first-child`);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '360'`, 'stage6 empty height restores its value');
     await focusSelector(client, heroHeightNumber);
-    await setInputValue(client, heroHeightNumber, '999');
+    await setCommittedNumber(heroHeightNumber, '999');
     await focusSelector(client, `${heroPlacement} button:first-child`);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '720'`, 'stage6 height upper bound');
-    await setInputValue(client, heroHeightNumber, '360');
+    await setCommittedNumber(heroHeightNumber, '360');
     // A separate slider gesture must start outside the existing 350ms history group.
     await wait(400);
     await setInputValue(client, `${stageSixHero} .hero-image-range input[type="range"]`, '420');
@@ -1718,7 +1725,7 @@ async function run() {
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '360'`, 'stage6 number follows undo');
     await clickSelector(client, '.panel-history-btn[aria-label="다시 실행"]');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroHeightNumber)})?.value === '420'`, 'stage6 number follows redo');
-    await setInputValue(client, heroHeightNumber, '360');
+    await setCommittedNumber(heroHeightNumber, '360');
     await clickSelector(client, `${heroPlacement} button:nth-child(3)`);
     await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-hero.hero-full .hero-full-content')`, 'stage6 full image with text');
     const heroTextSwitch = `${stageSixHero} [role="switch"][aria-label="글자 표시"]`;
@@ -1727,7 +1734,7 @@ async function run() {
     assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'stage6 hiding preview text must preserve the continuously visible editor title');
     await clickSelector(client, heroTextSwitch);
     await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-hero .hero-full-content') && !!document.querySelector(${JSON.stringify(heroFilterNumber)})`, 'stage6 text on restores content');
-    await setInputValue(client, heroFilterNumber, '25');
+    await setCommittedNumber(heroFilterNumber, '25');
     const heroFilterSwitch = `${stageSixHero} [role="switch"][aria-label="사진 필터"]`;
     await clickSelector(client, heroFilterSwitch);
     await waitForBrowser(client, `!document.querySelector('.phone-frame #block-editor-hero .hero-full-media > i') && !document.querySelector(${JSON.stringify(heroFilterNumber)})`, 'stage6 filter off');
@@ -2168,6 +2175,7 @@ async function run() {
       'text styling remains expanded after changing its inner spacing');
     await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '16');
+    await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return style.paddingTop === '0px' && style.marginTop === '16px'; })()`, 'exact zero padding and numeric outer spacing render without publishing').catch(async (error) => {
       const actual = await evaluate(client, `(() => { const style = getComputedStyle(document.querySelector('.phone-frame #block-editor-text')); return { padding: style.paddingTop, margin: style.marginTop, paddingValue: style.getPropertyValue('--widget-padding'), marginValue: style.getPropertyValue('--widget-margin') }; })()`);
       throw new Error(error.message + ': ' + JSON.stringify(actual));
@@ -2204,8 +2212,12 @@ async function run() {
     await setInputValue(client, outerSpacing, '');
     await focusSelector(client, innerSpacing);
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(outerSpacing)})?.value === '48'`, 'empty number input keeps the previous spacing');
+    await focusSelector(client, innerSpacing);
     await setInputValue(client, innerSpacing, '22');
+    await pressKeyboardKey(client, 'Enter');
+    await focusSelector(client, outerSpacing);
     await setInputValue(client, outerSpacing, '24');
+    await pressKeyboardKey(client, 'Enter');
     assert(apiState.saveCount === 0, 'number and spacing changes must not publish');
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-action');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'D03 text duplicate menu');
@@ -2288,15 +2300,23 @@ async function run() {
     const initialDividerSpacing = await evaluate(client, `document.querySelector(${JSON.stringify(dividerSpacing)})?.value`);
     const initialDividerWidth = await evaluate(client, `document.querySelector(${JSON.stringify(dividerLength)})?.value`);
     await setInputValue(client, dividerSpacing, '16');
+    await focusSelector(client, dividerSpacing);
+    await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)})).marginTop === '16px'
       && getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)})).marginBottom === '16px'`,
       'divider single spacing input updates both visible preview margins');
     await setInputValue(client, dividerSpacing, String(initialDividerSpacing));
+    await focusSelector(client, dividerSpacing);
+    await pressKeyboardKey(client, 'Enter');
     await setInputValue(client, dividerLength, '60');
+    await focusSelector(client, dividerLength);
+    await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(dividerSettingsRoot)})?.querySelector('[aria-label="정렬"]') !== null
       && getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)} + ' > div')).width !== '0px'`,
       'divider narrow line exposes alignment while remaining visible');
     await setInputValue(client, dividerLength, String(initialDividerWidth));
+    await focusSelector(client, dividerLength);
+    await pressKeyboardKey(client, 'Enter');
     assert(apiState.saveCount === 0, 'direct divider numeric edits must remain unpublished');
 
     // E2E-04: visibility toggle must update the preview without publishing.
