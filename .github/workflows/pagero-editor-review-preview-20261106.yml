@@ -85,7 +85,7 @@ jobs:
 
           curl --fail-with-body --silent --show-error \
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/inlet/deployments?per_page=40" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/inlet/deployments?per_page=20" \
             -o /tmp/pagero-editor-preview-deployments.json
           node --input-type=module - /tmp/pagero-editor-preview-deployments.json "${GITHUB_SHA}" "${PREVIEW_BRANCH}" <<'NODE'
           import fs from 'node:fs';
@@ -106,6 +106,10 @@ jobs:
           }
           console.log('Verified preview environment for exact SHA:', sha);
           console.log('Review URL:', url);
+          // Inspect only the newly published editor route. This must not call
+          // an authenticated API or write any user data.
+          const app = new URL('/app', url).toString();
+          console.log('Editor route:', app);
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
             '### PageRo editor review (not production)',
             '',
