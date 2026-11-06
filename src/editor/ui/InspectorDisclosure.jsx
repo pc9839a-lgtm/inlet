@@ -29,7 +29,7 @@ export function InspectorDisclosure({ label, className = '', bodyClassName = '',
     setExpanded(next);
   };
   return (
-    <details className={`inspector-disclosure ${className}`.trim()} open={expanded}>
+    <details className={`inspector-disclosure ${className}`.trim()} open={expanded} data-ui-expanded={expanded ? 'true' : 'false'} data-remembered-expanded={persistKey ? String(expandedByBlock.get(persistKey)) : ''} data-ui-key={persistKey}>
       <summary onClick={onActivate}>
         <strong>{label}</strong>
         <ChevronDown size={16} aria-hidden="true" />
