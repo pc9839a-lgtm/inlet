@@ -42,6 +42,58 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
   await setViewport(client, 1672, 941, false);
+  // A visual redesign must change the *first visible task*, not just CSS
+  // tokens. Verify real editor settings and capture each of four block types.
+  for (const [id, heading, primarySelector, advancedSelector] of [
+    ['editor-text', '내용 수정', '.text-editor-flow > .editor-field-v2--body-text textarea', '.text-editor-design'],
+    ['editor-image', '사진 변경', '.image-editor-flow .image-input-upload-action', '.image-editor-more'],
+    ['editor-form', '문의 폼 편집', '.form-editor-flow .form-question-title', '.form-behavior-detail'],
+    ['editor-code', '코드 편집', '.code-editor-box textarea', '.code-editor-options'],
+  ]) {
+    await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+    await waitForBrowser(client,
+      `!!document.querySelector('#editor-block-settings-${id} ${primarySelector}')`,
+      'content-first primary task loads for ' + id);
+    const firstView = await evaluate(client, `(() => {
+      const scope = document.querySelector('#editor-block-settings-${id}');
+      const primary = scope?.querySelector('${primarySelector}');
+      const secondary = scope?.querySelector('${advancedSelector}');
+      const heading = scope?.querySelector('.inspector-primary-heading');
+      const identity = document.querySelector('.editor-inspector-selected-copy');
+      const code = scope?.querySelector('.code-editor-box textarea');
+      const body = scope?.querySelector('.text-editor-flow > .editor-field-v2--body-text textarea');
+      return {
+        heading: heading?.textContent.trim(),
+        identityVisible: !!identity && identity.getBoundingClientRect().height >= 30,
+        primaryVisible: !!primary?.getClientRects().length,
+        primaryHeight: primary?.getBoundingClientRect().height || 0,
+        secondaryClosed: secondary?.tagName === 'DETAILS' && secondary.open === false,
+        bodyVisible: !!body?.getClientRects().length,
+        directCode: id === 'editor-code' ? code?.getBoundingClientRect().height >= 290 : true,
+      };
+    })()`);
+    assert(firstView.heading === heading && firstView.identityVisible && firstView.primaryVisible
+      && firstView.primaryHeight >= 30 && firstView.secondaryClosed && firstView.directCode
+      && (id !== 'editor-text' || firstView.bodyVisible),
+      'redesigned inspector exposes actual content before optional settings: ' + JSON.stringify({ id, firstView }));
+    if (id === 'editor-text' || id === 'editor-image' || id === 'editor-form' || id === 'editor-code') {
+      await capture(client, 'inspector-content-first-' + id);
+    }
+  }
+  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  const optionalText = await evaluate(client, `(() => {
+    const panel = document.querySelector('#editor-block-settings-editor-text');
+    return {
+      open: panel?.querySelector('.text-editor-design')?.open,
+      spacingVisible: !!panel?.querySelector('.widget-spacing-controls')?.getClientRects().length,
+      colorVisible: !!panel?.querySelector('input[aria-label="글자색 HEX"]')?.getClientRects().length,
+    };
+  })()`);
+  assert(optionalText.open && optionalText.spacingVisible && optionalText.colorVisible,
+    'one optional text design disclosure must reveal original text style and spacing actions: '
+    + JSON.stringify(optionalText));
+  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
   // Prior QA scenarios may leave a block selected. Explicitly enter page-level
   // editing to verify that clearing the selected block never hides the inspector.
   await clickPointer(client, '.editor-page-settings-button');
