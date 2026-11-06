@@ -259,10 +259,32 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-view {
   flex-direction: column;
   min-width: 0;
 }
-html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: sticky; top: 0; z-index: 6; padding: 14px 0 12px; margin: 0 0 14px; border-bottom: 1px solid #eef0f6; background: #fff; }
-html body #root .canvas-editor-shell .screen-order-v2-settings-title { display: flex; align-items: center; gap: 10px; min-height: 30px; }
-html body #root .canvas-editor-shell .screen-order-v2-settings-title > h2 { margin: 0; min-width: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size) !important; line-height: 1.4; font-weight: var(--editor-ui-strong); overflow-wrap: anywhere; }
-html body #root .canvas-editor-shell .screen-order-v2-settings-title > svg { flex: 0 0 auto; color: #2454ff; }
+/* Selected item identity, in the same hierarchy as the owner reference.
+   Display name and type are grouped; the existing actions remain available. */
+html body #root .canvas-editor-shell .screen-order-v2-settings-header {
+  position: sticky; top: 0; z-index: 6;
+  padding: 18px 0 14px; margin: 0 0 17px;
+  border-bottom: 1px solid #e9edf4; background: #fff;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings-title {
+  display: flex; align-items: center; gap: 11px; min-height: 38px;
+}
+html body #root .canvas-editor-shell .editor-inspector-kind-icon {
+  display: inline-flex; flex: 0 0 36px; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 10px;
+  background: #eef2ff; color: #2454ff;
+}
+html body #root .canvas-editor-shell .editor-inspector-selected-copy {
+  flex: 1 1 auto; min-width: 0; display: grid; gap: 3px;
+}
+html body #root .canvas-editor-shell .editor-inspector-selected-copy > h2 {
+  min-width: 0; margin: 0; color: #182230;
+  font-size: 16px !important; font-weight: 700; line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+html body #root .canvas-editor-shell .editor-inspector-selected-context {
+  color: #8893a7; font-size: 11px; line-height: 1.3; font-weight: 500;
+}
 html body #root .canvas-editor-shell .editor-block-switch {
   display: flex;
   align-items: center;
@@ -337,11 +359,12 @@ body .builder-shell.edit-mode-shell .editor-page-options-stack .style-panel { wi
 /* Inspector owns a single native disclosure hierarchy instead of redundant
    shortcut tabs + internal design accordions. Existing widget field values and
    detail class names remain unchanged; no new nested scrollbar is introduced. */
+/* One clear editing heading, followed by real fields; no extra navigation tabs. */
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-primary-heading {
-  margin: 2px 0 var(--editor-ui-space-3);
-  color: var(--editor-ui-text);
-  font-size: var(--editor-ui-section-size);
-  font-weight: var(--editor-ui-strong);
+  margin: 4px 0 17px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.4;
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-subgroup-heading {
