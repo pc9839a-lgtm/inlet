@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 
 const source = readFileSync('.github/workflows/deploy-cloudflare.yml', 'utf8');
@@ -42,6 +43,14 @@ const approvedOtherSiteWriters = new Set([
   'retire-legacy-life-pages.yml',
 ]);
 const approvedManualSecretWriter = 'calltag-admin-cloudflare-bootstrap.yml';
+// Only this exact, reviewed workflow may deploy the isolated editor review preview.
+// Pinning the complete Git blob makes any change fail closed until re-reviewed.
+const approvedReviewPreviewWriter = 'pagero-editor-review-preview-20261106.yml';
+const approvedReviewPreviewBlob = 'fa5c494ce2e1246ca56c073daf6b666b8ea5a970';
+const gitBlobSha = (content) => createHash('sha1')
+  .update(`blob ${Buffer.byteLength(content, 'utf8')}\0`)
+  .update(content)
+  .digest('hex');
 const writers = [
   /\b(?:npx\s+)?wrangler\s+pages\s+deploy\b/i,
   /\bnpm\s+run\s+deploy:pages\b/i,
@@ -61,6 +70,23 @@ for (const workflow of workflowNames) {
     assert.match(body, /environment: production/, 'secret bootstrap requires production environment');
     assert.match(body, /I_APPROVE_CALLTAG_ADMIN_CLOUDFLARE_BOOTSTRAP/, 'secret bootstrap requires independent approval');
     for (const writer of writers.slice(0, 3)) assert.doesNotMatch(body, writer, `${workflow} must not deploy pages`);
+  } else if (workflow === approvedReviewPreviewWriter) {
+    assert.equal(gitBlobSha(body), approvedReviewPreviewBlob,
+      `${workflow} changed: re-review the preview-only deploy safeguards before approval`);
+    assert.match(body, /^on:\s*\n  push:\s*\n    branches:\s*\n      - preview\/pagero-editor-review-20261106\s*$/m,
+      'editor review preview must trigger only on the isolated preview branch');
+    assert.match(body, /github\.repository == 'pc9839a-lgtm\/inlet' && github\.ref == 'refs\/heads\/preview\/pagero-editor-review-20261106'/,
+      'editor review job must verify the repository and exact preview ref');
+    assert.match(body, /PREVIEW_BRANCH: pagero-editor-review-20261106/,
+      'Cloudflare preview alias must remain separate from main');
+    assert.match(body, /--project-name inlet/, 'review preview must use the expected Pages project');
+    assert.match(body, /--branch "\$\{PREVIEW_BRANCH\}"/, 'review preview must upload to the isolated branch');
+    assert.match(body, /--commit-hash "\$\{GITHUB_SHA\}"/, 'review preview must upload the exact commit');
+    assert.match(body, /project\.production_branch !== 'main'/, 'review preview must verify production branch');
+    assert.match(body, /match\.environment !== 'preview'/, 'review preview must verify the environment');
+    for (const writer of writers.slice(1)) assert.doesNotMatch(body, writer, `${workflow} must not use another deploy or secret writer`);
+    assert.doesNotMatch(body, /environment:\s*production/i,
+      'review preview must not request the production environment');
   } else {
     for (const writer of writers) assert.doesNotMatch(body, writer, `unauthorized Cloudflare Pages writer: ${workflow}`);
   }
