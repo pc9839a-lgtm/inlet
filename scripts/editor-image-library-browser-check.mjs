@@ -359,6 +359,7 @@ async function run() {
     await clickSelector(client, '.image-editor-flow .crop-open-button');
     await waitForBrowser(client, `document.querySelector('.crop-modal input[aria-label="높이 (px)"]')?.value === '320'`, 'reopened crop restores committed height');
     await setInputValue(client, '.crop-modal input[aria-label="높이 (px)"]', '360');
+    await clickSelector(client, '.crop-modal input[aria-label="높이 (px)"]');
     await clickSelector(client, '.crop-actions button.primary');
     await waitForBrowser(client, `!document.querySelector('.crop-modal') && document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`, 'apply crop updates main image height');
     await waitForBrowser(client, `Math.round(document.querySelector('.phone-frame #block-editor-image .image-wrap.image-fill')?.getBoundingClientRect().height || 0) === 360`, 'applied crop height reaches page');
