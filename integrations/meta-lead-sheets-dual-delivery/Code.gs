@@ -294,7 +294,7 @@ function leadBridgeSource_(row, fields) {
 }
 
 function leadBridgeEventFromSource_(row, fields) {
-  const raw = fields.event_id === undefined ? '' : leadBridgeText_(row[fields.event_id]]);
+  const raw = fields.event_id === undefined ? '' : leadBridgeText_(row[fields.event_id]);
   return raw ? ('meta-' + raw.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 160)) : '';
 }
 
