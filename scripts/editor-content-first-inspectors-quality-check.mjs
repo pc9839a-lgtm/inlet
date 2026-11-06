@@ -39,8 +39,14 @@ assert(inspector.includes('editor-inspector-selected-copy') && inspector.include
 assert(css.includes('.editor-inspector-kind-icon') && css.includes('.editor-inspector-selected-copy')
   && css.includes('margin: 4px 0 17px;'),
   'inspector styles are owned by existing layout stylesheet');
-assert(disclosure.includes('useState(defaultOpen)') && disclosure.includes('onToggle={(event) => setExpanded(event.currentTarget.open)}'),
-  'native disclosure must persist the user-expanded state across edits');
+assert(disclosure.includes('expandedByBlock = new Map()')
+  && disclosure.includes('expandedByBlock.has(persistKey)')
+  && disclosure.includes('rememberExpanded(persistKey, next)')
+  && disclosure.includes('onToggle={onToggle}')
+  && text.includes('persistKey={blockId ?')
+  && image.includes('persistKey={(blockId || block?.id) ?')
+  && form.includes('form-behavior'),
+  'native disclosure must preserve only per-page/per-block UI expansion across lazy editor remounts');
 assert(browser.includes('inspector-content-first-') && browser.includes('firstView.secondaryClosed')
   && browser.includes('optionalText.spacingVisible') && browser.includes('optionalText.colorVisible'),
   'real Chrome verifies first-view design and hidden style controls reopening');
