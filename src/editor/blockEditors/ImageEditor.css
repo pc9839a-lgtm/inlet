@@ -35,6 +35,18 @@ html body #root .builder-shell .image-editor-flow .crop-open-button { justify-se
 }
 .builder-shell .image-editor-flow summary:focus-visible { outline: 2px solid var(--editor-ui-accent, #2454ff); outline-offset: 2px; border-radius: var(--editor-ui-space-1, 4px); }
 
+/* The selected photo is a primary editing surface. Media buttons retain
+   the existing uploader / library handlers and permissions. */
+html body #root .canvas-editor-shell .image-editor-flow .image-input--compact {
+  margin-bottom: 2px;
+}
+html body #root .canvas-editor-shell .image-editor-flow .image-input-source-actions > .image-input-upload-action {
+  background: #2454ff !important;
+  border-color: #2454ff !important;
+  color: #fff !important;
+  font-weight: 650 !important;
+}
+
 /* Keep the complete photo inside the short thumbnail despite legacy image rules. */
 html body #root .builder-shell .image-editor-flow .image-input--compact .image-preview-frame > img {
   width: 100% !important; height: 110px !important; max-height: 110px !important;
