@@ -12,7 +12,7 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout {
   --editor-ui-section-size: 13px;
   --editor-ui-label-size: 13px;
   --editor-ui-value-size: 14px;
-  --editor-ui-row-size: 12px;
+  --editor-ui-row-size: 13px;
   --editor-ui-helper-size: 11px;
   --editor-ui-text: #182230;
   --editor-ui-muted: #667085;
@@ -87,11 +87,19 @@ html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-heading {
   position: sticky; top: 0; z-index: 8;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  min-height: 76px; flex: 0 0 auto; padding: 16px 10px; border-bottom: 1px solid #eef0f6; background: #fff;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 20px 40px;
+  align-items: start;
+  gap: 10px;
+  min-height: 104px;
+  flex: 0 0 auto;
+  padding: 12px 8px 10px;
+  border-bottom: 1px solid #eef0f6;
+  background: #fff;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 { flex: 1; white-space: nowrap !important; margin: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size); font-weight: var(--editor-ui-strong); }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-content { padding: 4px 0 12px; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 { width: 100%; min-width: 0; white-space: nowrap !important; margin: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size); font-weight: var(--editor-ui-strong); line-height: 20px; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-content { padding: 8px 0 12px; }
 html body #root .builder-shell.canvas-editor-shell .screen-order-fixed-blocks { margin: 0 !important; padding: 0 !important; border: 0 !important; }
 html body #root .builder-shell.canvas-editor-shell .screen-order-fixed-blocks[hidden] { display: none !important; }
 /* The fixed-region toggles belong to the navigator, not to the public page. */
@@ -251,7 +259,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-view {
   flex-direction: column;
   min-width: 0;
 }
-html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: sticky; top: 0; z-index: 6; padding: 22px 0 16px; margin: 0 0 18px; border-bottom: 1px solid #eef0f6; background: #fff; }
+html body #root .canvas-editor-shell .screen-order-v2-settings-header { position: sticky; top: 0; z-index: 6; padding: 14px 0 12px; margin: 0 0 14px; border-bottom: 1px solid #eef0f6; background: #fff; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title { display: flex; align-items: center; gap: 10px; min-height: 30px; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > h2 { margin: 0; min-width: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size) !important; line-height: 1.4; font-weight: var(--editor-ui-strong); overflow-wrap: anywhere; }
 html body #root .canvas-editor-shell .screen-order-v2-settings-title > svg { flex: 0 0 auto; color: #2454ff; }

@@ -155,7 +155,7 @@ export function EditPanelLayout({
     <div className="edit-layout" data-editor-layout="left-persistent">
       <aside className="editor-composition-panel" aria-label="구성">
         <div className="editor-composition-heading">
-          <h2>블록</h2>
+          <h2>페이지 구성</h2>
           <AddBlockDock {...addBlockDockProps} compact />
 
         </div>

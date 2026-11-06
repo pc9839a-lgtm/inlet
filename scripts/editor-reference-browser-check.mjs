@@ -1,5 +1,46 @@
 // The owner reference defines the chrome. Content below is a disposable QA page.
 export async function checkReferenceEditor({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState }) {
+  // Visual reference: a named, full-width add action and readable flat
+  // composition rows at both the chosen 1672px size and narrow 900px PC.
+  for (const referenceWidth of [1672, 900]) {
+    await setViewport(client, referenceWidth, 941, false);
+    const visual = await evaluate(client, `(() => {
+      const heading = document.querySelector('.editor-composition-heading');
+      const button = heading?.querySelector('.add-dock-compact .add-toggle');
+      const label = button?.querySelector('strong');
+      const search = document.querySelector('.editor-composition-search');
+      const row = document.querySelector('.editor-composition-panel .screen-order-v2-identity-copy strong');
+      const fixedRow = document.querySelector('.fixed-composition-row .screen-order-v2-identity-copy strong');
+      const frame = document.querySelector('.phone-frame .landing-page');
+      if (!heading || !button || !label || !search || !row || !fixedRow || !frame) return null;
+      const rect = (node) => node.getBoundingClientRect();
+      return {
+        heading: heading.querySelector('h2')?.textContent.trim(),
+        buttonText: label.textContent.trim(),
+        ariaLabel: button.getAttribute('aria-label'),
+        buttonWidth: rect(button).width,
+        buttonHeight: rect(button).height,
+        headingWidth: rect(heading).width,
+        buttonBackground: getComputedStyle(button).backgroundColor,
+        labelVisible: rect(label).width > 50 && rect(label).height > 10,
+        searchBelowButton: rect(search).top >= rect(button).bottom,
+        listNameSize: getComputedStyle(row).fontSize,
+        fixedNameSize: getComputedStyle(fixedRow).fontSize,
+        phoneWidth: frame.clientWidth,
+        overflow: document.documentElement.scrollWidth - innerWidth,
+      };
+    })()`);
+    assert(visual?.heading === '페이지 구성' && visual.buttonText === '블록 추가'
+      && visual.ariaLabel === '블록 추가' && visual.labelVisible
+      && visual.buttonWidth >= visual.headingWidth - 24
+      && visual.buttonHeight >= 39 && visual.searchBelowButton
+      && ['rgb(237, 242, 255)', 'rgb(227, 235, 255)'].includes(visual.buttonBackground)
+      && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
+      && visual.phoneWidth === 390 && visual.overflow <= 3,
+      'reference 1672/900 visual hierarchy must keep visible add, legible rows and 390px phone: '
+      + JSON.stringify({ referenceWidth, visual }));
+    await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
+  }
   await setViewport(client, 1672, 941, false);
   // Prior QA scenarios may leave a block selected. Explicitly enter page-level
   // editing to verify that clearing the selected block never hides the inspector.
@@ -258,8 +299,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         && uiType.detailTitle?.size === '16px' && uiType.detailTitle?.weight === '650'
         && uiType.contentHeading?.size === '13px' && uiType.contentHeading?.weight === '650'
         && uiType.disclosure?.size === '13px' && uiType.disclosure?.weight === '650'
-        && uiType.normalRow?.size === '12px' && uiType.normalRow?.weight === '600'
-        && uiType.fixedRow?.size === '12px' && uiType.fixedRow?.weight === '600'
+        && uiType.normalRow?.size === '13px' && uiType.normalRow?.weight === '600'
+        && uiType.fixedRow?.size === '13px' && uiType.fixedRow?.weight === '600'
         && uiType.normalDetail?.size === '11px' && uiType.normalDetail?.weight === '500'
         && uiType.label?.size === '13px' && uiType.label?.weight === '600'
         && uiType.editor?.gap === '16px'
@@ -364,7 +405,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     assert(pageType.status?.size === '14px' && pageType.status?.weight === '650'
       && pageType.heading?.size === '13px' && pageType.heading?.weight === '650'
-      && pageType.label?.size === '12px' && pageType.label?.weight === '600'
+      && pageType.label?.size === '13px' && pageType.label?.weight === '600'
       && pageType.panel?.gap === '16px' && pageType.group?.gap === '12px',
       'page-level design inspector matches editor type and spacing at ' + width + ': ' + JSON.stringify(pageType));
     await capture(client, 'unified-page-design-type-' + width);
