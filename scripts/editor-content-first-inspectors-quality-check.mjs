@@ -31,7 +31,7 @@ assert(form.indexOf('<FormFieldsSection') < form.indexOf('label="디자인 조�
 assert(form.indexOf('label="제출 후 동작과 연동"') < form.indexOf('<FormPrivacySettings')
   && form.indexOf('<FormSubmissionSection') < form.indexOf('</InspectorDisclosure>', form.indexOf('label="제출 후 동작과 연동"')),
   'form privacy and submission remain accessible behind explicit section');
-assert(code.includes('<CodeEditorBox') && code.includes('codeDraftHint') && codeBox.includes('<strong>HTML 코드</strong>')
+assert(code.includes('<CodeEditorBox') && code.includes('codeDraftHint') && codeBox.includes('aria-label="HTML 코드 초안"')
   && codeBox.includes('onClick={onApply}'), 'direct code editing, draft state and apply remain visible');
 assert(inspector.includes('editor-inspector-selected-copy') && inspector.includes('{primaryLabel}')
   && inspector.includes('editor-inspector-selected-context'),
