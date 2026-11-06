@@ -87,11 +87,19 @@ html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-heading {
   position: sticky; top: 0; z-index: 8;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  min-height: 76px; flex: 0 0 auto; padding: 16px 10px; border-bottom: 1px solid #eef0f6; background: #fff;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 20px 40px;
+  align-items: start;
+  gap: 10px;
+  min-height: 104px;
+  flex: 0 0 auto;
+  padding: 12px 8px 10px;
+  border-bottom: 1px solid #eef0f6;
+  background: #fff;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 { flex: 1; white-space: nowrap !important; margin: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size); font-weight: var(--editor-ui-strong); }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-content { padding: 4px 0 12px; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 { width: 100%; min-width: 0; white-space: nowrap !important; margin: 0; color: var(--editor-ui-text); font-size: var(--editor-ui-title-size); font-weight: var(--editor-ui-strong); line-height: 20px; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-content { padding: 8px 0 12px; }
 html body #root .builder-shell.canvas-editor-shell .screen-order-fixed-blocks { margin: 0 !important; padding: 0 !important; border: 0 !important; }
 html body #root .builder-shell.canvas-editor-shell .screen-order-fixed-blocks[hidden] { display: none !important; }
 /* The fixed-region toggles belong to the navigator, not to the public page. */
