@@ -2300,15 +2300,23 @@ async function run() {
     const initialDividerSpacing = await evaluate(client, `document.querySelector(${JSON.stringify(dividerSpacing)})?.value`);
     const initialDividerWidth = await evaluate(client, `document.querySelector(${JSON.stringify(dividerLength)})?.value`);
     await setInputValue(client, dividerSpacing, '16');
+    await focusSelector(client, dividerSpacing);
+    await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)})).marginTop === '16px'
       && getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)})).marginBottom === '16px'`,
       'divider single spacing input updates both visible preview margins');
     await setInputValue(client, dividerSpacing, String(initialDividerSpacing));
+    await focusSelector(client, dividerSpacing);
+    await pressKeyboardKey(client, 'Enter');
     await setInputValue(client, dividerLength, '60');
+    await focusSelector(client, dividerLength);
+    await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(dividerSettingsRoot)})?.querySelector('[aria-label="정렬"]') !== null
       && getComputedStyle(document.querySelector('.phone-frame #block-' + ${JSON.stringify(addedDividerBlockId)} + ' > div')).width !== '0px'`,
       'divider narrow line exposes alignment while remaining visible');
     await setInputValue(client, dividerLength, String(initialDividerWidth));
+    await focusSelector(client, dividerLength);
+    await pressKeyboardKey(client, 'Enter');
     assert(apiState.saveCount === 0, 'direct divider numeric edits must remain unpublished');
 
     // E2E-04: visibility toggle must update the preview without publishing.
