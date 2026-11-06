@@ -341,6 +341,11 @@ async function run() {
     const heightInput = '.image-editor-flow input[aria-label="이미지 높이 (px)"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heightInput)})`, 'image height available directly');
     await setInputValue(client, heightInput, '320');
+    // NumberControl buffers keyboard edits until blur/Enter so its Inspector
+    // does not lose focus after the first digit. Commit before preview QA.
+    await evaluate(client, `document.querySelector(${JSON.stringify(heightInput)})?.focus()`);
+    await wait(60);
+    await evaluate(client, `document.querySelector(${JSON.stringify(heightInput)})?.blur()`);
     await waitForBrowser(client, `Math.round(document.querySelector('.phone-frame #block-editor-image .image-wrap.image-fill')?.getBoundingClientRect().height || 0) === 320`, 'direct image height reaches page preview');
     assert(await evaluate(client, `document.querySelectorAll('.image-editor-flow input[type="range"]').length === 0`), 'main image height and spacing must not duplicate number fields with sliders');
     await capture(client, 'desktop-image-direct-settings');
