@@ -42,6 +42,58 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
   await setViewport(client, 1672, 941, false);
+  // A visual redesign must change the *first visible task*, not just CSS
+  // tokens. Verify real editor settings and capture each of four block types.
+  for (const [id, heading, primarySelector, advancedSelector] of [
+    ['editor-text', '내용 수정', '.text-editor-flow > .editor-field-v2--body-text textarea', '.text-editor-design'],
+    ['editor-image', '사진 변경', '.image-editor-flow .image-input-upload-action', '.image-editor-more'],
+    ['editor-form', '문의 폼 편집', '.form-editor-flow .form-question-title', '.form-behavior-detail'],
+    ['editor-code', '코드 편집', '.code-editor-box textarea', '.code-editor-options'],
+  ]) {
+    await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+    await waitForBrowser(client,
+      `!!document.querySelector('#editor-block-settings-${id} ${primarySelector}')`,
+      'content-first primary task loads for ' + id);
+    const firstView = await evaluate(client, `(() => {
+      const scope = document.querySelector('#editor-block-settings-${id}');
+      const primary = scope?.querySelector('${primarySelector}');
+      const secondary = scope?.querySelector('${advancedSelector}');
+      const heading = scope?.querySelector('.inspector-primary-heading');
+      const identity = document.querySelector('.editor-inspector-selected-copy');
+      const code = scope?.querySelector('.code-editor-box textarea');
+      const body = scope?.querySelector('.text-editor-flow > .editor-field-v2--body-text textarea');
+      return {
+        heading: heading?.textContent.trim(),
+        identityVisible: !!identity && identity.getBoundingClientRect().height >= 30,
+        primaryVisible: !!primary?.getClientRects().length,
+        primaryHeight: primary?.getBoundingClientRect().height || 0,
+        secondaryClosed: secondary?.tagName === 'DETAILS' && secondary.open === false,
+        bodyVisible: !!body?.getClientRects().length,
+        directCode: ${JSON.stringify(id)} === 'editor-code' ? code?.getBoundingClientRect().height >= 290 : true,
+      };
+    })()`);
+    assert(firstView.heading === heading && firstView.identityVisible && firstView.primaryVisible
+      && firstView.primaryHeight >= 30 && firstView.secondaryClosed && firstView.directCode
+      && (id !== 'editor-text' || firstView.bodyVisible),
+      'redesigned inspector exposes actual content before optional settings: ' + JSON.stringify({ id, firstView }));
+    if (id === 'editor-text' || id === 'editor-image' || id === 'editor-form' || id === 'editor-code') {
+      await capture(client, 'inspector-content-first-' + id);
+    }
+  }
+  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  const optionalText = await evaluate(client, `(() => {
+    const panel = document.querySelector('#editor-block-settings-editor-text');
+    return {
+      open: panel?.querySelector('.text-editor-design')?.open,
+      spacingVisible: !!panel?.querySelector('.widget-spacing-controls')?.getClientRects().length,
+      colorVisible: !!panel?.querySelector('input[aria-label="글자색 HEX"]')?.getClientRects().length,
+    };
+  })()`);
+  assert(optionalText.open && optionalText.spacingVisible && optionalText.colorVisible,
+    'one optional text design disclosure must reveal original text style and spacing actions: '
+    + JSON.stringify(optionalText));
+  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
   // Prior QA scenarios may leave a block selected. Explicitly enter page-level
   // editing to verify that clearing the selected block never hides the inspector.
   await clickPointer(client, '.editor-page-settings-button');
@@ -241,19 +293,19 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // (not a second row of shortcuts pointing at nested design controls).
   for (const width of [900, 1024, 1440, 1672]) {
     await setViewport(client, width, 941, false);
-    for (const [id, designClass, behavior] of [
-      ['editor-hero', 'hero-editor-design', false],
-      ['editor-text', 'text-editor-design', false],
-      ['editor-form', 'form-design-detail', true],
+    for (const [id, designClass, expectedHeading, expectedDesign, expectedBehavior] of [
+      ['editor-hero', 'hero-editor-design', '내용 수정', '디자인', ''],
+      ['editor-text', 'text-editor-design', '내용 수정', '디자인 조정', ''],
+      ['editor-form', 'form-design-detail', '문의 폼 편집', '디자인 조정', '제출 후 동작과 연동'],
     ]) {
       await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
-      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .inspector-primary-heading')?.textContent?.trim() === '내용'`, 'inspector content heading for ' + id);
-      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .${designClass} > summary > strong')?.textContent?.trim() === '디자인'`, 'lazy inspector design group for ' + id);
+      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .inspector-primary-heading')?.textContent?.trim() === ${JSON.stringify(expectedHeading)}`, 'content-first heading for ' + id);
+      await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .${designClass} > summary > strong')?.textContent?.trim() === ${JSON.stringify(expectedDesign)}`, 'optional inspector design group for ' + id);
       const hierarchy = await evaluate(client, `(() => {
         const panel = document.querySelector('#editor-block-settings-${id}');
         const design = panel?.querySelector('.${designClass}');
         const label = design?.querySelector(':scope > summary > strong');
-        const behavior = panel?.querySelector('.inspector-subgroup-heading');
+        const behavior = panel?.querySelector('.form-behavior-detail > summary > strong');
         const body = panel?.querySelector('.block-editor-v2');
         const box = el => el?.getBoundingClientRect();
         return { hasDuplicate: !!document.querySelector('.inspector-navigation'),
@@ -265,8 +317,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           inspectorRight: box(panel)?.right,
           innerWidth: box(body)?.width };
       })()`);
-      assert(!hierarchy.hasDuplicate && hierarchy.content === '내용' && hierarchy.design === '디자인'
-        && (behavior ? hierarchy.behavior === '동작' : !hierarchy.behavior)
+      assert(!hierarchy.hasDuplicate && hierarchy.content === expectedHeading && hierarchy.design === expectedDesign
+        && hierarchy.behavior === expectedBehavior
+        && (id === 'editor-hero' || hierarchy.designOpen === false)
         && hierarchy.groupRight <= hierarchy.inspectorRight + 2
         && hierarchy.innerWidth > 210,
         'inspector hierarchy at ' + width + ' for ' + id + ': ' + JSON.stringify(hierarchy));
@@ -284,7 +337,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         const field = firstLabel ? getComputedStyle(firstLabel) : null;
         return {
           listTitle: style('.editor-composition-heading h2'),
-          detailTitle: style('.screen-order-v2-settings-title > h2'),
+          detailTitle: style('.editor-inspector-selected-copy > h2'),
           contentHeading: style('.screen-order-v2-settings .inspector-primary-heading'),
           disclosure: style('.screen-order-v2-settings .inspector-disclosure > summary > strong'),
           normalRow: style('.editor-composition-panel .screen-order-v2-identity-copy strong'),
@@ -296,8 +349,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         };
       })()`);
       assert(uiType.listTitle?.size === '16px' && uiType.listTitle?.weight === '650'
-        && uiType.detailTitle?.size === '16px' && uiType.detailTitle?.weight === '650'
-        && uiType.contentHeading?.size === '13px' && uiType.contentHeading?.weight === '650'
+        && uiType.detailTitle?.size === '16px' && uiType.detailTitle?.weight === '700'
+        && uiType.contentHeading?.size === '13px' && uiType.contentHeading?.weight === '700'
         && uiType.disclosure?.size === '13px' && uiType.disclosure?.weight === '650'
         && uiType.normalRow?.size === '13px' && uiType.normalRow?.weight === '600'
         && uiType.fixedRow?.size === '13px' && uiType.fixedRow?.weight === '600'
@@ -413,6 +466,15 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await setViewport(client, 1672, 941, false);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('.inspector-primary-heading') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy text inspector');
+
+  // The redesigned first view keeps design closed. Open it deliberately for
+  // secondary-control sizing and focus tests, rather than treating hidden
+  // fields as a visual regression.
+  if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
+    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  }
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'optional text design is opened for control geometry tests');
 
   // UX-032: 42px native fields / 36px compact fields / 44px toggle hit area.
   // Check computed styles at compact and wide inspector widths. Keep model
@@ -650,7 +712,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `(() => {
     const row = document.querySelector('#editor-block-editor-image');
     return row?.querySelector('.screen-order-v2-identity-copy strong')?.textContent === '본식 사진 QA'
-      && document.querySelector('.screen-order-v2-settings-title > h2')?.textContent === '본식 사진 QA';
+      && document.querySelector('.editor-inspector-selected-copy > h2')?.textContent === '본식 사진 QA';
   })()`, 'image nickname synchronizes list and inspector');
   await capture(client, 'image-label-editor-1672');
   assert(await evaluate(client, `document.querySelector('#editor-block-settings-editor-image input[placeholder="이미지 설명을 입력하세요"]')?.value`) === originalCaption,
@@ -858,6 +920,15 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
   await setInputValue(client, title, '더 나은 세상을 만드는\n당신의 아이디어');
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'typing content must not close a user-opened design group');
+  // Styling is initially hidden, but may already be expanded by a prior
+  // control-focus test. Preserve either state without closing it accidentally.
+  if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
+    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  }
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'text design controls remain reachable explicitly');
   await clickPointer(client, 'input[aria-label="제목 크기 (px)"]');
   await setInputValue(client, 'input[aria-label="제목 크기 (px)"]', '48');
   await focusSelector(client, 'input[aria-label="본문 크기 (px)"]');

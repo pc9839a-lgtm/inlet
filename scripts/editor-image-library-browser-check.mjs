@@ -305,8 +305,8 @@ async function run() {
         fitVisible: panel.querySelector('.editor-segmented-v2[aria-label="맞춤"]')?.getClientRects().length > 0 };
     })()`);
     assert(imageFlow.directSource && imageFlow.upload === '사진 올리기' && imageFlow.library
-      && imageFlow.tabs === 0 && imageFlow.moreClosed && imageFlow.fitVisible,
-      'image editor must start with photo selection and expose fit without tab switching: ' + JSON.stringify(imageFlow));
+      && imageFlow.tabs === 0 && imageFlow.moreClosed && !imageFlow.fitVisible,
+      'image editor starts with photo selection while optional fit remains collapsed: ' + JSON.stringify(imageFlow));
 
     await capture(client, 'desktop-image-library-before');
 
@@ -333,6 +333,10 @@ async function run() {
     assert(thumbnail.loaded && thumbnail.imageHeight <= thumbnail.frameHeight + 1 && thumbnail.fit === 'contain',
       'compact photo thumbnail must show the complete image inside its frame: ' + JSON.stringify(thumbnail));
     await capture(client, 'desktop-image-library-selected');
+    await clickSelector(client, '.image-editor-more > summary');
+    await waitForBrowser(client,
+      "document.querySelector('.image-editor-more')?.open === true && document.querySelector('.editor-segmented-v2[aria-label=\"맞춤\"]')?.getClientRects().length > 0",
+      'photo fit and crop controls accessible after opening optional design');
     await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="맞춤"] button:nth-child(2)');
     const heightInput = '.image-editor-flow input[aria-label="이미지 높이 (px)"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heightInput)})`, 'image height available directly');
@@ -353,8 +357,8 @@ async function run() {
     await clickSelector(client, '.crop-actions button.primary');
     await waitForBrowser(client, `!document.querySelector('.crop-modal') && document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`, 'apply crop updates main image height');
     await waitForBrowser(client, `Math.round(document.querySelector('.phone-frame #block-editor-image .image-wrap.image-fill')?.getBoundingClientRect().height || 0) === 360`, 'applied crop height reaches page');
-    await clickSelector(client, '.image-editor-more > summary');
-    await waitForBrowser(client, `document.querySelector('.image-editor-more')?.open === true`, 'image additional settings opened');
+    await waitForBrowser(client, `document.querySelector('.image-editor-more')?.open === true`,
+      'image optional settings remain expanded while editing crop and caption');
     await setInputValue(client, '.image-editor-flow input[placeholder="이미지 설명을 입력하세요"]', '사진 설명 수정 확인');
     await waitForBrowser(client, `(document.querySelector('.phone-frame #block-editor-image')?.textContent || '').includes('사진 설명 수정 확인')`, 'image caption updates selected page');
     await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="사진 구성"] button:nth-child(2)');
@@ -364,7 +368,7 @@ async function run() {
     await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="사진 구성"] button:first-child');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heightInput)})?.value === '360' && document.querySelector('.image-input--compact .image-preview-control.has-image img')?.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))})`, 'returning from gallery preserves single photo and crop');
     await clickSelector(client, '.image-editor-more > summary');
-    assert(await evaluate(client, `document.querySelector('.image-input-upload-action')?.getClientRects().length > 0 && document.querySelector(${JSON.stringify(heightInput)})?.getClientRects().length > 0`), 'closing image extras must keep replacement and height controls available');
+    assert(await evaluate(client, `document.querySelector('.image-input-upload-action')?.getClientRects().length > 0 && document.querySelector('.image-editor-flow input[placeholder="이미지 설명을 입력하세요"]')?.getClientRects().length > 0 && !document.querySelector(${JSON.stringify(heightInput)})?.getClientRects().length`), 'closing optional image settings keeps replacement and caption visible while hiding height');
     assert(apiState.saveCount === 0, 'image fit, height, crop apply/cancel and caption edits must not publish');
     await capture(client, 'desktop-image-crop-applied');
 
@@ -388,8 +392,12 @@ async function run() {
     await waitForState(() => apiState.pageLoadCount > pageReadsBeforeReload, 'fresh server image page read after reload');
     await clickSelector(client, imageRowHeadSelector);
     await waitForBrowser(client, `(() => { const image = document.querySelector('.screen-order-v2-settings .image-preview-control.has-image img'); return !!image && image.complete && image.naturalWidth > 0 && image.src.includes(${JSON.stringify(encodeURIComponent(libraryKey))}); })()`, 'selected image after reload');
-    await waitForBrowser(client, `document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`, 'saved image height restored after reload');
+    await waitForBrowser(client,
+      "document.querySelector('.image-editor-more')?.open === false",
+      'image design starts collapsed on fresh reload');
     await clickSelector(client, '.image-editor-more > summary');
+    await waitForBrowser(client, `document.querySelector('.image-editor-more')?.open === true && document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`,
+      'saved image height restored after expanding optional design');
     await waitForBrowser(client, `document.querySelector('.image-editor-flow input[placeholder="이미지 설명을 입력하세요"]')?.value === '사진 설명 수정 확인'`, 'saved image caption restored');
     const hasRecoveryDialog = await evaluate(client, `!!document.querySelector('[role="dialog"], [role="alertdialog"]')`);
     if (hasRecoveryDialog) {

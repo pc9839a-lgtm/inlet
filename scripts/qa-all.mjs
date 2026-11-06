@@ -90,6 +90,7 @@ const steps = [
   ['editor:gallery-link-longpage:qa', ['scripts/editor-gallery-link-longpage-quality-check.mjs']],
   ['editor:reference-independent-scroll:qa', ['scripts/editor-reference-independent-scroll-quality-check.mjs']],
   ['editor:visual-hierarchy-reference:qa', ['scripts/editor-visual-hierarchy-reference-quality-check.mjs']],
+  ['editor:content-first-inspectors:qa', ['scripts/editor-content-first-inspectors-quality-check.mjs']],
   ['browser:landing:contract:qa', ['scripts/landing-browser-regression-contract-check.mjs']],
   ['browser:editor:contract:qa', ['scripts/editor-browser-regression-contract-check.mjs']],
   ['browser:forms:contract:qa', ['scripts/form-reservation-browser-regression-contract-check.mjs']],
