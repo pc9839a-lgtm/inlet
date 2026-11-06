@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-// A single reusable details/summary pattern for every editor's optional groups.
-// The native details element preserves keyboard navigation and the open state.
+// Native details owns keyboard semantics; React owns the expanded state so
+// editing a field cannot silently reset it on an unrelated draft rerender.
 export function InspectorDisclosure({ label, className = '', bodyClassName = '', defaultOpen = false, children }) {
+  const [expanded, setExpanded] = useState(defaultOpen);
   return (
-    <details className={`inspector-disclosure ${className}`.trim()} open={defaultOpen}>
+    <details className={`inspector-disclosure ${className}`.trim()} open={expanded} onToggle={(event) => setExpanded(event.currentTarget.open)}>
       <summary>
         <strong>{label}</strong>
         <ChevronDown size={16} aria-hidden="true" />
