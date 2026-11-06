@@ -20,7 +20,12 @@
 .builder-shell .text-editor-design > summary::-webkit-details-marker { display: none; }
 .builder-shell .text-editor-design[open] > summary svg { transform: rotate(180deg); }
 .builder-shell .text-editor-design-controls { display: grid; gap: var(--editor-ui-space-3, 12px); padding: var(--editor-ui-space-1, 4px) 0 var(--editor-ui-space-3, 12px); }
-.builder-shell .text-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: var(--editor-ui-space-4, 16px); }
+/* Spacing belongs to the optional design disclosure, not the first edit view. */
+.builder-shell .text-editor-design-controls > .widget-spacing-controls {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #edf0f5;
+}
 
 .builder-shell .text-editor-design:not([open]) > .text-editor-design-controls { display: none; }
 
