@@ -42,7 +42,8 @@ assert(css.includes('.editor-inspector-kind-icon') && css.includes('.editor-insp
 assert(disclosure.includes('expandedByBlock = new Map()')
   && disclosure.includes('expandedByBlock.has(persistKey)')
   && disclosure.includes('rememberExpanded(persistKey, next)')
-  && disclosure.includes('onToggle={onToggle}')
+  && disclosure.includes('event.preventDefault()')
+  && disclosure.includes('<summary onClick={onActivate}>')
   && text.includes('persistKey={blockId ?')
   && image.includes('persistKey={(blockId || block?.id) ?')
   && form.includes('form-behavior'),
