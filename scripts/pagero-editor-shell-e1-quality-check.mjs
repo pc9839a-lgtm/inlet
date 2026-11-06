@@ -421,7 +421,7 @@ assert(stylePanel.includes("globalAlign: next === 'block' ? '' : next")
   && sharedControlsCss.includes('.editor-theme-source')
   && !layout.includes('data-page-theme-inheritance-override'),
   'page and block theme UI must use existing schema fields, explicit text reset and accurate bottom preset vs accent status');
-assert(disclosure.includes('<details') && disclosure.includes('<summary>') && disclosure.includes('inspector-disclosure-body')
+assert(disclosure.includes('<details') && disclosure.includes('<summary onClick={onActivate}>') && disclosure.includes('inspector-disclosure-body')
   && settingsHeader.includes('inspector-primary-heading')
   && !settingsHeader.includes('InspectorNavigation')
   && !editPanelLayoutCss.includes('.inspector-navigation')
