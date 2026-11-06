@@ -23,22 +23,22 @@ export default function ImageEditor({ s, set, block }) {
         removeGallery={imageState.removeGallery}
         updateSingleImage={imageState.updateSingleImage}
       />
-      {!gridGallery && <ImageDisplayControls
-        display={imageState.display}
-        s={s}
-        set={set}
-        editSrc={imageState.editSrc}
-        blockId={block?.id}
-        cropOpen={imageState.cropOpen}
-        setCropOpen={imageState.setCropOpen}
-        changeDisplay={imageState.changeDisplay}
-      />}
       <ImageCaptionSection s={s} set={set} />
-      <InspectorDisclosure label="디자인" className="image-editor-more" bodyClassName="image-editor-more-controls">
+      <InspectorDisclosure label="사진 맞춤과 디자인" className="image-editor-more" bodyClassName="image-editor-more-controls">
+        {!gridGallery && <ImageDisplayControls
+          display={imageState.display}
+          s={s}
+          set={set}
+          editSrc={imageState.editSrc}
+          blockId={block?.id}
+          cropOpen={imageState.cropOpen}
+          setCropOpen={imageState.setCropOpen}
+          changeDisplay={imageState.changeDisplay}
+        />}
         <ToggleRow label="모서리 둥글게" checked={Boolean(s.rounded)} onChange={(value) => set({ rounded: value })} />
         <ImageGalleryDisplaySection s={s} set={set} />
+        <WidgetSpacingControls s={s} set={set} padding={false} defaultMargin={12} />
       </InspectorDisclosure>
-      <WidgetSpacingControls s={s} set={set} padding={false} defaultMargin={12} />
     </div>
   );
 }
