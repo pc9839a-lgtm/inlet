@@ -32,6 +32,17 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   await enterText('.form-editor-flow > .field input', '상담 예약하기');
   await waitForBrowser(client, `(document.querySelector('.phone-frame #block-editor-form')?.innerText || '').includes('상담 신청 · 변경 확인') && document.querySelector('.phone-frame #block-editor-form button[type="submit"]')?.textContent.includes('상담 예약하기')`, 'form title and submit text update preview without tabs');
 
+  // Most common form question is one click: existing picker remains for other types.
+  await clickPointer(client, '.form-question-add-primary');
+  await waitForBrowser(client, `document.querySelectorAll('.form-question-card').length === 3
+    && !!document.querySelector('.form-question-card.open .form-question-body > .field input')`,
+    'one-click default text question opens immediately');
+  await waitForBrowser(client, `document.activeElement === document.querySelector('.form-question-card.open .form-question-body > .field input')`,
+    'one-click question focuses its editable label');
+  await clickPointer(client, '.form-question-card.open .form-question-actions .danger');
+  await waitForBrowser(client, `document.querySelectorAll('.form-question-card').length === 2`,
+    'one-click temporary question can be removed without changing original questions');
+
   const addSummary = '.form-question-add > summary';
   await focusSelector(client, addSummary);
   await pressKeyboardKey(client, 'Enter');
