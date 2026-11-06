@@ -107,7 +107,7 @@ test('new row delivers independently to both targets with stable field mappings'
   assert.match(body.content, /상담 희망/);
   assert.match(body.content, /money: 1천만원/);
   assert.match(x.calls[1].options.payload, /ITEM=64/);
-  assert.match(x.calls[1].options.payload, /DATAS_phone=01022223333/);
+  assert.match(x.calls[1].options.payload, /DATAS_phone=010-2222-3333/);
   assert.match(x.calls[1].options.payload, /DATAS_money=/);
   x.run('processLeadBridge');
   assert.equal(x.calls.length, 2, 'successful leads must not be sent again');
@@ -175,4 +175,25 @@ test('manual advertiser retry requires review and rejects SENT rows', () => {
   x.context.retryLeadBridgeRow(2, 'AD');
   assert.equal(x.status(2, '광고주_상태'), 'PENDING');
   assert.throws(() => x.context.retryLeadBridgeRow(2, 'CT'), /이미 전송 성공/);
+});
+
+
+test('Make blueprint Korean field names and P:+82 phone are compatible', () => {
+  const x = fakeApp([['lead_id', '이름', 'phone_number',
+    '총_채무액_선택_(2,000미만_불가)', '거주지역을_입력해주세요', '상담가능시간',
+    '문의내용_(ex.개인회생/파산_등)']]);
+  x.setDefaults(); x.run('installLeadBridge');
+  x.rows.push(['make-01', '테스트', 'P:+821012345678',
+    '2,000~3,000', '경기', '오후', '개인회생 상담']);
+  x.run('enableLeadBridge'); x.run('processLeadBridge');
+  assert.equal(x.status(2, 'CT_상태'), 'SENT');
+  assert.equal(x.status(2, '광고주_상태'), 'SENT');
+  const payload = x.calls[1].options.payload;
+  assert.match(payload, /ITEM=64/);
+  assert.match(payload, /DATAS_phone=010-1234-5678/);
+  assert.match(payload, /DATAS_money=2%2C000~3%2C000/);
+  assert.match(payload, /DATAS_area=%EA%B2%BD%EA%B8%B0/);
+  assert.match(payload, /DATAS_calldate=/);
+  assert.match(payload, /DATAS_data=/);
+  assert.equal(JSON.parse(x.calls[0].options.payload).phone, '01012345678');
 });
