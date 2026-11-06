@@ -53,3 +53,38 @@ html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .edito
 html body #root .canvas-editor-shell .text-editor-design-controls :is(.editor-control-v2-copy strong,.editor-number-control > label,.color > span) { color: var(--editor-ui-text, #182230) !important; font-size: var(--editor-ui-label-size, 13px) !important; font-weight: var(--editor-ui-label-weight, 600) !important; }
 html body #root .canvas-editor-shell .text-editor-flow .editor-number-value > input { font-size: var(--editor-ui-value-size, 14px) !important; }
 html body #root .canvas-editor-shell .text-editor-design-controls .color-main > input[type='text'] { font-size: 14px !important; }
+
+/* Design-source context stays accurate but no longer appears as a second
+   settings card underneath the same color control. Scope to text only. */
+html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-source {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin: -4px 0 2px;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-source-summary {
+  justify-content: flex-start;
+  gap: 7px;
+}
+html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-source-detail {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: 8px;
+}
+html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-align-notice {
+  margin: 0 0 3px;
+  padding: 3px 0 3px 9px;
+  background: transparent;
+  line-height: 1.5;
+}
+@container editor-inspector (max-width: 300px) {
+  html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-source-detail {
+    justify-content: flex-start;
+  }
+}
+
