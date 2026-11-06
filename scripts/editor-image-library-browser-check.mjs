@@ -357,8 +357,8 @@ async function run() {
     await clickSelector(client, '.crop-actions button.primary');
     await waitForBrowser(client, `!document.querySelector('.crop-modal') && document.querySelector(${JSON.stringify(heightInput)})?.value === '360'`, 'apply crop updates main image height');
     await waitForBrowser(client, `Math.round(document.querySelector('.phone-frame #block-editor-image .image-wrap.image-fill')?.getBoundingClientRect().height || 0) === 360`, 'applied crop height reaches page');
-    await clickSelector(client, '.image-editor-more > summary');
-    await waitForBrowser(client, `document.querySelector('.image-editor-more')?.open === true`, 'image additional settings opened');
+    await waitForBrowser(client, `document.querySelector('.image-editor-more')?.open === true`,
+      'image optional settings remain expanded while editing crop and caption');
     await setInputValue(client, '.image-editor-flow input[placeholder="이미지 설명을 입력하세요"]', '사진 설명 수정 확인');
     await waitForBrowser(client, `(document.querySelector('.phone-frame #block-editor-image')?.textContent || '').includes('사진 설명 수정 확인')`, 'image caption updates selected page');
     await clickSelector(client, '.image-editor-flow .editor-segmented-v2[aria-label="사진 구성"] button:nth-child(2)');
