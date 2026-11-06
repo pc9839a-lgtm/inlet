@@ -10,6 +10,20 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
   const typeLabel = `${meta.label}${identity?.repeated ? ` ${identity.occurrence}` : ''}`;
   const title = identity?.customLabel || typeLabel;
   const Icon = meta.icon;
+  // Keep the selected item recognizable, but make its immediately editable
+  // content the visual priority. No new fields or alternate save path.
+  const selectedContext = ({
+    text: '내용과 디자인',
+    image: '사진과 표시 방식',
+    form: '질문과 제출 버튼',
+    code: 'HTML 코드 직접 편집',
+  })[block.type] || '내용과 설정';
+  const primaryLabel = ({
+    text: '내용 수정',
+    image: '사진 변경',
+    form: '문의 폼 편집',
+    code: '코드 편집',
+  })[block.type] || '내용 수정';
 
   React.useEffect(() => {
     backRef.current?.focus({ preventScroll: true });
@@ -19,8 +33,11 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
     <div className="screen-order-v2-settings-view">
       <header className="screen-order-v2-settings-header">
         <div className="screen-order-v2-settings-title">
-          <Icon size={22} aria-hidden="true" />
-          <h2 ref={backRef} tabIndex={-1} title={title}>{title}</h2>
+          <span className="editor-inspector-kind-icon"><Icon size={18} aria-hidden="true" /></span>
+          <div className="editor-inspector-selected-copy">
+            <h2 ref={backRef} tabIndex={-1} title={title}>{title}</h2>
+            <span className="editor-inspector-selected-context">{selectedContext}</span>
+          </div>
           {isExplicitlyHidden(block) && <span className="screen-order-settings-hidden">숨김</span>}
           {actions}
         </div>
@@ -34,7 +51,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
         role="group"
         aria-label={`${meta.label} 상세 설정`}
       >
-        <h3 className="inspector-primary-heading">내용</h3>
+        <h3 className="inspector-primary-heading">{primaryLabel}</h3>
         {renderBlockEditor(block)}
       </div>
     </div>

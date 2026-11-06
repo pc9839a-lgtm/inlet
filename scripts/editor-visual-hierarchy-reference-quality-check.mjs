@@ -36,7 +36,7 @@ assert(layoutCss.includes('--editor-ui-row-size: 13px;')
 assert(read('src/editor/editPanelParts/FixedBlocksSection.css')
   .includes('font-size: var(--editor-ui-row-size, 12px)'),
   'fixed and normal block names must share the same readable type token');
-assert(layoutCss.includes('padding: 14px 0 12px; margin: 0 0 14px;'),
+assert(layoutCss.includes('padding: 18px 0 14px; margin: 0 0 17px;') && layoutCss.includes('.editor-inspector-selected-copy'),
   'Inspector header spacing must be tightened without removing navigation');
 assert(textCss.includes('.text-editor-design-controls .editor-theme-source')
   && textCss.includes('flex-wrap: wrap;')

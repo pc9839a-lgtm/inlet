@@ -1,11 +1,36 @@
+import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-// A single reusable details/summary pattern for every editor's optional groups.
-// The native details element preserves keyboard navigation and the open state.
-export function InspectorDisclosure({ label, className = '', bodyClassName = '', defaultOpen = false, children }) {
+// An editor may remount its lazy block component whenever the draft changes.
+// Preserve only per-block disclosure UI state, never any form/page data.
+// Bound the in-memory cache; a new block/page still starts with its own default.
+const expandedByBlock = new Map();
+function rememberExpanded(key, expanded) {
+  if (!key) return;
+  if (expandedByBlock.size >= 240 && !expandedByBlock.has(key)) {
+    expandedByBlock.delete(expandedByBlock.keys().next().value);
+  }
+  expandedByBlock.set(key, expanded);
+}
+
+export function InspectorDisclosure({ label, className = '', bodyClassName = '', defaultOpen = false, persistKey = '', children }) {
+  const [expanded, setExpanded] = useState(() => (
+    persistKey && expandedByBlock.has(persistKey)
+      ? expandedByBlock.get(persistKey)
+      : defaultOpen
+  ));
+  // Native toggle events are queued, and can race with a lazy editor remount
+  // during controlled input changes. Handle both click and keyboard activation
+  // synchronously at the native summary rather than reading a stale DOM state.
+  const onActivate = (event) => {
+    event.preventDefault();
+    const next = !expanded;
+    rememberExpanded(persistKey, next);
+    setExpanded(next);
+  };
   return (
-    <details className={`inspector-disclosure ${className}`.trim()} open={defaultOpen}>
-      <summary>
+    <details className={`inspector-disclosure ${className}`.trim()} open={expanded}>
+      <summary onClick={onActivate}>
         <strong>{label}</strong>
         <ChevronDown size={16} aria-hidden="true" />
       </summary>
