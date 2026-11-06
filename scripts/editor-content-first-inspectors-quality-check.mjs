@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const read = (path) => readFileSync(path, 'utf8');
+const text = read('src/editor/blockEditors/TextEditor.jsx');
+const image = read('src/editor/blockEditors/ImageEditor.jsx');
+const form = read('src/editor/blockEditors/FormEditor.jsx');
+const code = read('src/editor/blockEditors/CodeEditor.jsx');
+const codeBox = read('src/editor/blockEditors/CodeEditorBox.jsx');
+const inspector = read('src/editor/editPanelParts/ScreenOrderSettings.jsx');
+const css = read('src/editor/EditPanelLayout.css');
+const browser = read('scripts/editor-reference-browser-check.mjs');
+
+assert(text.indexOf('label="제목"') < text.indexOf('label="본문"')
+  && text.indexOf('label="본문"') < text.indexOf('label="디자인 조정"'),
+  'title and body precede design');
+assert(text.includes('<WidgetSpacingControls s={s} set={set} />')
+  && text.indexOf('<WidgetSpacingControls') < text.indexOf('</InspectorDisclosure>'),
+  'text spacing lives in one optional design disclosure');
+assert(!text.includes('defaultOpen'), 'text visual design must not monopolize first view');
+assert(image.indexOf('<ImageBasicSection') < image.indexOf('label="사진 맞춤과 디자인"')
+  && image.indexOf('<ImageCaptionSection') < image.indexOf('label="사진 맞춤과 디자인"'),
+  'image replacement and caption precede appearance');
+assert(image.indexOf('<ImageDisplayControls') > image.indexOf('label="사진 맞춤과 디자인"')
+  && image.indexOf('<WidgetSpacingControls') < image.indexOf('</InspectorDisclosure>'),
+  'image crop, fit and spacing remain functional but initially collapsed');
+assert(form.indexOf('<FormFieldsSection') < form.indexOf('label="디자인 조정"')
+  && form.indexOf('<Field label="버튼 문구"') < form.indexOf('label="디자인 조정"'),
+  'form title, questions and submit text are primary');
+assert(form.indexOf('label="제출 후 동작과 연동"') < form.indexOf('<FormPrivacySettings')
+  && form.indexOf('<FormSubmissionSection') < form.indexOf('</InspectorDisclosure>', form.indexOf('label="제출 후 동작과 연동"')),
+  'form privacy and submission remain accessible behind explicit section');
+assert(code.includes('<CodeEditorBox') && code.includes('codeDraftHint') && codeBox.includes('<strong>HTML 코드</strong>')
+  && codeBox.includes('onClick={onApply}'), 'direct code editing, draft state and apply remain visible');
+assert(inspector.includes('editor-inspector-selected-copy') && inspector.includes('{primaryLabel}')
+  && inspector.includes('editor-inspector-selected-context'),
+  'one selected-item identity and a task-specific primary heading replace dense settings header');
+assert(css.includes('.editor-inspector-kind-icon') && css.includes('.editor-inspector-selected-copy')
+  && css.includes('margin: 4px 0 17px;'),
+  'inspector styles are owned by existing layout stylesheet');
+assert(browser.includes('inspector-content-first-') && browser.includes('firstView.secondaryClosed')
+  && browser.includes('optionalText.spacingVisible') && browser.includes('optionalText.colorVisible'),
+  'real Chrome verifies first-view design and hidden style controls reopening');
+console.log('Content-first selected inspector design contract passed');
