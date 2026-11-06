@@ -19,14 +19,18 @@ export function InspectorDisclosure({ label, className = '', bodyClassName = '',
       ? expandedByBlock.get(persistKey)
       : defaultOpen
   ));
-  const onToggle = (event) => {
-    const next = event.currentTarget.open;
+  // Native toggle events are queued, and can race with a lazy editor remount
+  // during controlled input changes. Handle both click and keyboard activation
+  // synchronously at the native summary rather than reading a stale DOM state.
+  const onActivate = (event) => {
+    event.preventDefault();
+    const next = !expanded;
     rememberExpanded(persistKey, next);
     setExpanded(next);
   };
   return (
-    <details className={`inspector-disclosure ${className}`.trim()} open={expanded} onToggle={onToggle}>
-      <summary>
+    <details className={`inspector-disclosure ${className}`.trim()} open={expanded}>
+      <summary onClick={onActivate}>
         <strong>{label}</strong>
         <ChevronDown size={16} aria-hidden="true" />
       </summary>
