@@ -2787,7 +2787,7 @@ async function run() {
     await setInputValue(client, '#editor-block-settings-editor-code input[aria-label="구분 이름"]', persistedCodeLabel);
     await waitForBrowser(client, `(document.querySelector('#editor-block-editor-code .screen-order-v2-title-wrap strong')?.textContent || '').includes(${JSON.stringify(persistedCodeLabel)})`, 'screen order custom code label');
 
-    await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-code .editor-inspector-selected-copy > h2')?.textContent === ${JSON.stringify(persistedCodeLabel)}`,
+    await waitForBrowser(client, `document.querySelector('.editor-inspector-panel .editor-inspector-selected-copy > h2')?.textContent === ${JSON.stringify(persistedCodeLabel)}`,
       'code list name updates the selected inspector immediately');
 
     await focusSelector(client, '#editor-block-settings-editor-code .code-editor-options > summary');
