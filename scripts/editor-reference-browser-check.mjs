@@ -405,7 +405,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     assert(pageType.status?.size === '14px' && pageType.status?.weight === '650'
       && pageType.heading?.size === '13px' && pageType.heading?.weight === '650'
-      && pageType.label?.size === '12px' && pageType.label?.weight === '600'
+      && pageType.label?.size === '13px' && pageType.label?.weight === '600'
       && pageType.panel?.gap === '16px' && pageType.group?.gap === '12px',
       'page-level design inspector matches editor type and spacing at ' + width + ': ' + JSON.stringify(pageType));
     await capture(client, 'unified-page-design-type-' + width);
