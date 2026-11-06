@@ -920,6 +920,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
   await setInputValue(client, title, '더 나은 세상을 만드는\n당신의 아이디어');
+  await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'typing content must not close a user-opened design group');
   // Styling is initially hidden, but may already be expanded by a prior
   // control-focus test. Preserve either state without closing it accidentally.
   if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
