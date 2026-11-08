@@ -6,10 +6,12 @@ on:
       - 'feat/meta-leads-sheets-dual-delivery-*'
     paths:
       - 'integrations/meta-lead-sheets-dual-delivery/**'
+      - 'functions/api/integrations/meta-sheets/**'
       - '.github/workflows/meta-lead-sheets-bridge-qa.yml'
   pull_request:
     paths:
       - 'integrations/meta-lead-sheets-dual-delivery/**'
+      - 'functions/api/integrations/meta-sheets/**'
       - '.github/workflows/meta-lead-sheets-bridge-qa.yml'
 
 jobs:
@@ -21,5 +23,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate no-PII mock delivery contracts
+      - name: Validate Cloudflare relay and no-PII mock delivery contracts
         run: node --test integrations/meta-lead-sheets-dual-delivery/bridge.test.mjs
