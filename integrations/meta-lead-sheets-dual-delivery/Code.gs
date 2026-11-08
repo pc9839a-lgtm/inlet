@@ -27,10 +27,10 @@ const LEAD_BRIDGE = Object.freeze({
     email: ['email', '이메일', 'DATAS_email'],
     job: ['job', '직업', 'DATAS_job'],
     area: ['area', 'region', '거주지역', '거주지역을_입력해주세요', '지역', 'DATAS_area'],
-    money: ['money', 'debt', '채무금액', '총_채무액_선택_(2,000미만_불가)', '채무', 'DATAS_money'],
+    money: ['money', 'debt', '채무금액', '총_채무액(2,000만원_이상_가능)', '총_채무액_선택_(2,000미만_불가)', '채무', 'DATAS_money'],
     calldate: ['calldate', '상담가능시간', '상담시간', 'DATAS_calldate'],
     age: ['age', '나이', 'DATAS_age'],
-    data: ['data', 'content', 'message', '문의내용', '문의내용_(ex.개인회생/파산_등)', '상담내용', 'DATAS_data'],
+    data: ['data', 'content', 'message', '문의내용', '문의내용(ex개인회생/파산_등)', '문의내용_(ex.개인회생/파산_등)', '상담내용', 'DATAS_data'],
     gtype: ['gtype', '업종', 'DATAS_gtype'],
     insert_ad: ['insert_ad', '유입경로', '광고출처', 'DATAS_insert_ad'],
     partner_id: ['partner_id', '접수인아이디', '접수인id', 'DATAS_partner_id'],
@@ -164,6 +164,14 @@ function processLeadBridge() {
         sheet.getRange(rowNumber, cols[LEAD_BRIDGE.STATE.EVENT]).setValue(eventId);
       }
       const source = leadBridgeSource_(row, fields);
+      // Filter Meta-generated test lead payload before validating an intentionally dummy phone.
+      const isDummyLead = Object.keys(source).some(key => /<test lead:|dummy data/i.test(source[key]));
+      if (isDummyLead) {
+        if (leadBridgeEligible_(ctStatus)) leadBridgeMark_(sheet, rowNumber, cols, 'CT', 'SKIPPED_TEST', 0, 'Meta 더미 테스트 리드');
+        if (leadBridgeEligible_(adStatus)) leadBridgeMark_(sheet, rowNumber, cols, 'AD', 'SKIPPED_TEST', 0, 'Meta 더미 테스트 리드');
+        processed++;
+        continue;
+      }
       const phone = leadBridgeNormalizePhone_(source.phone);
       if (phone.length < 9 || phone.length > 12) {
         if (leadBridgeEligible_(ctStatus)) leadBridgeMark_(sheet, rowNumber, cols, 'CT', 'ERROR', 0, '연락처 형식 확인');
@@ -172,7 +180,6 @@ function processLeadBridge() {
         continue;
       }
       source.phone = phone;
-
       // Two separate status machines: one destination never blocks the other.
       if (leadBridgeEligible_(ctStatus)) {
         if (delivered.CT.has(eventId)) {
