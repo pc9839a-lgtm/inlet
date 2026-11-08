@@ -296,7 +296,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     for (const [id, designClass, expectedHeading, expectedDesign, expectedBehavior] of [
       ['editor-hero', 'hero-editor-design', '내용 수정', '디자인', ''],
       ['editor-text', 'text-editor-design', '내용 수정', '디자인 조정', ''],
-      ['editor-form', 'form-design-detail', '문의 폼 편집', '디자인 조정', '제출 후 동작과 연동'],
+      ['editor-form', 'form-design-detail', '문의 폼 편집', '디자인 조정', '중복 접수와 외부 연동'],
     ]) {
       await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
       await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .inspector-primary-heading')?.textContent?.trim() === ${JSON.stringify(expectedHeading)}`, 'content-first heading for ' + id);
