@@ -21,9 +21,13 @@ export function normalizePhone(raw) {
   if (value.startsWith('10') && value.length === 10) value = '0' + value;
   return value;
 }
+export function isMetaTestLead(row) {
+  return !!row && typeof row === 'object' && !Array.isArray(row)
+    && Object.values(row).some(v => /<test lead:|dummy data/i.test(String(v ?? '')));
+}
 export function normalizeSheetLead(row) {
   if (!row || typeof row !== 'object' || Array.isArray(row)) return null;
-  if (Object.values(row).some(v => /<test lead:|dummy data/i.test(String(v ?? '')))) return null;
+  if (isMetaTestLead(row)) return null;
   const external = pick(row, FIELD.id).slice(0, 120);
   const phone = normalizePhone(pick(row, FIELD.phone));
   if (!external || !/^[\w:-]+$/.test(external) || !/^01\d{8,9}$/.test(phone)) return null;
@@ -97,11 +101,23 @@ export async function onRequest({ request, env, ctx }) {
     if (!Array.isArray(rows) || rows.length > 5) {
       return jsonResponse(request, env, 400, { ok: false, error: 'INVALID_ROWS' }, METHODS);
     }
+    // Validate the complete batch before acknowledging it. Bad real leads must
+    // remain in the sheet cursor so they can be corrected instead of silently lost.
+    const validated = rows.map((row, index) => ({
+      lead: normalizeSheetLead(row),
+      dummy: isMetaTestLead(row),
+      rowIndex: index
+    }));
+    const invalid = validated.find(item => !item.lead && !item.dummy);
+    if (invalid) {
+      return jsonResponse(request, env, 422, {
+        ok: false, error: 'INVALID_LEAD_ROW', rowIndex: invalid.rowIndex
+      }, METHODS);
+    }
     const db = assertD1(env);
     await ensureSchema(db);
-    for (const row of rows) {
-      const lead = normalizeSheetLead(row);
-      if (!lead) continue;
+    for (const { lead } of validated) {
+      if (!lead) continue; // Meta dummy lead, deliberately excluded.
       await db.prepare('INSERT OR IGNORE INTO meta_sheet_dual_queue (event_id, payload_json) VALUES (?, ?)')
         .bind(lead.eventId, JSON.stringify(lead)).run();
     }
