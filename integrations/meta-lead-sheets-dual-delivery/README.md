@@ -35,6 +35,8 @@ Cloudflare 환경 변수 설정 및 코드의 main 병합/배포가 끝나기 �
 
 **GAS 코드 교체:** Google Sheet에서 확장 프로그램 → Apps Script → Code.gs 내용을 이 디렉터리의 Code.gs **전체 74줄**로 덮어쓰기 → 저장.
 
+**Apps Script 웹 앱 배포(/exec)는 이 구조에서 사용하지 않습니다.** 별도 웹 앱 배포가 필요 없으며 기존 배포 URL을 Cloudflare에 등록하지 않습니다. Apps Script 편집기에서 installMetaRelay를 한 번 실행하면 시간 기반 트리거가 만들어지고, 이후 relayMetaLeads가 서버로 POST 요청을 보냅니다. 이미 배포된 과거 /exec URL은 옛 버전을 가리킬 수도 있으므로 연동 성공 근거가 아닙니다.
+
 **GAS 스크립트 속성:** 딱 하나만 필요합니다.
 - META_SHEETS_RELAY_TOKEN: Cloudflare에 설정한 비밀키와 동일한 값.
 
