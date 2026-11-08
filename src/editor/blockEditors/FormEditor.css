@@ -329,6 +329,11 @@ html body #root .canvas-editor-shell .form-editor-flow :is(.form-outcome-detail,
   padding: 0;
   min-width: 0;
 }
+/* Explicitly hide optional advanced controls: their grid rules must never
+   escape a closed native disclosure in the compact Inspector. */
+.block-editor-v2 .form-editor-flow .form-behavior-detail:not([open]) > .inspector-disclosure-body {
+  display: none !important;
+}
 html body #root .canvas-editor-shell .form-editor-flow .form-behavior-detail .form-embed-button {
   margin-top: 12px;
 }
