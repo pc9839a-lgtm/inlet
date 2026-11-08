@@ -114,6 +114,10 @@ export async function onRequest({ request, env, ctx }) {
   }
 }
 export async function dispatchPending(db, env, config) {
+  // A crashed CallTag attempt can safely be retried because its external_id is idempotent.
+  await db.prepare("UPDATE meta_sheet_dual_queue SET ct_status='RETRY', updated_at=CURRENT_TIMESTAMP WHERE ct_status='SENDING' AND ct_attempts<3 AND updated_at < datetime('now','-3 minutes')").run();
+  // Advertiser delivery must never be retried automatically after an ambiguous send.
+  await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='REVIEW', ad_error='전송 중단: 수동 확인' WHERE ad_status='SENDING' AND updated_at < datetime('now','-3 minutes')").run();
   const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR ad_status='PENDING' ORDER BY created_at LIMIT 10").all();
   for (const record of queue.results || []) {
     let lead;
@@ -133,7 +137,7 @@ async function setState(db, id, prefix, state, note = '') {
     .bind(state, note.slice(0,100), id).run();
 }
 async function sendCallTag(db, env, config, id, lead) {
-  const lease = await db.prepare("UPDATE meta_sheet_dual_queue SET ct_status='SENDING', ct_attempts=ct_attempts+1 WHERE event_id=? AND ct_status IN ('PENDING','RETRY') AND ct_attempts<3").bind(id).run();
+  const lease = await db.prepare("UPDATE meta_sheet_dual_queue SET ct_status='SENDING', ct_attempts=ct_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ct_status IN ('PENDING','RETRY') AND ct_attempts<3").bind(id).run();
   if (!lease.meta?.changes) return;
   const tries = await db.prepare('SELECT ct_attempts FROM meta_sheet_dual_queue WHERE event_id=?').bind(id).first();
   try {
@@ -166,7 +170,7 @@ async function sendCallTag(db, env, config, id, lead) {
   }
 }
 async function sendAdvertiser(db, config, id, lead) {
-  const lease = await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1 WHERE event_id=? AND ad_status='PENDING'").bind(id).run();
+  const lease = await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='PENDING'").bind(id).run();
   if (!lease.meta?.changes) return;
   try {
     const res = await fetch(config.advertiser, {
