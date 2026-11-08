@@ -15,8 +15,8 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
       tabs: root.querySelectorAll('[role="tablist"]').length,
       questionCount: root.querySelectorAll('.form-question-card').length,
       expandedQuestions: root.querySelectorAll('.form-question-card.open').length,
-      settingsClosed: [...root.querySelectorAll('.form-basic-detail')].every(el => !el.open),
-      hiddenSettings: [...root.querySelectorAll('.form-basic-detail > div')].every(el => !el.getClientRects().length),
+      settingsClosed: [...root.querySelectorAll('.form-basic-detail,.form-behavior-detail')].every(el => !el.open),
+      hiddenSettings: [...root.querySelectorAll('.form-basic-detail > div,.form-behavior-detail > div')].every(el => !el.getClientRects().length),
       addClosed: !root.querySelector('.form-question-add').open,
       hiddenAdd: !root.querySelector('.form-question-tools').getClientRects().length,
       headerActions: root.querySelectorAll('.form-question-head-row .icon-only').length,
@@ -88,22 +88,39 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   assert(await evaluate(client, `document.querySelector('.form-basic-grid input')?.value === '상담 신청 · 변경 확인' && document.querySelectorAll('.form-design-detail [aria-expanded]').length === 0`), 'design disclosure must preserve primary fields without nested disclosure controls');
   await capture(client, 'desktop-form-design');
   await clickPointer(client, '.form-design-detail > summary');
-  // The new content-first form intentionally keeps submission/consent
-  // settings behind the separate optional behavior group.
+  // One click reveals the actual success/consent fields, with no second disclosure.
+  await clickPointer(client, '.form-outcome-detail > summary');
+  await waitForBrowser(client, `document.querySelector('.form-outcome-detail')?.open
+    && document.querySelector('.form-outcome-detail .privacy-compact-panel')?.getClientRects().length > 0
+    && document.querySelector('.form-outcome-detail .form-one-line-panel')?.getClientRects().length > 0`,
+    'success and privacy edit fields appear together after one disclosure');
+  assert(await evaluate(client, `document.querySelectorAll('.form-outcome-detail details,.form-behavior-detail details').length === 0`),
+    'form outcome/advanced groups must not contain nested disclosure steps');
+  await enterText('.form-outcome-detail .form-one-line-panel .field input', '상담 접수 완료');
+  await waitForBrowser(client, `document.querySelector('.form-outcome-detail .form-one-line-panel .field input')?.value === '상담 접수 완료'`,
+    'success title uses the existing form draft');
+  await clickPointer(client, '.privacy-compact-panel [role="switch"]');
+  await waitForBrowser(client, `document.querySelector('.privacy-compact-panel [role="switch"]')?.getAttribute('aria-checked') === 'false'`,
+    'privacy requirement disabled in draft');
+  await clickPointer(client, '.privacy-compact-panel [role="switch"]');
+  await waitForBrowser(client, `document.querySelector('.privacy-compact-panel [role="switch"]')?.getAttribute('aria-checked') === 'true'`,
+    'privacy requirement restores to mandatory');
+  await clickPointer(client, '.form-outcome-detail > summary');
   await clickPointer(client, '.form-behavior-detail > summary');
-  await waitForBrowser(client, `document.querySelector('.form-behavior-detail')?.open === true`,
-    'optional submission and integration settings open after primary form fields');
-  await clickPointer(client, '.form-basic-detail:has(.privacy-compact-panel) > summary');
-  await waitForBrowser(client, `document.querySelector('.privacy-compact-panel')?.getClientRects().length > 0`, 'privacy controls reachable');
-  await clickPointer(client, '.privacy-compact-panel [role="switch"]');
-  await waitForBrowser(client, `document.querySelector('.privacy-compact-panel [role="switch"]')?.getAttribute('aria-checked') === 'false'`, 'privacy requirement disabled in draft');
-  await clickPointer(client, '.privacy-compact-panel [role="switch"]');
-  await clickPointer(client, '.form-basic-detail:has(.privacy-compact-panel) > summary');
-  await clickPointer(client, '.form-duplicate-detail > summary');
-  await waitForBrowser(client, `document.querySelector('.form-duplicate-detail')?.open`, 'duplicate policy reachable');
-  await clickPointer(client, '.form-duplicate-detail > summary');
-  await waitForBrowser(client, `document.querySelector('.form-behavior-detail')?.open === true`,
-    'editing nested privacy options preserves expanded submission settings');
+  await waitForBrowser(client, `document.querySelector('.form-behavior-detail')?.open
+    && document.querySelector('.form-submission-settings .choice[aria-label="연락처"]')?.getClientRects().length > 0`,
+    'advanced duplicate policy reachable in one action');
+  const duplicateChoice = '.form-submission-settings .choice[aria-label="연락처"]';
+  await clickPointer(client, duplicateChoice + ' button:nth-child(2)');
+  await waitForBrowser(client, `document.querySelector('.form-submission-settings .choice[aria-label="연락처"] button:nth-child(2)')?.getAttribute('aria-pressed') === 'true'`,
+    'duplicate contact policy edits the existing form model');
+  await clickPointer(client, duplicateChoice + ' button:first-child');
+  assert(await evaluate(client, `document.querySelectorAll('.form-outcome-detail details,.form-behavior-detail details').length === 0`),
+    'advanced controls remain flat after changes');
+  await clickPointer(client, '.form-outcome-detail > summary');
+  await waitForBrowser(client, `document.querySelector('.form-outcome-detail')?.open
+    && document.querySelector('.form-outcome-detail .form-one-line-panel .field input')?.value === '상담 접수 완료'`,
+    'outcome fields survive switching between sibling disclosures');
   await clickPointer(client, '.form-embed-button');
   await waitForBrowser(client, `!!document.querySelector('.inlet-html-modal[role="dialog"]')`, 'external embed dialog');
   await pressKeyboardKey(client, 'Escape');

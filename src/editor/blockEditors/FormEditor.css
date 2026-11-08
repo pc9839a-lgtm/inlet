@@ -290,12 +290,49 @@ body .builder-shell .edit-layout .block-editor-v2 .form-embed-button { display: 
   }
 }
 
-/* The question builder is the default task. Advanced submission policy is
-   still available through one named, keyboard-accessible native disclosure. */
-html body #root .canvas-editor-shell .form-editor-flow .form-behavior-detail .form-editor-settings {
+/* Outcome and consent are one action from the primary form fields; duplicate
+   rules and external embeds remain optional. No nested accordion controls. */
+html body #root .canvas-editor-shell .form-editor-flow :is(.form-outcome-detail, .form-behavior-detail) .form-editor-settings {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   padding-top: 4px;
+}
+.block-editor-v2 .form-editor-flow .form-inline-group {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.block-editor-v2 .form-editor-flow .form-inline-group + .form-inline-group {
+  border-top: 1px solid #e7eaf2;
+  padding-top: 14px;
+}
+.block-editor-v2 .form-editor-flow .form-inline-group h3 {
+  margin: 0;
+  color: var(--editor-ui-text, #182230);
+  font-size: var(--editor-ui-section-size, 13px);
+  font-weight: var(--editor-ui-label-weight, 600);
+  line-height: 1.4;
+}
+.block-editor-v2 .form-editor-flow .form-inline-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.block-editor-v2 .form-editor-flow .form-inline-title > span {
+  color: var(--editor-ui-muted, #667085);
+  font-size: var(--editor-ui-helper-size, 11px);
+}
+.block-editor-v2 .form-editor-flow .form-inline-group :is(.privacy-compact-panel, .form-one-line-panel, .form-duplicate-controls) {
+  display: grid;
+  gap: var(--editor-ui-space-3, 12px);
+  padding: 0;
+  min-width: 0;
+}
+/* Explicitly hide optional advanced controls: their grid rules must never
+   escape a closed native disclosure in the compact Inspector. */
+.block-editor-v2 .form-editor-flow .form-behavior-detail:not([open]) > .inspector-disclosure-body {
+  display: none !important;
 }
 html body #root .canvas-editor-shell .form-editor-flow .form-behavior-detail .form-embed-button {
   margin-top: 12px;

@@ -29,9 +29,20 @@ assert(image.indexOf('<ImageDisplayControls') > image.indexOf('label="사진 맞
 assert(form.indexOf('<FormFieldsSection') < form.indexOf('label="디자인 조정"')
   && form.indexOf('<Field label="버튼 문구"') < form.indexOf('label="디자인 조정"'),
   'form title, questions and submit text are primary');
-assert(form.indexOf('label="제출 후 동작과 연동"') < form.indexOf('<FormPrivacySettings')
-  && form.indexOf('<FormSubmissionSection') < form.indexOf('</InspectorDisclosure>', form.indexOf('label="제출 후 동작과 연동"')),
-  'form privacy and submission remain accessible behind explicit section');
+const outcomeStart = form.indexOf('label="제출 안내와 개인정보"');
+const designStart = form.indexOf('label="디자인 조정"');
+const advancedStart = form.indexOf('label="중복 접수와 외부 연동"');
+assert(outcomeStart > form.indexOf('<Field label="버튼 문구"')
+  && outcomeStart < designStart && designStart < advancedStart
+  && form.indexOf('<FormSuccessSettings s={s} set={set} direct />', outcomeStart) < designStart
+  && form.indexOf('<FormPrivacySettings s={s} set={set} direct />', outcomeStart) < designStart
+  && form.indexOf('<FormSubmissionSection s={s} set={set} direct />', advancedStart) > advancedStart,
+  'form outcome and privacy are one disclosure, duplicate policy and embed remain separate');
+for (const file of ['FormPrivacySettings', 'FormSuccessSettings', 'FormSubmissionSection']) {
+  const source = read('src/editor/blockEditors/' + file + '.jsx');
+  assert(source.includes('direct = false') && source.includes('if (direct)') && source.includes('form-inline-group'),
+    file + ' must provide directly editable fields without nested accordions');
+}
 assert(code.includes('<CodeEditorBox') && code.includes('codeDraftHint') && codeBox.includes('aria-label="HTML 코드 초안"')
   && codeBox.includes('onClick={onApply}'), 'direct code editing, draft state and apply remain visible');
 assert(inspector.includes('editor-inspector-selected-copy') && inspector.includes('{primaryLabel}')
