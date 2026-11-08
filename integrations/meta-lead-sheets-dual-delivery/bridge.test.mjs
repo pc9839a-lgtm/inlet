@@ -129,3 +129,21 @@ test('Cloudflare accepts and deduplicates valid lead, omits Meta test lead',asyn
   await Promise.all(tasks);
   assert.equal(db.stored.size,1);
 });
+
+test('a malformed real lead rejects the batch instead of losing a customer',async()=>{
+  const db=fakeDb(),tasks=[];
+  const invalid={...lead,phone_number:'not-a-phone'};
+  const request=new Request('https://pagero.kr/api/integrations/meta-sheets/relay',{
+    method:'POST',
+    headers:{'X-Meta-Relay-Token':config.META_SHEETS_RELAY_TOKEN},
+    body:JSON.stringify({rows:[lead,invalid]})
+  });
+  const response=await onRequest({request,env:{...config,DB:db},
+    ctx:{waitUntil:promise=>tasks.push(promise)}});
+  assert.equal(response.status,422);
+  const result=await response.json();
+  assert.equal(result.error,'INVALID_LEAD_ROW');
+  assert.equal(result.rowIndex,1);
+  assert.equal(db.stored.size,0,'validation must happen before any inserts');
+  assert.equal(tasks.length,0);
+});
