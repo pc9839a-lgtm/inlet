@@ -24,4 +24,4 @@ jobs:
         with:
           node-version: '22'
       - name: Validate Cloudflare relay and no-PII mock delivery contracts
-        run: node --test integrations/meta-lead-sheets-dual-delivery/bridge.test.mjs
+        run: node --test integrations/meta-lead-sheets-dual-delivery/*.test.mjs
