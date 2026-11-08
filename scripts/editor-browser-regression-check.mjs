@@ -2433,7 +2433,11 @@ async function run() {
       && stageFourLegacyTrack.thumb === '22px',
       'stage4 legacy active styles must not paint a second switch background: ' + JSON.stringify(stageFourLegacyTrack));
     await capture(client, 'desktop-shared-form-stage4');
-    await clickSelector(client, '#editor-block-settings-editor-form .form-behavior-detail > summary');
+    // A prior form test may already have opened this persisted disclosure.
+    // Do not toggle it closed when revisiting the same selected block.
+    if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open`))) {
+      await clickSelector(client, '#editor-block-settings-editor-form .form-behavior-detail > summary');
+    }
     await waitForBrowser(client,
       `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open === true`,
       'duplicate policy and embed remain reachable without nested panels');
