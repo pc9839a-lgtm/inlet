@@ -67,3 +67,14 @@ CT_상태 / CT_시도 / CT_최종시도 / CT_결과 / 광고주_상태 / 광고�
 
 ## 7. 검증
 운영 서버를 호출하지 않는 스크립트 가상 테스트는 별도 bridge.test.mjs에 포함할 예정입니다.
+
+## 8. 실제 메타 개인회생 양식 연결 확인 (2026-11-08)
+- 리드 시트 이름: `시트1` (기존 Google Sheet에 바인딩된 Apps Script 실행을 권장)
+- 메타 원본 열: `id`, `created_time`, 광고 캠페인 관련 메타데이터, `총_채무액(2,000만원_이상_가능)`, `상담가능시간`, `문의내용(ex개인회생/파산_등)`, `full_name`, `phone_number`, `lead_status`
+- 필드 변환: `id` → 이벤트 ID, `full_name` → `DATAS_name`, `phone_number` → `DATAS_phone`, `총_채무액(2,000만원_이상_가능)` → `DATAS_money`, `상담가능시간` → `DATAS_calldate`, `문의내용(ex개인회생/파산_등)` → `DATAS_data`. `DATAS_area`는 새 양식에 원본 지역 질문이 없어 전달하지 않음.
+- 구글시트 R열 `lead_status` 이후 S:AA 범위에 분기 전송 상태 열을 추가한 상태. 기존 메타 생성 더미 리드 1개는 `SKIPPED_OLD` 처리되어 전송하지 않습니다.
+- `<test lead: ...>` 형식으로 전달되는 메타 가상 테스트 데이터는 스크립트에서도 `SKIPPED_TEST`로 자동 제외합니다.
+- 실제 연락처/개인정보는 어떤 외부 API에도 아직 전송하지 않았습니다.
+- **Google Apps Script 설치와 비밀값 등록은 아직 미완료.** 구글시트에서 확장 프로그램 → Apps Script를 열어 이 폴더 `Code.gs`를 붙여넣고, 프로젝트 설정에서 `LEADS_SHEET_NAME=시트1`, `CALLTAG_WEBHOOK_URL`에 발급받은 비밀 URL을 등록해야 합니다. 실제 리드 시트에 바인딩된 경우 `SPREADSHEET_ID`는 생략할 수 있습니다.
+- 앱의 Webhook 매핑에서 필수 `/phone`, `/name`, `/content`, `/event_id`를 연결하고, `installLeadBridge` → 테스트/검증 → `enableLeadBridge` 순서로 실행합니다.
+- 실제 광고주 API와 고객 DB의 접수 성공 여부는 수신 로그로 별도 검증해야 하며, `enableLeadBridge` 호출 전까지 코드가 전송을 하지 않습니다.
