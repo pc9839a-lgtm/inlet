@@ -9,7 +9,7 @@ Meta 인스턴트 양식 → Google Sheets (시트1, A:R) → **Apps Script 74�
 - 콜태그는 기존 Webhook 식별 키로 수신 계정 소유자를 조회해 **기존 범용 리드 저장 함수를 호출**하므로 앱 패치나 별도 Webhook 필드 매핑이 필요하지 않습니다.
 - 광고주에게는 기존 Make 방식과 동일하게 HTTPS POST + application/x-www-form-urlencoded, ITEM=64, DATAS_name/phone/money/calldate/data 등 전송.
 - 콜태그 실패는 최대 3회 재시도, 광고주는 성공 응답 규격이 불명확하므로 HTTP 200만으로 전송 완료 판정하지 않으며 불명확하면 REVIEW로 보류하고 자동 재전송하지 않습니다.
-- 데이터 전송 전용 키는 Cloudflare와 GAS 스크립트 속성에서만 사용합니다. 공개 GitHub 코드나 시트에 비밀값을 남기지 않습니다.
+- 기존 콜태그 Webhook 주소를 Apps Script 스크립트 속성에만 입력합니다. Cloudflare는 기존 활성 Webhook의 해시로 인증합니다. 실제 URL은 공개 GitHub 코드나 시트 셀에 넣지 않습니다.
 
 ## 현재 확인된 실제 Google Sheet
 
@@ -19,30 +19,23 @@ Meta 인스턴트 양식 → Google Sheets (시트1, A:R) → **Apps Script 74�
 - 생성 당시 메타 테스트 리드 1개가 있었고 이는 더미 데이터이므로 Cloudflare에서 전달을 제외함
 - 운영 리드/실제 연락처를 전송하는 테스트는 아직 수행하지 않음
 
-## 배포 및 비밀값 (운영 전 필수)
+## 설치 (별도 릴레이 토큰 생성 불필요)
 
-Cloudflare Pages 프로젝트 **inlet** (pagero.kr)에서 다음 환경 변수를 **Production**에 설정합니다.
+Cloudflare Pages 프로젝트 **inlet** (pagero.kr)에서 인증과 고객 처리를 수행합니다. 서버는 발급된 Webhook 주소의 일방향 SHA-256 지문과 기존 활성 연결 레코드를 함께 검사합니다. GitHub 코드에 비밀 URL은 저장하지 않습니다.
 
-| 변수 | 값 |
-| --- | --- |
-| META_SHEETS_RELAY_TOKEN | 직접 생성한 랜덤 32자 이상의 비밀키. GAS에서 같은 값 사용 |
-| META_SHEETS_CALLTAG_WEBHOOK_URL | 콜태그 앱에서 생성한 전체 Webhook HTTPS URL(비밀). 소스 저장 금지 |
-| META_SHEETS_DISPATCH_ENABLED | 1 (운영 허용 시) |
-| META_SHEETS_ADVERTISER_URL | 선택: https://ollymkt.shop/dbapi/ (기본값 동일) |
-| META_SHEETS_ADVERTISER_ITEM | 선택: 64 (기본값 동일) |
+별도로 META_SHEETS_RELAY_TOKEN이나 META_SHEETS_CALLTAG_WEBHOOK_URL을 Cloudflare에 설정할 필요가 없습니다. 이미 발급된 활성 Webhook을 재사용합니다. 선택적 Cloudflare 환경 변수는 다음과 같습니다.
+- META_SHEETS_DISPATCH_ENABLED: '0'을 설정하면 서버 전체 전송을 일시 정지합니다. 미설정 시 인증된 연결만 처리합니다.
+- META_SHEETS_ADVERTISER_URL: 기본 https://ollymkt.shop/dbapi/
+- META_SHEETS_ADVERTISER_ITEM: 기본 64
 
-Cloudflare 환경 변수 설정 및 코드의 main 병합/배포가 끝나기 전에는 정상 동작하지 않습니다. 인증 값이 없으면 API는 503, 잘못된 키는 401을 반환합니다. D1 바인딩 DB는 기존 앱에서 사용하는 동일 Cloudflare DB를 활용합니다.
+**Apps Script 코드 교체:** 구글시트에서 확장 프로그램 → Apps Script → Code.gs 전체를 이 디렉터리의 Code.gs로 교체 후 저장합니다. 웹 앱 배포(/exec)는 사용하지 않습니다.
 
-**GAS 코드 교체:** Google Sheet에서 확장 프로그램 → Apps Script → Code.gs 내용을 이 디렉터리의 Code.gs **전체 74줄**로 덮어쓰기 → 저장.
+**Apps Script 속성은 1개만 필요합니다.**
+- CALLTAG_WEBHOOK_URL: 기존 콜태그 앱에서 발급받은 비밀 Webhook 전체 HTTPS URL.
 
-**Apps Script 웹 앱 배포(/exec)는 이 구조에서 사용하지 않습니다.** 별도 웹 앱 배포가 필요 없으며 기존 배포 URL을 Cloudflare에 등록하지 않습니다. Apps Script 편집기에서 installMetaRelay를 한 번 실행하면 시간 기반 트리거가 만들어지고, 이후 relayMetaLeads가 서버로 POST 요청을 보냅니다. 이미 배포된 과거 /exec URL은 옛 버전을 가리킬 수도 있으므로 연동 성공 근거가 아닙니다.
+기존 META_SHEETS_RELAY_TOKEN 속성은 더 이상 사용하지 않으니 삭제해도 됩니다. `installMetaRelay` 실행 전에 Code.gs를 새 버전으로 교체해야 합니다.
 
-**GAS 스크립트 속성:** 딱 하나만 필요합니다.
-- META_SHEETS_RELAY_TOKEN: Cloudflare에 설정한 비밀키와 동일한 값.
-
-이전 설계의 CALLTAG_WEBHOOK_URL, ADVERTISER_URL, ADVERTISER_ITEM, LEADS_SHEET_NAME 등은 더 이상 GAS에서 사용하지 않습니다. 기존에 GAS에 적었다면 삭제할 수 있습니다.
-
-1. Cloudflare 구성이 완료된 다음 Apps Script의 함수 선택에서 **installMetaRelay**를 실행해 Google 권한을 승인합니다.
+1. Cloudflare 수정 버전의 main 병합 및 운영 배포가 확인된 다음 Apps Script의 함수 선택에서 **installMetaRelay**를 실행해 Google 권한을 승인합니다.
 2. installMetaRelay는 기존 행을 제외한 현재 마지막 행을 커서에 저장하고 1분 타이머를 등록합니다. 기존 processLeadBridge 트리거가 있으면 제거합니다.
 3. **relayMetaLeads**를 수동 실행하면 Cloudflare에 아직 보내지 않은 신규 행만 전송합니다. 신규 행이 없으면 재처리 대기 건을 점검하도록 빈 배열을 보냅니다.
 4. 202 + ok=true + accepted=전달 행 수를 받은 경우에만 커서를 진행합니다. 실패하면 다음 실행에 같은 행을 보내며 Cloudflare는 ID로 중복 저장을 방지합니다.
