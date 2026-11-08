@@ -197,3 +197,36 @@ test('Make blueprint Korean field names and P:+82 phone are compatible', () => {
   assert.match(payload, /DATAS_data=/);
   assert.equal(JSON.parse(x.calls[0].options.payload).phone, '01012345678');
 });
+
+
+test('actual Meta-created sheet headers deliver into correct advertiser fields', () => {
+  const headers = ['id','created_time','ad_id','ad_name','adset_id','adset_name',
+    'campaign_id','campaign_name','form_id','form_name','is_organic','platform',
+    '총_채무액(2,000만원_이상_가능)','상담가능시간',
+    '문의내용(ex개인회생/파산_등)','full_name','phone_number','lead_status'];
+  const x = fakeApp([headers]);
+  x.setDefaults(); x.run('installLeadBridge');
+  x.rows.push(['l:99011', '2026-11-08T07:23:31-05:00','','','','','','','','개인회생',
+    'false','facebook','3000만원 이상','오후 3시','상담 요청','테스트 사용자','010-2345-6789','CREATED']);
+  x.run('enableLeadBridge'); x.run('processLeadBridge');
+  assert.equal(x.calls.length, 2);
+  const advertiser = x.calls[1].options.payload;
+  assert.match(advertiser, /ITEM=64/);
+  assert.match(advertiser, /DATAS_phone=010-2345-6789/);
+  assert.match(advertiser, /DATAS_money=/);
+  assert.match(decodeURIComponent(advertiser), /3000만원 이상/);
+  assert.match(decodeURIComponent(advertiser), /상담 요청/);
+  assert.equal(x.status(2, 'CT_상태'), 'SENT');
+  assert.equal(x.status(2, '광고주_상태'), 'SENT');
+});
+
+test('Meta generated dummy lead cannot be forwarded even with valid-looking columns', () => {
+  const x = fakeApp([['id','full_name','phone_number','총_채무액(2,000만원_이상_가능)']]);
+  x.setDefaults(); x.run('installLeadBridge');
+  x.rows.push(['l:101','<test lead: dummy data for full_name>',
+    'p:<test lead: dummy data for phone_number>', '<test lead: dummy data for debt>']);
+  x.run('enableLeadBridge'); x.run('processLeadBridge');
+  assert.equal(x.calls.length, 0);
+  assert.equal(x.status(2, 'CT_상태'), 'SKIPPED_TEST');
+  assert.equal(x.status(2, '광고주_상태'), 'SKIPPED_TEST');
+});
