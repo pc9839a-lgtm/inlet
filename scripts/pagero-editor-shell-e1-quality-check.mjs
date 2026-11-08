@@ -426,7 +426,11 @@ assert(disclosure.includes('<details') && disclosure.includes('<summary onClick=
   && !settingsHeader.includes('InspectorNavigation')
   && !editPanelLayoutCss.includes('.inspector-navigation')
   && [heroEditor, textEditor, imageEditor, formEditor, advanced].every(source => source.includes('<InspectorDisclosure'))
-  && formEditor.includes('label="제출 후 동작과 연동"') && formEditor.includes('<FormPrivacySettings')
+  && formEditor.includes('label="제출 안내와 개인정보"')
+  && formEditor.includes('label="중복 접수와 외부 연동"')
+  && formEditor.includes('<FormSuccessSettings s={s} set={set} direct />')
+  && formEditor.includes('<FormPrivacySettings s={s} set={set} direct />')
+  && formEditor.includes('<FormSubmissionSection s={s} set={set} direct />')
   && editPanelLayoutCss.includes('.screen-order-v2-settings .inspector-disclosure'),
   'inspector must use one shared content/behavior/design/advanced native disclosure hierarchy without duplicate shortcuts');
 assert(editPanelLayoutCss.includes('.editor-composition-footer > .editor-page-settings-button')
