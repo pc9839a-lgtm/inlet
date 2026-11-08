@@ -71,30 +71,46 @@ async function ensureSchema(db) {
   await db.prepare("CREATE TABLE IF NOT EXISTS meta_sheet_dual_queue (event_id TEXT PRIMARY KEY, payload_json TEXT NOT NULL, ct_status TEXT NOT NULL DEFAULT 'PENDING', ad_status TEXT NOT NULL DEFAULT 'PENDING', ct_attempts INTEGER NOT NULL DEFAULT 0, ad_attempts INTEGER NOT NULL DEFAULT 0, ct_error TEXT NOT NULL DEFAULT '', ad_error TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)").run();
   await db.prepare("CREATE INDEX IF NOT EXISTS idx_meta_sheet_dual_status ON meta_sheet_dual_queue(ct_status, ad_status, created_at)").run();
 }
+// This is a one-way SHA-256 fingerprint, never the secret Webhook URL.
+const META_SHEETS_ALLOWED_WEBHOOK_HASH = '5581b91b500d9fb0454d2377b8a53968d79d4471f314171d8eeb2d50dd78c57f';
 function readConfig(env) {
-  const secret = String(env.META_SHEETS_RELAY_TOKEN || '');
-  const urlString = String(env.META_SHEETS_CALLTAG_WEBHOOK_URL || '');
-  let webhook, advertiser;
+  let advertiser;
+  try { advertiser = new URL(String(env.META_SHEETS_ADVERTISER_URL || 'https://ollymkt.shop/dbapi/')); }
+  catch { return null; }
+  if (advertiser.protocol !== 'https:' || env.META_SHEETS_DISPATCH_ENABLED === '0') return null;
+  return { advertiser: advertiser.href, item: String(env.META_SHEETS_ADVERTISER_ITEM || '64') };
+}
+export function extractWebhookKey(raw) {
+  const value = String(raw || '').trim();
+  if (/^ctwh_[A-Za-z0-9_-]{24,110}$/.test(value)) return value;
   try {
-    webhook = new URL(urlString);
-    advertiser = new URL(String(env.META_SHEETS_ADVERTISER_URL || 'https://ollymkt.shop/dbapi/'));
-  } catch { return null; }
-  if (secret.length < 32 || env.META_SHEETS_DISPATCH_ENABLED !== '1'
-      || webhook.protocol !== 'https:' || webhook.hostname !== 'pagero.kr'
-      || !/^\/api\/calltag\/v1\/hooks\/ctwh_[a-zA-Z0-9_-]+$/.test(webhook.pathname)
-      || advertiser.protocol !== 'https:') return null;
-  return { secret, endpointKey: webhook.pathname.split('/').pop(),
-    advertiser: advertiser.href, item: String(env.META_SHEETS_ADVERTISER_ITEM || '64') };
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.host !== 'pagero.kr') return '';
+    const found = /^\/api\/calltag\/v1\/hooks\/(ctwh_[A-Za-z0-9_-]{24,110})$/.exec(url.pathname);
+    return found ? found[1] : '';
+  } catch { return ''; }
+}
+async function verifyWebhookAccess(db, rawKey, expectedHash) {
+  const key = extractWebhookKey(rawKey);
+  if (!key) return null;
+  const hash = await sha256(key);
+  if (hash !== expectedHash) return null;
+  await ensureWebhookSchema(db);
+  const active = await db.prepare("SELECT id FROM calltag_webhook_connections WHERE endpoint_hash=? AND status='active' LIMIT 1")
+    .bind(hash).first();
+  return active?.id ? key : null;
 }
 export async function onRequest({ request, env, ctx }) {
   if (request.method === 'OPTIONS') return optionsResponse(request, env, METHODS);
   if (request.method !== 'POST') return jsonResponse(request, env, 405, { ok: false }, METHODS);
-  const config = readConfig(env);
-  if (!config) return jsonResponse(request, env, 503, { ok: false, error: 'NOT_CONFIGURED' }, METHODS);
-  if (request.headers.get('X-Meta-Relay-Token') !== config.secret) {
-    return jsonResponse(request, env, 401, { ok: false, error: 'UNAUTHORIZED' }, METHODS);
-  }
+  const settings = readConfig(env);
+  if (!settings) return jsonResponse(request, env, 503, { ok: false, error: 'NOT_CONFIGURED' }, METHODS);
   try {
+    const db = assertD1(env);
+    const endpointKey = await verifyWebhookAccess(db, request.headers.get('X-Meta-Relay-Token'),
+      String(env.META_SHEETS_EXPECTED_ENDPOINT_HASH || META_SHEETS_ALLOWED_WEBHOOK_HASH));
+    if (!endpointKey) return jsonResponse(request, env, 401, { ok: false, error: 'UNAUTHORIZED' }, METHODS);
+    const config = { ...settings, endpointKey };
     const raw = await request.text();
     if (raw.length > 128 * 1024) return jsonResponse(request, env, 413, { ok: false }, METHODS);
     const rows = JSON.parse(raw)?.rows;
@@ -114,7 +130,6 @@ export async function onRequest({ request, env, ctx }) {
         ok: false, error: 'INVALID_LEAD_ROW', rowIndex: invalid.rowIndex
       }, METHODS);
     }
-    const db = assertD1(env);
     await ensureSchema(db);
     for (const { lead } of validated) {
       if (!lead) continue; // Meta dummy lead, deliberately excluded.

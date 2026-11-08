@@ -23,8 +23,11 @@ function installMetaRelay() {
 
 function relayMetaLeads() {
   const props = PropertiesService.getScriptProperties();
-  const token = props.getProperty('META_SHEETS_RELAY_TOKEN');
-  if (!token) throw new Error('스크립트 속성 META_SHEETS_RELAY_TOKEN을 먼저 입력하세요.');
+  // Reuse the existing private CallTag Webhook URL as the relay credential.
+  // Cloudflare checks its one-way fingerprint against the active connection.
+  const token = props.getProperty('CALLTAG_WEBHOOK_URL')
+    || props.getProperty('META_SHEETS_RELAY_TOKEN');
+  if (!token) throw new Error('스크립트 속성 CALLTAG_WEBHOOK_URL에 콜태그 Webhook 주소를 입력하세요.');
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(1000)) return;
   try {

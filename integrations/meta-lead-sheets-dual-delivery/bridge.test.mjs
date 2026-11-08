@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { Script, createContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -50,17 +51,21 @@ function fakeDb(){
       return {meta:{changes:1}};
     },
     async all(){return {results:[]};},
-    async first(){return null;}
+    async first(){return this.args && typeof this.args[0] === 'string' && this.args[0].length === 64 ? {id:'fake-active-webhook'} : null;}
   })};
 }
-const config={META_SHEETS_RELAY_TOKEN:'x'.repeat(64),
-  META_SHEETS_CALLTAG_WEBHOOK_URL:'https://pagero.kr/api/calltag/v1/hooks/ctwh_fake123456789012',
-  META_SHEETS_DISPATCH_ENABLED:'1'};
+const FAKE_WEBHOOK_KEY='ctwh_fake12345678901234567890';
+const FAKE_WEBHOOK_URL='https://pagero.kr/api/calltag/v1/hooks/'+FAKE_WEBHOOK_KEY;
+const config={
+  META_SHEETS_EXPECTED_ENDPOINT_HASH:createHash('sha256').update(FAKE_WEBHOOK_KEY).digest('hex'),
+  META_SHEETS_DISPATCH_ENABLED:'1'
+};
 
 test('GAS is only a Cloudflare connector, never an advertiser/CallTag client',()=>{
   assert.doesNotThrow(()=>new Script(source));
   assert.match(source,/META_RELAY_ENDPOINT/);
-  assert.doesNotMatch(source,/ollymkt|DATAS_|CALLTAG_WEBHOOK_URL/);
+  assert.doesNotMatch(source,/ollymkt|DATAS_|ctwh_XHQF/);
+  assert.match(source,/getProperty\('CALLTAG_WEBHOOK_URL'\)/);
 });
 test('install skips old rows and creates one 1-minute trigger',()=>{
   const x=mockGas([headers,headers.map(h=>dummy[h]??'')]);
@@ -71,7 +76,7 @@ test('install skips old rows and creates one 1-minute trigger',()=>{
 });
 test('new row forwarded to Cloudflare; no duplicate after ACK; heartbeat on idle',()=>{
   const x=mockGas([headers,headers.map(h=>dummy[h]??'')]);
-  x.context.installMetaRelay();x.props.set('META_SHEETS_RELAY_TOKEN','secret');
+  x.context.installMetaRelay();x.props.set('CALLTAG_WEBHOOK_URL',FAKE_WEBHOOK_URL);
   x.rows.push(headers.map(h=>lead[h]??''));
   x.context.relayMetaLeads();
   assert.equal(x.calls.length,1);
@@ -83,7 +88,7 @@ test('new row forwarded to Cloudflare; no duplicate after ACK; heartbeat on idle
 });
 test('GAS retries same row after server 503 without cursor advance',()=>{
   const x=mockGas([headers]);x.context.installMetaRelay();
-  x.props.set('META_SHEETS_RELAY_TOKEN','secret');x.props.set('FAIL','1');
+  x.props.set('CALLTAG_WEBHOOK_URL',FAKE_WEBHOOK_URL);x.props.set('FAIL','1');
   x.rows.push(headers.map(h=>lead[h]??''));
   assert.throws(()=>x.context.relayMetaLeads(),/접수 확인 실패/);
   assert.equal(x.props.get('META_RELAY_CURSOR'),'1');
@@ -110,13 +115,13 @@ test('advertiser response must be explicit and unknown 200 is not proof',()=>{
 test('Cloudflare relay fails closed without secrets or with wrong token',async()=>{
   const request=new Request('https://pagero.kr/api/integrations/meta-sheets/relay',
     {method:'POST',body:'{"rows":[]}'});
-  assert.equal((await onRequest({request,env:{},ctx:{}})).status,503);
-  assert.equal((await onRequest({request,env:config,ctx:{}})).status,401);
+  assert.equal((await onRequest({request,env:{...config,META_SHEETS_DISPATCH_ENABLED:'0'},ctx:{}})).status,503);
+  assert.equal((await onRequest({request,env:{...config,DB:fakeDb()},ctx:{}})).status,401);
 });
 test('Cloudflare accepts and deduplicates valid lead, omits Meta test lead',async()=>{
   const db=fakeDb(),tasks=[];
   const makeRequest=()=>new Request('https://pagero.kr/api/integrations/meta-sheets/relay',{
-    method:'POST',headers:{'X-Meta-Relay-Token':config.META_SHEETS_RELAY_TOKEN},
+    method:'POST',headers:{'X-Meta-Relay-Token':FAKE_WEBHOOK_URL},
     body:JSON.stringify({rows:[lead,dummy]})});
   const ctx={waitUntil:promise=>tasks.push(promise)};
   const first=await onRequest({request:makeRequest(),env:{...config,DB:db},ctx});
@@ -135,7 +140,7 @@ test('a malformed real lead rejects the batch instead of losing a customer',asyn
   const invalid={...lead,phone_number:'not-a-phone'};
   const request=new Request('https://pagero.kr/api/integrations/meta-sheets/relay',{
     method:'POST',
-    headers:{'X-Meta-Relay-Token':config.META_SHEETS_RELAY_TOKEN},
+    headers:{'X-Meta-Relay-Token':FAKE_WEBHOOK_URL},
     body:JSON.stringify({rows:[lead,invalid]})
   });
   const response=await onRequest({request,env:{...config,DB:db},
@@ -146,4 +151,15 @@ test('a malformed real lead rejects the batch instead of losing a customer',asyn
   assert.equal(result.rowIndex,1);
   assert.equal(db.stored.size,0,'validation must happen before any inserts');
   assert.equal(tasks.length,0);
+});
+
+
+test('WebHook credential is required, wrong key rejected, unrelated WebHook rejected',async()=>{
+  const db=fakeDb();
+  const base='https://pagero.kr/api/integrations/meta-sheets/relay';
+  const send=(token)=>new Request(base,{method:'POST',headers:{'X-Meta-Relay-Token':token},body:'{"rows":[]}'});
+  assert.equal((await onRequest({request:send('garbage'),env:{...config,DB:db},ctx:{}})).status,401);
+  assert.equal((await onRequest({request:send('ctwh_otherFake12345678901234567890'),env:{...config,DB:db},ctx:{}})).status,401);
+  const allowed=await onRequest({request:send(FAKE_WEBHOOK_URL),env:{...config,DB:db},ctx:{}});
+  assert.equal(allowed.status,202);
 });
