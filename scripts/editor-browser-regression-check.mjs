@@ -2403,15 +2403,18 @@ async function run() {
     assert(stageFourLegacyField.radius === stageFourField.radius && stageFourLegacyField.size === stageFourField.size
       && stageFourLegacyField.minHeight === '42px',
       'stage4 legacy form fields must match modern fields: ' + JSON.stringify(stageFourLegacyField));
-    // Content-first form groups keep consent / duplicate rules behind the
-    // optional submission panel. Open the parent before nested legacy controls.
-    if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open`))) {
-      await clickSelector(client, '#editor-block-settings-editor-form .form-behavior-detail > summary');
+    // The primary form fields lead to one disclosure for consent and success.
+    // No nested accordion is required to reach the actual consent toggle.
+    if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-form .form-outcome-detail')?.open`))) {
+      await clickSelector(client, '#editor-block-settings-editor-form .form-outcome-detail > summary');
     }
     await waitForBrowser(client,
-      `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open === true`,
-      'form consent/duplicate controls available after explicit behavior expansion');
-    await clickSelector(client, '#editor-block-settings-editor-form .form-basic-detail:has(.privacy-compact-panel) > summary');
+      `document.querySelector('#editor-block-settings-editor-form .form-outcome-detail')?.open === true
+        && !!document.querySelector('#editor-block-settings-editor-form .form-one-line-panel')`,
+      'form consent and success fields available after one disclosure');
+    assert(await evaluate(client,
+      `document.querySelectorAll('#editor-block-settings-editor-form .form-outcome-detail details').length === 0`),
+      'form consent panel must not require a second accordion');
     const stageFourLegacyToggle = '#editor-block-settings-editor-form .privacy-compact-panel .toggle [role="switch"]';
     const stageFourLegacyChecked = await evaluate(client, `document.querySelector(${JSON.stringify(stageFourLegacyToggle)}).getAttribute('aria-checked')`);
     await focusSelector(client, stageFourLegacyToggle);
@@ -2430,8 +2433,10 @@ async function run() {
       && stageFourLegacyTrack.thumb === '22px',
       'stage4 legacy active styles must not paint a second switch background: ' + JSON.stringify(stageFourLegacyTrack));
     await capture(client, 'desktop-shared-form-stage4');
-    await clickSelector(client, '#editor-block-settings-editor-form .form-basic-detail:has(.privacy-compact-panel) > summary');
-    await clickSelector(client, '#editor-block-settings-editor-form .form-duplicate-detail > summary');
+    await clickSelector(client, '#editor-block-settings-editor-form .form-behavior-detail > summary');
+    await waitForBrowser(client,
+      `document.querySelector('#editor-block-settings-editor-form .form-behavior-detail')?.open === true`,
+      'duplicate policy and embed remain reachable without nested panels');
     const stageFourLegacyChoice = '#editor-block-settings-editor-form .choice[aria-label="연락처"]';
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(stageFourLegacyChoice)})`, 'stage4 legacy contact choice');
     await focusSelector(client, `${stageFourLegacyChoice} button:nth-child(2)`);
