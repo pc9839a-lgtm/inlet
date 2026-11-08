@@ -1,0 +1,27 @@
+name: Meta Sheets dual-lead bridge QA
+
+on:
+  push:
+    branches:
+      - 'feat/meta-leads-sheets-dual-delivery-*'
+    paths:
+      - 'integrations/meta-lead-sheets-dual-delivery/**'
+      - 'functions/api/integrations/meta-sheets/**'
+      - '.github/workflows/meta-lead-sheets-bridge-qa.yml'
+  pull_request:
+    paths:
+      - 'integrations/meta-lead-sheets-dual-delivery/**'
+      - 'functions/api/integrations/meta-sheets/**'
+      - '.github/workflows/meta-lead-sheets-bridge-qa.yml'
+
+jobs:
+  bridge-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Cloudflare relay and no-PII mock delivery contracts
+        run: node --test integrations/meta-lead-sheets-dual-delivery/bridge.test.mjs
