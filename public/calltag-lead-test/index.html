@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<title>콜태그 리드 연동 테스트</title>
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Pretendard","Segoe UI",sans-serif;color:#17181b;background:#f8f9fb}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+main{width:min(100%,480px);background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:28px;box-shadow:0 6px 24px #00000007}
+h1{font-size:24px;letter-spacing:-.7px;margin:0 0 12px}p{color:#4b5563;font-size:14px;line-height:1.7;margin:0 0 20px}
+label{display:block;font-size:14px;font-weight:650;margin-bottom:8px}
+input{display:block;width:100%;height:50px;font-size:14px;border:1px solid #cfd4dc;border-radius:10px;padding:0 14px}
+input:focus{outline:2px solid #2862db;outline-offset:1px}
+button{height:50px;width:100%;border:0;border-radius:10px;background:#2862db;color:#fff;font-size:16px;font-weight:700;margin-top:16px;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}.note{background:#f3f5f8;border-radius:10px;padding:12px 14px;margin:15px 0 0;color:#4b5563;font-size:13px;line-height:1.6}
+#result{margin-top:18px;padding:14px;border-radius:10px;background:#f1f4f9;font-size:14px;line-height:1.7;white-space:pre-line;display:none}
+a{color:#2862db}
+</style>
+</head>
+<body>
+<main>
+<h1>콜태그 고객등록 테스트</h1>
+<p>테스트 버튼을 누르면 콜태그에 가상 고객 1건만 등록돼요. 실제 상담 DB나 광고주 API에는 전송하지 않습니다.</p>
+<form id="testForm">
+<label for="webhook">콜태그 Webhook 주소</label>
+<input id="webhook" type="password" required autocomplete="off" spellcheck="false" placeholder="https://pagero.kr/api/calltag/v1/hooks/ctwh_...">
+<p class="note">Webhook URL은 인증용으로만 전송하며 브라우저나 서버의 별도 설정에 저장하지 않습니다. 같은 테스트를 여러 번 실행해도 고객은 중복 등록되지 않아요.</p>
+<button id="submit" type="submit">가상 고객 1건 콜태그에 등록</button>
+</form>
+<div id="result" role="status" aria-live="polite"></div>
+</main>
+<script>
+(() => {
+  const form=document.getElementById('testForm');
+  const input=document.getElementById('webhook');
+  const result=document.getElementById('result');
+  const button=document.getElementById('submit');
+  const show=(message)=>{result.style.display='block';result.textContent=message;};
+  form.addEventListener('submit',async(event)=>{
+    event.preventDefault();
+    if(!input.value.trim())return;
+    button.disabled=true;button.textContent='콜태그 등록 확인 중…';
+    try{
+      const response=await fetch('/api/integrations/meta-sheets/test-lead',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CallTag-Test-Webhook':input.value.trim()},
+        body:'{}',
+        cache:'no-store',
+        redirect:'error'
+      });
+      const data=await response.json();
+      if(!response.ok||!data.ok){
+        const errors={
+          INVALID_TEST_WEBHOOK:'Webhook 주소가 다르거나 잘못됐습니다.',
+          WEBHOOK_NOT_ACTIVE:'콜태그 Webhook이 비활성 상태입니다.',
+          TEST_FAILED:'서버 처리 오류가 발생했습니다. 콜태그 연결 상태를 확인해주세요.'
+        };
+        show('등록 실패\n'+(errors[data.error]||('HTTP '+response.status)));
+        return;
+      }
+      show((data.status==='CREATED'?'고객 등록 완료':'이미 등록된 테스트 고객입니다')
+        +'\n이름: 연동 테스트 고객\n연락처: 010-0000-0000'
+        +'\n광고주 전송: 없음'
+        +'\n푸시 알림: '+(data.push==='sent'?'발송 성공':data.push==='not_delivered'?'미발송/실패':'추가 발송 없음')
+        +'\n\n콜태그 앱에서 신규 고객 목록을 확인하세요.');
+    }catch(error){show('서버 연결 실패. 배포 상태를 확인해 주세요.');}
+    finally{button.disabled=false;button.textContent='가상 고객 1건 콜태그에 등록';}
+  });
+})();
+</script>
+</body>
+</html>
