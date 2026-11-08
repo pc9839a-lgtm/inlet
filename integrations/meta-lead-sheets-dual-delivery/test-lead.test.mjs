@@ -23,7 +23,7 @@ test('test endpoint rejects blank, wrong or invalid hostname credentials',async(
 });
 test('page is static and excludes the private webhook value',()=>{
   const page=readFileSync(new URL('../../public/calltag-lead-test/index.html',import.meta.url),'utf8');
-  assert.match(page,/calltag-lead-test/);
+  assert.match(page,/\/api\/integrations\/meta-sheets\/test-lead/);
   assert.match(page,/가상 고객 1건/);
   assert.doesNotMatch(page,/ctwh_XHQF78fwwGLQequlXQZV_wJJdAymWZFB/);
   assert.doesNotMatch(page,/localStorage|sessionStorage|document\.cookie/);
