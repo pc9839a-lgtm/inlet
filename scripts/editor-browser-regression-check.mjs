@@ -2463,7 +2463,8 @@ async function run() {
       return {
         pageEntrySelected: document.querySelector('.editor-page-settings-button')?.getAttribute('aria-pressed') === 'true',
         redundantTabs: document.querySelectorAll('.edit-section-tabs').length,
-        designFirst: stack.firstElementChild?.classList.contains('style-panel'),
+        designFirst: stack.querySelector('.editor-page-options-heading') === stack.firstElementChild
+          && stack.querySelector('.style-panel')?.compareDocumentPosition(stack.querySelector('.page-global-options-card')) & Node.DOCUMENT_POSITION_FOLLOWING,
         designTitle: stack.querySelector('.style-apply-bar strong')?.textContent,
         status: stack.querySelector('.style-apply-bar span')?.textContent,
         globalHeadingRemoved: !stack.querySelector('.page-global-options-title'),
