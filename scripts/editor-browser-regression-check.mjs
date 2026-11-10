@@ -2101,8 +2101,8 @@ async function run() {
       };
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
-      && stageOneList.gap === '2px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '8px' && stageOneList.height >= 55
+      && stageOneList.gap === '5px' && stageOneList.rowBorder === '1px'
+      && stageOneList.rowRadius === '10px' && stageOneList.height >= 62
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
       && stageOneList.actionCount === 1 && stageOneList.actions,
