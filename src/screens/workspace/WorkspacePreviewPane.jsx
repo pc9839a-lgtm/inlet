@@ -44,6 +44,13 @@ export function WorkspacePreviewPane({
       style={{ '--editor-preview-content-width': `${PREVIEW_CONTENT_WIDTH}px` }}
     >
       <div className="preview-sticky">
+        <div className="preview-stage-heading">
+          <div className="preview-stage-label">
+            <span className="preview-stage-signal" aria-hidden="true" />
+            <strong>실시간 미리보기</strong>
+          </div>
+          <span className="preview-stage-width">모바일 · 390px</span>
+        </div>
         <div className="phone-frame" ref={frameRef}>
           <PreviewRenderer
             page={previewPage}

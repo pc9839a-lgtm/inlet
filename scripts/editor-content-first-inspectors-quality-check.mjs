@@ -49,8 +49,8 @@ assert(inspector.includes('editor-inspector-selected-copy') && inspector.include
   && inspector.includes('editor-inspector-selected-context'),
   'one selected-item identity and a task-specific primary heading replace dense settings header');
 assert(css.includes('.editor-inspector-kind-icon') && css.includes('.editor-inspector-selected-copy')
-  && css.includes('margin: 4px 0 17px;'),
-  'inspector styles are owned by existing layout stylesheet');
+  && css.includes('.editor-inspector-section-label') && css.includes('margin: 0 0 26px;'),
+  'selected inspector must show one spacious identity header before content and keep CSS ownership');
 assert(disclosure.includes('expandedByBlock = new Map()')
   && disclosure.includes('expandedByBlock.has(persistKey)')
   && disclosure.includes('rememberExpanded(persistKey, next)')
