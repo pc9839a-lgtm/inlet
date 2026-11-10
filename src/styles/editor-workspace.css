@@ -2,10 +2,10 @@
 html body #root .builder-shell.canvas-editor-shell {
   /* Reference: enough space for navigator AND editable properties.
      Keep the 390px phone fully visible on narrow desktops. */
-  --editor-list-width: clamp(220px, 16.5vw, 276px);
-  /* 1672px reference: 276px navigator + 394px settings.
-     Reserve >=400px for a 390px content phone at 900px. */
-  --editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 394px)), 670px);
+  --editor-list-width: clamp(220px, 16.8vw, 280px);
+  /* Spacious 1672px editing layout: 280px composition + 420px properties.
+     Narrow desktop still reserves >=400px for the same 390px page. */
+  --editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 420px)), 700px);
   --editor-settings-width: calc(var(--editor-edit-width) - var(--editor-list-width));
   display: grid;
   grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;
@@ -28,7 +28,7 @@ html body #root .canvas-editor-shell .work-panel {
   padding: 0 !important;
   /* The navigator and Inspector own independent scroll; the shell stays put. */
   overflow: hidden !important;
-  border-right: 1px solid #e7eaf2;
+  border-right: 1px solid #dfe6f1;
   background: #fff;
 }
 /* Desktop zoom keeps both surfaces reachable; phones retain operations mode. */
