@@ -83,21 +83,38 @@ jobs:
             --commit-hash "${GITHUB_SHA}" \
             --commit-message "Editor visual review only" 2>&1 | tee /tmp/pagero-editor-preview-wrangler.log
 
-          curl --fail-with-body --silent --show-error \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/inlet/deployments?per_page=20" \
-            -o /tmp/pagero-editor-preview-deployments.json
-          node --input-type=module - /tmp/pagero-editor-preview-deployments.json "${GITHUB_SHA}" "${PREVIEW_BRANCH}" <<'NODE'
+          # Cloudflare deployment-list metadata can lag the Wrangler success response.
+          # Keep fail-closed SHA/branch/environment checks; never infer success
+          # from Wrangler output or a public preview alias alone.
+          for attempt in 1 2 3 4 5 6 7 8; do
+            curl --fail-with-body --silent --show-error \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/inlet/deployments?env=preview&per_page=100" \
+              -o /tmp/pagero-editor-preview-deployments.json
+            if node --input-type=module - /tmp/pagero-editor-preview-deployments.json "${GITHUB_SHA}" "${PREVIEW_BRANCH}" <<'NODE'
           import fs from 'node:fs';
           const data = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
           const sha = process.argv[3];
           const branch = process.argv[4];
-          const match = (data.result || []).find(item =>
+          const deployments = Array.isArray(data.result) ? data.result : [];
+          const match = deployments.find(item =>
             item?.deployment_trigger?.metadata?.commit_hash === sha &&
-            item?.deployment_trigger?.metadata?.branch === branch);
-          if (data.success !== true || !match || match.environment !== 'preview') {
-            console.error('::error::Exact-SHA preview environment could not be confirmed. Do not share this deployment.');
-            process.exit(1);
+            item?.deployment_trigger?.metadata?.branch === branch &&
+            item?.environment === 'preview');
+          if (data.success !== true || !match) {
+            // Non-secret diagnostics distinguish API lag from CLI metadata drift.
+            const candidates = deployments.filter(item =>
+              item?.environment === 'preview' &&
+              item?.deployment_trigger?.metadata?.branch === branch).slice(0, 5);
+            console.log('Exact-SHA preview metadata pending:', JSON.stringify({
+              success: data.success === true,
+              inspected: deployments.length,
+              branchCandidates: candidates.map(item => ({
+                hashPrefix: String(item?.deployment_trigger?.metadata?.commit_hash || '').slice(0, 12),
+                status: item?.latest_stage?.status || '',
+              })),
+            }));
+            process.exit(2);
           }
           const url = String(match.url || '');
           if (!/^https:\/\/[a-z0-9-]+\.inlet-8mr\.pages\.dev\/?$/i.test(url)) {
@@ -106,8 +123,7 @@ jobs:
           }
           console.log('Verified preview environment for exact SHA:', sha);
           console.log('Review URL:', url);
-          // Inspect only the newly published editor route. This must not call
-          // an authenticated API or write any user data.
+          // Only expose the editor route. No authenticated API or data writes.
           const app = new URL('/app', url).toString();
           console.log('Editor route:', app);
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
@@ -125,3 +141,11 @@ jobs:
             '',
           ].join('\n'));
           NODE
+            then
+              exit 0
+            fi
+            echo "Preview metadata not yet verified; attempt ${attempt}/8."
+            sleep 5
+          done
+          echo "::error::Exact-SHA preview environment could not be confirmed. Do not share this deployment."
+          exit 1
