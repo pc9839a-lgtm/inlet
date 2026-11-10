@@ -1001,9 +1001,9 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  // Selected 1672px reference: 276px list + 394px Inspector.
-  const expectedComposition = Math.min(276, Math.max(220, width * 0.165));
-  const expectedEdit = Math.min(670, Math.max(500, Math.min(width - 410, expectedComposition + 394)));
+  // New 1672px layout: 280px composition + 420px Inspector; keep 390px page at 900px.
+  const expectedComposition = Math.min(280, Math.max(220, width * 0.168));
+  const expectedEdit = Math.min(700, Math.max(500, Math.min(width - 410, expectedComposition + 420)));
   const expectedInspector = expectedEdit - expectedComposition;
   assert(Math.abs(edit - expectedEdit) <= 2,
     `left editor must be wide enough for editing at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
