@@ -332,7 +332,7 @@ html body #root .canvas-editor-shell .editor-inspector-selected-copy {
   flex: 1 1 auto; min-width: 0; display: grid; gap: 3px;
 }
 html body #root .canvas-editor-shell .editor-inspector-selected-copy > h2 {
-  min-width: 0; margin: 0; color: #182230;
+  min-width: 0; margin: 0; color: #1b2740;
   font-size: 19px !important; font-weight: 750; line-height: 1.25; letter-spacing: -.035em;
   overflow-wrap: anywhere;
 }
