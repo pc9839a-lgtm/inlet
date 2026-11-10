@@ -46,7 +46,7 @@ const approvedManualSecretWriter = 'calltag-admin-cloudflare-bootstrap.yml';
 // Only this exact, reviewed workflow may deploy the isolated editor review preview.
 // Pinning the complete Git blob makes any change fail closed until re-reviewed.
 const approvedReviewPreviewWriter = 'pagero-editor-review-preview-20261106.yml';
-const approvedReviewPreviewBlob = '858abdb0628078c2e4c6e902699fb38f17215f22';
+const approvedReviewPreviewBlob = 'c659a8ff86d40edfc39b9d9191bcc71de0d3c805';
 const gitBlobSha = (content) => createHash('sha1')
   .update(`blob ${Buffer.byteLength(content, 'utf8')}\0`)
   .update(content)
@@ -89,7 +89,7 @@ for (const workflow of workflowNames) {
       'review preview must require the exact preview branch');
     assert.match(body, /item\?\.environment === 'preview'/,
       'review preview must require Cloudflare preview environment');
-    assert.match(body, /env=preview&per_page=100/,
+    assert.match(body, /env=preview&per_page=20/,
       'review preview must query only recent preview deployments');
     assert.match(body, /Exact-SHA preview environment could not be confirmed/,
       'review preview must fail closed when SHA metadata cannot be confirmed');
