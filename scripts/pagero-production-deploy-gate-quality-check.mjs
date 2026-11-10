@@ -46,7 +46,7 @@ const approvedManualSecretWriter = 'calltag-admin-cloudflare-bootstrap.yml';
 // Only this exact, reviewed workflow may deploy the isolated editor review preview.
 // Pinning the complete Git blob makes any change fail closed until re-reviewed.
 const approvedReviewPreviewWriter = 'pagero-editor-review-preview-20261106.yml';
-const approvedReviewPreviewBlob = 'fa5c494ce2e1246ca56c073daf6b666b8ea5a970';
+const approvedReviewPreviewBlob = '858abdb0628078c2e4c6e902699fb38f17215f22';
 const gitBlobSha = (content) => createHash('sha1')
   .update(`blob ${Buffer.byteLength(content, 'utf8')}\0`)
   .update(content)
@@ -83,7 +83,18 @@ for (const workflow of workflowNames) {
     assert.match(body, /--branch "\$\{PREVIEW_BRANCH\}"/, 'review preview must upload to the isolated branch');
     assert.match(body, /--commit-hash "\$\{GITHUB_SHA\}"/, 'review preview must upload the exact commit');
     assert.match(body, /project\.production_branch !== 'main'/, 'review preview must verify production branch');
-    assert.match(body, /match\.environment !== 'preview'/, 'review preview must verify the environment');
+    assert.match(body, /item\?\.deployment_trigger\?\.metadata\?\.commit_hash === sha/,
+      'review preview must require a full exact deployment SHA');
+    assert.match(body, /item\?\.deployment_trigger\?\.metadata\?\.branch === branch/,
+      'review preview must require the exact preview branch');
+    assert.match(body, /item\?\.environment === 'preview'/,
+      'review preview must require Cloudflare preview environment');
+    assert.match(body, /env=preview&per_page=100/,
+      'review preview must query only recent preview deployments');
+    assert.match(body, /Exact-SHA preview environment could not be confirmed/,
+      'review preview must fail closed when SHA metadata cannot be confirmed');
+    assert.doesNotMatch(body, /--branch\s+(?:"?main"?|production)\b/,
+      'review preview must not target the production branch');
     for (const writer of writers.slice(1)) assert.doesNotMatch(body, writer, `${workflow} must not use another deploy or secret writer`);
     assert.doesNotMatch(body, /environment:\s*production/i,
       'review preview must not request the production environment');
