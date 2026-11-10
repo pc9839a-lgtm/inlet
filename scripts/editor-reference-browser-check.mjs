@@ -16,6 +16,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       const rect = (node) => node.getBoundingClientRect();
       return {
         heading: heading.querySelector('h2')?.textContent.trim(),
+        kicker: heading.querySelector('.editor-panel-kicker')?.textContent.trim(),
+        total: heading.querySelector('.editor-composition-total')?.textContent.trim(),
         buttonText: label.textContent.trim(),
         ariaLabel: button.getAttribute('aria-label'),
         buttonWidth: rect(button).width,
@@ -26,18 +28,35 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         searchBelowButton: rect(search).top >= rect(button).bottom,
         listNameSize: getComputedStyle(row).fontSize,
         fixedNameSize: getComputedStyle(fixedRow).fontSize,
+        normalRowHeight: rect(row.closest('.screen-order-v2-head')).height,
+        fixedRowHeight: rect(fixedRow.closest('.fixed-block-head')).height,
+        compositionWidth: rect(document.querySelector('.editor-composition-panel')).width,
+        inspectorWidth: rect(document.querySelector('.editor-inspector-panel')).width,
+        compositionBackground: getComputedStyle(document.querySelector('.editor-composition-panel')).backgroundColor,
+        inspectorBackground: getComputedStyle(document.querySelector('.editor-inspector-panel')).backgroundColor,
+        stageBackground: getComputedStyle(document.querySelector('.preview-workspace')).backgroundColor,
+        stageHeading: document.querySelector('.preview-stage-label strong')?.textContent.trim(),
+        stageWidth: document.querySelector('.preview-stage-width')?.textContent.trim(),
         phoneWidth: frame.clientWidth,
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     })()`);
-    assert(visual?.heading === '페이지 구성' && visual.buttonText === '블록 추가'
+    assert(visual?.heading === '블록 구성' && visual.kicker === '페이지 편집'
+      && /[0-9]+개/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
       && visual.buttonWidth >= visual.headingWidth - 24
       && visual.buttonHeight >= 39 && visual.searchBelowButton
       && ['rgb(237, 242, 255)', 'rgb(227, 235, 255)'].includes(visual.buttonBackground)
-      && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
+      && visual.listNameSize === '14px' && visual.fixedNameSize === '14px'
+      && visual.normalRowHeight >= 62 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
+      && Math.abs(visual.compositionWidth - (referenceWidth === 1672 ? 280 : 220)) <= 3
+      && visual.inspectorWidth >= (referenceWidth === 1672 ? 400 : 255)
+      && visual.compositionBackground === 'rgb(247, 249, 252)'
+      && visual.inspectorBackground === 'rgb(255, 255, 255)'
+      && visual.stageBackground === 'rgb(238, 242, 248)'
+      && visual.stageHeading === '실시간 미리보기' && visual.stageWidth === '모바일 · 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
-      'reference 1672/900 visual hierarchy must keep visible add, legible rows and 390px phone: '
+      'redesigned 1672/900 editor must separate composition, properties and live page with readable layers: '
       + JSON.stringify({ referenceWidth, visual }));
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
