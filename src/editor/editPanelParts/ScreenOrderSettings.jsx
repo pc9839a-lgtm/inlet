@@ -32,6 +32,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
   return (
     <div className="screen-order-v2-settings-view">
       <header className="screen-order-v2-settings-header">
+        <div className="editor-inspector-section-label">선택한 블록</div>
         <div className="screen-order-v2-settings-title">
           <span className="editor-inspector-kind-icon"><Icon size={18} aria-hidden="true" /></span>
           <div className="editor-inspector-selected-copy">
