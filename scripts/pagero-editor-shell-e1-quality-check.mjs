@@ -222,16 +222,16 @@ assert(css.includes('.canvas-editor-shell') && css.includes('@media (max-width: 
 // UX-008/018/019/032: the existing owner styles consume one editor-only
 // typography/rhythm scale, not a late stylesheet of !important overrides.
 const typographyTokens = [
-  '--editor-ui-title-size: 16px;',
+  '--editor-ui-title-size: 18px;',
   '--editor-ui-section-size: 13px;',
   '--editor-ui-label-size: 13px;',
   '--editor-ui-value-size: 14px;',
-  '--editor-ui-row-size: 13px;',
-  '--editor-ui-helper-size: 11px;',
+  '--editor-ui-row-size: 14px;',
+  '--editor-ui-helper-size: 12px;',
   '--editor-ui-space-1: 4px;',
   '--editor-ui-space-2: 8px;',
   '--editor-ui-space-3: 12px;',
-  '--editor-ui-space-4: 16px;',
+  '--editor-ui-space-4: 18px;',
 ];
 assert(typographyTokens.every(token => editPanelLayoutCss.includes(token))
   && editPanelLayoutCss.includes('font-size: var(--editor-ui-title-size)')
