@@ -854,23 +854,25 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-list {
   display: grid !important;
-  gap: 2px !important;
+  gap: 5px !important;
   border: 0 !important;
   background: transparent !important;
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item {
   margin: 0 !important;
   padding: 0 !important;
-  border: 0 !important;
-  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item:is(:hover,:focus-within) {
-  background: #f4f6fc !important;
+  background: #eef2f8 !important;
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true'] {
-  background: #e5ebff !important;
+  border-color: #bfd0ff !important;
+  background: #fff !important;
+  box-shadow: inset 3px 0 0 #2454ff, 0 1px 4px rgba(38, 66, 121, .045) !important;
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true']::before { display: none !important; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-title { display: none !important; }
@@ -878,9 +880,9 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head {
   grid-template-columns: 14px minmax(0, 1fr) 28px !important;
   gap: 2px !important;
-  min-height: 58px !important;
+  min-height: 64px !important;
   height: auto !important;
-  padding: 6px 3px !important;
+  padding: 8px 5px !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag {
   width: 14px !important;
@@ -890,20 +892,20 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag > svg { width: 13px; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-title-wrap {
-  grid-template-columns: 28px minmax(0, 1fr) !important;
-  gap: 6px !important;
+  grid-template-columns: 32px minmax(0, 1fr) !important;
+  gap: 9px !important;
   min-width: 0;
   overflow: hidden !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon {
   display: grid;
   place-items: center;
-  width: 28px !important;
-  min-width: 28px !important;
-  height: 28px !important;
-  border-radius: 6px;
-  background: #edf2f7;
-  color: #475467 !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px;
+  background: #e9eef6;
+  color: #566781 !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon.has-thumbnail {
   border: 1px solid #e2e8f0;
@@ -916,8 +918,8 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong {
   min-width: 0;
   color: var(--editor-ui-text, #182230) !important;
-  font-size: var(--editor-ui-row-size, 12px) !important;
-  font-weight: var(--editor-ui-label-weight, 600) !important;
+  font-size: var(--editor-ui-row-size, 14px) !important;
+  font-weight: 650 !important;
   line-height: 1.4 !important;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -942,6 +944,10 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
   color: #667085 !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item[data-selected='true'] :is(.screen-order-v2-identity-copy strong, .screen-order-v2-drag, .screen-order-v2-visibility-button, .screen-order-v2-action) {
+  color: #2454ff !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item[data-selected='true'] .screen-order-v2-type-icon:not(.has-thumbnail) {
+  background: #eaf0ff;
   color: #2454ff !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is(.screen-order-v2-visibility, .screen-order-v2-actions) {

@@ -16,6 +16,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       const rect = (node) => node.getBoundingClientRect();
       return {
         heading: heading.querySelector('h2')?.textContent.trim(),
+        kicker: heading.querySelector('.editor-panel-kicker')?.textContent.trim(),
+        total: heading.querySelector('.editor-composition-total')?.textContent.trim(),
         buttonText: label.textContent.trim(),
         ariaLabel: button.getAttribute('aria-label'),
         buttonWidth: rect(button).width,
@@ -26,18 +28,35 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         searchBelowButton: rect(search).top >= rect(button).bottom,
         listNameSize: getComputedStyle(row).fontSize,
         fixedNameSize: getComputedStyle(fixedRow).fontSize,
+        normalRowHeight: rect(row.closest('.screen-order-v2-head')).height,
+        fixedRowHeight: rect(fixedRow.closest('.fixed-block-head')).height,
+        compositionWidth: rect(document.querySelector('.editor-composition-panel')).width,
+        inspectorWidth: rect(document.querySelector('.editor-inspector-panel')).width,
+        compositionBackground: getComputedStyle(document.querySelector('.editor-composition-panel')).backgroundColor,
+        inspectorBackground: getComputedStyle(document.querySelector('.editor-inspector-panel')).backgroundColor,
+        stageBackground: getComputedStyle(document.querySelector('.preview-workspace')).backgroundColor,
+        stageHeading: document.querySelector('.preview-stage-label strong')?.textContent.trim(),
+        stageWidth: document.querySelector('.preview-stage-width')?.textContent.trim(),
         phoneWidth: frame.clientWidth,
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     })()`);
-    assert(visual?.heading === '페이지 구성' && visual.buttonText === '블록 추가'
+    assert(visual?.heading === '블록 구성' && visual.kicker === '페이지 편집'
+      && /[0-9]+개/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
       && visual.buttonWidth >= visual.headingWidth - 24
       && visual.buttonHeight >= 39 && visual.searchBelowButton
       && ['rgb(237, 242, 255)', 'rgb(227, 235, 255)'].includes(visual.buttonBackground)
-      && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
+      && visual.listNameSize === '14px' && visual.fixedNameSize === '14px'
+      && visual.normalRowHeight >= 62 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
+      && Math.abs(visual.compositionWidth - (referenceWidth === 1672 ? 280 : 220)) <= 3
+      && visual.inspectorWidth >= (referenceWidth === 1672 ? 400 : 255)
+      && visual.compositionBackground === 'rgb(247, 249, 252)'
+      && visual.inspectorBackground === 'rgb(255, 255, 255)'
+      && visual.stageBackground === 'rgb(238, 242, 248)'
+      && visual.stageHeading === '실시간 미리보기' && visual.stageWidth === '모바일 · 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
-      'reference 1672/900 visual hierarchy must keep visible add, legible rows and 390px phone: '
+      'redesigned 1672/900 editor must separate composition, properties and live page with readable layers: '
       + JSON.stringify({ referenceWidth, visual }));
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
@@ -110,9 +129,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 669 && unselected.editorWidth <= 671
-    && unselected.listWidth >= 275 && unselected.listWidth <= 277
-    && unselected.inspectorWidth >= 392 && unselected.inspectorWidth <= 395,
+    && unselected.editorWidth >= 699 && unselected.editorWidth <= 701
+    && unselected.listWidth >= 279 && unselected.listWidth <= 281
+    && unselected.inspectorWidth >= 417 && unselected.inspectorWidth <= 421,
     'no-selection must show actual page controls in the wide left editor: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
@@ -348,17 +367,17 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           tokens: Object.fromEntries(['--editor-ui-title-size','--editor-ui-section-size','--editor-ui-label-size','--editor-ui-row-size','--editor-ui-space-4'].map(k=>[k,getComputedStyle(document.querySelector('.edit-layout')).getPropertyValue(k).trim()])),
         };
       })()`);
-      assert(uiType.listTitle?.size === '16px' && uiType.listTitle?.weight === '650'
-        && uiType.detailTitle?.size === '16px' && uiType.detailTitle?.weight === '700'
+      assert(uiType.listTitle?.size === '18px' && uiType.listTitle?.weight === '750'
+        && uiType.detailTitle?.size === '19px' && uiType.detailTitle?.weight === '750'
         && uiType.contentHeading?.size === '13px' && uiType.contentHeading?.weight === '700'
         && uiType.disclosure?.size === '13px' && uiType.disclosure?.weight === '650'
-        && uiType.normalRow?.size === '13px' && uiType.normalRow?.weight === '600'
-        && uiType.fixedRow?.size === '13px' && uiType.fixedRow?.weight === '600'
-        && uiType.normalDetail?.size === '11px' && uiType.normalDetail?.weight === '500'
+        && uiType.normalRow?.size === '14px' && uiType.normalRow?.weight === '650'
+        && uiType.fixedRow?.size === '14px' && uiType.fixedRow?.weight === '650'
+        && uiType.normalDetail?.size === '12px' && uiType.normalDetail?.weight === '500'
         && uiType.label?.size === '13px' && uiType.label?.weight === '600'
-        && uiType.editor?.gap === '16px'
-        && uiType.tokens['--editor-ui-title-size'] === '16px'
-        && uiType.tokens['--editor-ui-space-4'] === '16px'
+        && uiType.editor?.gap === '18px'
+        && uiType.tokens['--editor-ui-title-size'] === '18px'
+        && uiType.tokens['--editor-ui-space-4'] === '18px'
         && uiType.listTitle.color === uiType.detailTitle.color
         && uiType.normalRow.color === uiType.fixedRow.color,
         'consistent font/spacing contract at ' + width + ' for ' + id + ': ' + JSON.stringify(uiType));
@@ -458,8 +477,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     assert(pageType.status?.size === '14px' && pageType.status?.weight === '650'
       && pageType.heading?.size === '13px' && pageType.heading?.weight === '650'
-      && pageType.label?.size === '13px' && pageType.label?.weight === '600'
-      && pageType.panel?.gap === '16px' && pageType.group?.gap === '12px',
+      && pageType.label?.size === '14px' && pageType.label?.weight === '600'
+      && pageType.panel?.gap === '18px' && pageType.group?.gap === '12px',
       'page-level design inspector matches editor type and spacing at ' + width + ': ' + JSON.stringify(pageType));
     await capture(client, 'unified-page-design-type-' + width);
   }
@@ -1010,9 +1029,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 276) <= 1
-    && geometry.inspector.width >= 392 && geometry.inspector.width <= 395,
-    'approved 1672px viewport must preserve 276px navigator and 394px settings: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 280) <= 1
+    && geometry.inspector.width >= 418 && geometry.inspector.width <= 421,
+    'redesigned 1672px viewport must provide 280px navigator and 420px settings: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
@@ -1050,7 +1069,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const expectedWidth = width <= 950 ? 392 : 394;
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
       && parseInt(chrome.radius, 10) <= 20 && chrome.stageCentered && chrome.frameInside
-      && chrome.children === 1 && !chrome.hasToolbar,
+      && chrome.children === 2 && !chrome.hasToolbar,
       'mobile editor preview must contain only the 390px phone without auxiliary bars at ' + width + ': ' + JSON.stringify(chrome));
     if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
   }

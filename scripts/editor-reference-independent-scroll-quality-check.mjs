@@ -9,9 +9,9 @@ const previewSelection = read('src/runtime/useWorkspaceShellActions.js');
 const browser = read('scripts/editor-browser-regression-check.mjs');
 const preview = read('src/screens/workspace/WorkspacePreviewPane.css');
 
-assert.ok(shell.includes('clamp(220px, 16.5vw, 276px)'), 'navigator reference width stays 276px at 1672px');
-assert.ok(shell.includes('calc(var(--editor-list-width) + 394px)') && shell.includes('670px'),
-  'Inspector must have 394px at selected reference viewport');
+assert.ok(shell.includes('clamp(220px, 16.8vw, 280px)'), 'redesigned navigator measures 280px at 1672px');
+assert.ok(shell.includes('calc(var(--editor-list-width) + 420px)') && shell.includes('700px'),
+  'redesigned Inspector must have 420px at the reference viewport');
 assert.ok(shell.includes('calc(100vw - 410px)') && shell.includes('clamp(500px,'),
   '900px editor must reserve a 400px preview stage');
 assert.ok(shell.includes('overflow: hidden !important;'),
@@ -22,7 +22,7 @@ assert.ok(layout.includes('.editor-composition-content {\n  flex: 1 1 auto;\n  m
   'only composition rows scroll, preserving fixed list actions');
 assert.ok(layout.includes('.editor-inspector-panel {\n  overflow-y: auto !important;'),
   'Inspector gets its own native vertical scroll');
-assert.ok(layout.includes('.editor-composition-footer') && layout.includes('border-top: 1px solid #eef0f6;'),
+assert.ok(layout.includes('.editor-composition-footer') && layout.includes('border-top: 1px solid #e4e9f2;'),
   'page settings must be pinned below block rows');
 assert.ok(editor.includes('className="editor-composition-content" role="region" aria-label="블록 목록" tabIndex={0}'),
   'navigator scroll is keyboard-reachable');
@@ -39,8 +39,8 @@ assert.ok(preview.includes('--landing-runtime-width: 390px'),
 assert.ok(browser.includes('long-page navigator and Inspector must remain isolated')
   && browser.includes('900px long-page keeps two independently reachable editing regions'),
   'real Chrome must exercise both scrollers on the 36-block page');
-assert.ok(browser.includes('const expectedComposition = Math.min(276, Math.max(220, width * 0.165));'),
-  'Chrome checks actual selected 276px list width instead of historical 240px');
+assert.ok(browser.includes('const expectedComposition = Math.min(280, Math.max(220, width * 0.168));'),
+  'Chrome checks actual redesigned 280px list width instead of historical dimensions');
 assert.ok(browser.includes("inspectorScroll.footerPinned && inspectorScroll.innerOverflowY === 'visible'"),
   'Chrome checks pinned page settings and no third nested settings scrollbar');
 console.log('Editor reference panel geometry and independent scrolling quality check passed');

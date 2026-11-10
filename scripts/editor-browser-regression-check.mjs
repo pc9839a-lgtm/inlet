@@ -1001,9 +1001,9 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  // Selected 1672px reference: 276px list + 394px Inspector.
-  const expectedComposition = Math.min(276, Math.max(220, width * 0.165));
-  const expectedEdit = Math.min(670, Math.max(500, Math.min(width - 410, expectedComposition + 394)));
+  // New 1672px layout: 280px composition + 420px Inspector; keep 390px page at 900px.
+  const expectedComposition = Math.min(280, Math.max(220, width * 0.168));
+  const expectedEdit = Math.min(700, Math.max(500, Math.min(width - 410, expectedComposition + 420)));
   const expectedInspector = expectedEdit - expectedComposition;
   assert(Math.abs(edit - expectedEdit) <= 2,
     `left editor must be wide enough for editing at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
@@ -2101,8 +2101,8 @@ async function run() {
       };
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
-      && stageOneList.gap === '2px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '8px' && stageOneList.height >= 55
+      && stageOneList.gap === '5px' && stageOneList.rowBorder === '1px'
+      && stageOneList.rowRadius === '10px' && stageOneList.height >= 62
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
       && stageOneList.actionCount === 1 && stageOneList.actions,
@@ -2463,7 +2463,8 @@ async function run() {
       return {
         pageEntrySelected: document.querySelector('.editor-page-settings-button')?.getAttribute('aria-pressed') === 'true',
         redundantTabs: document.querySelectorAll('.edit-section-tabs').length,
-        designFirst: stack.firstElementChild?.classList.contains('style-panel'),
+        designFirst: stack.querySelector('.editor-page-options-heading') === stack.firstElementChild
+          && stack.querySelector('.style-panel')?.compareDocumentPosition(stack.querySelector('.page-global-options-card')) & Node.DOCUMENT_POSITION_FOLLOWING,
         designTitle: stack.querySelector('.style-apply-bar strong')?.textContent,
         status: stack.querySelector('.style-apply-bar span')?.textContent,
         globalHeadingRemoved: !stack.querySelector('.page-global-options-title'),
@@ -2977,7 +2978,7 @@ async function run() {
       && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && (desktopViewport.width <= 1100
         ? leftGeometry.inspectorPadding === '8px' && leftGeometry.compositionPadding === '8px'
-        : leftGeometry.inspectorPadding === '16px')
+        : leftGeometry.inspectorPadding === '24px')
       && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
       'reference-width independent panels must fit without clipped controls or preview overlap: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
@@ -3020,7 +3021,7 @@ async function run() {
     assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '8px' && screenOrderShellStyle?.rowBorder === '0px', `reference list must keep flat rows at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '10px' && screenOrderShellStyle?.rowBorder === '1px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(237, 242, 255)', `reference full-width add action must keep the light-blue primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 900 || desktopViewport.width === 1024) {

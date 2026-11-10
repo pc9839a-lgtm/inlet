@@ -222,24 +222,24 @@ assert(css.includes('.canvas-editor-shell') && css.includes('@media (max-width: 
 // UX-008/018/019/032: the existing owner styles consume one editor-only
 // typography/rhythm scale, not a late stylesheet of !important overrides.
 const typographyTokens = [
-  '--editor-ui-title-size: 16px;',
+  '--editor-ui-title-size: 18px;',
   '--editor-ui-section-size: 13px;',
   '--editor-ui-label-size: 13px;',
   '--editor-ui-value-size: 14px;',
-  '--editor-ui-row-size: 13px;',
-  '--editor-ui-helper-size: 11px;',
+  '--editor-ui-row-size: 14px;',
+  '--editor-ui-helper-size: 12px;',
   '--editor-ui-space-1: 4px;',
   '--editor-ui-space-2: 8px;',
   '--editor-ui-space-3: 12px;',
-  '--editor-ui-space-4: 16px;',
+  '--editor-ui-space-4: 18px;',
 ];
 assert(typographyTokens.every(token => editPanelLayoutCss.includes(token))
   && editPanelLayoutCss.includes('font-size: var(--editor-ui-title-size)')
   && editPanelLayoutCss.includes('font-size: var(--editor-ui-section-size)')
   && blockEditorShellCss.includes('gap: var(--editor-ui-space-4, 16px)')
   && !editPanelLayoutCss.includes('.block-editor-v2.block-editor')
-  && rowCss.includes('font-size: var(--editor-ui-row-size, 12px)')
-  && fixedBlocksCss.includes('font-size: var(--editor-ui-row-size, 12px)')
+  && rowCss.includes('font-size: var(--editor-ui-row-size, 14px)')
+  && fixedBlocksCss.includes('font-size: var(--editor-ui-row-size, 14px)')
   && sharedControlsCss.includes('font-size: var(--editor-ui-label-size, 13px)')
   && sharedControlsCss.includes('font-weight: var(--editor-ui-label-weight, 600)')
   && sharedControlsCss.includes('gap: var(--editor-ui-space-3, 12px)')
@@ -376,13 +376,13 @@ assert(!headerSource.includes('panel-save-status operations-save-status')
 
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('--editor-list-width: clamp(220px, 16.5vw, 276px);')
-  && css.includes('--editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 394px)), 670px);')
+assert(css.includes('--editor-list-width: clamp(220px, 16.8vw, 280px);')
+  && css.includes('--editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 420px)), 700px);')
   && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;')
-  && editPanelLayoutCss.includes('.editor-inspector-panel { padding: 0 16px 32px;')
+  && editPanelLayoutCss.includes('.editor-inspector-panel { padding: 0 24px 44px;')
   && editPanelLayoutCss.includes('.builder-shell.canvas-editor-shell .editor-inspector-panel { padding-inline: 8px;')
   && css.includes('overflow: hidden !important;'),
-  'selected reference: 276px list, 394px Inspector, 390px phone without adding outer scroll');
+  'visual redesign: 280px navigator, 420px Inspector, fixed 390px page without outer scroll');
 assert(!editPanelLayoutCss.includes('.editor-inspector-panel:has(.editor-selection-empty)') && layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;") && layout.includes('{showPageOptions ? ('), 'unselected editor must keep inspector open with useful page settings');
 assert(layout.includes('editor-composition-heading') && editPanelLayoutCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;'), 'block list and inspector must share compact editor space');
 assert(css.includes('overflow: hidden !important;') && editPanelLayoutCss.includes('.editor-composition-content {') && editPanelLayoutCss.includes('overflow-y: auto !important;') && editPanelLayoutCss.includes('.editor-inspector-panel {') && editPanelLayoutCss.includes('overflow-x: hidden !important;'), 'edit workspace must keep independent navigator and Inspector scrolls without outer scroll');
@@ -439,9 +439,10 @@ assert(editPanelLayoutCss.includes('.editor-composition-footer > .editor-page-se
   'page settings stay pinned below the list while search remains visible above scrollable rows');
 assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
 assert(previewPaneCss.includes('border: 2px solid #cbd5e1')
-  && previewPaneCss.includes('border-radius: 20px')
-  && previewPaneCss.includes('box-shadow: 0 5px 18px #17203912')
-  && previewPaneCss.includes('background: #f8f9fc')
+  && previewPaneCss.includes('border-radius: 14px')
+  && previewPaneCss.includes('box-shadow: 0 10px 30px rgba(39, 54, 81, .12)')
+  && previewPaneCss.includes('background: #eef2f8')
+  && previewPaneCss.includes('.preview-stage-heading')
   && !previewPaneCss.includes('.preview-width-toolbar')
   && !previewPaneCss.includes('.preview-selection-toolbar')
   && !previewPaneCss.includes('border: 6px solid #242934')

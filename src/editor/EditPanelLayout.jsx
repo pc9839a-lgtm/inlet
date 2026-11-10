@@ -155,9 +155,14 @@ export function EditPanelLayout({
     <div className="edit-layout" data-editor-layout="left-persistent">
       <aside className="editor-composition-panel" aria-label="구성">
         <div className="editor-composition-heading">
-          <h2>페이지 구성</h2>
+          <div className="editor-composition-title-row">
+            <div className="editor-composition-title-copy">
+              <span className="editor-panel-kicker">페이지 편집</span>
+              <h2>블록 구성</h2>
+            </div>
+            <span className="editor-composition-total">{screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개</span>
+          </div>
           <AddBlockDock {...addBlockDockProps} compact />
-
         </div>
         <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} fixedDescriptors={fixedDescriptors} selectedId={selectedBlockId} onSelect={chooseSearchResult} onRevealSelected={revealFixedSearch} />
         <div className="editor-composition-content" role="region" aria-label="블록 목록" tabIndex={0}>
@@ -199,6 +204,10 @@ export function EditPanelLayout({
       <div id="editor-selection-panel" className="edit-section-panel" data-editor-section={showPageOptions ? 'options' : section}>
         {showPageOptions ? (
           <div className="editor-page-options-stack">
+            <header className="editor-page-options-heading">
+              <span className="editor-panel-kicker">페이지 전체</span>
+              <h2>디자인과 설정</h2>
+            </header>
             {stylePanelProps && (
               <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
                 <PageThemeStylePanel {...stylePanelProps} />
