@@ -36,7 +36,7 @@ assert(layoutCss.includes('--editor-ui-row-size: 14px;')
   && rowsCss.includes('font-size: var(--editor-ui-row-size, 14px)'),
   'normal row names must use legible 14px typography without a new override stylesheet');
 assert(read('src/editor/editPanelParts/FixedBlocksSection.css')
-  .includes('font-size: var(--editor-ui-row-size, 12px)'),
+  .includes('font-size: var(--editor-ui-row-size, 14px)'),
   'fixed and normal block names must share the same readable type token');
 assert(layoutCss.includes('margin: 0 0 26px;')
   && layoutCss.includes('.editor-inspector-section-label')
