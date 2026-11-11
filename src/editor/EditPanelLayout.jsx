@@ -63,13 +63,25 @@ export function EditPanelLayout({
   const showPageOptions = section === 'options' || !selectedBlockId;
   const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
   const fixedSelected = fixedDescriptors.find((item) => item.open);
+  // Focus belongs to an explicit user selection, never the automatic
+  // first-content selection on workspace entry or a tab switch.
+  const focusInspectorHeading = (id, attempts = 4) => {
+    requestAnimationFrame(() => {
+      const settings = document.getElementById(`editor-block-settings-${id}`);
+      const heading = settings?.closest('.screen-order-v2-settings-view')?.querySelector('.screen-order-v2-settings-title h2');
+      if (heading) heading.focus({ preventScroll: true });
+      else if (attempts > 0) focusInspectorHeading(id, attempts - 1);
+    });
+  };
   const chooseBlock = (id) => {
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
     setSection('order');
+    focusInspectorHeading(id);
   };
   const chooseFixed = (id) => {
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
+    focusInspectorHeading(id);
   };
   const revealFixedSearch = (id) => {
     if (fixedDescriptors.some((item) => item.block.id === id)) setFixedSearchReveal({ id });
