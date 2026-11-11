@@ -378,7 +378,7 @@ assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.include
 assert(css.includes('--editor-edit-width: clamp(500px, 42vw, 660px);')
   && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;')
   && editPanelLayoutCss.includes('.editor-inspector-panel.editor-inline-settings')
-  && editPanelLayoutCss.includes('border-radius: 0 0 12px 12px')
+  && editPanelLayoutCss.includes('border-radius: 0 !important;')
   && css.includes('overflow: hidden !important;'),
   'the new editor must present inline expandable blocks beside one actual 390px phone');
 assert(layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;")
