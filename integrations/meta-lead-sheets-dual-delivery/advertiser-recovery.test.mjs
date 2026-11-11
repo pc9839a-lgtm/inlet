@@ -1,82 +1,86 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import {onRequest} from '../../functions/api/integrations/meta-sheets/recovery.js';
+import { readFileSync } from 'node:fs';
+import { onRequest } from '../../functions/api/integrations/meta-sheets/recovery.js';
+import { advertiserForm } from '../../functions/api/integrations/meta-sheets/relay.js';
+import {
+  responsePreview, redactAdvertiserText, requestShape, safeRedirect
+} from '../../functions/api/integrations/meta-sheets/advertiser-diagnostics.js';
+
+const server=readFileSync(new URL('../../functions/api/integrations/meta-sheets/relay.js',import.meta.url),'utf8');
+const recovery=readFileSync(new URL('../../functions/api/integrations/meta-sheets/recovery.js',import.meta.url),'utf8');
+const diagnostics=readFileSync(new URL('../../functions/api/integrations/meta-sheets/advertiser-diagnostics.js',import.meta.url),'utf8');
+const ui=readFileSync(new URL('../../public/meta-advertiser-recovery/index.html',import.meta.url),'utf8');
 const endpoint='https://pagero.kr/api/integrations/meta-sheets/recovery';
-const request=(action,token='ctwh_invalidfake111111111111111111111')=>
-  new Request(endpoint,{method:'POST',headers:{'X-Meta-Relay-Token':token},
-    body:JSON.stringify({action,confirmedNotReceived:action==='retry-advertiser'})});
-function fakeDb(){
-  const called=[];
-  return {called,prepare(sql){const q={sql,args:[],
-    bind(...args){this.args=args;return this},
-    async run(){called.push({kind:'run',sql,args:this.args});return {meta:{changes:1}}},
-    async first(){called.push({kind:'first',sql,args:this.args});return null}
-  };return q;}};
-}
-test('status/retry endpoint never permits GET',async()=>{
-  const r=await onRequest({request:new Request(endpoint),env:{}});
-  assert.equal(r.status,405);
-});
-test('no Cloudflare DB request without valid secret',async()=>{
-  const db=fakeDb(), r=await onRequest({request:request('retry-advertiser'),
-     env:{DB:db}});
-  assert.equal(r.status,401);
-  assert.equal(db.called.length,0);
-});
-test('recovery is hard-scoped to one known Meta ID and is confirmation gated',()=>{
-  const js=readFileSync(new URL('../../functions/api/integrations/meta-sheets/recovery.js',import.meta.url),'utf8');
-  assert.match(js,/meta-l1870743443942053/);
-  assert.match(js,/confirmedNotReceived/);
-  assert.match(js,/ALREADY_MARKED_SENT/);
-  assert.match(js,/CONCURRENT_DELIVERY/);
-  assert.match(js,/ad_attempts <2/);
-  assert.doesNotMatch(js,/ct_status='SENDING'|intakeCanonicalLead|notifyUniversalLeadAvailable/);
-});
-test('customer data and bearer Webhook do not appear in public HTML',()=>{
-  const page=readFileSync(new URL('../../public/meta-advertiser-recovery/index.html',import.meta.url),'utf8');
-  assert.match(page,/advertiserStatus/);
-  assert.match(page,/confirmedNotReceived/);
-  assert.match(page,/type="password"/);
-  assert.doesNotMatch(page,/ctwh_XHQF78|localStorage|sessionStorage/);
-});
 
-
-test('only owner-confirmed missing Meta lead is eligible for exactly one automatic resend',()=>{
-  const server=readFileSync(new URL('../../functions/api/integrations/meta-sheets/relay.js',import.meta.url),'utf8');
-  assert.match(server,/APPROVED_ADVERTISER_RECOVERY_EVENT_ID = 'meta-l1870743443942053'/);
-  assert.match(server,/event_id=\? AND ad_status IN \('REVIEW','SENT'\) AND ad_attempts=1/);
-  assert.match(server,/record\.event_id === APPROVED_ADVERTISER_RECOVERY_EVENT_ID/);
-  assert.match(server,/approvedOneTimeReplay && id === APPROVED_ADVERTISER_RECOVERY_EVENT_ID/);
-  assert.match(server,/ad_status='PENDING'/);
-  assert.doesNotMatch(server,/ct_status='SENDING'.*approvedOneTimeReplay/);
+test('only status and safe HEAD probe are available; no POST resend action',()=>{
+  assert.match(recovery,/probe-connection/);
+  assert.doesNotMatch(recovery,/retry-advertiser|advertiserForm\(|confirmedNotReceived/);
+  assert.match(recovery,/method:'HEAD'/);
+  assert.doesNotMatch(recovery,/method:'POST'[\s\S]{0,300}body:advertiserForm/);
+  assert.match(ui,/HEAD · 고객정보 전송 안 함/);
+  assert.doesNotMatch(ui,/retry-advertiser|고객 1건 전송/);
 });
-test('successful Make blueprint request exactly matches current advertiser fields',async()=>{
-  const { advertiserForm } = await import('../../functions/api/integrations/meta-sheets/relay.js');
-  const encoded=advertiserForm({
-    name:'임의 테스트',phone:'01012345678',money:'2000만원 이상',
-    area:'서울',calldate:'오후 3시',content:'개인회생 상담',email:'private@example.com'
-  },'64');
-  const form=new URLSearchParams(encoded);
-  assert.deepEqual([...form.keys()],[
-    'ITEM','DATAS_name','DATAS_phone','DATAS_money',
-    'DATAS_area','DATAS_calldate','DATAS_data'
-  ]);
+test('historical advertiser retries are completely disabled, future PENDING still sent',()=>{
+  assert.doesNotMatch(server,/APPROVED_ADVERTISER_RECOVERY_EVENT_ID/);
+  assert.doesNotMatch(server,/approvedOneTimeReplay/);
+  assert.match(server,/record.ad_status === 'PENDING'/);
+  assert.match(server,/recordAdvertiserHttpLog/);
+  assert.match(server,/responsePreview/);
+});
+test('diagnostics redact customer email, phone, name and webhook key',()=>{
+  const raw='김테스트 님 010-1234-5678 / test@example.com ctwh_supersecret99999';
+  const out=redactAdvertiserText(raw,{
+    name:'김테스트',phone:'01012345678',email:'test@example.com'
+  });
+  assert.doesNotMatch(out,/김테스트|010-1234|test@example.com|ctwh_supersecret99999/);
+  assert.match(out,/REDACTED|PHONE/);
+});
+test('logs retain useful JSON error codes but no exact submitted field values',()=>{
+  const out=responsePreview(JSON.stringify({
+    status:'ERROR',error_code:'INVALID_AREA',message:'010-1234-5678 연락처가 포함됨',
+    raw_customer_name:'김테스트'
+  }), 'application/json', {name:'김테스트',phone:'01012345678'});
+  assert.match(out,/INVALID_AREA/);
+  assert.doesNotMatch(out,/010-1234|김테스트/);
+  assert.doesNotMatch(out,/raw_customer_name/);
+});
+test('request shape only includes field names, not customer values',()=>{
+  const shape=requestShape({name:'김테스트',phone:'01012345678',money:'3000만원',
+    area:'',calldate:'오후',content:'문의내용'},'64');
+  assert.deepEqual(shape.empty,['DATAS_area']);
+  assert.equal(shape.item,'64');
+  assert.doesNotMatch(JSON.stringify(shape),/김테스트|01012345678|3000만원/);
+});
+test('redirect displays host/path only without query tokens',()=>{
+  const out=safeRedirect('https://ollymkt.shop/auth/login?secret=private#x','https://ollymkt.shop/dbapi/');
+  assert.deepEqual(out,{host:'ollymkt.shop',path:'/auth/login'});
+});
+test('diagnostic logs are durable per attempt, no raw POST payload retained',()=>{
+  assert.match(diagnostics,/CREATE TABLE IF NOT EXISTS meta_sheet_advertiser_http_logs/);
+  assert.match(diagnostics,/http_status/);
+  assert.match(diagnostics,/response_preview/);
+  assert.match(diagnostics,/exception_code/);
+  assert.match(diagnostics,/empty_fields/);
+  assert.doesNotMatch(diagnostics,/request_payload|payload_json/);
+});
+test('recovery is forbidden for GET and unauthorized POST without reading customer records',async()=>{
+  const get=await onRequest({request:new Request(endpoint),env:{}});
+  assert.equal(get.status,405);
+  const accessed=[];
+  const db={prepare(sql){accessed.push(sql);throw Error('unauthorized must not perform SQL')}};
+  const request=new Request(endpoint,{method:'POST',
+    headers:{'X-Meta-Relay-Token':'ctwh_fakeinvalid111111111111111111'},
+    body:JSON.stringify({action:'probe-connection'})});
+  const unauthorized=await onRequest({request,env:{DB:db}});
+  assert.equal(unauthorized.status,401);
+  assert.equal(accessed.length,0);
+});
+test('previous Make request seven fields are preserved',()=>{
+  const form=new URLSearchParams(advertiserForm({name:'test',phone:'01012345678',
+    money:'2천만원',area:'',calldate:'오후',content:'상담',email:'ignore@example.com'},'64'));
+  assert.deepEqual([...form.keys()],['ITEM','DATAS_name','DATAS_phone',
+    'DATAS_money','DATAS_area','DATAS_calldate','DATAS_data']);
   assert.equal(form.get('ITEM'),'64');
-  assert.equal(form.get('DATAS_phone'),'010-1234-5678');
-  assert.equal(form.get('DATAS_name'),'임의 테스트');
-  assert.equal(form.get('DATAS_area'),'서울');
   assert.equal(form.has('DATAS_email'),false);
-  assert.equal(form.has('DATAS_insert_ad'),false);
-  assert.deepEqual([...new URLSearchParams(advertiserForm({phone:'01012345678'},'64')).keys()],[
-    'ITEM','DATAS_name','DATAS_phone','DATAS_money','DATAS_area','DATAS_calldate','DATAS_data'
-  ]);
-});
-
-test('CallTag push and advertiser POST run independently, without head-of-line blocking',()=>{
-  const src=readFileSync(new URL('../../functions/api/integrations/meta-sheets/relay.js',import.meta.url),'utf8');
-  assert.match(src,/const deliveries = \[\]/);
-  assert.match(src,/deliveries\.push\(sendAdvertiser\(/);
-  assert.match(src,/deliveries\.push\(sendCallTag\(/);
-  assert.match(src,/Promise\.allSettled\(deliveries\)/);
 });
