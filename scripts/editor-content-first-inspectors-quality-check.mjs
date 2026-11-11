@@ -54,7 +54,7 @@ assert(inspector.includes('editor-inspector-selected-copy')
 assert(css.includes('.editor-inspector-kind-icon') && css.includes('.editor-inspector-selected-copy')
   && css.includes('.editor-inspector-section-label')
   && css.includes('.editor-inspector-panel.editor-inline-settings')
-  && css.includes('padding: 18px 0 12px !important;'),
+  && css.includes('padding: 12px 0 10px !important;'),
   'inline selected block must have one compact identity header before its existing editable fields');
 assert(disclosure.includes('expandedByBlock = new Map()')
   && disclosure.includes('expandedByBlock.has(persistKey)')
