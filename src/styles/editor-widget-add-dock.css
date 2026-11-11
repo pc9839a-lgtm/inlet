@@ -465,7 +465,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .ed
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
-  height: 40px;
+  height: 46px;
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
@@ -476,17 +476,17 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .ed
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 8px !important;
+  gap: 9px !important;
   width: 100% !important;
   min-width: 0 !important;
-  height: 40px !important;
-  min-height: 40px !important;
-  padding: 0 10px !important;
-  border: 1px solid #cfddff !important;
-  border-radius: 8px !important;
-  background: #edf2ff !important;
-  color: #2454ff !important;
-  box-shadow: none !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 14px !important;
+  border: 1px solid #202b4d !important;
+  border-radius: 10px !important;
+  background: #202b4d !important;
+  color: #fff !important;
+  box-shadow: 0 2px 6px rgba(17,26,51,.1) !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle strong {
   display: inline !important;
@@ -496,9 +496,9 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .ed
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle:is(:hover,:focus-visible),
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle[aria-expanded='true'] {
-  border-color: #aabfff !important;
-  background: #e3ebff !important;
-  color: #1746d2 !important;
+  border-color: #101a35 !important;
+  background: #101a35 !important;
+  color: #fff !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .add-dock-compact.open .add-panel {
   position: absolute !important;
