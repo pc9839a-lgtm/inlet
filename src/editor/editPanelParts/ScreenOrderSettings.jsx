@@ -26,7 +26,13 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
   })[block.type] || '내용 수정';
 
   React.useEffect(() => {
-    backRef.current?.focus({ preventScroll: true });
+    // A user-selected row/canvas may move focus into its inspector.
+    // On first entry or when returning from Inbox/Stats, leave the active
+    // workspace navigation trigger focused instead of stealing its focus.
+    const active = document.activeElement;
+    if (active?.closest?.('.editor-composition-panel, .preview-workspace')) {
+      backRef.current?.focus({ preventScroll: true });
+    }
   }, []);
 
   return (
