@@ -6,6 +6,9 @@ const layoutCss = read('src/editor/EditPanelLayout.css');
 const toggle = read('src/editor/editPanelParts/AddBlockDockToggle.jsx');
 const catalogCss = read('src/styles/editor-widget-add-dock.css');
 const textCss = read('src/editor/blockEditors/TextEditor.css');
+const gallery = read('src/editor/editPanelParts/AddBlockPanel.jsx');
+const dock = read('src/editor/editPanelParts/AddBlockDock.jsx');
+const canvas = read('src/screens/workspace/WorkspacePreviewPane.jsx');
 const rowsCss = read('src/editor/editPanelParts/ScreenOrder.css');
 const reference = read('scripts/editor-reference-browser-check.mjs');
 const baseline = read('src/screens/workspace/WorkspacePreviewPane.css');
@@ -29,9 +32,13 @@ assert(catalogCss.includes('.editor-composition-heading .add-dock-compact .add-t
   && catalogCss.includes('width: 100% !important;')
   && catalogCss.includes('background: #edf2ff !important;'),
   'reference action must occupy navigator width with a light, readable surface');
-assert(catalogCss.includes('top: calc(100% - 2px) !important;')
-  && catalogCss.includes('max-height: min(62dvh, 620px) !important;'),
-  'existing add catalog should open beneath the taller heading without overflowing the viewport');
+assert(catalogCss.includes('.editor-gallery-dialog')
+  && catalogCss.includes('.editor-gallery-quick-grid')
+  && gallery.includes("['form', '문의 폼'")
+  && gallery.includes('<AddBlockGroupGrid onAdd={onAdd} query={query} category={category} />')
+  && dock.includes('role="dialog" aria-modal="true"')
+  && dock.includes('createPortal('),
+  'visual gallery must expose quick blocks, searchable full catalog and a real keyboard-accessible dialog');
 assert(layoutCss.includes('--editor-ui-row-size: 14px;')
   && rowsCss.includes('font-size: var(--editor-ui-row-size, 14px)'),
   'normal row names must use legible 14px typography without a new override stylesheet');
@@ -48,9 +55,11 @@ assert(textCss.includes('.text-editor-design-controls .editor-theme-source')
   'text controls retain accurate color/theme origin in compact responsive form');
 assert(reference.includes("'editor-visual-hierarchy-' + referenceWidth")
   && reference.includes("visual.labelVisible")
-  && reference.includes("visual.listNameSize === '14px'")
-  && reference.includes("visual.stageHeading === '실시간 미리보기'"),
-  'real Chrome must compare 1672px and 900px legibility, geometry and full-width add');
+  && reference.includes("visual.stageHeading === '페이지 화면'")
+  && reference.includes("visual.normalRowHeight >= 82")
+  && canvas.includes('role="toolbar"')
+  && canvas.includes('editor-canvas-add-after'),
+  'real Chrome must compare readable content cards, canvas controls and 390px geometry');
 assert(baseline.includes('--landing-runtime-width: 390px'),
   'editing layout refinements must not change public mobile rendering width');
 console.log('Reference editor visual hierarchy contracts passed');
