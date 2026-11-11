@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createScreenOrderIdentities, isExplicitlyHidden } from '../src/editor/editPanelParts/screenOrderIdentityModel.js';
+import { findBlockNavigationMatches } from '../src/editor/editPanelParts/blockNavigatorSearchModel.js';
 
 const blocks = [
   { id: 'text-a', type: 'text', s: { title: '<strong>첫 번째 소개</strong>' } },
@@ -10,6 +11,9 @@ const blocks = [
   { id: 'image-e', type: 'image', s: { image: 'javascript:alert(1)', caption: '그림 없음' } },
   { id: 'code-f', type: 'code', s: { editorLabel: '고객 후기' } },
   { id: 'spacer-g', type: 'spacer', s: {} },
+  { id: 'hero-h', type: 'hero', s: { title: '<b>대표 서비스</b>', body: '세 가지 혜택' } },
+  { id: 'form-i', type: 'form', s: { title: '상담 요청', questions: [{ id: 'q1' }, { id: 'q2' }], submit: '무료 문의' } },
+  { id: 'links-j', type: 'links', s: { items: [{ label: '서비스 문의' }, { label: '예약 안내' }] } },
 ];
 const snapshot = JSON.stringify(blocks);
 const identities = createScreenOrderIdentities(blocks);
@@ -25,6 +29,27 @@ assert.equal(identities[4].thumbnail, '', 'unsafe protocols must not be loaded i
 assert.equal(identities[3].customLabel, '채팅 링크', 'existing code custom labels remain visible');
 assert.equal(identities[5].customLabel, '고객 후기');
 assert.equal(identities[6].repeated, false, 'singletons should not gain unnecessary numbering');
+
+assert.equal(identities[0].contentTitle, '첫 번째 소개');
+assert.equal(identities[2].contentTitle, '두 번째 소개');
+assert.equal(identities[7].contentTitle, '대표 서비스', 'content-first hero title must strip markup');
+assert.equal(identities[7].contentSummary, '세 가지 혜택');
+assert.equal(identities[8].contentTitle, '상담 요청');
+assert.equal(identities[8].contentSummary, '질문 2개 · 무료 문의');
+assert.equal(identities[9].contentTitle, '서비스 문의');
+assert.equal(identities[9].contentSummary, '링크 2개');
+assert.equal(identities[3].contentTitle, '', 'custom code identity keeps user-defined label');
+assert.equal(JSON.stringify(blocks), snapshot, 'content identity remains purely derived');
+for (const [query, expected] of [
+  ['대표 서비스', 'hero-h'],
+  ['세 가지 혜택', 'hero-h'],
+  ['질문 2개', 'form-i'],
+  ['무료 문의', 'form-i'],
+  ['서비스 문의', 'links-j'],
+]) {
+  assert.deepEqual(findBlockNavigationMatches({ blocks, query }).map((m) => m.id), [expected],
+    'content-led search should locate exact editor blocks: ' + query);
+}
 const reordered = [blocks[2], blocks[1], blocks[0], blocks[3], blocks[4], blocks[5], blocks[6]];
 assert.equal(createScreenOrderIdentities(reordered)[0].occurrence, 1, 'order numbering should reflect the current screen order');
 assert.equal(createScreenOrderIdentities(reordered)[2].occurrence, 2);

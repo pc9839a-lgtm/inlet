@@ -37,7 +37,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
           <span className="editor-inspector-kind-icon"><Icon size={18} aria-hidden="true" /></span>
           <div className="editor-inspector-selected-copy">
             <h2 ref={backRef} tabIndex={-1} title={title}>{title}</h2>
-            <span className="editor-inspector-selected-context">{selectedContext}</span>
+            <span className="editor-inspector-selected-context" title={identity?.contentTitle || selectedContext}>{identity?.contentTitle || selectedContext}</span>
           </div>
           {isExplicitlyHidden(block) && <span className="screen-order-settings-hidden">숨김</span>}
           {actions}

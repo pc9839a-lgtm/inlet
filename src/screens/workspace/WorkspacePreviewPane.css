@@ -54,6 +54,37 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-work
 @media (min-width:900px) and (max-width:950px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 392px !important; border-width: 1px !important; border-radius: 12px !important; } }
 @media (max-width:899px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 1; grid-row: 3; height: auto !important; min-height: 540px !important; } }
 
+/* Page-first editing: only the selected form exposes an explicit shortcut
+   to its existing button-copy field. It never submits a lead or changes the
+   published landing renderer. */
+html body #root .canvas-editor-shell .editor-preview .form .editor-preview-submit-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 34px;
+  margin: 10px 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid #c8d6ff;
+  border-radius: 7px;
+  background: #f1f5ff;
+  color: #1e4ac4;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  cursor: pointer;
+}
+html body #root .canvas-editor-shell .editor-preview .form .editor-preview-submit-edit:hover {
+  background: #e6edff;
+}
+html body #root .canvas-editor-shell .editor-preview .form .editor-preview-submit-edit:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 2px;
+}
+html body #root .canvas-editor-shell .editor-preview .form :is(h2, [class^='form-desc-align-']) {
+  cursor: pointer;
+}
+
 /* Editor preview viewport parity with the public landing width. */
 html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame .landing-page {
   box-sizing: border-box !important;
