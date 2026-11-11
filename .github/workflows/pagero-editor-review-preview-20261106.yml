@@ -97,15 +97,20 @@ jobs:
           const sha = process.argv[3];
           const branch = process.argv[4];
           const deployments = Array.isArray(data.result) ? data.result : [];
+          // Wrangler receives a short Pages alias, but Cloudflare may report
+          // the full GitHub preview ref as the branch metadata. Both names
+          // identify ONLY this reviewed preview branch; SHA and env still
+          // require exact matches before we expose a review URL.
+          const allowedBranches = new Set([branch, `preview/${branch}`]);
           const match = deployments.find(item =>
             item?.deployment_trigger?.metadata?.commit_hash === sha &&
-            item?.deployment_trigger?.metadata?.branch === branch &&
+            allowedBranches.has(item?.deployment_trigger?.metadata?.branch) &&
             item?.environment === 'preview');
           if (data.success !== true || !match) {
             // Non-secret diagnostics distinguish API lag from CLI metadata drift.
             const candidates = deployments.filter(item =>
               item?.environment === 'preview' &&
-              item?.deployment_trigger?.metadata?.branch === branch).slice(0, 5);
+              allowedBranches.has(item?.deployment_trigger?.metadata?.branch)).slice(0, 5);
             console.log('Exact-SHA preview metadata pending:', JSON.stringify({
               success: data.success === true,
               inspected: deployments.length,
