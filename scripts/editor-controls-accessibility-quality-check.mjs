@@ -172,8 +172,12 @@ assert.equal(autoSelectedId, '', 'opening Page Settings must not trigger a secon
 enterEditor({ id: 'page-two', blocks: [{ id: 'other-content', visible: true }] });
 assert.equal(autoSelectedId, 'other-content', 'changing pages must initialize the new page independently');
 firstSelectionRefs.length = 0;
-autoSelectedId = 'already-selected';
+autoSelectedId = 'visible-content';
 enterEditor(initialPage);
-assert.equal(autoSelectedId, 'already-selected', 'existing explicit selection must take priority on initial entry');
+assert.equal(autoSelectedId, 'visible-content', 'existing valid selection must take priority on initial entry');
+firstSelectionRefs.length = 0;
+autoSelectedId = 'deleted-block';
+enterEditor(initialPage);
+assert.equal(autoSelectedId, 'visible-content', 'stale selection from another page must not hide initial content');
 
 console.log('editor controls accessibility: source contracts and selection hook regressions passed');
