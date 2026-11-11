@@ -1055,11 +1055,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 1672 * .156) <= 2
-    && geometry.inspector.width >= 370 && geometry.inspector.width <= 380,
-    'page-first desktop must reserve more space for canvas without collapsing the inspector: ' + JSON.stringify(geometry));
-  assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
-    'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 660) <= 3
+    && geometry.inspector.width >= 575 && geometry.inspector.width <= geometry.list.width,
+    'single block-stack editor must have a full-width inline settings section at 1672px: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.list.top - 64) <= 1 && geometry.inspector.top >= geometry.list.top,
+    'selected block must expand below the shared 64px workspace toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
     && geometry.ancestors[1].scrollTop === 0,
     'work panel must remain stationary while the two editing regions scroll: ' + JSON.stringify(geometry));
@@ -1067,9 +1067,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && geometry.labels.every(label => label.whiteSpace === 'normal' && label.height <= label.lineHeight * 2 + 2),
     'long Korean block names must fit within two lines without overlapping actions: ' + JSON.stringify(geometry.labels));
   assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0
-    && geometry.documentWidth <= 1672 && !geometry.redundantNav && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto' && geometry.inspectorScroll === 'auto'
+    && geometry.documentWidth <= 1672 && !geometry.redundantNav
+    && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
+    && geometry.inspectorScroll === 'visible'
     && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
-    'reference editor must show a centered phone alongside independently scrolling edit panels: ' + JSON.stringify(geometry));
+    'reference editor must have one scrolling block stack and a centered real phone: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
   // zoom, fullscreen, or floating block-action toolbars above the phone.
@@ -1097,8 +1099,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const expectedWidth = width <= 950 ? 392 : 394;
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
       && parseInt(chrome.radius, 10) <= 20 && chrome.stageCentered && chrome.frameInside
-      && chrome.children === 5 && chrome.canvasAdd && !chrome.hasLegacyToolbar,
-      'canvas workbench must keep exactly one 390px mobile page plus editor-only actions at ' + width + ': ' + JSON.stringify(chrome));
+      && chrome.children === 2 && (chrome.canvasTools || chrome.canvasAdd) && !chrome.hasLegacyToolbar,
+      'canvas must show a single real 390px page with a compact inline action row at ' + width + ': ' + JSON.stringify(chrome));
     if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
   }
   await setViewport(client, 1672, 941, false);
