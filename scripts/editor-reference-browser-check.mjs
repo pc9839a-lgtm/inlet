@@ -1053,9 +1053,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 280) <= 1
-    && geometry.inspector.width >= 418 && geometry.inspector.width <= 421,
-    'redesigned 1672px viewport must provide 280px navigator and 420px settings: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 1672 * .156) <= 2
+    && geometry.inspector.width >= 370 && geometry.inspector.width <= 380,
+    'page-first desktop must reserve more space for canvas without collapsing the inspector: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
@@ -1086,15 +1086,17 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         stageCentered: Math.abs((box(stage).left + box(stage).right) / 2 - (box(frame).left + box(frame).right) / 2) <= 4,
         frameInside: box(frame).left >= box(preview).left - 2 && box(frame).right <= box(preview).right + 2,
         children: stage.children.length,
-        hasToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
+        hasLegacyToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
+        canvasAdd: !!stage.querySelector('.editor-canvas-bottom-add'),
+        canvasTools: !!stage.querySelector('.editor-canvas-tools'),
         selectedBlocks: frame.querySelectorAll('[data-preview-selected="true"]').length,
       };
     })()`);
     const expectedWidth = width <= 950 ? 392 : 394;
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
       && parseInt(chrome.radius, 10) <= 20 && chrome.stageCentered && chrome.frameInside
-      && chrome.children === 2 && !chrome.hasToolbar,
-      'mobile editor preview must contain only the 390px phone without auxiliary bars at ' + width + ': ' + JSON.stringify(chrome));
+      && chrome.children === 5 && chrome.canvasAdd && !chrome.hasLegacyToolbar,
+      'canvas workbench must keep exactly one 390px mobile page plus editor-only actions at ' + width + ': ' + JSON.stringify(chrome));
     if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
   }
   await setViewport(client, 1672, 941, false);
@@ -1113,15 +1115,17 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const stage = await evaluate(client, `(() => {
       const phone = document.querySelector('.preview-workspace .phone-frame');
       const picked = phone.querySelector('[data-preview-selected="true"]');
+      const tools = document.querySelector('.editor-canvas-tools');
       return { width: phone.querySelector('.landing-page')?.clientWidth,
-        picked: picked?.id || '', noDock: !document.querySelector('.preview-selection-toolbar') };
+        picked: picked?.id || '', toolbarId: tools?.dataset.canvasBlockId || '' };
     })()`);
-    assert(stage.width === 390 && stage.noDock,
-      'selected block must not create an action row above the 390px page: ' + JSON.stringify(stage));
+    assert(stage.width === 390 && (blockId === 'editor-bottom'
+      ? !stage.toolbarId : stage.toolbarId === blockId),
+      'selecting a normal section must show its exact editor-only canvas actions, while fixed controls remain in the navigator: ' + JSON.stringify(stage));
   }
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
-    'return to selected text without stage actions');
+    'return to selected text with its contextual canvas actions');
   assert(apiState.saveCount === 0, 'preview selections never publish or mutate the saved page');
 
   const menu = '.workspace-editor-nav > summary';
