@@ -115,6 +115,6 @@ test('production advertiser and diagnostics cannot use deprecated ITEM 40 or 41'
   assert.doesNotMatch(server,/env\.META_SHEETS_ADVERTISER_ITEM/);
   assert.doesNotMatch(recovery,/env\.META_SHEETS_ADVERTISER_ITEM/);
   assert.match(server,/form\.set\('ITEM', ADVERTISER_ITEM\)/);
-  assert.match(server,/return \{ advertiser: advertiser\.href, item: ADVERTISER_ITEM \}/);
+  assert.match(server,/return \{ advertiser: advertiser\.href, item: ADVERTISER_ITEM, advertiserTransport \}/);
   assert.match(recovery,/const shape=requestShape\(source,ADVERTISER_ITEM\)/);
 });
