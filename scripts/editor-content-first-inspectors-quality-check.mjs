@@ -45,12 +45,17 @@ for (const file of ['FormPrivacySettings', 'FormSuccessSettings', 'FormSubmissio
 }
 assert(code.includes('<CodeEditorBox') && code.includes('codeDraftHint') && codeBox.includes('aria-label="HTML 코드 초안"')
   && codeBox.includes('onClick={onApply}'), 'direct code editing, draft state and apply remain visible');
-assert(inspector.includes('editor-inspector-selected-copy') && inspector.includes('{primaryLabel}')
-  && inspector.includes('editor-inspector-selected-context'),
-  'one selected-item identity and a task-specific primary heading replace dense settings header');
+assert(inspector.includes('editor-inspector-selected-copy')
+  && inspector.includes('<h2 tabIndex={-1} title={title}>{title}</h2>')
+  && inspector.includes('{renderBlockEditor(block)}')
+  && !inspector.includes('{primaryLabel}')
+  && !inspector.includes('editor-inspector-selected-context'),
+  'selected block must show its editable identity without a duplicate task heading');
 assert(css.includes('.editor-inspector-kind-icon') && css.includes('.editor-inspector-selected-copy')
-  && css.includes('.editor-inspector-section-label') && css.includes('margin: 0 0 26px;'),
-  'selected inspector must show one spacious identity header before content and keep CSS ownership');
+  && css.includes('.editor-inspector-section-label')
+  && css.includes('.editor-inspector-panel.editor-inline-settings')
+  && css.includes('padding: 18px 0 12px !important;'),
+  'inline selected block must have one compact identity header before its existing editable fields');
 assert(disclosure.includes('expandedByBlock = new Map()')
   && disclosure.includes('expandedByBlock.has(persistKey)')
   && disclosure.includes('rememberExpanded(persistKey, next)')
