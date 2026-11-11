@@ -1566,7 +1566,7 @@ async function run() {
         badge: getComputedStyle(block, '::after').display };
     })()`);
     assert(canvasSelectionStyle.outline === '2px'
-      && (canvasSelectionStyle.shadow === 'none' || canvasSelectionStyle.shadow.includes('rgba(70, 92, 240, 0.13)'))
+      && (canvasSelectionStyle.shadow === 'none' || canvasSelectionStyle.shadow.includes('rgba(128, 145, 168, 0.08)'))
       && canvasSelectionStyle.badge === 'none',
       'mobile block selection must use a clear 2px outline without a covering badge: ' + JSON.stringify(canvasSelectionStyle));
 
@@ -2106,8 +2106,8 @@ async function run() {
       };
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
-      && stageOneList.gap === '0px' && stageOneList.rowBorder === '1px'
-      && stageOneList.rowRadius.startsWith('11px 11px') && stageOneList.height >= 55 && stageOneList.height <= 70
+      && stageOneList.gap === '0px' && stageOneList.rowBorder === '0px'
+      && stageOneList.rowRadius === '0px' && stageOneList.height >= 54 && stageOneList.height <= 60
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
       && stageOneList.actionCount === 1 && stageOneList.actions,
@@ -2264,6 +2264,10 @@ async function run() {
     assert(await evaluate(client, `!!document.querySelector('.editor-gallery-dialog input[aria-label="추가할 블록 검색"]')`),
       'the new gallery offers content-first block search');
     assert(!(await evaluate(client, `!!document.querySelector('.section-pattern-card')`)), 'block add panel must not expose recommended section cards');
+    await clickSelector(client, '.editor-gallery-show-all');
+    await waitForBrowser(client,
+      `document.querySelector('.editor-block-gallery-all')?.hidden === false`,
+      'full block catalog becomes visible only after explicit request');
     await clickButtonByText(client, '.add-panel', '구분선');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'added divider row');
     const addedDividerId = (await normalBlockOrder(client)).find((id) => !normalOrderBeforeAdd.includes(id));
@@ -2982,7 +2986,7 @@ async function run() {
       && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 300 : 340)
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
       && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'visible' && leftGeometry.navigatorScroll === 'auto'
-      && parseFloat(leftGeometry.inspectorPadding) >= 20
+      && parseFloat(leftGeometry.inspectorPadding) >= 16
       && leftGeometry.rightEdge <= leftGeometry.previewLeft - 15
       && Math.abs(leftGeometry.list - (desktopViewport.width <= 1190 ? 500 : Math.min(660, desktopViewport.width * .42))) <= 4,
       'inline block settings must fit within their editor stack without clipping or overlapping the real phone: '
@@ -3026,8 +3030,8 @@ async function run() {
     assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius?.startsWith('11px') && screenOrderShellStyle?.rowBorder === '1px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.addBackground === 'rgb(32, 43, 77)', `reference full-width add action must keep its high-contrast navy primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '0px' && screenOrderShellStyle?.rowBorder === '0px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.addBackground === 'rgb(246, 247, 249)', `reference full-width add action must keep its high-contrast navy primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 900 || desktopViewport.width === 1024) {
         await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');

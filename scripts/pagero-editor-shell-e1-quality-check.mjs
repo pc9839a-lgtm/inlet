@@ -329,10 +329,10 @@ assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card
 assert(!css.includes('.block-editor-v2-header') && !css.includes('.editor-field-v2') && !css.includes('.editor-section-v2-trigger') && !css.includes('.editor-segmented-v2') && !css.includes('.image-mode-toolbar'), 'workspace geometry must not own block editor internals');
 assert(editPanelLayoutCss.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack owned by EditPanelLayout.css');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row')
-  && fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 35px !important;')
+  && fixedBlocksCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
   && fixedBlocksCss.includes('.fixed-composition-select')
   && !css.includes('.screen-order-fixed-blocks'),
-  'fixed blocks must use the same 61px stack row geometry as normal blocks');
+  'fixed blocks must share the 55px neutral row system with normal blocks');
 assert(rowIdentity.includes('function BlockTypeThumbnail({ Icon, src })')
   && rowIdentity.includes("onError={() => setImageState('error')}")
   && rowIdentity.includes("key={thumbnail || 'block-type'}")
@@ -351,8 +351,8 @@ assert(!compactRowSource.includes('<ScreenOrderRowVisibility')
   && compactRowActions.includes('role="switch"')
   && compactRowActions.includes('onClick={() => run(onToggleVisible)}')
   && !fixedCard.includes('fixed-open-button')
-  && rowCss.includes('grid-template-columns: 20px minmax(0,1fr) 35px !important;')
-  && fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 35px !important;')
+  && rowCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
+  && fixedBlocksCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
   && rowIdentity.includes("failed ? <ImageOff size={16} />")
   && rowCss.includes('screen-order-v2-type-icon.thumbnail-error'),
   'new stack rows must preserve visibility/menu keyboard control and image failure fallback');
@@ -378,7 +378,7 @@ assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.include
 assert(css.includes('--editor-edit-width: clamp(500px, 42vw, 660px);')
   && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;')
   && editPanelLayoutCss.includes('.editor-inspector-panel.editor-inline-settings')
-  && editPanelLayoutCss.includes('border-radius: 0 0 12px 12px')
+  && editPanelLayoutCss.includes('border-radius: 0 !important;')
   && css.includes('overflow: hidden !important;'),
   'the new editor must present inline expandable blocks beside one actual 390px phone');
 assert(layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;")

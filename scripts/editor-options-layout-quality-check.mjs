@@ -89,8 +89,8 @@ assert(editLayout.includes('groupId="top" title="상단 고정"')
   'fixed blocks must keep labeled, keyboard-accessible top/bottom groups, and reveal selected fixed blocks');
 assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row') && fixedBlocksCss.includes('.fixed-composition-row .fixed-block-head'), 'fixed region section must own inline row geometry');
-assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 35px !important;')
-  && fixedBlocksCss.includes('grid-template-columns: 36px minmax(0,1fr) !important;')
+assert(fixedBlocksCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
+  && fixedBlocksCss.includes('grid-template-columns: 32px minmax(0,1fr) !important;')
   && fixedBlocksCss.includes('overflow-wrap: anywhere'),
   'fixed rows must match normal block geometry and preserve long-name wrapping');
 assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share option must not repeat an explanatory subtitle');
@@ -115,7 +115,7 @@ assert(editLayout.includes('페이지 설정')
   && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'),
   'the inline page design panel must reuse the existing theme and page settings models');
 assert(!pageOptions.includes('PageGlobalOptionsHeader') && pageOptions.includes('aria-label="페이지 동작"'), 'page behavior must have an accessible group label without repeating a visible settings heading');
-assert(editLayout.includes('<h2>블록 편집</h2>')
+assert(editLayout.includes('<h2>블록 편집 <span className="editor-composition-total">')
   && editLayout.includes('editor-composition-total')
   && !screenOrderList.includes('ScreenOrderListHeader'),
   'block stack must have one identifiable title and count');
@@ -160,20 +160,20 @@ assert(editLayout.includes("const showPageOptions = section === 'options' || !se
   && editLayout.includes('{showPageOptions && ('),
   'an empty selection must present page design inside the editable stack');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('.editor-page-settings-button') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
-assert(screenOrderCss.includes('Littly-style block composition')
-  && fixedBlocksCss.includes('Fixed entries use the same compact block-row vocabulary'),
+assert(screenOrderCss.includes('One quiet composition list')
+  && fixedBlocksCss.includes('Pinned rows use the same flat'),
   'normal and fixed rows must share geometry while keeping their own CSS owners');
 assert(pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('.page-option-head') && screenOrderCss.includes('border-radius: 0 !important'), 'page settings and block rows must retain separate flat component surface owners');
 assert(screenOrderCss.includes('.screen-order-v2-list')
   && screenOrderCss.includes('gap: 0 !important;')
-  && screenOrderCss.includes('border: 1px solid #e2e6ef !important;')
+  && screenOrderCss.includes('border-bottom: 1px solid #eceef1 !important;')
   && !editorWorkspaceCss.includes('.screen-order-v2-card'),
-  'block component must own compact card rows rather than workspace-wide list CSS');
-assert(screenOrderCss.includes('min-height: 61px !important;')
-  && screenOrderCss.includes('grid-template-columns: 20px minmax(0,1fr) 35px !important;'),
-  'new stacked block rows must use one readable 61px geometry');
-assert(screenOrderCss.includes('min-height: 61px !important;')
-  && screenOrderCss.includes('grid-template-columns: 20px minmax(0,1fr) 35px !important;')
+  'block component must own flat divider rows rather than workspace-wide CSS');
+assert(screenOrderCss.includes('min-height: 55px !important;')
+  && screenOrderCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;'),
+  'new stacked block rows must use one readable 55px geometry');
+assert(screenOrderCss.includes('min-height: 55px !important;')
+  && screenOrderCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
   && screenOrderCss.includes('.screen-order-v2-action')
   && screenOrderCss.includes('.screen-order-v2-drag'),
   'new block rows must keep drag and accessible overflow actions');
