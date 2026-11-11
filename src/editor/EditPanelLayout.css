@@ -613,3 +613,11 @@ html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-primar
     padding-inline: 8px;
   }
 }
+
+/* Narrow-PC property forms need >=340px of actual content at 1180px, not
+   375px panel minus two 24px paddings. Keep the 900px compact 12px rule. */
+@media (min-width: 1101px) and (max-width: 1280px) {
+  html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
+    padding-inline: 16px;
+  }
+}
