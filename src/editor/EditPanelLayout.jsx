@@ -184,13 +184,12 @@ export function EditPanelLayout({
           <div className="editor-composition-title-row">
             <div className="editor-composition-title-copy">
               <span className="editor-panel-kicker">내 페이지</span>
-              <h2>블록 편집</h2>
+              <h2>블록 편집 <span className="editor-composition-total">
+                {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
+              </span></h2>
             </div>
-            <span className="editor-composition-total">
-              {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
-            </span>
+            <AddBlockDock {...addBlockDockProps} compact />
           </div>
-          <AddBlockDock {...addBlockDockProps} compact />
         </header>
         <BlockNavigatorSearch
           blocks={screenOrderListProps.normalBlocks}
