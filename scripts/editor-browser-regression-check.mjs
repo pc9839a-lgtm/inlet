@@ -2979,14 +2979,13 @@ async function run() {
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
-      && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 252 : 340)
+      && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 300 : 340)
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
-      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
-      && (desktopViewport.width <= 1100
-        ? leftGeometry.inspectorPadding === '8px' && leftGeometry.compositionPadding === '8px'
-        : leftGeometry.inspectorPadding === '16px')
-      && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
-      'reference-width independent panels must fit without clipped controls or preview overlap: '
+      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'visible' && leftGeometry.navigatorScroll === 'auto'
+      && parseFloat(leftGeometry.inspectorPadding) >= 20
+      && leftGeometry.rightEdge <= leftGeometry.previewLeft - 15
+      && Math.abs(leftGeometry.list - (desktopViewport.width <= 1190 ? 500 : Math.min(660, desktopViewport.width * .42))) <= 4,
+      'inline block settings must fit within their editor stack without clipping or overlapping the real phone: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
     const pageOptionsShellStyle = await evaluate(client, `(() => {
