@@ -27,6 +27,7 @@ const page = {
     { id: 'a', type: 'text', visible: true, s: { title: '처음', body: '첫 줄<br>둘째', align: 'left' } },
     { id: 'b', type: 'code', s: { html: '<b>위젯</b>' } },
     { id: 'c', type: 'text', s: { title: '<strong>서식</strong>', body: '그대로' } },
+    { id: 'hero-d', type: 'hero', s: { title: '브랜드 제목', body: '서비스 소개<br>두 줄', image: '/hero.jpg' } },
   ],
 };
 const previous = JSON.stringify(page);
@@ -53,6 +54,23 @@ const bodyChanged = patchInlineTextBlock(page, {
 });
 assert.equal(bodyChanged.blocks[0].s.body, '변경<br>확인');
 
+const heroChange = patchInlineTextBlock(page, {
+  blockId: 'hero-d', field: 'title', previousHtml: '브랜드 제목', nextHtml: '새로운 브랜드',
+});
+assert.equal(heroChange.blocks[3].s.title, '새로운 브랜드', 'hero headline uses the same guarded draft updater');
+assert.equal(heroChange.blocks[3].s.image, '/hero.jpg', 'hero media settings are not touched');
+assert.equal(heroChange.blocks[0], page.blocks[0], 'other blocks remain referentially identical');
+assert.equal(patchInlineTextBlock(heroChange, {
+  blockId: 'hero-d', field: 'title', previousHtml: '브랜드 제목', nextHtml: '뒤늦은 변경',
+}), heroChange, 'stale hero quick edits cannot clobber the current title');
+const heroBody = patchInlineTextBlock(page, {
+  blockId: 'hero-d', field: 'body', previousHtml: '서비스 소개<br>두 줄', nextHtml: '수정된 소개',
+});
+assert.equal(heroBody.blocks[3].s.body, '수정된 소개');
+assert.equal(patchInlineTextBlock(page, {
+  blockId: 'hero-d', field: 'title', previousHtml: '브랜드 제목', nextHtml: '<b>서식</b>',
+}), page, 'rich or unsafe hero HTML is rejected');
+
 const integration = {
   renderer: readFileSync('src/preview/LandingRenderer.jsx', 'utf8'),
   fields: readFileSync('src/preview/renderers/ContentBlocks.jsx', 'utf8'),
@@ -64,6 +82,10 @@ assert.ok(integration.renderer.includes('onEditPreviewText={editorPreview ? onEd
   'editing must be unavailable to published/template render paths');
 assert.ok(integration.fields.includes('canInlineEditTextMarkup(s.title)'));
 assert.ok(integration.fields.includes('canInlineEditTextMarkup(s.body)'));
+assert.ok(integration.fields.includes('as="h1" blockId={blockId} field="title"')
+  && integration.fields.includes('label="히어로 설명"')
+  && integration.renderer.includes('block={renderBlock} editorPreview={editorPreview} onEditPreviewText={onEditPreviewText}'),
+  'hero title and body must reuse the editor-only inline text control');
 assert.ok(integration.pane.includes('onEditPreviewText={onEditPreviewText}'));
 assert.ok(integration.screen.includes('settingsPanelProps.setPage((latest) => patchInlineTextBlock(latest,'),
   'draft updates must use the functional latest-page updater');
