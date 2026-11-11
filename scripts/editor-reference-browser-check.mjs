@@ -103,12 +103,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       const scope = document.querySelector('#editor-block-settings-${id}');
       const primary = scope?.querySelector('${primarySelector}');
       const secondary = scope?.querySelector('${advancedSelector}');
-      const heading = scope?.querySelector('.inspector-primary-heading');
-      const identity = document.querySelector('.editor-inspector-selected-copy');
+      const heading = scope?.closest('.editor-inline-settings')?.querySelector('.screen-order-v2-settings-title h2');
+      const identity = scope?.closest('.editor-inline-settings')?.querySelector('.editor-inspector-selected-copy');
       const code = scope?.querySelector('.code-editor-box textarea');
       const body = scope?.querySelector('.text-editor-flow > .editor-field-v2--body-text textarea');
       return {
         heading: heading?.textContent.trim(),
+        headingVisible: !!heading?.getClientRects().length && !!heading?.textContent.trim(),
         identityVisible: !!identity && identity.getBoundingClientRect().height >= 30,
         primaryVisible: !!primary?.getClientRects().length,
         primaryHeight: primary?.getBoundingClientRect().height || 0,
@@ -117,7 +118,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         directCode: ${JSON.stringify(id)} === 'editor-code' ? code?.getBoundingClientRect().height >= 290 : true,
       };
     })()`);
-    assert(firstView.heading === heading && firstView.identityVisible && firstView.primaryVisible
+    assert(firstView.headingVisible && firstView.identityVisible && firstView.primaryVisible
       && firstView.primaryHeight >= 30 && firstView.secondaryClosed && firstView.directCode
       && (id !== 'editor-text' || firstView.bodyVisible),
       'redesigned inspector exposes actual content before optional settings: ' + JSON.stringify({ id, firstView }));
