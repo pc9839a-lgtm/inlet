@@ -1,0 +1,55 @@
+name: Check original Make ITEM 41 form against live ollymkt endpoint
+on:
+  push:
+    branches: [ops/ollymkt-item41-original-probe-20261111]
+    paths: [.github/workflows/ollymkt-original-item41-probe.yml]
+permissions: {contents: read}
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: One original-form-shaped request with deliberately unusable synthetic contact
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,json,re,time
+          fields=[('ITEM','41'),
+            ('DATAS_name','TEST_NOT_A_REAL_CUSTOMER_DO_NOT_REGISTER'),
+            ('DATAS_phone','00000000000'),
+            ('DATAS_money','TEST_ONLY'),('DATAS_area','TEST_ONLY'),
+            ('DATAS_calldate','TEST_ONLY'),('DATAS_data','TEST_ONLY_DO_NOT_REGISTER')]
+          body=urllib.parse.urlencode(fields).encode('utf-8')
+          req=urllib.request.Request('https://ollymkt.shop/dbapi/',data=body,method='POST',
+            headers={'Content-Type':'application/x-www-form-urlencoded'})
+          t=time.monotonic()
+          try: response=urllib.request.urlopen(req,timeout=15)
+          except urllib.error.HTTPError as e: response=e
+          except Exception as e:
+            print('ORIGINAL_ITEM41 '+json.dumps({'error':type(e).__name__,'elapsedMs':round((time.monotonic()-t)*1000)}));quit()
+          bodytext=response.read(5000).decode('utf-8','replace')
+          title=re.search(r'<title[^>]*>(.*?)</title>',bodytext,re.I|re.S)
+          print('ORIGINAL_ITEM41 '+json.dumps({
+            'status':response.status,'server':response.headers.get('server',''),
+            'type':response.headers.get('content-type',''),
+            'title':re.sub(r'\s+',' ',title.group(1))[:90] if title else '',
+            'elapsedMs':round((time.monotonic()-t)*1000),
+            'bodyClass':'HTML forbidden' if '403 Forbidden' in bodytext else 'OTHER',
+            'fieldCount':len(fields),'item':41,'realCustomer':False},ensure_ascii=False))
+          PY
+      - name: Inspect canonical path behavior without customer data
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,json,time
+          for url in ['https://ollymkt.shop/dbapi','https://www.ollymkt.shop/dbapi/']:
+            t=time.monotonic()
+            try:res=urllib.request.urlopen(urllib.request.Request(url,method='GET'),timeout=10)
+            except urllib.error.HTTPError as e:res=e
+            except Exception as e:
+              print('PATH_VARIANT '+json.dumps({'url':url,'error':type(e).__name__}));continue
+            print('PATH_VARIANT '+json.dumps({'url':url,'http':res.status,
+              'locationHost':res.geturl().split('/')[2],
+              'ms':round((time.monotonic()-t)*1000),
+              'server':res.headers.get('server','')}))
+          PY
