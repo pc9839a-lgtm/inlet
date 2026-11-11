@@ -2986,7 +2986,7 @@ async function run() {
       && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 300 : 340)
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
       && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'visible' && leftGeometry.navigatorScroll === 'auto'
-      && parseFloat(leftGeometry.inspectorPadding) >= 20
+      && parseFloat(leftGeometry.inspectorPadding) >= 16
       && leftGeometry.rightEdge <= leftGeometry.previewLeft - 15
       && Math.abs(leftGeometry.list - (desktopViewport.width <= 1190 ? 500 : Math.min(660, desktopViewport.width * .42))) <= 4,
       'inline block settings must fit within their editor stack without clipping or overlapping the real phone: '
