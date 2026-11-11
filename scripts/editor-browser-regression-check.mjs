@@ -1477,7 +1477,7 @@ async function run() {
         inspectorHasEntry: !!inspector?.querySelector('.editor-page-settings-button') };
     })()`);
     assert(editorNavigation.count === 1 && editorNavigation.inComposition && editorNavigation.redundantTabs === 0
-      && editorNavigation.target === 'editor-selection-panel' && editorNavigation.label === '페이지 설정'
+      && editorNavigation.target === 'editor-selection-panel' && editorNavigation.label === '전체 디자인 · 페이지 설정'
       && editorNavigation.height >= 40 && !editorNavigation.inspectorHasEntry,
       'page settings must have one reachable entry outside selected-item settings: ' + JSON.stringify(editorNavigation));
 
