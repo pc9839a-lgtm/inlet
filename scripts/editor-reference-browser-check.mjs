@@ -391,13 +391,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           tokens: Object.fromEntries(['--editor-ui-title-size','--editor-ui-section-size','--editor-ui-label-size','--editor-ui-row-size','--editor-ui-space-4'].map(k=>[k,getComputedStyle(document.querySelector('.edit-layout')).getPropertyValue(k).trim()])),
         };
       })()`);
-      assert(uiType.listTitle?.size === '18px' && uiType.listTitle?.weight === '750'
-        && uiType.detailTitle?.size === '19px' && uiType.detailTitle?.weight === '750'
-        && uiType.contentHeading?.size === '13px' && uiType.contentHeading?.weight === '700'
+      assert(uiType.listTitle?.size === '20px' && uiType.listTitle?.weight === '780'
+        && uiType.detailTitle?.size === '20px' && uiType.detailTitle?.weight === '780'
+        && uiType.contentHeading?.size === '14px' && uiType.contentHeading?.weight === '760'
         && uiType.disclosure?.size === '13px' && uiType.disclosure?.weight === '650'
-        && uiType.normalRow?.size === '14px' && uiType.normalRow?.weight === '650'
-        && uiType.fixedRow?.size === '14px' && uiType.fixedRow?.weight === '650'
-        && uiType.normalDetail?.size === '12px' && uiType.normalDetail?.weight === '500'
+        && uiType.normalRow?.size === '13.5px' && uiType.normalRow?.weight === '720'
+        && uiType.fixedRow?.size === '13.5px' && uiType.fixedRow?.weight === '720'
+        && uiType.normalDetail?.size === '11px' && uiType.normalDetail?.weight === '500'
         && uiType.label?.size === '13px' && uiType.label?.weight === '600'
         && uiType.editor?.gap === '18px'
         && uiType.tokens['--editor-ui-title-size'] === '18px'
