@@ -73,8 +73,8 @@ export async function ensureAdvertiserDiagnosticsSchema(db) {
 export async function recordAdvertiserHttpLog(db, record) {
   await ensureAdvertiserDiagnosticsSchema(db);
   const url=new URL(record.advertiserUrl);
-  const method=record.method === 'HEAD' ? 'HEAD' : 'POST';
-  const shape=method==='HEAD' ? {item:String(record.item || ''),supplied:[],empty:[]} : requestShape(record.lead,record.item);
+  const method=['GET','HEAD'].includes(record.method) ? record.method : 'POST';
+  const shape=method!=='POST' ? {item:String(record.item || ''),supplied:[],empty:[]} : requestShape(record.lead,record.item);
   await db.prepare('INSERT OR REPLACE INTO meta_sheet_advertiser_http_logs '+
     '(event_id,attempt,method,host,path,item,content_type_sent,supplied_fields,empty_fields,'+
     'elapsed_ms,http_status,response_type,response_preview,redirect_host,redirect_path,'+
@@ -103,5 +103,13 @@ export async function getAdvertiserHttpLogs(db,eventId) {
     elapsedMs:v.elapsed_ms,httpStatus:v.http_status,responseType:v.response_type,
     responsePreview:v.response_preview,redirectHost:v.redirect_host,redirectPath:v.redirect_path,
     exceptionType:v.exception_type,exceptionCode:v.exception_code,outcome:v.outcome
+  }));
+}
+
+export function safeDiagnosticHeaders(headers) {
+  const allowed=['server','cf-ray','via','allow','x-cache','www-authenticate','x-request-id'];
+  return Object.fromEntries(allowed.flatMap(key => {
+    const v=String(headers?.get?.(key)||'').slice(0,100);
+    return v ? [[key,redactAdvertiserText(v)]] : [];
   }));
 }
