@@ -64,11 +64,55 @@ export default function WorkspaceEditorScreen({
     return true;
   };
 
+  // A click on the rendered form title or description takes the user to
+  // the exact existing content field, including when the Inspector is lazy.
+  // No alternate form state or preview mutation is introduced.
+  const pendingFormFocusRef = React.useRef(null);
+  React.useEffect(() => () => pendingFormFocusRef.current?.(), []);
+  const focusPreviewFormField = (id, field) => {
+    if (!canUseBuilder || !editWorkspace || startMode === 'template' || stylePanelProps?.hasPendingStyle
+      || !['title', 'description'].includes(field)) return;
+    const form = editPanelProps?.page?.blocks?.find((block) => block.id === id && block.type === 'form');
+    if (!form || form.visible === false || typeof document === 'undefined'
+      || typeof MutationObserver !== 'function') return;
+    const inspector = document.querySelector('.editor-inspector-panel');
+    if (!inspector) return;
+    pendingFormFocusRef.current?.();
+    let finished = false;
+    let timeoutId = 0;
+    const observer = new MutationObserver(tryFocus);
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+      observer.disconnect();
+      window.clearTimeout(timeoutId);
+      if (pendingFormFocusRef.current === cleanup) pendingFormFocusRef.current = null;
+    };
+    function tryFocus() {
+      if (finished) return;
+      const settings = document.getElementById(`editor-block-settings-${id}`);
+      if (!settings) return;
+      const selector = field === 'title'
+        ? '.form-basic-grid .field-title input'
+        : '.form-basic-grid .editor-field-v2 textarea';
+      const input = settings.querySelector(selector);
+      if (!input || input.disabled) return;
+      cleanup();
+      input.scrollIntoView({ block: 'nearest' });
+      input.focus({ preventScroll: true });
+    }
+    observer.observe(inspector, { childList: true, subtree: true });
+    timeoutId = window.setTimeout(cleanup, 5000);
+    requestAnimationFrame(tryFocus);
+    pendingFormFocusRef.current = cleanup;
+  };
+
   // An image click keeps the existing preview selection and directs attention
   // to the current ImageInput uploader. Never opens a native picker implicitly,
   // bypasses the existing media library, or writes image content itself.
   const selectPreviewBlockWithImage = (id, interaction) => {
     onSelectPreviewBlock?.(id);
+    if (interaction?.focusField) focusPreviewFormField(id, interaction.focusField);
     if (!interaction?.imageClick || !canUseBuilder || !editWorkspace || startMode === 'template'
       || stylePanelProps?.hasPendingStyle || typeof requestAnimationFrame !== 'function') return;
     const selectedImage = editPanelProps?.page?.blocks?.find((block) => block.id === id && block.type === 'image');
