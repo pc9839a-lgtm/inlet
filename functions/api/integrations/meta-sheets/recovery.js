@@ -1,7 +1,7 @@
 import { assertD1, jsonResponse, optionsResponse } from '../../_shared.js';
 import { ensureWebhookSchema, sha256 } from '../../calltag/v1/_shared.js';
 import { extractWebhookKey } from './relay.js';
-import { getAdvertiserHttpLogs, recordAdvertiserHttpLog, requestShape, safeRedirect, responsePreview } from './advertiser-diagnostics.js';
+import { getAdvertiserHttpLogs, recordAdvertiserHttpLog, requestShape, safeRedirect, responsePreview, safeDiagnosticHeaders } from './advertiser-diagnostics.js';
 
 const METHODS='POST, OPTIONS';
 const TARGET_ID='meta-l1870743443942053';
@@ -51,30 +51,39 @@ export async function onRequest({request,env}){
     const shape=requestShape(source,String(env.META_SHEETS_ADVERTISER_ITEM||'64'));
 
     if(action==='probe-connection') {
-      // Safe transport diagnosis: HEAD carries ZERO customer data and creates no advertiser lead.
+      // HEAD and GET are safe: neither request carries a lead or a form body.
+      // Compare statuses to distinguish a method restriction from broader access rejection.
       const endpoint=destination(env);
-      const entry={
-        eventId:TARGET_ID,attempt:0,advertiserUrl:endpoint,
-        item:String(env.META_SHEETS_ADVERTISER_ITEM||'64'),
-        lead:{},method:'HEAD',status:0,contentType:'',preview:'',
-        redirect:{host:'',path:''},errorName:'',errorCode:'',outcome:'TRANSPORT_PROBE',
-        duration:0
-      };
-      const started=Date.now();
-      try{
-        const response=await fetch(endpoint,{method:'HEAD',redirect:'manual',
-          signal:AbortSignal.timeout(12000)});
-        entry.status=response.status;
-        entry.contentType=response.headers.get('content-type')||'';
-        entry.redirect=safeRedirect(response.headers.get('location'),endpoint);
-        entry.preview='HEAD response (no lead data sent)';
-      }catch(err){
-        entry.errorName=String(err?.name||'Error').slice(0,80);
-        entry.errorCode=String(err?.cause?.code||err?.code||'').slice(0,80);
-        entry.preview='Network/transport exception';
+      for (const [method,attempt] of [['HEAD',-1],['GET',0]]) {
+        const entry={
+          eventId:TARGET_ID,attempt,advertiserUrl:endpoint,
+          item:String(env.META_SHEETS_ADVERTISER_ITEM||'64'),
+          lead:{},method,status:0,contentType:'',preview:'',
+          redirect:{host:'',path:''},errorName:'',errorCode:'',
+          outcome:'TRANSPORT_PROBE',duration:0
+        };
+        const started=Date.now();
+        try {
+          const response=await fetch(endpoint,{
+            method,redirect:'manual',signal:AbortSignal.timeout(8000),
+            headers:{'Accept':'text/html,application/json;q=0.9,*/*;q=0.1'}
+          });
+          entry.status=response.status;
+          entry.contentType=response.headers.get('content-type')||'';
+          entry.redirect=safeRedirect(response.headers.get('location'),endpoint);
+          const headers=safeDiagnosticHeaders(response.headers);
+          const body=method==='GET' ? (await response.text()).slice(0,3500) : '';
+          const detail=method==='GET' ? responsePreview(body,entry.contentType,{})
+            : '(HEAD has no response body)';
+          entry.preview=('headers='+JSON.stringify(headers)+'; body='+detail).slice(0,690);
+        }catch(err){
+          entry.errorName=String(err?.name||'Error').slice(0,80);
+          entry.errorCode=String(err?.cause?.code||err?.code||'').slice(0,80);
+          entry.preview='Network/transport exception';
+        }
+        entry.duration=Date.now()-started;
+        await recordAdvertiserHttpLog(db,entry);
       }
-      entry.duration=Date.now()-started;
-      await recordAdvertiserHttpLog(db,entry);
     }
     const logs=await getAdvertiserHttpLogs(db,TARGET_ID);
     const postLogs=logs.filter(x=>x.method==='POST');
@@ -83,7 +92,7 @@ export async function onRequest({request,env}){
       requestShape:shape,
       logs,
       historicalResponsesUnavailable:Number(row.ad_attempts||0)>postLogs.length,
-      note:'2026-11-11 이전 HTTP 응답 본문은 기록하지 않아 소급 확인할 수 없습니다. 고객정보 재전송은 실행하지 않습니다.'
+      note:'기존 POST 전송의 상세 응답은 소급 복구할 수 없습니다. HEAD/GET 테스트에는 고객정보를 포함하지 않습니다.'
     },METHODS);
   }catch(err){
     console.error('Advertiser diagnostics status error',{type:String(err?.name||'Error')});

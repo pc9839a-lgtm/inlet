@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { onRequest } from '../../functions/api/integrations/meta-sheets/recovery.js';
 import { advertiserForm } from '../../functions/api/integrations/meta-sheets/relay.js';
 import {
-  responsePreview, redactAdvertiserText, requestShape, safeRedirect
+  responsePreview, redactAdvertiserText, requestShape, safeRedirect, safeDiagnosticHeaders
 } from '../../functions/api/integrations/meta-sheets/advertiser-diagnostics.js';
 
 const server=readFileSync(new URL('../../functions/api/integrations/meta-sheets/relay.js',import.meta.url),'utf8');
@@ -16,9 +16,10 @@ const endpoint='https://pagero.kr/api/integrations/meta-sheets/recovery';
 test('only status and safe HEAD probe are available; no POST resend action',()=>{
   assert.match(recovery,/probe-connection/);
   assert.doesNotMatch(recovery,/retry-advertiser|advertiserForm\(|confirmedNotReceived/);
-  assert.match(recovery,/method:'HEAD'/);
+  assert.match(recovery,/\['HEAD',-1\],\['GET',0\]/);
+  assert.match(recovery,/method,redirect:'manual'/);
   assert.doesNotMatch(recovery,/method:'POST'[\s\S]{0,300}body:advertiserForm/);
-  assert.match(ui,/HEAD · 고객정보 전송 안 함/);
+  assert.match(ui,/HEAD \+ GET · 고객정보 전송 안 함/);
   assert.doesNotMatch(ui,/retry-advertiser|고객 1건 전송/);
 });
 test('historical advertiser retries are completely disabled, future PENDING still sent',()=>{
@@ -83,4 +84,20 @@ test('previous Make request seven fields are preserved',()=>{
     'DATAS_money','DATAS_area','DATAS_calldate','DATAS_data']);
   assert.equal(form.get('ITEM'),'64');
   assert.equal(form.has('DATAS_email'),false);
+});
+
+test('GET and HEAD safe probes store only header allowlist and do not create advertiser POST',()=>{
+  assert.match(recovery,/method==='GET' \? \(await response.text\(\)\)/);
+  assert.match(recovery,/safeDiagnosticHeaders\(response.headers\)/);
+  assert.match(recovery,/await recordAdvertiserHttpLog\(db,entry\)/);
+  const headers=new Headers({
+    server:'nginx', 'cf-ray':'abc123-ICN', 'allow':'POST',
+    'set-cookie':'user=private', 'authorization':'Bearer secret'
+  });
+  const result=safeDiagnosticHeaders(headers);
+  assert.equal(result.server,'nginx');
+  assert.equal(result['cf-ray'],'abc123-ICN');
+  assert.equal(result.allow,'POST');
+  assert.equal(result['set-cookie'],undefined);
+  assert.equal(result.authorization,undefined);
 });
