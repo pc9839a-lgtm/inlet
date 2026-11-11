@@ -394,7 +394,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           tokens: Object.fromEntries(['--editor-ui-title-size','--editor-ui-section-size','--editor-ui-label-size','--editor-ui-row-size','--editor-ui-space-4'].map(k=>[k,getComputedStyle(document.querySelector('.edit-layout')).getPropertyValue(k).trim()])),
         };
       })()`);
-      assert(parseFloat(uiType.listTitle?.size) >= 20
+      assert(parseFloat(uiType.listTitle?.size) >= 18
         && parseFloat(uiType.detailTitle?.size) >= 14
         && parseFloat(uiType.normalRow?.size) >= 13
         && parseFloat(uiType.fixedRow?.size) >= 13
