@@ -10,6 +10,7 @@ const fixed = read('src/editor/editPanelParts/GlobalFixedBlocks.jsx');
 const gallery = read('src/editor/editPanelParts/AddBlockPanel.jsx');
 const dock = read('src/editor/editPanelParts/AddBlockDock.jsx');
 const toggle = read('src/editor/editPanelParts/AddBlockDockToggle.jsx');
+const dockCss = read('src/styles/editor-widget-add-dock.css');
 const preview = read('src/screens/workspace/WorkspacePreviewPane.jsx');
 const previewCss = read('src/screens/workspace/WorkspacePreviewPane.css');
 const shell = read('src/styles/editor-workspace.css');
@@ -17,7 +18,7 @@ const reference = read('scripts/editor-reference-browser-check.mjs');
 
 // The selected design replaces the old detached Inspector with a real stack.
 assert(layout.includes('data-editor-layout="littly-block-stack"')
-  && layout.includes('<h2>블록 편집</h2>')
+  && layout.includes('<h2>블록 편집 <span className="editor-composition-total">')
   && layout.includes('editor-composition-total')
   && layout.includes('editor-page-options-heading')
   && !layout.includes('inspectorOnly'),
@@ -34,16 +35,16 @@ assert(layoutCss.includes('.editor-composition-content')
   && layoutCss.includes('.editor-inspector-panel.editor-inline-settings')
   && !layoutCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr)'),
   'a single block-list scroller must replace independent nested panel scrolls');
-assert(rowCss.includes('min-height: 61px !important;')
-  && rowCss.includes('grid-template-columns: 20px minmax(0,1fr) 35px !important;')
-  && fixedCss.includes('min-height: 61px !important;')
-  && fixedCss.includes('grid-template-columns: 20px minmax(0, 1fr) 35px !important;'),
-  'ordinary and fixed blocks must use consistent compact 61px rows');
+assert(rowCss.includes('min-height: 55px !important;')
+  && rowCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
+  && fixedCss.includes('min-height: 55px !important;')
+  && fixedCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;'),
+  'ordinary and fixed blocks must use consistent calm 55px rows');
 assert(toggle.includes('<strong>블록 추가</strong>')
   && toggle.includes('aria-expanded={open}')
-  && layoutCss.includes('background: #202b4d !important;')
+  && dockCss.includes('background: #f6f7f9 !important;')
   && layout.includes('<AddBlockDock {...addBlockDockProps} compact />'),
-  'adding a block must be the most visible action and keep accessible state');
+  'block addition must be a secondary action without losing its accessible state');
 assert(dock.includes('role="dialog" aria-modal="true"')
   && dock.includes('createPortal(')
   && gallery.includes("['form', '문의 폼'"),
