@@ -2106,12 +2106,12 @@ async function run() {
       };
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
-      && stageOneList.gap === '9px' && stageOneList.rowBorder === '1px'
-      && stageOneList.rowRadius === '13px' && stageOneList.height >= 76
+      && stageOneList.gap === '0px' && stageOneList.rowBorder === '1px'
+      && stageOneList.rowRadius === '11px' && stageOneList.height >= 55 && stageOneList.height <= 70
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
       && stageOneList.actionCount === 1 && stageOneList.actions,
-      'compact block list must show two-line-ready names and one reachable actions menu: ' + JSON.stringify(stageOneList));
+      'inline editor stack must use readable compact rows and one reachable actions menu: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
       && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
