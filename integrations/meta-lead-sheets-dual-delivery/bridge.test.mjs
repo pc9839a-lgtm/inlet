@@ -215,3 +215,12 @@ test('advertiser ITEM is locked to 64 even when old 40 or 41 is supplied via env
   }
   assert.equal(readConfig({META_SHEETS_DISPATCH_ENABLED:'0'}),null);
 });
+
+test('opt-in Make transport prevents Cloudflare advertiser POST without disabling CallTag intake',()=>{
+  const config = readConfig({ META_SHEETS_ADVERTISER_TRANSPORT:'make' });
+  assert.equal(config.advertiserTransport,'make');
+  assert.equal(config.item,'64');
+  assert.equal(readConfig({}).advertiserTransport,'direct');
+  assert.equal(readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'invalid'}).advertiserTransport,'direct');
+  assert.equal(readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'make',META_SHEETS_DISPATCH_ENABLED:'0'}),null);
+});
