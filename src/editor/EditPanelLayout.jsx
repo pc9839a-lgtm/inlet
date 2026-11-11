@@ -138,17 +138,14 @@ export function EditPanelLayout({
     if (selectedBlockId) setSection('order');
   }, [selectedBlockId]);
 
-  // Replacing the selected widget should start at the beginning of its own
-  // settings, without resetting the user's position in the block navigator.
-  React.useEffect(() => {
-    const inspector = document.querySelector('.canvas-editor-shell .editor-inspector-panel');
-    if (inspector) inspector.scrollTop = 0;
-  }, [selectedBlockId, showPageOptions]);
-
   const openPageOptions = () => {
     if (screenOrderListProps?.selectedId) screenOrderListProps.clearBlockSelection();
     else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
     setSection('options');
+    requestAnimationFrame(() => {
+      document.querySelector('.canvas-editor-shell .editor-composition-content')
+        ?.scrollTo({ top: 0, behavior: 'instant' });
+    });
   };
 
   const pageTheme = stylePanelProps?.stagedTheme || pageGlobalOptionsProps.page.theme;
@@ -163,83 +160,122 @@ export function EditPanelLayout({
   // D05: row selection must not auto-scroll the outer editor. An explicit
   // preview-to-editor click is handled by useWorkspaceShellActions.
 
+  const renderFixedSettings = (keys) => {
+    if (showPageOptions || !fixedSelected || !keys.includes(fixedSelected.key)) return null;
+    return (
+      <section className="editor-inspector-panel editor-inline-settings"
+        role="region" aria-label="선택 항목 편집" tabIndex={0}>
+        <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
+          <ScreenOrderSettings
+            block={fixedSelected.block}
+            identity={{ customLabel: fixedSelected.title }}
+            renderBlockEditor={fixedSelected.renderEditor}
+            navigation={inspectorNavigation}
+          />
+        </div>
+      </section>
+    );
+  };
+
   return (
-    <div className="edit-layout" data-editor-layout="left-persistent">
-      <aside className="editor-composition-panel" aria-label="구성">
-        <div className="editor-composition-heading">
+    <div className="edit-layout" data-editor-layout="littly-block-stack">
+      <aside className="editor-composition-panel" aria-label="페이지 블록 편집">
+        <header className="editor-composition-heading">
           <div className="editor-composition-title-row">
             <div className="editor-composition-title-copy">
-              <span className="editor-panel-kicker">페이지 편집</span>
-              <h2>블록 구성</h2>
+              <span className="editor-panel-kicker">내 페이지</span>
+              <h2>블록 편집</h2>
             </div>
-            <span className="editor-composition-total">{screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개</span>
+            <span className="editor-composition-total">
+              {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
+            </span>
           </div>
           <AddBlockDock {...addBlockDockProps} compact />
-        </div>
-        <BlockNavigatorSearch blocks={screenOrderListProps.normalBlocks} fixedDescriptors={fixedDescriptors} selectedId={selectedBlockId} onSelect={chooseSearchResult} onRevealSelected={revealFixedSearch} />
-        <div className="editor-composition-content" role="region" aria-label="블록 목록" tabIndex={0}>
+        </header>
+        <BlockNavigatorSearch
+          blocks={screenOrderListProps.normalBlocks}
+          fixedDescriptors={fixedDescriptors}
+          selectedId={selectedBlockId}
+          onSelect={chooseSearchResult}
+          onRevealSelected={revealFixedSearch}
+        />
+        <div className="editor-composition-content" role="region" aria-label="블록 목록과 편집" tabIndex={0}>
+          {showPageOptions && (
+            <section className="editor-inspector-panel editor-inline-settings editor-page-inline-settings"
+              role="region" aria-label="페이지 전체 설정" tabIndex={0}>
+              <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="options">
+                <div className="editor-page-options-stack">
+                  <header className="editor-page-options-heading">
+                    <span className="editor-panel-kicker">페이지 전체</span>
+                    <h2>전체 디자인과 설정</h2>
+                  </header>
+                  {stylePanelProps && (
+                    <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
+                      <PageThemeStylePanel {...stylePanelProps} />
+                    </React.Suspense>
+                  )}
+                  <PageGlobalOptions
+                    {...pageGlobalOptionsProps}
+                    page={{ ...pageGlobalOptionsProps.page, theme: pageTheme }}
+                    updateTheme={updatePageTheme}
+                  />
+                </div>
+              </div>
+            </section>
+          )}
           <FixedCompositionGroup
             groupId="top" title="상단 고정" keys={['topnav']}
-            descriptors={fixedDescriptors} selectedId={fixedBlocksProps.openId} revealRequest={fixedSearchReveal}
+            descriptors={fixedDescriptors}
+            selectedId={fixedBlocksProps.openId}
+            revealRequest={fixedSearchReveal}
           >
-            <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
+            <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']}
+              compositionRow selectedId={fixedBlocksProps.openId}
+              openId="" toggleBlockOpen={chooseFixed}
+              renderInlineEditor={() => renderFixedSettings(['topnav'])} />
           </FixedCompositionGroup>
           <div className="editor-composition-group-caption">
-            <span>콘텐츠 블록</span>
-            <span>{screenOrderListProps.normalBlocks.length}개</span>
+            <span>페이지 블록</span>
+            <span>{screenOrderListProps.normalBlocks.length}</span>
           </div>
-          <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
+          <ScreenOrderList
+            {...screenOrderListProps}
+            listOnly
+            selectBlock={chooseBlock}
+            inspectorNavigation={inspectorNavigation}
+          />
           <FixedCompositionGroup
             groupId="bottom" title="하단 고정" keys={['bottom', 'footer']}
-            descriptors={fixedDescriptors} selectedId={fixedBlocksProps.openId} revealRequest={fixedSearchReveal}
+            descriptors={fixedDescriptors}
+            selectedId={fixedBlocksProps.openId}
+            revealRequest={fixedSearchReveal}
           >
-            <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
+            <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']}
+              compositionRow selectedId={fixedBlocksProps.openId}
+              openId="" toggleBlockOpen={chooseFixed}
+              renderInlineEditor={() => renderFixedSettings(['bottom', 'footer'])} />
           </FixedCompositionGroup>
         </div>
-        <div className="editor-composition-footer">
-            <button
-              className="editor-page-settings-button"
-              type="button"
-              aria-pressed={showPageOptions}
-              aria-controls="editor-selection-panel"
-              onClick={openPageOptions}
-              title={stylePanelProps?.hasPendingStyle ? '페이지 설정 · 미적용' : '페이지 설정'}
-            >
-              <Settings2 size={15} aria-hidden="true" />
-              <span>페이지 설정</span>
-              {stylePanelProps?.hasPendingStyle && (
-                <>
-                  <span className="editor-settings-pending" aria-hidden="true" />
-                  <span className="editor-visually-hidden"> · 미적용</span>
-                </>
-              )}
-            </button>
-        </div>
-      </aside>
-      <section className="editor-inspector-panel" role="region" aria-label="선택 항목 편집" tabIndex={0}>
-      <div id="editor-selection-panel" className="edit-section-panel" data-editor-section={showPageOptions ? 'options' : section}>
-        {showPageOptions ? (
-          <div className="editor-page-options-stack">
-            <header className="editor-page-options-heading">
-              <span className="editor-panel-kicker">페이지 전체</span>
-              <h2>디자인과 설정</h2>
-            </header>
-            {stylePanelProps && (
-              <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
-                <PageThemeStylePanel {...stylePanelProps} />
-              </React.Suspense>
+        <footer className="editor-composition-footer">
+          <button
+            className="editor-page-settings-button"
+            type="button"
+            aria-pressed={showPageOptions}
+            aria-controls="editor-selection-panel"
+            onClick={openPageOptions}
+            title={stylePanelProps?.hasPendingStyle ? '페이지 설정 · 미적용' : '페이지 설정'}
+          >
+            <Settings2 size={17} aria-hidden="true" />
+            <span>전체 디자인 · 페이지 설정</span>
+            {stylePanelProps?.hasPendingStyle && (
+              <>
+                <span className="editor-settings-pending" aria-hidden="true" />
+                <span className="editor-visually-hidden"> · 미적용</span>
+              </>
             )}
-            <PageGlobalOptions {...pageGlobalOptionsProps} page={{ ...pageGlobalOptionsProps.page, theme: pageTheme }} updateTheme={updatePageTheme} />
-          </div>
-        ) : (
-          <>
-            {fixedSelected ? <ScreenOrderSettings block={fixedSelected.block} identity={{ customLabel: fixedSelected.title }} renderBlockEditor={fixedSelected.renderEditor} navigation={inspectorNavigation} />
-              : <ScreenOrderList {...screenOrderListProps} inspectorOnly inspectorNavigation={inspectorNavigation} />}
-          </>
-        )}
-      </div>
-
-      </section>
+          </button>
+        </footer>
+      </aside>
     </div>
   );
 }

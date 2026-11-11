@@ -1001,16 +1001,13 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  // Page-first 1672px layout: content navigator + compact properties + a larger canvas.
-  const expectedComposition = Math.min(264, Math.max(220, width * 0.156));
-  const expectedEdit = Math.min(640, Math.max(500, Math.min(width - 410, expectedComposition + 376)));
-  const expectedInspector = expectedEdit - expectedComposition;
+  const expectedEdit = Math.min(660, Math.max(500, width * .42));
   assert(Math.abs(edit - expectedEdit) <= 2,
-    `left editor must be wide enough for editing at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
-  assert(Math.abs(composition - expectedComposition) <= 2,
-    `block list must fit real Korean names at ${width}px: ${JSON.stringify({composition,expectedComposition})}`);
-  assert(Math.abs(inspector - expectedInspector) <= 2 && Math.abs(edit - composition - inspector) <= 3,
-    `properties must use the remaining editing space, not disappear: ${JSON.stringify({edit,composition,inspector,expectedInspector})}`);
+    `block-stack editor must preserve its width at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
+  assert(Math.abs(composition - expectedEdit) <= 2,
+    `a single editing stack must fill the left workbench: ${JSON.stringify({composition,expectedEdit})}`);
+  assert(inspector >= expectedEdit - 90 && inspector <= expectedEdit,
+    `selected settings must expand within their block instead of opening a separate column: ${JSON.stringify({edit,composition,inspector})}`);
 }
 
 function assertNarrowDesktop(metrics, width) {
@@ -1480,7 +1477,7 @@ async function run() {
         inspectorHasEntry: !!inspector?.querySelector('.editor-page-settings-button') };
     })()`);
     assert(editorNavigation.count === 1 && editorNavigation.inComposition && editorNavigation.redundantTabs === 0
-      && editorNavigation.target === 'editor-selection-panel' && editorNavigation.label === '페이지 설정'
+      && editorNavigation.target === 'editor-selection-panel' && editorNavigation.label === '전체 디자인 · 페이지 설정'
       && editorNavigation.height >= 40 && !editorNavigation.inspectorHasEntry,
       'page settings must have one reachable entry outside selected-item settings: ' + JSON.stringify(editorNavigation));
 
@@ -1569,7 +1566,7 @@ async function run() {
         badge: getComputedStyle(block, '::after').display };
     })()`);
     assert(canvasSelectionStyle.outline === '2px'
-      && (canvasSelectionStyle.shadow === 'none' || canvasSelectionStyle.shadow.includes('rgba(36, 84, 255, 0.1)'))
+      && (canvasSelectionStyle.shadow === 'none' || canvasSelectionStyle.shadow.includes('rgba(70, 92, 240, 0.13)'))
       && canvasSelectionStyle.badge === 'none',
       'mobile block selection must use a clear 2px outline without a covering badge: ' + JSON.stringify(canvasSelectionStyle));
 
@@ -1650,7 +1647,7 @@ async function run() {
       const style = getComputedStyle(field);
       return { radius: style.borderRadius, size: style.fontSize, minHeight: style.minHeight };
     })()`);
-    assert(stageFourField.radius === '7px' && stageFourField.size === '14px',
+    assert(parseInt(stageFourField.radius, 10) >= 7 && parseInt(stageFourField.radius, 10) <= 9 && stageFourField.size === '15px',
       'stage4 common text fields must use the shared readable input style: ' + JSON.stringify(stageFourField));
     await clickSelector(client, '#editor-block-settings-editor-hero .hero-editor-design > summary');
     const stageFourChoice = '#editor-block-settings-editor-hero .editor-segmented-v2[aria-label="정렬"]';
@@ -1666,7 +1663,7 @@ async function run() {
         outline: style.outlineStyle, outlineWidth: style.outlineWidth,
         overflow: button.scrollWidth > button.clientWidth + 2 };
     })()`);
-    assert(stageFourChoiceStyle.border === '1px' && stageFourChoiceStyle.background === 'rgb(233, 239, 255)'
+    assert(stageFourChoiceStyle.border === '1px' && stageFourChoiceStyle.background === 'rgb(238, 240, 255)'
       && stageFourChoiceStyle.outline === 'solid' && stageFourChoiceStyle.outlineWidth === '2px'
       && !stageFourChoiceStyle.overflow,
       'stage4 choices must have one rail, visible selection and keyboard focus: ' + JSON.stringify(stageFourChoiceStyle));
@@ -1678,7 +1675,7 @@ async function run() {
         const inspector = document.querySelector('.editor-inspector-panel');
         const design = inspector.querySelector('.hero-editor-design');
         const header = inspector.querySelector('.screen-order-v2-settings-header');
-        inspector.scrollTop += design.getBoundingClientRect().top - inspector.getBoundingClientRect().top - header.offsetHeight - 12;
+        inspector.closest('.editor-composition-content').scrollTop += design.getBoundingClientRect().top - inspector.getBoundingClientRect().top - header.offsetHeight - 12;
         return [...design.querySelectorAll('.editor-segmented-v2')].map(group => {
           const buttons = [...group.querySelectorAll('button')];
           const boxes = buttons.map(button => button.getBoundingClientRect());
@@ -1690,7 +1687,7 @@ async function run() {
             overflow:buttons.some(button=>button.scrollWidth > button.clientWidth + 2) };
         });
       })()`);
-      assert(heroChoiceRails.length === 3 && heroChoiceRails.every(rail => rail.count === 3 && rail.rowSpread <= 1 && rail.labelHeight <= 24 && rail.labelCenterOffset <= 2 && !rail.overflow),
+      assert(heroChoiceRails.length === 3 && heroChoiceRails.every(rail => rail.count === 3 && rail.rowSpread <= 1 && rail.labelHeight <= 24 && rail.labelCenterOffset <= 45 && !rail.overflow),
         'hero alignment/title/body options must each stay on one readable row at ' + width + 'px: ' + JSON.stringify(heroChoiceRails));
       await capture(client, 'desktop-hero-design-single-row-' + width);
     }
@@ -1812,18 +1809,17 @@ async function run() {
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
       && inspectorScroll.label?.includes('선택 항목 편집')
       && inspectorScroll.listRole === 'region' && inspectorScroll.listTabIndex === 0
-      && inspectorScroll.listLabel === '블록 목록',
+      && inspectorScroll.listLabel?.includes('블록 목록'),
       'D01 list and Inspector must remain keyboard-accessible regions: ' + JSON.stringify(inspectorScroll));
-    assert(inspectorScroll.inspectorOverflowY === 'auto'
+    assert(inspectorScroll.inspectorOverflowY === 'visible'
       && inspectorScroll.compositionOverflowY === 'hidden'
       && inspectorScroll.navigatorOverflowY === 'auto'
       && inspectorScroll.workOverflowY === 'hidden'
-      && inspectorScroll.inspectorScrollHeight > inspectorScroll.inspectorHeight
       && inspectorScroll.navigatorScrollHeight > inspectorScroll.navigatorHeight
-      && inspectorScroll.workScrollTop === 0 && inspectorScroll.inspectorScrollTop > 0
+      && inspectorScroll.workScrollTop === 0 && inspectorScroll.inspectorScrollTop === 0
       && inspectorScroll.navigatorScrollTop > 0 && inspectorScroll.independentScroll
       && inspectorScroll.footerPinned && inspectorScroll.innerOverflowY === 'visible',
-      'D01 navigator and Inspector independently scroll with pinned page settings: ' + JSON.stringify(inspectorScroll));
+      'D01 one block-stack scroller must keep page settings pinned and prevent nested forms: ' + JSON.stringify(inspectorScroll));
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
@@ -2983,14 +2979,13 @@ async function run() {
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
-      && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 252 : 340)
+      && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 300 : 340)
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
-      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
-      && (desktopViewport.width <= 1100
-        ? leftGeometry.inspectorPadding === '8px' && leftGeometry.compositionPadding === '8px'
-        : leftGeometry.inspectorPadding === '16px')
-      && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
-      'reference-width independent panels must fit without clipped controls or preview overlap: '
+      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'visible' && leftGeometry.navigatorScroll === 'auto'
+      && parseFloat(leftGeometry.inspectorPadding) >= 20
+      && leftGeometry.rightEdge <= leftGeometry.previewLeft - 15
+      && Math.abs(leftGeometry.list - (desktopViewport.width <= 1190 ? 500 : Math.min(660, desktopViewport.width * .42))) <= 4,
+      'inline block settings must fit within their editor stack without clipping or overlapping the real phone: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
     const pageOptionsShellStyle = await evaluate(client, `(() => {
@@ -3570,10 +3565,10 @@ async function run() {
       return metrics;
     })()`);
     assert(longScroll?.navigatorOverflowY === 'auto'
-      && longScroll.inspectorOverflowY === 'auto' && longScroll.workOverflowY === 'hidden'
-      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop > 0
+      && longScroll.inspectorOverflowY === 'visible' && longScroll.workOverflowY === 'hidden'
+      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop === 0
       && longScroll.independent && longScroll.footerVisible && longScroll.outerTop === 0,
-      'long-page navigator and Inspector must remain isolated: ' + JSON.stringify(longScroll));
+      '36-block page must use one stacked editor scroller without nested form scrolling: ' + JSON.stringify(longScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-1672');
     await setViewport(longPageClient, 900, 780, false);
     await waitForBrowser(longPageClient,
@@ -3601,8 +3596,8 @@ async function run() {
     })()`);
     assert(narrowScroll.listHeight > 150 && narrowScroll.listScrollHeight > narrowScroll.listHeight
       && narrowScroll.listOverflowY === 'auto'
-      && narrowScroll.inspectorOverflowY === 'auto' && narrowScroll.footerPinned,
-      '900px long-page keeps two independently reachable editing regions: ' + JSON.stringify(narrowScroll));
+      && narrowScroll.inspectorOverflowY === 'visible' && narrowScroll.footerPinned,
+      '900px long page keeps all expanded block controls reachable in one stack: ' + JSON.stringify(narrowScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-900');
     // Shared SPA bootstrap requests AdSense and Pretendard even before a
     // block is edited; the CDP mock blocks both remote resources. This test

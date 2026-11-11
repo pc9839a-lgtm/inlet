@@ -229,225 +229,141 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .
 .editor-preview .image-wrap > .editor-preview-image-replace { top: 10px; right: 10px; }
 
 
-/* Canvas-first editor workbench — only the authenticated editing surface.
-   The phone's landing content remains exactly 390px; floating tools live
-   OUTSIDE the public page renderer, not inside its persisted block DOM. */
+/* Clean mobile canvas: the actual page stays 390px wide. Context actions
+   occupy one compact bar ABOVE the page, never a floating overlay. */
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace {
-  background-color: #f7f9fd !important;
-  background-image: radial-gradient(#dce4f0 .75px, transparent .75px) !important;
-  background-size: 18px 18px !important;
-  padding-top: 31px !important;
+  padding-top: 24px !important;
+  background: #eaedf3 !important;
+  background-image: none !important;
 }
 html body #root .builder-shell.canvas-editor-shell .preview-stage-heading {
-  min-height: 27px;
-  margin-bottom: 6px;
-  padding-inline: 0;
+  min-height: 30px;
+  margin: 0 0 12px;
+  padding: 0;
 }
 html body #root .builder-shell.canvas-editor-shell .preview-stage-label strong {
-  color: #1b2740;
-  font-size: 15px;
-  font-weight: 780;
-  letter-spacing: -.035em;
-}
-html body #root .builder-shell.canvas-editor-shell .preview-stage-width {
-  padding: 5px 9px;
-  border: 1px solid #e0e6f1;
-  border-radius: 7px;
-  background: #fff;
-  color: #5e6c85;
-  font-size: 11px;
-  font-weight: 650;
+  color: #283450;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -.02em;
 }
 html body #root .builder-shell.canvas-editor-shell .preview-stage-signal {
-  width: 8px;
-  height: 8px;
-  background: #2454ff;
+  background: #4256d5;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-canvas-hint {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
-  width: 100%;
-  margin: 0 0 18px;
-  color: #758298;
-  font-size: 12px;
-  line-height: 1.45;
+html body #root .builder-shell.canvas-editor-shell .preview-stage-width {
+  color: #677389;
+  font-size: 11px;
+  font-weight: 600;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-canvas-hint svg { color: #6379ab; }
 html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap {
   position: relative;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
   flex: 0 0 auto;
   width: 394px;
-  max-width: none;
+  max-width: 100%;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame {
-  border-color: #d7e0ef !important;
-  border-radius: 19px !important;
-  box-shadow: 0 19px 62px rgba(35, 58, 106, .19), 0 3px 12px rgba(35, 58, 106, .07) !important;
+  border-color: #d7dce7 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 48px rgba(33,43,68,.13), 0 2px 8px rgba(33,43,68,.05) !important;
+  height: calc(100dvh - 216px) !important;
+  min-height: 0 !important;
+  max-height: 820px !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools {
-  position: absolute;
-  top: var(--canvas-tools-top, 76px);
-  left: calc(100% + 18px);
-  z-index: 5;
+  position: static !important;
   display: grid;
-  width: 174px;
-  min-width: 0;
-  padding: 11px;
-  border: 1px solid #dce4f0;
-  border-radius: 12px;
-  background: rgba(255,255,255,.98);
-  box-shadow: 0 12px 40px rgba(30, 52, 94, .14), 0 2px 7px rgba(30,52,94,.06);
-  color: #192640;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 1px solid #e3e7ef;
+  border-radius: 11px;
+  background: #fff;
+  color: #202b42;
+  box-shadow: 0 1px 6px rgba(35,49,78,.06);
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools::before {
-  content: '';
-  position: absolute;
-  top: 22px;
-  right: 100%;
-  width: 18px;
-  height: 1px;
-  background: #95aafa;
+  display: none;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading {
   display: grid;
-  gap: 5px;
+  gap: 2px;
   min-width: 0;
-  padding: 3px 4px 12px;
-  border-bottom: 1px solid #ebeff6;
+  padding: 0 !important;
+  border: 0 !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading span {
-  color: #496bd2;
-  font-size: 10px;
-  font-weight: 750;
+  display: none;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 750;
+  min-width: 0; max-width: 100px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: 12px; font-weight: 750;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading small {
-  color: #8390a4;
-  font-size: 11px;
+  color: #909aac; font-size: 10px;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-primary {
-  display: grid;
-  gap: 6px;
-  padding: 11px 0 7px;
+  display: flex; align-items: center;
+  gap: 5px;
+  padding: 0 !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button {
   display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 7px 9px;
-  border: 1px solid #dee5ee;
-  border-radius: 7px;
-  background: #fff;
-  color: #34445f;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 650;
-  cursor: pointer;
+  align-items: center; justify-content: center;
+  gap: 5px;
+  min-height: 35px; padding: 6px 9px;
+  border: 1px solid #e2e7ef; border-radius: 7px;
+  background: #f9fafc; color: #3d4960;
+  font: inherit; font-size: 11px; font-weight: 650; cursor: pointer;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:hover:not(:disabled) {
-  border-color: #b8cafa;
-  background: #eef3ff;
-  color: #2454ff;
+  border-color: #c4cdf2; background: #f1f3ff; color: #344acb;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:focus-visible {
-  outline: 2px solid #2454ff;
-  outline-offset: 2px;
+  outline: 2px solid #465cf0; outline-offset: 2px;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:disabled {
-  opacity: .32;
-  cursor: default;
+  opacity: .32; cursor: default;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button.editor-canvas-add-after {
-  border-color: #2454ff;
-  background: #2454ff;
-  color: #fff;
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools .editor-canvas-add-after {
+  border-color: #263154; background: #263154; color: #fff;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button.editor-canvas-add-after:hover {
-  background: #1945dc;
-  color: #fff;
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools .editor-canvas-add-after:hover:not(:disabled) {
+  background: #192446; color: #fff;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5px;
-  padding-top: 3px;
+  display: flex; align-items: center; gap: 3px; padding: 0;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary button {
-  min-width: 0;
-  min-height: 30px;
-  padding: 4px;
+  min-width: 27px; min-height: 30px; padding: 4px;
+  border-color: transparent;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  width: 100%;
-  min-height: 42px;
-  margin: 14px 0 0;
-  padding: 7px 10px;
-  border: 1px dashed #bbc9e4;
-  border-radius: 10px;
-  background: rgba(255,255,255,.9);
-  color: #385ac5;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add:hover {
-  border-color: #668cf1;
-  background: #edf2ff;
+  width: 100%; min-height: 43px; margin: 12px 0 0;
+  padding: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border: 1px dashed #b4bfd2; border-radius: 10px;
+  background: #fff; color: #3f509a;
+  font: inherit; font-size: 12px; font-weight: 680; cursor: pointer;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add:focus-visible {
-  outline: 2px solid #2454ff;
-  outline-offset: 2px;
-}
-html body #root .builder-shell.canvas-editor-shell .editor-canvas-caption {
-  display: block;
-  margin: 12px 0 0;
-  color: #98a2b3;
-  font-size: 10px;
-  line-height: 1.35;
-  text-align: center;
+  outline: 2px solid #465cf0; outline-offset: 2px;
 }
 html body #root .builder-shell.canvas-editor-shell .preview-workspace .preview-selected-block {
-  outline: 2px solid #2454ff !important;
+  outline: 2px solid #465cf0 !important;
   outline-offset: -2px !important;
-  box-shadow: inset 0 0 0 2px rgba(36,84,255,.10) !important;
+  box-shadow: inset 0 0 0 1px rgba(70,92,240,.13) !important;
 }
-@media (max-width: 1450px) {
-  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools {
-    position: static;
-    order: -1;
-    display: grid;
-    grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
-    width: 100%;
-    margin: 0 0 12px;
-    padding: 9px;
-  }
-  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools::before { display: none; }
-  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading {
-    padding: 4px 8px 3px 2px; border: 0; align-self: center;
-  }
-  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-primary { padding: 0; gap: 5px; }
-  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary { grid-column: 1 / -1; }
-  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-primary button { min-height: 32px; }
-}
-@media (max-width: 950px) {
+@media (min-width: 900px) and (max-width: 950px) {
   html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap { width: 392px; }
-  html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add { max-width: 100%; }
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools {
+    gap: 4px; padding-inline: 5px;
+  }
 }
