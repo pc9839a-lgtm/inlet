@@ -149,15 +149,19 @@ export async function dispatchPending(db, env, config) {
   await db.prepare("UPDATE meta_sheet_dual_queue SET ct_status='RETRY', updated_at=CURRENT_TIMESTAMP WHERE ct_status='SENDING' AND ct_attempts<3 AND updated_at < datetime('now','-3 minutes')").run();
   // Advertiser delivery must never be retried automatically after an ambiguous send.
   await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='REVIEW', ad_error='전송 중단: 수동 확인' WHERE ad_status='SENDING' AND updated_at < datetime('now','-3 minutes')").run();
-  const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR ad_status='PENDING' ORDER BY created_at LIMIT 10").all();
+  // One-time, single-ID repair: the account owner confirmed the 2026-11-10 advertiser record
+  // was absent. Never auto-replay other leads, never replay SENT, and never exceed 2 attempts.
+  const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR ad_status='PENDING' OR (event_id='meta-l1870743443942053' AND ad_status='REVIEW' AND ad_attempts=1) ORDER BY created_at LIMIT 10").all();
   for (const record of queue.results || []) {
     let lead;
     try { lead = JSON.parse(record.payload_json); } catch { continue; }
     if (record.ct_status === 'PENDING' || record.ct_status === 'RETRY') {
       await sendCallTag(db, env, config, record.event_id, lead);
     }
-    if (record.ad_status === 'PENDING') {
-      await sendAdvertiser(db, config, record.event_id, lead);
+    const exactRecoveredLead = record.event_id === 'meta-l1870743443942053'
+      && record.ad_status === 'REVIEW';
+    if (record.ad_status === 'PENDING' || exactRecoveredLead) {
+      await sendAdvertiser(db, config, record.event_id, lead, exactRecoveredLead);
     }
   }
   await db.prepare("DELETE FROM meta_sheet_dual_queue WHERE created_at < datetime('now','-14 days') AND ct_status NOT IN ('PENDING','RETRY','SENDING') AND ad_status NOT IN ('PENDING','SENDING')").run();
@@ -200,8 +204,11 @@ async function sendCallTag(db, env, config, id, lead) {
       '콜태그 등록 실패');
   }
 }
-async function sendAdvertiser(db, config, id, lead) {
-  const lease = await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='PENDING'").bind(id).run();
+async function sendAdvertiser(db, config, id, lead, oneTimeRecovery = false) {
+  const claimSql = oneTimeRecovery && id === 'meta-l1870743443942053'
+    ? "UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='REVIEW' AND ad_attempts=1"
+    : "UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='PENDING'";
+  const lease = await db.prepare(claimSql).bind(id).run();
   if (!lease.meta?.changes) return;
   try {
     const res = await fetch(config.advertiser, {
