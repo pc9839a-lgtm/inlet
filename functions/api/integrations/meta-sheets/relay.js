@@ -45,14 +45,16 @@ export function normalizeSheetLead(row) {
   };
 }
 // Mirror the proven Make HTTP form shape: exactly seven fields in the same order.
-// ITEM=41 is the exact archived Make blueprint. Override META_SHEETS_ADVERTISER_ITEM for a newer campaign.
-export function advertiserForm(lead, item = '41') {
+// Production advertiser campaign is explicitly locked to ITEM=40.
+// Do not reuse the archived Make campaign (41) or legacy Cloudflare setting (64).
+export const ADVERTISER_ITEM = '40';
+export function advertiserForm(lead) {
   const raw = String(lead?.phone || '').replace(/\D/g, '');
   const phone = /^010\d{8}$/.test(raw)
     ? raw.slice(0, 3) + '-' + raw.slice(3, 7) + '-' + raw.slice(7)
     : raw;
   const form = new URLSearchParams();
-  form.set('ITEM', String(item));
+  form.set('ITEM', ADVERTISER_ITEM);
   form.set('DATAS_name', String(lead?.name || ''));
   form.set('DATAS_phone', phone);
   form.set('DATAS_money', String(lead?.money || ''));
@@ -94,12 +96,12 @@ async function ensureSchema(db) {
 }
 // This is a one-way SHA-256 fingerprint, never the secret Webhook URL.
 const META_SHEETS_ALLOWED_WEBHOOK_HASH = '5581b91b500d9fb0454d2377b8a53968d79d4471f314171d8eeb2d50dd78c57f';
-function readConfig(env) {
+export function readConfig(env) {
   let advertiser;
   try { advertiser = new URL(String(env.META_SHEETS_ADVERTISER_URL || 'https://ollymkt.shop/dbapi/')); }
   catch { return null; }
   if (advertiser.protocol !== 'https:' || env.META_SHEETS_DISPATCH_ENABLED === '0') return null;
-  return { advertiser: advertiser.href, item: String(env.META_SHEETS_ADVERTISER_ITEM || '41') };
+  return { advertiser: advertiser.href, item: ADVERTISER_ITEM };
 }
 export function extractWebhookKey(raw) {
   const value = String(raw || '').trim();
@@ -245,7 +247,7 @@ async function sendAdvertiser(db, config, id, lead) {
     const res = await fetch(config.advertiser,{
       method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:advertiserForm(lead,config.item),
+      body:advertiserForm(lead),
       redirect:'follow', // Mirror Make blueprint followRedirect=true (POST only).
       signal:AbortSignal.timeout(12000)
     });
