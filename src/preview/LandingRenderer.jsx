@@ -335,7 +335,16 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
       && !event.target.closest?.('button, a, input, textarea, select, label');
     const slot = imageClick ? event.target.closest?.('[data-preview-gallery-index]')?.getAttribute('data-preview-gallery-index') : null;
     const galleryIndex = slot != null && /^\d+$/.test(slot) ? Number(slot) : undefined;
-    onSelectBlock?.(id, { imageClick, galleryIndex });
+    const block = blocks.find((entry) => entry.id === id);
+    // Title/description in a preview form are not inline text controls:
+    // a click opens the matching, existing Inspector field instead.
+    // Direct hero/text inline editors keep their own double-click behavior.
+    const focusField = editorPreview && block?.type === 'form'
+      ? event.target.closest?.('h2') ? 'title'
+        : event.target.closest?.('.form-desc-align-left, .form-desc-align-center, .form-desc-align-right') ? 'description'
+        : ''
+      : '';
+    onSelectBlock?.(id, { imageClick, galleryIndex, focusField });
   };
 
   const go = (target, url, labelText) => {
