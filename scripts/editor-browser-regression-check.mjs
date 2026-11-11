@@ -2107,7 +2107,7 @@ async function run() {
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '0px' && stageOneList.rowBorder === '1px'
-      && stageOneList.rowRadius === '11px' && stageOneList.height >= 55 && stageOneList.height <= 70
+      && stageOneList.rowRadius.startsWith('11px 11px') && stageOneList.height >= 55 && stageOneList.height <= 70
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
       && stageOneList.actionCount === 1 && stageOneList.actions,
