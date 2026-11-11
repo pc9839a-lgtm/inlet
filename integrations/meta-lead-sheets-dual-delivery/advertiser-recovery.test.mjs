@@ -82,7 +82,7 @@ test('previous Make request seven fields are preserved',()=>{
     money:'2천만원',area:'',calldate:'오후',content:'상담',email:'ignore@example.com'}));
   assert.deepEqual([...form.keys()],['ITEM','DATAS_name','DATAS_phone',
     'DATAS_money','DATAS_area','DATAS_calldate','DATAS_data']);
-  assert.equal(form.get('ITEM'),'41');
+  assert.equal(form.get('ITEM'),'40');
   assert.equal(form.has('DATAS_email'),false);
 });
 
@@ -104,9 +104,17 @@ test('GET and HEAD safe probes store only header allowlist and do not create adv
 
 test('advertiser POST follows redirects as in Make blueprint while HEAD/GET diagnostic remains no-lead',()=>{
   assert.match(server,/redirect:'follow', \/\/ Mirror Make blueprint followRedirect=true/);
-  assert.match(server,/META_SHEETS_ADVERTISER_ITEM \|\| '41'/);
-  assert.match(recovery,/META_SHEETS_ADVERTISER_ITEM\|\|'41'/);
+  assert.match(server,/export const ADVERTISER_ITEM = '40'/);
+  assert.match(recovery,/item:ADVERTISER_ITEM/);
   assert.match(server,/method:'POST'/);
   assert.match(server,/ad_status === 'PENDING'/);
   assert.doesNotMatch(recovery,/retry-advertiser/);
+});
+
+test('production advertiser and diagnostics cannot use the deprecated ITEM 41 or 64',()=>{
+  assert.doesNotMatch(server,/env\.META_SHEETS_ADVERTISER_ITEM/);
+  assert.doesNotMatch(recovery,/env\.META_SHEETS_ADVERTISER_ITEM/);
+  assert.match(server,/form\.set\('ITEM', ADVERTISER_ITEM\)/);
+  assert.match(server,/return \{ advertiser: advertiser\.href, item: ADVERTISER_ITEM \}/);
+  assert.match(recovery,/const shape=requestShape\(source,ADVERTISER_ITEM\)/);
 });
