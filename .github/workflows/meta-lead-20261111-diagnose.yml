@@ -1,0 +1,66 @@
+name: Meta lead live diagnosis — 2026-11-11
+on:
+  push:
+    branches:
+      - ops/meta-lead-20261111-recovery
+    paths:
+      - .github/workflows/meta-lead-20261111-diagnose.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit
+      - name: Query production queue without exposing PII
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          QUERY="SELECT event_id, ct_status, ad_status, ct_attempts, ad_attempts, ct_error, ad_error, created_at, updated_at FROM meta_sheet_dual_queue WHERE event_id = 'meta-l1870743443942053' LIMIT 1;"
+          node node_modules/wrangler/bin/wrangler.js d1 execute inlet-prod --remote --json --command "$QUERY" > /tmp/meta-result.json
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const source = JSON.parse(fs.readFileSync('/tmp/meta-result.json', 'utf8'));
+          const first = Array.isArray(source) ? source[0] : source;
+          if (first?.success === false) throw new Error('D1 query failed');
+          const result = Array.isArray(first?.results) ? first.results : [];
+          console.log(JSON.stringify({
+            liveLeadId: 'meta-l1870743443942053',
+            foundInQueue: result.length === 1,
+            record: result.map(r => ({
+              calltagStatus: r.ct_status,
+              advertiserStatus: r.ad_status,
+              calltagAttempts: r.ct_attempts,
+              advertiserAttempts: r.ad_attempts,
+              calltagError: String(r.ct_error || '').slice(0, 120),
+              advertiserError: String(r.ad_error || '').slice(0, 120),
+              createdAt: r.created_at, updatedAt: r.updated_at
+            }))
+          }, null, 2));
+          JS
+      - name: Check CallTag canonical lead intake status without customer data
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          QUERY="SELECT COUNT(*) AS value FROM calltag_lead_events WHERE external_id = 'meta-l1870743443942053';"
+          node node_modules/wrangler/bin/wrangler.js d1 execute inlet-prod --remote --json --command "$QUERY" > /tmp/calltag-result.json
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const source = JSON.parse(fs.readFileSync('/tmp/calltag-result.json', 'utf8'));
+          const first = Array.isArray(source) ? source[0] : source;
+          if (first?.success === false) throw new Error('D1 query failed');
+          console.log(JSON.stringify({ calltagActualLeadCount: first?.results?.[0]?.value ?? null }));
+          JS
