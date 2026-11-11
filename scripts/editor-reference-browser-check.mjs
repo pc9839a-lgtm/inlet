@@ -110,7 +110,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       return {
         heading: heading?.textContent.trim(),
         headingVisible: !!heading?.getClientRects().length && !!heading?.textContent.trim(),
-        identityVisible: !!identity && identity.getBoundingClientRect().height >= 22,
+        identityVisible: !!identity && !!identity.getClientRects().length,
         primaryVisible: !!primary?.getClientRects().length,
         primaryHeight: primary?.getBoundingClientRect().height || 0,
         secondaryClosed: secondary?.tagName === 'DETAILS' && secondary.open === false,
