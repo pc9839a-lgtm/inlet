@@ -11,6 +11,7 @@ const modeTabs = read('src/editor/blockEditors/BottomLinkModeTabs.jsx');
 const target = read('src/editor/targetControlModel.js');
 const imageInput = read('src/editor/imageControls.jsx');
 const browser = read('scripts/editor-browser-regression-check.mjs');
+const reference = read('scripts/editor-reference-browser-check.mjs');
 
 assert.ok(image.includes("editorPreview && selected && s.mode !== 'gallery'"),
   'direct photo action must appear only on a selected non-gallery edit preview image');
@@ -51,7 +52,7 @@ assert.ok(screen.includes('focusPreviewFormField(id, interaction.focusField)')
   'direct edit targets existing title/submit fields without a duplicate save path');
 assert.ok(formCss.includes('.form .editor-preview-submit-edit'),
   'in-canvas affordance styling must stay owned by the preview pane');
-assert.ok(browser.includes('form submit-copy shortcut focuses exact existing field'),
+assert.ok(reference.includes('form submit-copy shortcut focuses exact existing field'),
   'Chrome must exercise the selected-preview CTA without form submission');
 assert.ok(browser.includes('selected image displays replace action')
   && browser.includes('selected CTA opens exact button label setting')
