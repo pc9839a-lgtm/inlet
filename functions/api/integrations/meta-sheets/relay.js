@@ -101,7 +101,10 @@ export function readConfig(env) {
   try { advertiser = new URL(String(env.META_SHEETS_ADVERTISER_URL || 'https://ollymkt.shop/dbapi/')); }
   catch { return null; }
   if (advertiser.protocol !== 'https:' || env.META_SHEETS_DISPATCH_ENABLED === '0') return null;
-  return { advertiser: advertiser.href, item: ADVERTISER_ITEM };
+  // Make can own advertiser delivery while Cloudflare continues CallTag intake.
+  // The flag is opt-in and must be enabled only AFTER Make has been verified.
+  const advertiserTransport = env.META_SHEETS_ADVERTISER_TRANSPORT === 'make' ? 'make' : 'direct';
+  return { advertiser: advertiser.href, item: ADVERTISER_ITEM, advertiserTransport };
 }
 export function extractWebhookKey(raw) {
   const value = String(raw || '').trim();
@@ -172,7 +175,10 @@ export async function dispatchPending(db, env, config) {
   await db.prepare("UPDATE meta_sheet_dual_queue SET ct_status='RETRY', updated_at=CURRENT_TIMESTAMP WHERE ct_status='SENDING' AND ct_attempts<3 AND updated_at < datetime('now','-3 minutes')").run();
   // Advertiser may have accepted an interrupted request; never replay automatically.
   await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='REVIEW', ad_error='전송 중단: 수동 확인' WHERE ad_status='SENDING' AND updated_at < datetime('now','-3 minutes')").run();
-  const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR ad_status='PENDING' ORDER BY created_at LIMIT 10").all();
+  // When Make owns delivery, do not dispatch any advertiser POST from Cloudflare.
+  // Keep the advertiser row PENDING rather than falsely claiming a Make/CRM receipt.
+  const directAdvertiser = config.advertiserTransport !== 'make';
+  const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR (ad_status='PENDING' AND ?=1) ORDER BY created_at LIMIT 10").bind(directAdvertiser ? 1 : 0).all();
   for (const record of queue.results || []) {
     let lead;
     try { lead = JSON.parse(record.payload_json); } catch { continue; }
@@ -180,7 +186,7 @@ export async function dispatchPending(db, env, config) {
     // advertiser's POST (or vice versa) within the Cloudflare waitUntil budget.
     const deliveries = [];
     // REVIEW/SENT are terminal. Do not attempt another chargeable advertiser POST.
-    if (record.ad_status === 'PENDING') {
+    if (directAdvertiser && record.ad_status === 'PENDING') {
       deliveries.push(sendAdvertiser(db, config, record.event_id, lead));
     }
     if (record.ct_status === 'PENDING' || record.ct_status === 'RETRY') {
