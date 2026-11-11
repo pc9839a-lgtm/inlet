@@ -2073,11 +2073,11 @@ async function run() {
         helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
       };
     })()`);
-    assert(stageTwoSettings.listVisible && stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
-      && stageTwoSettings.title === '히어로' && stageTwoSettings.headingVisible
+    assert(stageTwoSettings.listVisible && !stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
+      && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.headingVisible
       && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.paneWidth
       && stageTwoSettings.fixedVisible && stageTwoSettings.addVisible && stageTwoSettings.helperCopyRemoved,
-      'stage 2 must focus the selected block without expanding rows or mixing unrelated controls: ' + JSON.stringify(stageTwoSettings));
+      'stage 2 must preserve the list and open an edited-title block directly in its stack: ' + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
     await openBlockSettings(client, 'editor-hero');
     await focusSelector(client, '#editor-block-editor-hero .screen-order-v2-title-wrap');
