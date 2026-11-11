@@ -41,22 +41,24 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     })()`);
-    assert(visual?.heading === '블록 구성' && visual.kicker === '페이지 편집'
-      && /[0-9]+개/.test(visual.total) && visual.buttonText === '블록 추가'
+    const expectedComposerWidth = Math.min(660, Math.max(500, referenceWidth * .42));
+    assert(visual?.heading === '블록 편집' && visual.kicker === '내 페이지'
+      && /[0-9]+개 블록/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
-      && visual.buttonWidth >= visual.headingWidth - 24
-      && visual.buttonHeight >= 39 && visual.searchBelowButton
-      && ['rgb(237, 242, 255)', 'rgb(227, 235, 255)'].includes(visual.buttonBackground)
-      && visual.listNameSize === '13.5px' && visual.fixedNameSize === '13.5px'
-      && visual.normalRowHeight >= 76 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 6
-      && Math.abs(visual.compositionWidth - (referenceWidth === 1672 ? 1672 * .156 : 220)) <= 3
-      && visual.inspectorWidth >= (referenceWidth === 1672 ? 370 : 255)
-      && visual.compositionBackground === 'rgb(248, 250, 252)'
+      && visual.buttonWidth >= visual.headingWidth - 60
+      && visual.buttonHeight >= 44 && visual.searchBelowButton
+      && visual.buttonBackground === 'rgb(32, 43, 77)'
+      && visual.listNameSize === '14px' && visual.fixedNameSize === '14px'
+      && visual.normalRowHeight >= 55 && visual.normalRowHeight <= 70
+      && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
+      && Math.abs(visual.compositionWidth - expectedComposerWidth) <= 3
+      && visual.inspectorWidth >= visual.compositionWidth - 85
+      && visual.compositionBackground === 'rgb(244, 245, 249)'
       && visual.inspectorBackground === 'rgb(255, 255, 255)'
-      && visual.stageBackground === 'rgb(247, 249, 253)'
+      && visual.stageBackground === 'rgb(234, 237, 243)'
       && visual.stageHeading === '페이지 화면' && visual.stageWidth === '모바일 · 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
-      'redesigned 1672/900 editor must separate composition, properties and live page with readable layers: '
+      'Littly block stack must show inline editing, primary add and a separate real mobile page: '
       + JSON.stringify({ referenceWidth, visual }));
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
