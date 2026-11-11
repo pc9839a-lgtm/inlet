@@ -60,7 +60,7 @@ export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selec
       <Search size={16} aria-hidden="true" />
       <input
         type="search"
-        placeholder="블록 이름 검색"
+        placeholder="제목·내용·블록 검색"
         aria-label="블록 이름 검색"
         value={query}
         onChange={changeQuery}
