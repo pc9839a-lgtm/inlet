@@ -231,8 +231,8 @@ export function EditPanelLayout({
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']}
               compositionRow selectedId={fixedBlocksProps.openId}
-              openId="" toggleBlockOpen={chooseFixed} />
-            {renderFixedSettings(['topnav'])}
+              openId="" toggleBlockOpen={chooseFixed}
+              renderInlineEditor={() => renderFixedSettings(['topnav'])} />
           </FixedCompositionGroup>
           <div className="editor-composition-group-caption">
             <span>페이지 블록</span>
@@ -252,8 +252,8 @@ export function EditPanelLayout({
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']}
               compositionRow selectedId={fixedBlocksProps.openId}
-              openId="" toggleBlockOpen={chooseFixed} />
-            {renderFixedSettings(['bottom', 'footer'])}
+              openId="" toggleBlockOpen={chooseFixed}
+              renderInlineEditor={() => renderFixedSettings(['bottom', 'footer'])} />
           </FixedCompositionGroup>
         </div>
         <footer className="editor-composition-footer">
