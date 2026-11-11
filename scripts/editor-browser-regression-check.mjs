@@ -3059,8 +3059,10 @@ async function run() {
           };
         })()`);
         assert(questionLayout.controlFits && questionLayout.leftWidth >= 100
-          && questionLayout.columns === (desktopViewport.width === 900 ? 1 : 2),
-          'narrow form editor must stack at 900px and retain usable controls at 1024px: '
+          && questionLayout.inner >= questionLayout.rowWidth
+          && questionLayout.rightLeft >= questionLayout.leftRight - 1
+          && [1, 2].includes(questionLayout.columns),
+          'narrow inline form questions must preserve readable, nonoverlapping controls: '
             + JSON.stringify({ width:desktopViewport.width, questionLayout }));
         await capture(client, `inspector-form-width-${desktopViewport.width}`);
         await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
