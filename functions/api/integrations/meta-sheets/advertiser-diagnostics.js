@@ -43,7 +43,7 @@ export function responsePreview(body, contentType, lead) {
   return redactAdvertiserText(raw, lead);
 }
 export function requestShape(lead, item) {
-  const fields={DATAS_name:lead.name,DATAS_phone:lead.advertiserPhone || lead.phone,
+  const fields={DATAS_name:lead.name,DATAS_phone:lead.phone,
     DATAS_money:lead.money,DATAS_calldate:lead.calldate,DATAS_data:lead.content};
   return {
     item:String(item),
