@@ -26,13 +26,16 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
   })[block.type] || '내용 수정';
 
   React.useEffect(() => {
-    // A user-selected row/canvas may move focus into its inspector.
-    // On first entry or when returning from Inbox/Stats, leave the active
-    // workspace navigation trigger focused instead of stealing its focus.
-    const active = document.activeElement;
-    if (active?.closest?.('.editor-composition-panel, .preview-workspace')) {
-      backRef.current?.focus({ preventScroll: true });
-    }
+    // Let WorkspaceTabs restore a lost workspace-menu focus first when
+    // returning from Inbox/Stats. A real block change still focuses its
+    // inspector heading, including programmatic row-click selection.
+    const frame = requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (!active?.closest?.('.workspace-persistent-header')) {
+        backRef.current?.focus({ preventScroll: true });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   return (
