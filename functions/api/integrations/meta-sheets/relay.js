@@ -3,6 +3,9 @@ import { ensureWebhookSchema, intakeCanonicalLead, sha256 } from '../../calltag/
 import { notifyUniversalLeadAvailable } from '../../call/push/_shared.js';
 
 const METHODS = 'POST, OPTIONS';
+// Owner confirmed this exact lead is absent from the advertiser's CRM on 2026-11-11.
+// This permits exactly one recovery retry, never any other record.
+const APPROVED_ADVERTISER_RECOVERY_EVENT_ID = 'meta-l1870743443942053';
 const FIELD = {
   id: ['id', 'lead_id'], created: ['created_time', 'created_at'],
   name: ['full_name', '이름', '성함'], phone: ['phone_number', '연락처', '전화번호'],
@@ -152,15 +155,17 @@ export async function dispatchPending(db, env, config) {
   await db.prepare("UPDATE meta_sheet_dual_queue SET ct_status='RETRY', updated_at=CURRENT_TIMESTAMP WHERE ct_status='SENDING' AND ct_attempts<3 AND updated_at < datetime('now','-3 minutes')").run();
   // Advertiser may have accepted an interrupted request; never replay automatically.
   await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='REVIEW', ad_error='전송 중단: 수동 확인' WHERE ad_status='SENDING' AND updated_at < datetime('now','-3 minutes')").run();
-  const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR ad_status='PENDING' ORDER BY created_at LIMIT 10").all();
+  const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR ad_status='PENDING' OR (event_id=? AND ad_status IN ('REVIEW','SENT') AND ad_attempts=1) ORDER BY created_at LIMIT 10").bind(APPROVED_ADVERTISER_RECOVERY_EVENT_ID).all();
   for (const record of queue.results || []) {
     let lead;
     try { lead = JSON.parse(record.payload_json); } catch { continue; }
     // Run each destination independently. CallTag FCM push must never block the
     // advertiser's POST (or vice versa) within the Cloudflare waitUntil budget.
     const deliveries = [];
-    if (record.ad_status === 'PENDING') {
-      deliveries.push(sendAdvertiser(db, config, record.event_id, lead));
+    const approvedOneTimeReplay = record.event_id === APPROVED_ADVERTISER_RECOVERY_EVENT_ID
+      && (record.ad_status === 'REVIEW' || record.ad_status === 'SENT');
+    if (record.ad_status === 'PENDING' || approvedOneTimeReplay) {
+      deliveries.push(sendAdvertiser(db, config, record.event_id, lead, approvedOneTimeReplay));
     }
     if (record.ct_status === 'PENDING' || record.ct_status === 'RETRY') {
       deliveries.push(sendCallTag(db, env, config, record.event_id, lead));
@@ -207,8 +212,12 @@ async function sendCallTag(db, env, config, id, lead) {
       '콜태그 등록 실패');
   }
 }
-async function sendAdvertiser(db, config, id, lead) {
-  const lease = await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='PENDING'").bind(id).run();
+async function sendAdvertiser(db, config, id, lead, approvedOneTimeReplay = false) {
+  const recovery = approvedOneTimeReplay && id === APPROVED_ADVERTISER_RECOVERY_EVENT_ID;
+  const claimSql = recovery
+    ? "UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status IN ('REVIEW','SENT') AND ad_attempts=1"
+    : "UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='PENDING'";
+  const lease = await db.prepare(claimSql).bind(id).run();
   if (!lease.meta?.changes) return;
   try {
     const res = await fetch(config.advertiser, {
