@@ -2,7 +2,6 @@ import { assertD1, jsonResponse, optionsResponse } from '../../_shared.js';
 import { ensureWebhookSchema, intakeCanonicalLead, sha256 } from '../../calltag/v1/_shared.js';
 import { notifyUniversalLeadAvailable } from '../../call/push/_shared.js';
 import { recordAdvertiserHttpLog, responsePreview, safeRedirect } from './advertiser-diagnostics.js';
-import { recordAdvertiserHttpLog, responsePreview, safeRedirect } from './advertiser-diagnostics.js';
 
 const METHODS = 'POST, OPTIONS';
 const FIELD = {
@@ -210,12 +209,8 @@ async function sendCallTag(db, env, config, id, lead) {
       '콜태그 등록 실패');
   }
 }
-async function sendAdvertiser(db, config, id, lead, approvedOneTimeReplay = false) {
-  const recovery = approvedOneTimeReplay && id === APPROVED_ADVERTISER_RECOVERY_EVENT_ID;
-  const claimSql = recovery
-    ? "UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status IN ('REVIEW','SENT') AND ad_attempts=1"
-    : "UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='PENDING'";
-  const lease = await db.prepare(claimSql).bind(id).run();
+async function sendAdvertiser(db, config, id, lead) {
+  const lease = await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='PENDING'").bind(id).run();
   if (!lease.meta?.changes) return;
   const attemptRow = await db.prepare("SELECT ad_attempts FROM meta_sheet_dual_queue WHERE event_id=?").bind(id).first();
   const attempt = Number(attemptRow?.ad_attempts || 1);
