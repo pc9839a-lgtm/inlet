@@ -577,7 +577,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-footer {
 }
 html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
   background: #fff;
-  padding: 0 24px 48px;
+  padding: 0 16px 48px;
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings-header {
   padding: 23px 0 17px;
