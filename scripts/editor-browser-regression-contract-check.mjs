@@ -178,8 +178,12 @@ assert(mediaSettingsBrowserSource.includes("'전체 2+'") && mediaSettingsBrowse
 assert(mediaSettingsBrowserSource.includes("width: 980") && mediaSettingsBrowserSource.includes("narrow media settings overflow"), 'media settings browser QA must cover narrow desktop overflow');
 assert(!mediaSettingsBrowserSource.includes('pagero.kr/api/auth/login') && !mediaSettingsBrowserSource.includes('productionPassword'), 'media settings browser QA must not use production credentials or production auth endpoints');
 
-assert(addBlockPanelSource.includes('<AddBlockGroupGrid onAdd={onAdd} />'), 'block add surface must open directly to the basic block grid');
-assert(!addBlockPanelSource.includes('pagero-widget-search') && !addBlockPanelSource.includes('section-add-modes') && !addBlockPanelSource.includes('AddSectionPatternGrid'), 'block add surface must not expose search, recommendation modes, or section-pattern cards');
+assert(addBlockPanelSource.includes('<AddBlockGroupGrid onAdd={onAdd} query={query} category={category} />')
+  && addBlockPanelSource.includes('editor-gallery-quick-grid'),
+  'block gallery must retain the canonical block grid alongside visual quick insertion');
+assert(!addBlockPanelSource.includes('pagero-widget-search') && !addBlockPanelSource.includes('section-add-modes') && !addBlockPanelSource.includes('AddSectionPatternGrid')
+  && addBlockPanelSource.includes('aria-label="추가할 블록 검색"'),
+  'visual gallery adds lightweight search without reintroducing recommendation or section-pattern modes');
 assert(!addBlockPanelSource.includes('recent-additions') && !addBlockPanelSource.includes('최근 사용'), 'block add surface must not expose recent-use UI');
 assert(addBlockGridSource.includes("category === 'all' || categoryKey === category") && addBlockGridSource.includes('위젯 없음'), 'block grid filtering support may remain internal with a concise empty state and without extra picker chrome');
 assert(addBlockOptionSource.includes("meta.preset || '', type"), 'block add options must preserve existing add-block catalog behavior');
