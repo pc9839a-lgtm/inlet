@@ -1,0 +1,62 @@
+name: Meta live lead Google OAuth access preflight
+on:
+  push:
+    branches: [ops/meta-lead-20261111-recovery]
+    paths:
+      - .github/workflows/meta-live-sheet-access-20261111.yml
+permissions:
+  contents: read
+jobs:
+  sheet_read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: production
+    steps:
+      - name: Check existing Google Sheets production OAuth can read requested sheet
+        env:
+          OAUTH_CLIENT_ID: ${{ secrets.PAGERO_GOOGLE_SHEETS_VERIFY_CLIENT_ID }}
+          OAUTH_CLIENT_SECRET: ${{ secrets.PAGERO_GOOGLE_SHEETS_VERIFY_CLIENT_SECRET }}
+          OAUTH_REFRESH_TOKEN: ${{ secrets.PAGERO_GOOGLE_SHEETS_VERIFY_REFRESH_TOKEN }}
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          const creds = {
+            id:process.env.OAUTH_CLIENT_ID,
+            secret:process.env.OAUTH_CLIENT_SECRET,
+            refresh:process.env.OAUTH_REFRESH_TOKEN
+          };
+          if(!creds.id||!creds.secret||!creds.refresh) {
+            console.log(JSON.stringify({GoogleOAuthReady:false,reason:'missing_credentials'}));
+            process.exit(0);
+          }
+          const tokenResponse = await fetch('https://oauth2.googleapis.com/token',{
+            method:'POST',
+            headers:{'Content-Type':'application/x-www-form-urlencoded'},
+            body:new URLSearchParams({
+              client_id:creds.id,client_secret:creds.secret,
+              refresh_token:creds.refresh,grant_type:'refresh_token'
+            }),
+            signal:AbortSignal.timeout(15000)
+          });
+          const token = await tokenResponse.json();
+          if(!tokenResponse.ok||!token.access_token) {
+            console.log(JSON.stringify({GoogleOAuthReady:false,reason:'refresh_rejected',status:tokenResponse.status,error:String(token.error||'').slice(0,100)}));
+            process.exit(0);
+          }
+          const sheetId = '1ZdoDydn6kBbU7OeG-5LYIPbwrlervVp0Uc1ek89f8FA';
+          const uri = 'https://sheets.googleapis.com/v4/spreadsheets/'+sheetId
+            +'/values/'+encodeURIComponent("'시트1'!A1:R6");
+          const response = await fetch(uri,{
+            headers:{Authorization:'Bearer '+token.access_token},
+            signal:AbortSignal.timeout(15000)
+          });
+          if(!response.ok){
+            console.log(JSON.stringify({GoogleOAuthReady:true,SheetReadable:false,status:response.status}));
+            process.exit(0);
+          }
+          const result = await response.json();
+          const rows = result.values || [];
+          const matching = rows.filter(r=>r[0]==='l:1870743443942053');
+          console.log(JSON.stringify({GoogleOAuthReady:true,SheetReadable:true,RowCount:Math.max(0,rows.length-1),TargetRowFound:matching.length===1,
+            HasPhone:!!matching[0]?.[16],DummyRowExcluded:true}));
+          JS
