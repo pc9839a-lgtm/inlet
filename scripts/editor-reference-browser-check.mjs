@@ -42,23 +42,23 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       };
     })()`);
     const expectedComposerWidth = Math.min(660, Math.max(500, referenceWidth * .42));
-    assert(visual?.heading === '블록 편집' && visual.kicker === '내 페이지'
+    assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '내 페이지'
       && /[0-9]+개 블록/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
-      && visual.buttonWidth >= visual.headingWidth - 60
-      && visual.buttonHeight >= 44 && visual.searchBelowButton
-      && visual.buttonBackground === 'rgb(32, 43, 77)'
-      && visual.listNameSize === '14px' && visual.fixedNameSize === '14px'
-      && visual.normalRowHeight >= 55 && visual.normalRowHeight <= 70
+      && visual.buttonWidth >= 96 && visual.buttonWidth <= 135
+      && visual.buttonHeight >= 35 && visual.buttonHeight <= 40 && visual.searchBelowButton
+      && visual.buttonBackground === 'rgb(246, 247, 249)'
+      && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
+      && visual.normalRowHeight >= 54 && visual.normalRowHeight <= 60
       && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
       && Math.abs(visual.compositionWidth - expectedComposerWidth) <= 3
       && visual.inspectorWidth >= visual.compositionWidth - 85
-      && visual.compositionBackground === 'rgb(244, 245, 249)'
-      && visual.inspectorBackground === 'rgb(255, 255, 255)'
-      && visual.stageBackground === 'rgb(234, 237, 243)'
+      && visual.compositionBackground === 'rgb(255, 255, 255)'
+      && visual.inspectorBackground === 'rgb(250, 251, 252)'
+      && visual.stageBackground === 'rgb(243, 244, 246)'
       && visual.stageHeading === '페이지 화면' && visual.stageWidth === '모바일 · 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
-      'Littly block stack must show inline editing, primary add and a separate real mobile page: '
+      'quiet block stack must prioritize page content, compact add, and readable 390px result: '
       + JSON.stringify({ referenceWidth, visual }));
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
@@ -1148,12 +1148,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const dialog = document.querySelector('.editor-gallery-dialog');
     return { width: dialog?.getBoundingClientRect().width,
       quickCards: dialog?.querySelectorAll('.editor-gallery-quick').length,
+      quickVisible: !!dialog?.querySelector('.editor-gallery-quick-grid')?.getClientRects().length,
+      catalogHidden: !!dialog?.querySelector('.editor-block-gallery-all[hidden]'),
       searchFocused: document.activeElement === dialog?.querySelector('input[aria-label="추가할 블록 검색"]'),
       categoryCount: dialog?.querySelectorAll('.editor-gallery-categories button').length,
       catalog: !!dialog?.querySelector('.widget-group-grid') };
   })()`);
-  assert(gallery.width >= 760 && gallery.quickCards === 8
-    && gallery.searchFocused && gallery.categoryCount >= 5 && gallery.catalog,
+  assert(gallery.width >= 680 && gallery.width <= 760 && gallery.quickCards === 8
+    && gallery.quickVisible && gallery.catalogHidden && gallery.searchFocused && gallery.categoryCount >= 5 && gallery.catalog,
     'Littly-style block picker must be readable and keyboard-ready: ' + JSON.stringify(gallery));
   await capture(client, 'editor-visual-block-gallery-1672');
   await pressKeyboardKey(client, 'Escape');
