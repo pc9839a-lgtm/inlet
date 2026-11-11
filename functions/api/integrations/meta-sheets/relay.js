@@ -2,6 +2,7 @@ import { assertD1, jsonResponse, optionsResponse } from '../../_shared.js';
 import { ensureWebhookSchema, intakeCanonicalLead, sha256 } from '../../calltag/v1/_shared.js';
 import { notifyUniversalLeadAvailable } from '../../call/push/_shared.js';
 import { recordAdvertiserHttpLog, responsePreview, safeRedirect } from './advertiser-diagnostics.js';
+import { recordAdvertiserHttpLog, responsePreview, safeRedirect } from './advertiser-diagnostics.js';
 
 const METHODS = 'POST, OPTIONS';
 const FIELD = {
@@ -209,51 +210,55 @@ async function sendCallTag(db, env, config, id, lead) {
       '콜태그 등록 실패');
   }
 }
-async function sendAdvertiser(db, config, id, lead) {
-  // Atomic claim: only one request can move PENDING -> SENDING.
-  const claimed = await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='PENDING'")
-    .bind(id).run();
-  if (!claimed.meta?.changes) return;
+async function sendAdvertiser(db, config, id, lead, approvedOneTimeReplay = false) {
+  const recovery = approvedOneTimeReplay && id === APPROVED_ADVERTISER_RECOVERY_EVENT_ID;
+  const claimSql = recovery
+    ? "UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status IN ('REVIEW','SENT') AND ad_attempts=1"
+    : "UPDATE meta_sheet_dual_queue SET ad_status='SENDING', ad_attempts=ad_attempts+1, updated_at=CURRENT_TIMESTAMP WHERE event_id=? AND ad_status='PENDING'";
+  const lease = await db.prepare(claimSql).bind(id).run();
+  if (!lease.meta?.changes) return;
   const attemptRow = await db.prepare("SELECT ad_attempts FROM meta_sheet_dual_queue WHERE event_id=?").bind(id).first();
   const attempt = Number(attemptRow?.ad_attempts || 1);
   const started = Date.now();
-  const diagnostic = {
-    eventId:id,attempt,advertiserUrl:config.advertiser,item:config.item,lead,
-    method:'POST',duration:0,status:0,contentType:'',preview:'',
-    redirect:{host:'',path:''},errorName:'',errorCode:'',outcome:'REVIEW'
+  let record = {
+    eventId:id, attempt, advertiserUrl:config.advertiser,
+    item:config.item, lead, status:0, duration:0, contentType:'',
+    preview:'', redirect:{host:'',path:''}, errorName:'', errorCode:'', outcome:'REVIEW'
   };
-  let state = 'REVIEW';
-  let note = '광고주 실제 접수 확인 필요';
+  let resultStatus = 'REVIEW', resultNote = '광고주 응답 불명확';
   try {
-    const res = await fetch(config.advertiser,{
+    const res = await fetch(config.advertiser, {
       method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
       body:advertiserForm(lead,config.item),
       redirect:'manual',
       signal:AbortSignal.timeout(12000)
     });
-    diagnostic.status=res.status;
-    diagnostic.contentType=res.headers.get('content-type') || '';
-    diagnostic.redirect=safeRedirect(res.headers.get('location'),config.advertiser);
-    const raw = (await res.text()).slice(0,10000);
-    diagnostic.preview=responsePreview(raw,diagnostic.contentType,lead);
-    const accepted=explicitAdvertiserSuccess(res.status,raw);
-    state=accepted?'SENT':'REVIEW';
-    note=accepted?'광고주 성공 형식 응답 수신 (전산 조회 별도)':
-      'HTTP '+res.status+', 응답 로그에서 거부 원인 확인';
-  } catch(err) {
-    diagnostic.errorName=String(err?.name||'Error').slice(0,80);
-    diagnostic.errorCode=String(err?.cause?.code||err?.code||'').slice(0,80);
-    note='광고주 전송 예외: '+diagnostic.errorName;
-  } finally {
-    diagnostic.duration=Date.now()-started;
-    diagnostic.outcome=state;
-    try {
-      await recordAdvertiserHttpLog(db,diagnostic);
-    } catch(err) {
-      console.error('Advertiser diagnostics persistence failed',{eventId:id,attempt,errorType:String(err?.name||'Error')});
-      note += ' / 상세 로그 저장 실패';
-    }
-    await setState(db,id,'ad',state,note);
+    const responseBody=(await res.text()).slice(0,10000);
+    record = {
+      ...record,
+      status:res.status, contentType:res.headers.get('content-type')||'',
+      preview:responsePreview(responseBody,res.headers.get('content-type'),lead),
+      redirect:safeRedirect(res.headers.get('location'),config.advertiser),
+      duration:Date.now()-started
+    };
+    resultStatus = explicitAdvertiserSuccess(res.status,responseBody)?'SENT':'REVIEW';
+    resultNote = resultStatus === 'SENT'?'':'HTTP '+res.status+', 광고주 응답 확인 필요';
+    record.outcome=resultStatus;
+  } catch(error) {
+    record = {...record, duration:Date.now()-started,
+      errorName:String(error?.name||'Error'),
+      errorCode:String(error?.cause?.code||error?.code||'').slice(0,80),
+      outcome:'REVIEW'};
+    resultNote = '전송 예외: '+record.errorName+(record.errorCode?' '+record.errorCode:'');
   }
+  try {
+    await recordAdvertiserHttpLog(db,record);
+  } catch(error) {
+    // Do not misrepresent the delivery status as success if the audit trail was lost.
+    console.error('meta advertiser audit write failed', {eventId:id,attempt,type:error?.name||'Error'});
+    resultNote = 'HTTP 로그 저장 실패: '+String(error?.name||'Error');
+    resultStatus='REVIEW';
+  }
+  await setState(db,id,'ad',resultStatus,resultNote);
 }
