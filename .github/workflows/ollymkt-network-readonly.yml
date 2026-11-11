@@ -37,3 +37,35 @@ jobs:
             for method in ['GET','HEAD']:
               print('NETWORK_PROBE '+json.dumps(probe(method,path),ensure_ascii=False),flush=True)
           PY
+
+      - name: Probe empty POST method without customer or ITEM fields
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.error, json, time, re
+          url='https://ollymkt.shop/dbapi/'
+          req=urllib.request.Request(url,method='POST',data=b'',
+            headers={'Content-Type':'application/x-www-form-urlencoded',
+              'Accept':'text/html,application/json,*/*'})
+          started=time.time()
+          try:
+            res=urllib.request.urlopen(req,timeout=15)
+          except urllib.error.HTTPError as e:
+            res=e
+          except Exception as e:
+            print('EMPTY_POST '+json.dumps({'errorType':type(e).__name__,
+              'elapsedMs':round((time.time()-started)*1000)}))
+            raise SystemExit(0)
+          content=res.read(4096).decode('utf-8','replace')
+          title=re.search(r'<title[^>]*>(.*?)</title>',content,re.I|re.S)
+          print('EMPTY_POST '+json.dumps({
+            'status':res.status,'elapsedMs':round((time.time()-started)*1000),
+            'finalHost':urllib.parse.urlsplit(res.geturl()).hostname,
+            'headers':{k:res.headers.get(k) for k in ['server','cf-ray','content-type','allow']
+              if res.headers.get(k)},
+            'title':re.sub(r'\s+',' ',title.group(1))[:80] if title else '',
+            'responseKind':'json' if content.lstrip().startswith('{') else ('html' if '<html' in content.lower() else 'other'),
+            'containsOkOrSuccess':bool(re.search(r'ok|success',content,re.I)),
+            'bodyByteCountMax':len(content)
+          },ensure_ascii=False))
+          PY
