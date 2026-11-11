@@ -229,141 +229,100 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .
 .editor-preview .image-wrap > .editor-preview-image-replace { top: 10px; right: 10px; }
 
 
-/* Clean mobile canvas: the actual page stays 390px wide. Context actions
-   occupy one compact bar ABOVE the page, never a floating overlay. */
+/* Preview is the result, not another action dashboard. The phone keeps
+   its real 390px layout while contextual controls stay deliberately quiet. */
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace {
-  padding-top: 24px !important;
-  background: #eaedf3 !important;
-  background-image: none !important;
+  padding-top: 18px !important;
+  background: #f3f4f6 !important; background-image: none !important;
 }
 html body #root .builder-shell.canvas-editor-shell .preview-stage-heading {
-  min-height: 30px;
-  margin: 0 0 12px;
-  padding: 0;
+  min-height: 28px; margin: 0 0 10px; padding: 0;
 }
 html body #root .builder-shell.canvas-editor-shell .preview-stage-label strong {
-  color: #283450;
-  font-size: 14px;
-  font-weight: 750;
-  letter-spacing: -.02em;
+  color: #444c59; font-size: 13px; font-weight: 670; letter-spacing: -.015em;
 }
-html body #root .builder-shell.canvas-editor-shell .preview-stage-signal {
-  background: #4256d5;
-}
+html body #root .builder-shell.canvas-editor-shell .preview-stage-signal { background: #8795a7; }
 html body #root .builder-shell.canvas-editor-shell .preview-stage-width {
-  color: #677389;
-  font-size: 11px;
-  font-weight: 600;
+  color: #939aa7; font-size: 11px; font-weight: 550;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-  flex: 0 0 auto;
-  width: 394px;
-  max-width: 100%;
+  position: relative; display: flex; flex-direction: column;
+  align-items: stretch; gap: 7px;
+  flex: 0 0 auto; width: 394px; max-width: 100%;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame {
-  border-color: #d7dce7 !important;
-  border-radius: 18px !important;
-  box-shadow: 0 18px 48px rgba(33,43,68,.13), 0 2px 8px rgba(33,43,68,.05) !important;
-  height: calc(100dvh - 216px) !important;
-  min-height: 0 !important;
-  max-height: 820px !important;
+  border-color: #dfe2e8 !important; border-radius: 15px !important;
+  box-shadow: 0 10px 32px rgba(32, 41, 58, .09) !important;
+  height: calc(100dvh - 200px) !important;
+  min-height: 0 !important; max-height: 820px !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools {
-  position: static !important;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 58px;
-  padding: 8px 10px;
-  border: 1px solid #e3e7ef;
-  border-radius: 11px;
-  background: #fff;
-  color: #202b42;
-  box-shadow: 0 1px 6px rgba(35,49,78,.06);
+  position: static !important; display: grid;
+  grid-template-columns: minmax(0,1fr) auto auto;
+  align-items: center; gap: 6px; width: 100%;
+  min-height: 43px; padding: 3px 0;
+  border: 0; border-radius: 0; background: transparent;
+  color: #434d5d; box-shadow: none;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools::before {
-  display: none;
-}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools::before { display: none; }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  padding: 0 !important;
-  border: 0 !important;
+  display: grid; gap: 1px; min-width: 0; padding: 0 !important; border: 0 !important;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading span {
-  display: none;
-}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading span { display: none; }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading strong {
-  min-width: 0; max-width: 100px;
-  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-  font-size: 12px; font-weight: 750;
+  min-width: 0; max-width: 114px; overflow: hidden;
+  white-space: nowrap; text-overflow: ellipsis;
+  color: #485262; font-size: 12px; font-weight: 670;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading small {
-  color: #909aac; font-size: 10px;
+  color: #9ba3ae; font-size: 10px;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-primary {
-  display: flex; align-items: center;
-  gap: 5px;
-  padding: 0 !important;
+  display: flex; align-items: center; gap: 4px; padding: 0 !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button {
-  display: inline-flex;
-  align-items: center; justify-content: center;
-  gap: 5px;
-  min-height: 35px; padding: 6px 9px;
-  border: 1px solid #e2e7ef; border-radius: 7px;
-  background: #f9fafc; color: #3d4960;
-  font: inherit; font-size: 11px; font-weight: 650; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 5px; min-height: 31px; padding: 5px 8px;
+  border: 1px solid #e0e4eb; border-radius: 7px;
+  background: #fff; color: #526073;
+  font: inherit; font-size: 11px; font-weight: 610; cursor: pointer;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:hover:not(:disabled) {
-  border-color: #c4cdf2; background: #f1f3ff; color: #344acb;
+  border-color: #c8d0da; background: #f9fafb; color: #2d3747;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:focus-visible {
-  outline: 2px solid #465cf0; outline-offset: 2px;
+  outline: 2px solid #4c64cd; outline-offset: 2px;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:disabled {
-  opacity: .32; cursor: default;
+  opacity: .35; cursor: default;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools .editor-canvas-add-after {
-  border-color: #263154; background: #263154; color: #fff;
+  border-color: #d7dde5; background: #fff; color: #475364;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools .editor-canvas-add-after:hover:not(:disabled) {
-  background: #192446; color: #fff;
+  background: #edf0f4; color: #303b4b;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary {
-  display: flex; align-items: center; gap: 3px; padding: 0;
+  display: flex; align-items: center; gap: 2px; padding: 0;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary button {
-  min-width: 27px; min-height: 30px; padding: 4px;
-  border-color: transparent;
+  min-width: 26px; min-height: 30px; padding: 4px; border-color: transparent; background: transparent;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add {
-  width: 100%; min-height: 43px; margin: 12px 0 0;
-  padding: 8px;
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  border: 1px dashed #b4bfd2; border-radius: 10px;
-  background: #fff; color: #3f509a;
-  font: inherit; font-size: 12px; font-weight: 680; cursor: pointer;
+  width: 100%; min-height: 40px; margin: 8px 0 0; padding: 7px;
+  border: 1px dashed #ced4dd; border-radius: 8px;
+  background: transparent; color: #758093;
+  font: inherit; font-size: 12px; font-weight: 610; cursor: pointer;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add:focus-visible {
-  outline: 2px solid #465cf0; outline-offset: 2px;
+  outline: 2px solid #4c64cd; outline-offset: 2px;
 }
 html body #root .builder-shell.canvas-editor-shell .preview-workspace .preview-selected-block {
-  outline: 2px solid #465cf0 !important;
-  outline-offset: -2px !important;
-  box-shadow: inset 0 0 0 1px rgba(70,92,240,.13) !important;
+  outline: 2px solid #9daabc !important; outline-offset: -2px !important;
+  box-shadow: inset 0 0 0 1px rgba(128, 145, 168, .08) !important;
 }
 @media (min-width: 900px) and (max-width: 950px) {
   html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap { width: 392px; }
-  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools {
-    gap: 4px; padding-inline: 5px;
-  }
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools { gap: 3px; padding-inline: 0; }
 }
