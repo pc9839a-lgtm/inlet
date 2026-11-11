@@ -1882,8 +1882,8 @@ async function run() {
     })()`);
     assert(fixedSelection.selectPressed === 'true' && !fixedSelection.duplicateEditButton
       && fixedSelection.rowEditors === 0
-      && fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
-      'fixed selection must behave as a normal row with settings only in the shared inspector: ' + JSON.stringify(fixedSelection));
+      && !fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
+      'fixed selection must expand its real settings directly below the matching block row: ' + JSON.stringify(fixedSelection));
     const fixedAdvancedState = await evaluate(client, `(() => {
       const details = document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings');
       const root = details?.closest('.block-editor-v2-content');
