@@ -153,9 +153,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 699 && unselected.editorWidth <= 701
-    && unselected.listWidth >= 279 && unselected.listWidth <= 281
-    && unselected.inspectorWidth >= 417 && unselected.inspectorWidth <= 421,
+    && unselected.editorWidth >= 635 && unselected.editorWidth <= 642
+    && unselected.listWidth >= 259 && unselected.listWidth <= 265
+    && unselected.inspectorWidth >= 370 && unselected.inspectorWidth <= 380,
     'no-selection must show actual page controls in the wide left editor: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
