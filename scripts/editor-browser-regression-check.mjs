@@ -980,7 +980,7 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.shell, metrics.innerWidth, 'desktop builder shell');
   assertInsideViewport(metrics.left, metrics.innerWidth, 'desktop left workspace');
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
-  assert(metrics.frame?.top <= (metrics.preview?.top || 0) + 94, 'desktop phone preview must follow its compact width selector');
+  assert(metrics.frame?.top <= (metrics.preview?.top || 0) + 145, 'desktop phone must follow the page heading and small editing hint, without a tall empty stage');
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.pageSettings, metrics.innerWidth, 'desktop page settings entry');
