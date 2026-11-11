@@ -48,7 +48,7 @@ export async function onRequest({request,env}){
     if(!row)return jsonResponse(request,env,200,{ok:true,...summary(row),logs:[]},METHODS);
     let source={};
     try{source=JSON.parse(row.payload_json);}catch{}
-    const shape=requestShape(source,String(env.META_SHEETS_ADVERTISER_ITEM||'64'));
+    const shape=requestShape(source,String(env.META_SHEETS_ADVERTISER_ITEM||'41'));
 
     if(action==='probe-connection') {
       // HEAD and GET are safe: neither request carries a lead or a form body.
@@ -57,7 +57,7 @@ export async function onRequest({request,env}){
       for (const [method,attempt] of [['HEAD',-1],['GET',0]]) {
         const entry={
           eventId:TARGET_ID,attempt,advertiserUrl:endpoint,
-          item:String(env.META_SHEETS_ADVERTISER_ITEM||'64'),
+          item:String(env.META_SHEETS_ADVERTISER_ITEM||'41'),
           lead:{},method,status:0,contentType:'',preview:'',
           redirect:{host:'',path:''},errorName:'',errorCode:'',
           outcome:'TRANSPORT_PROBE',duration:0

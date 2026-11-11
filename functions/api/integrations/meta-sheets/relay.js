@@ -6,9 +6,9 @@ import { recordAdvertiserHttpLog, responsePreview, safeRedirect } from './advert
 const METHODS = 'POST, OPTIONS';
 const FIELD = {
   id: ['id', 'lead_id'], created: ['created_time', 'created_at'],
-  name: ['full_name', '이름', '성함'], phone: ['phone_number', '연락처', '전화번호'],
-  money: ['총_채무액(2,000만원_이상_가능)', '총_채무액_선택_(2,000미만_불가)', '채무금액'],
-  time: ['상담가능시간'], message: ['문의내용(ex개인회생/파산_등)', '문의내용_(ex.개인회생/파산_등)', '문의내용'],
+  name: ['이름', 'full_name', '성함'], phone: ['phone_number', '연락처', '전화번호'],
+  money: ['총_채무액_선택_(2,000미만_불가)', '총_채무액(2,000만원_이상_가능)', '채무금액'],
+  time: ['상담가능시간'], message: ['문의내용_(ex.개인회생/파산_등)', '문의내용(ex개인회생/파산_등)', '문의내용'],
   area: ['거주지역을_입력해주세요', '거주지역'], email: ['email', '이메일']
 };
 function pick(fields, aliases) {
@@ -45,8 +45,8 @@ export function normalizeSheetLead(row) {
   };
 }
 // Mirror the proven Make HTTP form shape: exactly seven fields in the same order.
-// ITEM=64 is the current campaign; the old successful blueprint used ITEM=41.
-export function advertiserForm(lead, item = '64') {
+// ITEM=41 is the exact archived Make blueprint. Override META_SHEETS_ADVERTISER_ITEM for a newer campaign.
+export function advertiserForm(lead, item = '41') {
   const raw = String(lead?.phone || '').replace(/\D/g, '');
   const phone = /^010\d{8}$/.test(raw)
     ? raw.slice(0, 3) + '-' + raw.slice(3, 7) + '-' + raw.slice(7)
@@ -71,6 +71,23 @@ export function explicitAdvertiserSuccess(status, body) {
       || /^(OK|SUCCESS|ACCEPTED)$/i.test(String(json?.status || json?.result || ''));
   } catch { return false; }
 }
+// Make considers a 2xx HTTP response successful unless an explicit failure is present.
+// This indicates transport acceptance only; advertiser CRM insertion is not confirmed.
+export function makeCompatibleHttpAccepted(status, body) {
+  if (status < 200 || status >= 300) return false;
+  const raw = String(body || '').trim();
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      if (parsed.ok === false || parsed.success === false || parsed.error === true) return false;
+      const statusText = String(parsed.status ?? parsed.result ?? '').trim();
+      if (/^(error|failed|failure|denied|rejected|invalid|forbidden)$/i.test(statusText)) return false;
+      if (parsed.error && typeof parsed.error === 'string') return false;
+    }
+  } catch { /* Plain-text/HTML responses are not JSON. */ }
+  if (/^(ERROR|FAIL|FAILED|DENIED|REJECTED|FORBIDDEN)$/i.test(raw)) return false;
+  return true;
+}
 async function ensureSchema(db) {
   await db.prepare("CREATE TABLE IF NOT EXISTS meta_sheet_dual_queue (event_id TEXT PRIMARY KEY, payload_json TEXT NOT NULL, ct_status TEXT NOT NULL DEFAULT 'PENDING', ad_status TEXT NOT NULL DEFAULT 'PENDING', ct_attempts INTEGER NOT NULL DEFAULT 0, ad_attempts INTEGER NOT NULL DEFAULT 0, ct_error TEXT NOT NULL DEFAULT '', ad_error TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)").run();
   await db.prepare("CREATE INDEX IF NOT EXISTS idx_meta_sheet_dual_status ON meta_sheet_dual_queue(ct_status, ad_status, created_at)").run();
@@ -82,7 +99,7 @@ function readConfig(env) {
   try { advertiser = new URL(String(env.META_SHEETS_ADVERTISER_URL || 'https://ollymkt.shop/dbapi/')); }
   catch { return null; }
   if (advertiser.protocol !== 'https:' || env.META_SHEETS_DISPATCH_ENABLED === '0') return null;
-  return { advertiser: advertiser.href, item: String(env.META_SHEETS_ADVERTISER_ITEM || '64') };
+  return { advertiser: advertiser.href, item: String(env.META_SHEETS_ADVERTISER_ITEM || '41') };
 }
 export function extractWebhookKey(raw) {
   const value = String(raw || '').trim();
@@ -229,7 +246,7 @@ async function sendAdvertiser(db, config, id, lead) {
       method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
       body:advertiserForm(lead,config.item),
-      redirect:'manual',
+      redirect:'follow', // Mirror Make blueprint followRedirect=true (POST only).
       signal:AbortSignal.timeout(12000)
     });
     diagnostic.status=res.status;
@@ -237,9 +254,9 @@ async function sendAdvertiser(db, config, id, lead) {
     diagnostic.redirect=safeRedirect(res.headers.get('location'),config.advertiser);
     const raw = (await res.text()).slice(0,10000);
     diagnostic.preview=responsePreview(raw,diagnostic.contentType,lead);
-    const accepted=explicitAdvertiserSuccess(res.status,raw);
+    const accepted=makeCompatibleHttpAccepted(res.status,raw);
     state=accepted?'SENT':'REVIEW';
-    note=accepted?'광고주 성공 형식 응답 수신 (전산 조회 별도)':
+    note=accepted?'HTTP '+res.status+' 수락 (광고주 전산 등록은 별도 확인)':
       'HTTP '+res.status+', 응답 로그에서 거부 원인 확인';
   } catch(err) {
     diagnostic.errorName=String(err?.name||'Error').slice(0,80);

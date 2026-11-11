@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { Script, createContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { normalizePhone, normalizeSheetLead, advertiserForm, explicitAdvertiserSuccess, onRequest } from '../../functions/api/integrations/meta-sheets/relay.js';
+import { normalizePhone, normalizeSheetLead, advertiserForm, explicitAdvertiserSuccess, makeCompatibleHttpAccepted, onRequest } from '../../functions/api/integrations/meta-sheets/relay.js';
 
 const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)),'Code.gs'),'utf8');
 const headers = ['id','created_time','ad_id','ad_name','adset_id','adset_name',
@@ -102,7 +102,7 @@ test('Cloudflare handles Meta field mapping, Make-compatible phone and advertise
   assert.equal(mapped.eventId,'meta-l2013932282624321');
   assert.equal(mapped.money,'3000만원');
   assert.equal(mapped.content,'개인회생 상담');
-  assert.match(advertiserForm(mapped),/ITEM=64/);
+  assert.match(advertiserForm(mapped),/ITEM=41/);
   assert.match(advertiserForm(mapped),/DATAS_phone=010-2345-6789/);
   assert.equal(normalizeSheetLead(dummy),null);
 });
@@ -162,4 +162,44 @@ test('WebHook credential is required, wrong key rejected, unrelated WebHook reje
   assert.equal((await onRequest({request:send('ctwh_otherFake12345678901234567890'),env:{...config,DB:db},ctx:{}})).status,401);
   const allowed=await onRequest({request:send(FAKE_WEBHOOK_URL),env:{...config,DB:db},ctx:{}});
   assert.equal(allowed.status,202);
+});
+
+test('Make blueprint field names take precedence over alternate Meta form aliases',()=>{
+  const original={
+    id:'l:1234567890',phone_number:'P:+821012345678',
+    '이름':'원본이름',full_name:'다른이름',
+    '총_채무액_선택_(2,000미만_불가)':'원본채무',
+    '총_채무액(2,000만원_이상_가능)':'다른채무',
+    '거주지역을_입력해주세요':'인천',
+    상담가능시간:'저녁',
+    '문의내용_(ex.개인회생/파산_등)':'원본문의',
+    '문의내용(ex개인회생/파산_등)':'다른문의'
+  };
+  const lead=normalizeSheetLead(original);
+  assert.equal(lead.name,'원본이름');
+  assert.equal(lead.money,'원본채무');
+  assert.equal(lead.area,'인천');
+  assert.equal(lead.calldate,'저녁');
+  assert.equal(lead.content,'원본문의');
+  assert.equal(lead.phone,'01012345678');
+  const form=new URLSearchParams(advertiserForm(lead));
+  assert.deepEqual([...form.keys()],[
+    'ITEM','DATAS_name','DATAS_phone','DATAS_money','DATAS_area','DATAS_calldate','DATAS_data'
+  ]);
+  assert.equal(form.get('ITEM'),'41');
+  assert.equal(form.get('DATAS_phone'),'010-1234-5678');
+  assert.equal(form.get('DATAS_name'),'원본이름');
+  assert.equal(form.get('DATAS_money'),'원본채무');
+  assert.equal(form.get('DATAS_area'),'인천');
+  assert.equal(form.get('DATAS_data'),'원본문의');
+});
+test('Make-compatible 2xx transport result does not turn explicit rejection into success',()=>{
+  assert.equal(makeCompatibleHttpAccepted(200,'OK'),true);
+  assert.equal(makeCompatibleHttpAccepted(204,''),true);
+  assert.equal(makeCompatibleHttpAccepted(200,'<html>unknown</html>'),true);
+  assert.equal(makeCompatibleHttpAccepted(200,'{"success":false}'),false);
+  assert.equal(makeCompatibleHttpAccepted(200,'{"error":"invalid area"}'),false);
+  assert.equal(makeCompatibleHttpAccepted(200,'{"status":"failed"}'),false);
+  assert.equal(makeCompatibleHttpAccepted(302,'OK'),false);
+  assert.equal(makeCompatibleHttpAccepted(403,'OK'),false);
 });
