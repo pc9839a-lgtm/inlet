@@ -44,6 +44,7 @@ assert.ok(previewFocus.includes("document.querySelector('.editor-composition-con
   'photo/form/link/CTA focus watchers must observe a stable stack parent across lazy selections');
 assert.ok(preview.includes('--landing-runtime-width: 390px'),
   'real editor and public page must keep the same 390px landing content width');
-assert.ok(browser.includes('long-page navigator and Inspector must remain isolated'),
-  'real Chrome still needs the 36-block long-page stress scenario (with updated geometry checks)');
+assert.ok(browser.includes('36-block page must use one stacked editor scroller')
+  && browser.includes('900px long page keeps all expanded block controls reachable'),
+  'real Chrome must verify single-scroll controls on both 1672px and 900px 36-block pages');
 console.log('Littly-style editor block stack geometry and focus contract passed');
