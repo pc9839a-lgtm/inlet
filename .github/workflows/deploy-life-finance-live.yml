@@ -78,8 +78,9 @@ jobs:
           set -euo pipefail
           npm install --ignore-scripts --no-audit --no-fund --package-lock=false
           npm run build
-          node scripts/verify-finance-experience.mjs
-          node scripts/verify-trimmed-life-ui.mjs
+          # Build itself runs finance/mobile/SEO regression checks BEFORE CSS pruning.
+          # The legacy standalone verifier requires intermediate CSS that the
+          # production finish step intentionally removes; never run it again here.
           node - <<'JS'
           const fs=require('fs');
           const html=fs.readFileSync('dist/finance/index.html','utf8');
