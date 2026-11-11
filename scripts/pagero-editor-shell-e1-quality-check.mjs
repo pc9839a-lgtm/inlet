@@ -329,10 +329,10 @@ assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card
 assert(!css.includes('.block-editor-v2-header') && !css.includes('.editor-field-v2') && !css.includes('.editor-section-v2-trigger') && !css.includes('.editor-segmented-v2') && !css.includes('.image-mode-toolbar'), 'workspace geometry must not own block editor internals');
 assert(editPanelLayoutCss.includes('editor-page-options-stack'), 'page options and theme controls need a left-panel stack owned by EditPanelLayout.css');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row')
-  && fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 35px !important;')
+  && fixedBlocksCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
   && fixedBlocksCss.includes('.fixed-composition-select')
   && !css.includes('.screen-order-fixed-blocks'),
-  'fixed blocks must use the same 61px stack row geometry as normal blocks');
+  'fixed blocks must share the 55px neutral row system with normal blocks');
 assert(rowIdentity.includes('function BlockTypeThumbnail({ Icon, src })')
   && rowIdentity.includes("onError={() => setImageState('error')}")
   && rowIdentity.includes("key={thumbnail || 'block-type'}")
