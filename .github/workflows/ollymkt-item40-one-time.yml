@@ -1,0 +1,53 @@
+name: One-time ollymkt ITEM 40 synthetic POST
+on:
+  push:
+    branches: [ops/test-ollymkt-item40-20261111]
+    paths: [.github/workflows/ollymkt-item40-one-time.yml]
+permissions:
+  contents: read
+jobs:
+  item40-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Submit clearly synthetic Make-compatible ITEM40 request
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,json,re,time
+          fields={
+            'ITEM':'40',
+            'DATAS_name':'TEST_ONLY_NOT_CUSTOMER',
+            'DATAS_phone':'00000000000',
+            'DATAS_money':'TEST',
+            'DATAS_area':'TEST',
+            'DATAS_calldate':'TEST',
+            'DATAS_data':'INTEGRATION_TEST_ONLY_NOT_CUSTOMER_DO_NOT_BILL'
+          }
+          payload=urllib.parse.urlencode(fields).encode('utf-8')
+          req=urllib.request.Request('https://ollymkt.shop/dbapi/', data=payload, method='POST',
+            headers={'Content-Type':'application/x-www-form-urlencoded',
+              'User-Agent':'Make-compatible-form-test/1.0'})
+          t=time.time()
+          try:
+            r=urllib.request.urlopen(req, timeout=15)
+          except urllib.error.HTTPError as e: r=e
+          except Exception as e:
+            print('ITEM40_RESULT '+json.dumps({'networkError':type(e).__name__,
+              'elapsedMs':round((time.time()-t)*1000)}))
+            raise SystemExit(0)
+          body=r.read(5000).decode('utf-8','replace')
+          title=re.search(r'<title[^>]*>(.*?)</title>',body,re.I|re.S)
+          print('ITEM40_RESULT '+json.dumps({
+            'httpStatus':r.status,
+            'elapsedMs':round((time.time()-t)*1000),
+            'contentType':r.headers.get('content-type',''),
+            'server':r.headers.get('server',''),
+            'cfRay':r.headers.get('cf-ray',''),
+            'pageTitle':re.sub(r'\s+',' ',title.group(1)).strip()[:120] if title else '',
+            'bodySummary':re.sub(r'\s+',' ',re.sub('<[^>]+>',' ',body)).strip()[:320] if '<html' in body.lower() else body[:320],
+            'item':40,
+            'fieldCount':len(fields),
+            'realCustomerData':False,
+          }, ensure_ascii=False))
+          PY
