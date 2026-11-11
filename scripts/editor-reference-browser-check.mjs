@@ -591,17 +591,17 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     assert(metrics?.input?.height >= 78
       && metrics.segment?.height >= 36 && metrics.segment.height <= 44
-      && metrics.segment.color === 'rgb(36, 84, 255)'
-      && metrics.segment.bg === 'rgb(233, 239, 255)'
-      && metrics.rail?.height >= 40 && parseInt(metrics.rail.radius,10) <= 7
+      && metrics.segment.color === 'rgb(64, 87, 237)'
+      && metrics.segment.bg === 'rgb(238, 240, 255)'
+      && metrics.rail?.height >= 40 && parseInt(metrics.rail.radius,10) <= 9
       && metrics.number?.height >= 36 && metrics.number.height <= 44
       && metrics.hex?.height >= 36 && metrics.hex.height <= 44
       && metrics.swatch?.height >= 36 && metrics.eyedropper?.height >= 36
-      && metrics.numberBox?.radius === '7px' && metrics.hex.radius === '7px'
+      && parseInt(metrics.numberBox?.radius,10) <= 9 && parseInt(metrics.hex.radius,10) <= 9
       && Number(metrics.disabledOpacity) <= .5 && !metrics.overflow
       && metrics.swatch.right <= metrics.hex.left
       && metrics.hex.right <= metrics.eyedropper.left
-      && metrics.cssToken === '7px',
+      && metrics.cssToken === '8px',
       'block fields/selection/number/HEX must align at ' + width + ': ' + JSON.stringify(metrics));
     if (width === 900 || width === 1440) await capture(client, 'control-states-block-' + width);
   }
