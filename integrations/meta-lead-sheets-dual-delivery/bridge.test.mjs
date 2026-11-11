@@ -220,32 +220,21 @@ test('advertiser ITEM is locked to 64 even when old 40 or 41 is supplied via env
   assert.equal(readConfig({META_SHEETS_DISPATCH_ENABLED:'0'}),null);
 });
 
-test('opt-in Make transport prevents Cloudflare advertiser POST without disabling CallTag intake',()=>{
-  const config = readConfig({ META_SHEETS_ADVERTISER_TRANSPORT:'make' });
-  assert.equal(config.advertiserTransport,'make');
-  assert.equal(config.item,'64');
-  assert.equal(readConfig({}).advertiserTransport,'direct');
-  assert.equal(readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'invalid'}).advertiserTransport,'direct');
-  assert.equal(readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'make',META_SHEETS_DISPATCH_ENABLED:'0'}),null);
+test('advertiser sends directly from Cloudflare even when an obsolete Make flag is set',()=>{
+  const settings=readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'make'});
+  assert.equal(settings.item,'64');
+  assert.equal(settings.advertiserTransport,undefined);
+  assert.equal(readConfig({}).advertiserTransport,undefined);
+  assert.equal(readConfig({META_SHEETS_DISPATCH_ENABLED:'0'}),null);
 });
 
-test('Make transport does not issue an advertiser fetch for PENDING leads',async()=>{
-  const bound=[];
-  const db={prepare(sql){
-    return {
-      args:[],bind(...args){this.args=args;bound.push({sql,args});return this;},
-      async run(){return {meta:{changes:1}};},
-      async all(){return {results:[{
-        event_id:'meta-example',payload_json:'{}',ct_status:'SENT',ad_status:'PENDING'
-      }]};}
-    };
-  }};
-  const savedFetch=globalThis.fetch;
-  let called=0;
-  globalThis.fetch=async()=>{called++;throw Error('advertiser must not be sent in Make mode');};
-  try {
-    await dispatchPending(db,{},readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'make'}));
-  } finally {globalThis.fetch=savedFetch;}
-  assert.equal(called,0);
-  assert.ok(bound.some(x=>x.sql.includes('ad_status=') && x.args.length===1 && x.args[0]===0));
+test('direct dispatch includes PENDING advertiser queue without external transport switch',async()=>{
+  const allQueries=[];
+  const db={prepare(sql){return {
+    async run(){return {meta:{changes:1}};},
+    async all(){allQueries.push(sql);return {results:[]};}
+  };}};
+  await dispatchPending(db,{},readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'make'}));
+  assert.ok(allQueries.some(sql=>sql.includes("OR ad_status='PENDING'")));
+  assert.ok(allQueries.every(sql=>!sql.includes('advertiserTransport')));
 });

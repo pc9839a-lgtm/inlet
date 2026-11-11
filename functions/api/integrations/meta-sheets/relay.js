@@ -1,7 +1,7 @@
 import { assertD1, jsonResponse, optionsResponse } from '../../_shared.js';
 import { ensureWebhookSchema, intakeCanonicalLead, sha256 } from '../../calltag/v1/_shared.js';
 import { notifyUniversalLeadAvailable } from '../../call/push/_shared.js';
-import { recordAdvertiserHttpLog, responsePreview, safeRedirect } from './advertiser-diagnostics.js';
+import { recordAdvertiserHttpLog, responsePreview, safeRedirect, advertiserAccessRefusal } from './advertiser-diagnostics.js';
 
 const METHODS = 'POST, OPTIONS';
 const FIELD = {
@@ -99,10 +99,8 @@ export function readConfig(env) {
   try { advertiser = new URL(String(env.META_SHEETS_ADVERTISER_URL || 'https://ollymkt.shop/dbapi/')); }
   catch { return null; }
   if (advertiser.protocol !== 'https:' || env.META_SHEETS_DISPATCH_ENABLED === '0') return null;
-  // Make can own advertiser delivery while Cloudflare continues CallTag intake.
-  // The flag is opt-in and must be enabled only AFTER Make has been verified.
-  const advertiserTransport = env.META_SHEETS_ADVERTISER_TRANSPORT === 'make' ? 'make' : 'direct';
-  return { advertiser: advertiser.href, item: ADVERTISER_ITEM, advertiserTransport };
+  // Advertiser transport belongs to this server. Ignore obsolete Make routing flags.
+  return { advertiser: advertiser.href, item: ADVERTISER_ITEM };
 }
 export function extractWebhookKey(raw) {
   const value = String(raw || '').trim();
@@ -173,10 +171,8 @@ export async function dispatchPending(db, env, config) {
   await db.prepare("UPDATE meta_sheet_dual_queue SET ct_status='RETRY', updated_at=CURRENT_TIMESTAMP WHERE ct_status='SENDING' AND ct_attempts<3 AND updated_at < datetime('now','-3 minutes')").run();
   // Advertiser may have accepted an interrupted request; never replay automatically.
   await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='REVIEW', ad_error='전송 중단: 수동 확인' WHERE ad_status='SENDING' AND updated_at < datetime('now','-3 minutes')").run();
-  // When Make owns delivery, do not dispatch any advertiser POST from Cloudflare.
-  // Keep the advertiser row PENDING rather than falsely claiming a Make/CRM receipt.
-  const directAdvertiser = config.advertiserTransport !== 'make';
-  const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR (ad_status='PENDING' AND ?=1) ORDER BY created_at LIMIT 10").bind(directAdvertiser ? 1 : 0).all();
+  // Direct dispatch on our Cloudflare server only. Never hand off to Make.
+  const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR ad_status='PENDING' ORDER BY created_at LIMIT 10").all();
   for (const record of queue.results || []) {
     let lead;
     try { lead = JSON.parse(record.payload_json); } catch { continue; }
@@ -184,7 +180,7 @@ export async function dispatchPending(db, env, config) {
     // advertiser's POST (or vice versa) within the Cloudflare waitUntil budget.
     const deliveries = [];
     // REVIEW/SENT are terminal. Do not attempt another chargeable advertiser POST.
-    if (directAdvertiser && record.ad_status === 'PENDING') {
+    if (record.ad_status === 'PENDING') {
       deliveries.push(sendAdvertiser(db, config, record.event_id, lead));
     }
     if (record.ct_status === 'PENDING' || record.ct_status === 'RETRY') {
@@ -259,11 +255,17 @@ async function sendAdvertiser(db, config, id, lead) {
     diagnostic.contentType=res.headers.get('content-type') || '';
     diagnostic.redirect=safeRedirect(res.headers.get('location'),config.advertiser);
     const raw = (await res.text()).slice(0,10000);
-    diagnostic.preview=responsePreview(raw,diagnostic.contentType,lead);
-    const accepted=makeCompatibleHttpAccepted(res.status,raw);
+    const refusal=advertiserAccessRefusal(res.status,res.headers);
+    const responseSummary=responsePreview(raw,diagnostic.contentType,lead);
+    diagnostic.preview=refusal ? (refusal.kind+' server='+refusal.server+' cf-ray='+refusal.cfRay+'; '+responseSummary).slice(0,700) : responseSummary;
+    // Only explicit SUCCESS/OK or equivalent confirmation is acceptance.
+    // A 200 HTML page is NOT a successful advertiser registration.
+    const accepted=explicitAdvertiserSuccess(res.status,raw);
     state=accepted?'SENT':'REVIEW';
-    note=accepted?'HTTP '+res.status+' 수락 (광고주 전산 등록은 별도 확인)':
-      'HTTP '+res.status+', 응답 로그에서 거부 원인 확인';
+    note=accepted?'HTTP '+res.status+' 명시적 성공 응답 (CRM 저장 별도 확인)':
+      refusal?.kind==='EDGE_403'?'HTTP 403: 광고주 CDN/WAF 차단 의심 (cf-ray 확인 필요)':
+      refusal?'HTTP 403: 광고주 접근 거부 (응답 확인 필요)':
+      'HTTP '+res.status+': 명시적 성공 응답 없음';
   } catch(err) {
     diagnostic.errorName=String(err?.name||'Error').slice(0,80);
     diagnostic.errorCode=String(err?.cause?.code||err?.code||'').slice(0,80);

@@ -42,6 +42,17 @@ export function responsePreview(body, contentType, lead) {
   }
   return redactAdvertiserText(raw, lead);
 }
+// Distinguish upstream edge refusal from form validation. This is diagnostic
+// evidence, not proof of a particular Cloudflare WAF rule.
+export function advertiserAccessRefusal(status, headers) {
+  if (status !== 403) return null;
+  const server = String(headers?.get?.('server') || '').slice(0,80);
+  const cfRay = String(headers?.get?.('cf-ray') || '').slice(0,96);
+  return {
+    kind: (cfRay || /cloudflare/i.test(server)) ? 'EDGE_403' : 'HTTP_403',
+    server, cfRay
+  };
+}
 export function requestShape(lead, item) {
   const fields={DATAS_name:lead.name,DATAS_phone:lead.phone,
     DATAS_money:lead.money,DATAS_calldate:lead.calldate,DATAS_data:lead.content};

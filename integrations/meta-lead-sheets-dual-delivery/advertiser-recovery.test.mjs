@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { onRequest } from '../../functions/api/integrations/meta-sheets/recovery.js';
 import { advertiserForm } from '../../functions/api/integrations/meta-sheets/relay.js';
 import {
-  responsePreview, redactAdvertiserText, requestShape, safeRedirect, safeDiagnosticHeaders
+  responsePreview, redactAdvertiserText, requestShape, safeRedirect, safeDiagnosticHeaders, advertiserAccessRefusal
 } from '../../functions/api/integrations/meta-sheets/advertiser-diagnostics.js';
 
 const server=readFileSync(new URL('../../functions/api/integrations/meta-sheets/relay.js',import.meta.url),'utf8');
@@ -116,6 +116,19 @@ test('production advertiser and diagnostics cannot use deprecated ITEM 40 or 41'
   assert.doesNotMatch(server,/env\.META_SHEETS_ADVERTISER_ITEM/);
   assert.doesNotMatch(recovery,/env\.META_SHEETS_ADVERTISER_ITEM/);
   assert.match(server,/form\.set\('ITEM', ADVERTISER_ITEM\)/);
-  assert.match(server,/return \{ advertiser: advertiser\.href, item: ADVERTISER_ITEM, advertiserTransport \}/);
+  assert.match(server,/return \{ advertiser: advertiser\.href, item: ADVERTISER_ITEM \}/);
   assert.match(recovery,/const shape=requestShape\(source,ADVERTISER_ITEM\)/);
+});
+
+test('diagnose Cloudflare edge 403 by safe headers, without confusing it with validation',()=>{
+  const edge=advertiserAccessRefusal(403,new Headers({server:'cloudflare','cf-ray':'sample-ICN'}));
+  assert.deepEqual(edge,{kind:'EDGE_403',server:'cloudflare',cfRay:'sample-ICN'});
+  assert.equal(advertiserAccessRefusal(200,new Headers({server:'nginx'})),null);
+  const origin=advertiserAccessRefusal(403,new Headers({server:'nginx'}));
+  assert.equal(origin.kind,'HTTP_403');
+});
+test('direct sender accepts only an explicit advertiser success response',()=>{
+  assert.match(server,/explicitAdvertiserSuccess\(res.status,raw\)/);
+  assert.doesNotMatch(server,/makeCompatibleHttpAccepted\(res.status,raw\)/);
+  assert.match(server,/advertiserAccessRefusal\(res.status,res.headers\)/);
 });

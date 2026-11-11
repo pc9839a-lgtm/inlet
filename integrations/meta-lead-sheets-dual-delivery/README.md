@@ -8,7 +8,7 @@ Meta 인스턴트 양식 → Google Sheets (시트1, A:R) → **Apps Script 74�
 - Cloudflare는 Meta ID로 중복을 차단하고 D1에 접수한 뒤, 각 목적지의 전송 상태를 분리 관리합니다.
 - 콜태그는 기존 Webhook 식별 키로 수신 계정 소유자를 조회해 **기존 범용 리드 저장 함수를 호출**하므로 앱 패치나 별도 Webhook 필드 매핑이 필요하지 않습니다.
 - 광고주에게는 HTTPS POST + application/x-www-form-urlencoded, **ITEM=64 고정** 및 확인된 Make 성공 요청과 동일한 6개 필드를 전송. 과거 Make 블루프린트의 ITEM=41과 임시 테스트 ITEM=40은 사용하지 않습니다.
-- 콜태그 실패는 최대 3회 재시도. 광고주는 원본 Make 설정과 같이 리다이렉트를 따라가고 최종 HTTP 2xx를 전송 성공으로 표시하되, 명시적 실패 내용은 REVIEW로 분류합니다. `SENT`는 HTTP 수락 기록이지 광고주 전산 등록을 증명하지 않습니다. 불확실한 전송은 자동 재시도하지 않습니다.
+- 콜태그 실패는 최대 3회 재시도. 광고주는 리다이렉트를 따라가고 최종 HTTP 2xx 및 명시적 성공 응답(SUCCESS 등)이 있을 때만 전송 수락으로 표시하며 그 외는 REVIEW로 분류합니다. `SENT`는 HTTP 수락 기록이지 광고주 전산 등록을 증명하지 않습니다. 불확실한 전송은 자동 재시도하지 않습니다.
 - 기존 콜태그 Webhook 주소를 Apps Script 스크립트 속성에만 입력합니다. Cloudflare는 기존 활성 Webhook의 해시로 인증합니다. 실제 URL은 공개 GitHub 코드나 시트 셀에 넣지 않습니다.
 
 ## 현재 확인된 실제 Google Sheet
@@ -67,14 +67,14 @@ GAS 코드는 사용자가 구글시트에 수동으로 붙여넣어야 합니�
 - 기존 광고주 전송 시도 `REVIEW` 및 `SENT` 고객에 대한 자동 재전송은 없습니다. 배포만으로 기존 고객이 다시 전송되지 않습니다.
 - **HTTP 403은 양식 수정만으로 해결을 보장할 수 없습니다.** GET/HEAD/무효번호를 사용한 별도 테스트에서 접근 거부가 확인됐으며, 실제 광고주 DB 접수는 별도 검증이 필요합니다.
 
-## 기존 Make 서버를 광고주 전송 경로로 사용하는 경우
+## 서버 직접 전송만 사용
 
-- 현재 개인회생 메타 양식 ID는 `1635966914677428` (구글시트 실제 리드에서 확인). 원본 Make 파일의 예전 양식 ID `1484699249313068`은 다릅니다. 기존 블루프린트를 그대로 가져오면 현재 리드를 받는다고 보장할 수 없습니다.
-- 별도로 제공한 갱신 Make 블루프린트에서 Meta Webhook을 **현재 페이지/폼에 다시 연결**해야 합니다. `ITEM`은 오직 64이고 실제 시트의 `full_name`, `phone_number`, `총_채무액(2,000만원_이상_가능)`, `상담가능시간`, `문의내용(ex개인회생/파산_등)`을 매핑합니다. 성공한 HTTP 모듈처럼 `DATAS_area`는 전달하지 않습니다.
-- **Make 실제 HTTP 모듈에서 광고주가 2xx로 응답하고 접수 확인이 되었을 때에만** Cloudflare Pages의 `META_SHEETS_ADVERTISER_TRANSPORT=make`로 변경합니다. 그 이전에는 `direct`(기본값)를 유지합니다.
-- `make` 모드는 Cloudflare에서 광고주 POST를 전송하지 않습니다. 단, Google Sheet→Cloudflare→콜태그 경로와 콜태그 재시도는 그대로 작동합니다. 광고주 전송 결과를 Cloudflare가 알 수 없으므로 해당 큐의 `ad_status`는 `PENDING` 상태로 남으며, Make 전송 성공으로 허위 표시하지 않습니다.
-- `META_SHEETS_DISPATCH_ENABLED=0`을 Make 전환 스위치로 사용하지 마세요. 이는 CallTag까지 차단합니다.
-- 과거에 2회 시도한 고객 데이터를 임의로 재전송하거나 신규 테스트 리드를 실제 광고주 CRM에 등록하지 않습니다. Make 시나리오 활성화 전에 중복 발송 경로와 테스트 데이터 취급을 확인하세요.
+- Google Sheet → Apps Script → Cloudflare Pages Function → D1 → 광고주 API 및 CallTag의 직접 전송 경로만 사용합니다. Make 라우팅은 더 이상 지원하지 않습니다. 과거 `META_SHEETS_ADVERTISER_TRANSPORT=make` 환경 변수는 제거하는 것이 좋으며 서버에서는 이 값을 무시합니다.
+- `ITEM=64`, Content-Type `application/x-www-form-urlencoded`, 6개 필드(ITEM, DATAS_name, DATAS_phone, DATAS_money, DATAS_calldate, DATAS_data), 전화번호는 숫자만 포함한 `010XXXXXXXX` 입니다.
+- HTTP 403이며 응답 헤더 `cf-ray` 또는 `server: cloudflare`가 있으면 진단 로그에 `EDGE_403`을 기록합니다. 이는 광고주 측 엣지 차단의 강한 단서이지 어떤 보안 규칙이 적용되었는지의 확정 증거는 아닙니다.
+- 200 HTML 및 비어 있는 응답은 성공 처리하지 않습니다. 명시적 `SUCCESS`·`OK` 또는 정해진 확인 응답이 있어야 HTTP 성공으로 기록하며 광고주 DB 실접수는 별도 확인해야 합니다.
+- 동일 광고주가 Cloudflare·Google·GitHub 출발지에서 HEAD/GET도 403을 반환했던 반면 다른 외부 출발지에서는 200 SUCCESS였습니다. 출발지 차단이 확인되면 광고주 측 WAF 규칙/접근 허용 설정을 수정하거나 **사용자가 제어하는 고정 IP 서버**에서 outbound를 처리해야 합니다. User-Agent 변조나 403 자동 반복 전송으로 해결하려 하지 않습니다.
+- 기존 `REVIEW` 또는 `SENT` 리드를 재전송하지 않고, 접수되지 않은 신규 리드만 큐에서 단회 처리합니다.
 
 ## 2026-11-11 Make 성공 요청 대조
 
