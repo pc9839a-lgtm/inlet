@@ -41,7 +41,12 @@ const approvedProductionWriter = 'deploy-cloudflare.yml';
 const approvedOtherSiteWriters = new Set([
   'restore-life-content-origin.yml',
   'retire-legacy-life-pages.yml',
+  'deploy-life-finance-live.yml',
 ]);
+// Separate LIFE production is allowed only while its reviewed workflow remains
+// byte-for-byte identical. Any future edit requires an explicit safety review.
+const approvedLifeFinanceWriter = 'deploy-life-finance-live.yml';
+const approvedLifeFinanceBlob = 'e804411132b9ab0461db3a1a11d4d2f131887efa';
 const approvedManualSecretWriter = 'calltag-admin-cloudflare-bootstrap.yml';
 // Only this exact, reviewed workflow may deploy the isolated editor review preview.
 // Pinning the complete Git blob makes any change fail closed until re-reviewed.
@@ -64,6 +69,16 @@ for (const workflow of workflowNames) {
   if (approvedOtherSiteWriters.has(workflow)) {
     assert.doesNotMatch(body, /--project-name\s+inlet\b/, `${workflow} must not deploy shared inlet`);
     assert.match(body, /--project-name\s+life-pagero\b/, `${workflow} is allowed only for life-pagero`);
+    if (workflow === approvedLifeFinanceWriter) {
+      assert.equal(gitBlobSha(body), approvedLifeFinanceBlob,
+        'LIFE-only production workflow changed: review its target and triggers before accepting it');
+      assert.match(body, /--branch main --commit-hash "\$TARGET_SHA"/,
+        'LIFE production must pin the source SHA on its own project');
+      assert.match(body, /project\.get\('name'\)!='life-pagero'/,
+        'LIFE deploy must explicitly verify its independent project');
+      assert.doesNotMatch(body, /--project-name\s+inlet\b/,
+        'LIFE deploy must never write PageRo production');
+    }
   } else if (workflow === approvedManualSecretWriter) {
     assert.match(body, /^on:\s*\n  workflow_dispatch:/m, 'secret bootstrap must be manual-only');
     assert.doesNotMatch(body, /^  (?:push|pull_request|workflow_run|issues|schedule):/m, 'secret bootstrap must not be automatic');
