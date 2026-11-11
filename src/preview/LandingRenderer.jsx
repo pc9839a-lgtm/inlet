@@ -373,7 +373,7 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={pageClassName} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,'--page-fixed-top-height':`${fixedUiHeights.top}px`,'--page-fixed-bottom-height':`${fixedUiHeights.bottom}px`,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
-      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={editorPreview ? simulateEditorPreviewLead : addLead} track={editorPreview ? undefined : track} go={go} editorPreview={editorPreview} selectedBlockId={selectedBlockId} onReplacePreviewImage={editorPreview ? onReplacePreviewImage : undefined} onEditPreviewLinkItem={editorPreview ? onEditPreviewLinkItem : undefined} onEditPreviewText={editorPreview ? onEditPreviewText : undefined}/>)}</div>
+      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={editorPreview ? simulateEditorPreviewLead : addLead} track={editorPreview ? undefined : track} go={go} editorPreview={editorPreview} selectedBlockId={selectedBlockId} onReplacePreviewImage={editorPreview ? onReplacePreviewImage : undefined} onEditPreviewLinkItem={editorPreview ? onEditPreviewLinkItem : undefined} onEditPreviewText={editorPreview ? onEditPreviewText : undefined} onEditPreviewFormSubmit={editorPreview ? (id) => onSelectBlock?.(id, { focusField: 'submit' }) : undefined}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
       {!editorPreview && page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} />}
       {!publicView && bottomNode}
@@ -429,7 +429,7 @@ function RenderBlock(props) {
   );
 }
 
-function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false, selectedBlockId, onReplacePreviewImage, onEditPreviewLinkItem, onEditPreviewText }) {
+function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false, selectedBlockId, onReplacePreviewImage, onEditPreviewLinkItem, onEditPreviewText, onEditPreviewFormSubmit }) {
   const globalAlign = pickSafe(page?.theme?.globalAlign, ['left','center','right'], '');
   const renderBlock = globalAlign
     ? { ...block, s: { ...(block.s || {}), align: globalAlign, textAlign: globalAlign } }
@@ -452,7 +452,7 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
     ? <section id={`block-${block.id}`} className="landing-section code-widget-empty" role="note">외부 동영상은 발행본에서 재생할 수 있습니다.</section>
     : <UtilityRenderCode block={renderBlock} editorPreview={editorPreview}/>;
   if(block.type==='search')return <UtilityRenderPageSearch block={renderBlock}/>;
-  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
+  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview} selected={selectedBlockId === block.id} onEditSubmit={editorPreview ? onEditPreviewFormSubmit : undefined}/>;
   if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
   if(block.type==='footer')return <LayoutRenderFooter block={renderBlock}/>;
   return <section className="landing-section block-render-fallback"><strong>지원하지 않는 블록</strong></section>;
