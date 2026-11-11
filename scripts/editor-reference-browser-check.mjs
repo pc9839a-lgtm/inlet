@@ -47,14 +47,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && visual.buttonWidth >= visual.headingWidth - 24
       && visual.buttonHeight >= 39 && visual.searchBelowButton
       && ['rgb(237, 242, 255)', 'rgb(227, 235, 255)'].includes(visual.buttonBackground)
-      && visual.listNameSize === '14px' && visual.fixedNameSize === '14px'
-      && visual.normalRowHeight >= 62 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
-      && Math.abs(visual.compositionWidth - (referenceWidth === 1672 ? 280 : 220)) <= 3
-      && visual.inspectorWidth >= (referenceWidth === 1672 ? 400 : 255)
-      && visual.compositionBackground === 'rgb(247, 249, 252)'
+      && visual.listNameSize === '13.5px' && visual.fixedNameSize === '13.5px'
+      && visual.normalRowHeight >= 76 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 6
+      && Math.abs(visual.compositionWidth - (referenceWidth === 1672 ? 1672 * .156 : 220)) <= 3
+      && visual.inspectorWidth >= (referenceWidth === 1672 ? 370 : 255)
+      && visual.compositionBackground === 'rgb(248, 250, 252)'
       && visual.inspectorBackground === 'rgb(255, 255, 255)'
-      && visual.stageBackground === 'rgb(238, 242, 248)'
-      && visual.stageHeading === '실시간 미리보기' && visual.stageWidth === '모바일 · 390px'
+      && visual.stageBackground === 'rgb(247, 249, 253)'
+      && visual.stageHeading === '페이지 화면' && visual.stageWidth === '모바일 · 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
       'redesigned 1672/900 editor must separate composition, properties and live page with readable layers: '
       + JSON.stringify({ referenceWidth, visual }));
