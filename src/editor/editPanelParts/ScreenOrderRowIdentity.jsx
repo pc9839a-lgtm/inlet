@@ -41,10 +41,15 @@ export function ScreenOrderRowIdentity({ block, identity, meta, open, onDragStar
   const displayLabel = `${meta.label}${ordinal}${customLabel}`;
   const detail = identity?.detail || '';
   const typeLabel = `${meta.label}${ordinal}`;
-  const primaryLabel = identity?.customLabel || typeLabel;
-  const secondaryLabel = identity?.customLabel ? typeLabel : detail;
+  const contentTitle = identity?.contentTitle || '';
+  const primaryLabel = identity?.customLabel || contentTitle || typeLabel;
+  const secondaryLabel = identity?.customLabel
+    ? [typeLabel, detail].filter(Boolean).join(' · ')
+    : contentTitle
+      ? [typeLabel, identity?.contentSummary].filter(Boolean).join(' · ')
+      : detail;
   const thumbnail = identity?.thumbnail || '';
-  const summary = [displayLabel, detail, hidden ? '숨김' : ''].filter(Boolean).join(' · ');
+  const summary = [primaryLabel, secondaryLabel, hidden ? '숨김' : ''].filter(Boolean).join(' · ');
   const selectTitle = (event) => {
     stop(event);
     onSelectRow?.();

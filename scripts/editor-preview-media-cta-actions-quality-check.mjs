@@ -11,6 +11,7 @@ const modeTabs = read('src/editor/blockEditors/BottomLinkModeTabs.jsx');
 const target = read('src/editor/targetControlModel.js');
 const imageInput = read('src/editor/imageControls.jsx');
 const browser = read('scripts/editor-browser-regression-check.mjs');
+const reference = read('scripts/editor-reference-browser-check.mjs');
 
 assert.ok(image.includes("editorPreview && selected && s.mode !== 'gallery'"),
   'direct photo action must appear only on a selected non-gallery edit preview image');
@@ -36,6 +37,23 @@ assert.ok(target.includes('invalidWidgetTarget'), 'invalid target must not fall 
 assert.ok(pane.includes('onReplacePreviewImage={onReplacePreviewImage}')
   && pane.includes('onEditPreviewBottomButton={onEditPreviewBottomButton}'),
   'editing callbacks must reach only the preview renderer');
+const formRender = read('src/preview/renderers/FormBlocks.jsx');
+const formCss = read('src/screens/workspace/WorkspacePreviewPane.css');
+assert.ok(formRender.includes("editorPreview && selected && !done")
+  && formRender.includes("className=\"editor-preview-submit-edit\"")
+  && formRender.includes('onEditSubmit(block.id)'),
+  'preview-only form button edit action must be visible only for selected form and cannot submit leads');
+assert.ok(renderer.includes("onSelectBlock?.(id, { focusField: 'submit' })")
+  && renderer.includes('onSelectBlock?.(id, { imageClick, galleryIndex, focusField })'),
+  'form preview heading and button must route by exact block id');
+assert.ok(screen.includes('focusPreviewFormField(id, interaction.focusField)')
+  && screen.includes(".form-editor-flow > .field-title input")
+  && screen.includes(".form-basic-grid .field-title input"),
+  'direct edit targets existing title/submit fields without a duplicate save path');
+assert.ok(formCss.includes('.form .editor-preview-submit-edit'),
+  'in-canvas affordance styling must stay owned by the preview pane');
+assert.ok(reference.includes('form submit-copy shortcut focuses exact existing field'),
+  'Chrome must exercise the selected-preview CTA without form submission');
 assert.ok(browser.includes('selected image displays replace action')
   && browser.includes('selected CTA opens exact button label setting')
   && browser.includes('CTA changes to URL target mode'),

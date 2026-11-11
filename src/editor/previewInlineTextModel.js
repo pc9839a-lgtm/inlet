@@ -1,4 +1,4 @@
-// Editor-only, lossless quick-edit boundary for plain text blocks.
+// Editor-only, lossless quick-edit boundary for plain text and hero blocks.
 // Formatted HTML stays in the existing RichField/Inspector editor.
 const EDITABLE_FIELDS = new Set(['title', 'body']);
 const HTML_TAG = /<\/?[a-z][^>]*>/i;
@@ -46,7 +46,7 @@ export function patchInlineTextBlock(page, { blockId, field, previousHtml, nextH
   if (!page || !Array.isArray(page.blocks) || !EDITABLE_FIELDS.has(field)
     || typeof nextHtml !== 'string' || !canInlineEditTextMarkup(previousHtml)
     || (nextHtml !== '' && !canInlineEditTextMarkup(nextHtml))) return page;
-  const index = page.blocks.findIndex((block) => block?.id === blockId && block?.type === 'text');
+  const index = page.blocks.findIndex((block) => block?.id === blockId && ['text', 'hero'].includes(block?.type));
   if (index < 0) return page;
   const previous = page.blocks[index];
   if (String(previous.s?.[field] ?? '') !== previousHtml || previousHtml === nextHtml) return page;

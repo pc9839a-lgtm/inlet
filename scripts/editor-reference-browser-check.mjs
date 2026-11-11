@@ -61,6 +61,30 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
   await setViewport(client, 1672, 941, false);
+  // A real page-first workflow: selecting visible content edits the exact
+  // existing field. Cancel must leave the staged and published page intact.
+  await focusSelector(client, '.phone-frame #block-editor-hero h1.editor-inline-text-trigger');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `!!document.querySelector('.phone-frame #block-editor-hero textarea[aria-label="히어로 제목 바로 수정"]')`,
+    'hero headline opens an in-canvas editor without switching page layout');
+  await capture(client, 'hero-headline-inline-edit');
+  await clickPointer(client, '.phone-frame #block-editor-hero .editor-inline-text-actions button:first-child');
+  await waitForBrowser(client,
+    `!document.querySelector('.phone-frame #block-editor-hero textarea[aria-label="히어로 제목 바로 수정"]')`,
+    'hero cancel returns to its rendered headline');
+  await clickPointer(client, '.phone-frame #block-editor-form h2');
+  await waitForBrowser(client,
+    `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-basic-grid .field-title input')`,
+    'form headline selects matching existing inspector title field');
+  await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-form .editor-preview-submit-edit')`,
+    'selected form exposes its button-copy editing shortcut');
+  await clickPointer(client, '.phone-frame #block-editor-form .editor-preview-submit-edit');
+  await waitForBrowser(client,
+    `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-editor-flow > .field-title input')`,
+    'form submit-copy shortcut focuses exact existing field, never submits');
+  assert(apiState.saveCount === 0, 'preview editing shortcuts do not publish pages or persist test leads');
+  await capture(client, 'form-direct-title-and-submit-edit');
   // A visual redesign must change the *first visible task*, not just CSS
   // tokens. Verify real editor settings and capture each of four block types.
   for (const [id, heading, primarySelector, advancedSelector] of [

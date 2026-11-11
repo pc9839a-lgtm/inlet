@@ -142,7 +142,7 @@ function slots(start = '10:00', end = '18:00', interval = 30) {
   return arr;
 }
 
-export function RenderForm({ block, addLead, track, editorPreview = false }) {
+export function RenderForm({ block, addLead, track, editorPreview = false, selected = false, onEditSubmit }) {
   const s = block.s || {};
   const [done, setDone] = useState(false);
   const [vals, setVals] = useState({});
@@ -354,6 +354,16 @@ export function RenderForm({ block, addLead, track, editorPreview = false }) {
           />
           <button type="submit" disabled={submitting}>{submitting ? '접수 중' : (s.submit || '신청하기')}</button>
         </form>
+      )}
+      {editorPreview && selected && !done && typeof onEditSubmit === 'function' && (
+        <button
+          type="button"
+          className="editor-preview-submit-edit"
+          aria-label="제출 버튼 문구 편집"
+          onClick={() => onEditSubmit(block.id)}
+        >
+          버튼 문구 수정
+        </button>
       )}
     </section>
   );

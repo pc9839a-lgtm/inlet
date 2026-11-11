@@ -37,7 +37,7 @@ export function findBlockNavigationMatches({
       : null;
     return [{
       id: block.id,
-      text: normalized([label, identity?.repeated ? identity.occurrence : '', identity?.customLabel, identity?.detail]),
+      text: normalized([label, identity?.repeated ? identity.occurrence : '', identity?.customLabel, identity?.detail, identity?.contentTitle, identity?.contentSummary]),
       typedIndexMatches,
     }];
   });
