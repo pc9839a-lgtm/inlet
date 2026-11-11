@@ -2046,8 +2046,8 @@ async function run() {
         accessibleName: row.getAttribute('aria-label'),
       } : null;
     })()`);
-    assert(heroRowIdentity?.name === '히어로'
-      && heroRowIdentity.detail === updatedHeroTitle
+    assert(heroRowIdentity?.name === updatedHeroTitle
+      && heroRowIdentity.detail?.startsWith('히어로 · ')
       && heroRowIdentity.accessibleName.includes(updatedHeroTitle),
       `D03 hero row should identify its live title: ${JSON.stringify(heroRowIdentity)}`);
 
