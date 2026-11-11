@@ -20,7 +20,12 @@
 .builder-shell .text-editor-design > summary::-webkit-details-marker { display: none; }
 .builder-shell .text-editor-design[open] > summary svg { transform: rotate(180deg); }
 .builder-shell .text-editor-design-controls { display: grid; gap: var(--editor-ui-space-3, 12px); padding: var(--editor-ui-space-1, 4px) 0 var(--editor-ui-space-3, 12px); }
-.builder-shell .text-editor-flow > .widget-spacing-controls { margin-top: 0; padding-top: var(--editor-ui-space-4, 16px); }
+/* Spacing belongs to the optional design disclosure, not the first edit view. */
+.builder-shell .text-editor-design-controls > .widget-spacing-controls {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #edf0f5;
+}
 
 .builder-shell .text-editor-design:not([open]) > .text-editor-design-controls { display: none; }
 
@@ -47,9 +52,73 @@ html body #root .canvas-editor-shell .text-editor-design-controls .color-main > 
 html body #root .canvas-editor-shell .text-editor-flow .widget-spacing-controls { display: grid; gap: var(--editor-ui-space-3, 12px); border: 0; }
 html body #root .canvas-editor-shell .text-editor-flow .widget-spacing-controls > h3 { margin: 0 0 var(--editor-ui-space-1, 4px); color: var(--editor-ui-text, #182230); font-size: var(--editor-ui-section-size, 13px); font-weight: var(--editor-ui-strong, 650); }
 
+/* The first view now resembles a content editor, not a wall of settings.
+   Existing rich-text value conversion, IME and undo path remain unchanged. */
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-control textarea {
+  padding: 13px 14px !important;
+  border: 1px solid #dce3ef !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2--compact-text .editor-field-v2-control textarea {
+  min-height: 82px !important;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2--body-text .editor-field-v2-control textarea {
+  min-height: 128px !important;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-control textarea:focus-visible {
+  border-color: #6385f6 !important;
+  outline: 2px solid #dce5ff !important;
+  outline-offset: 0;
+}
+html body #root .canvas-editor-shell .text-editor-flow .text-editor-design {
+  margin-top: 12px;
+}
+
 /* Keep editable text and property values legible at the reference viewport. */
 html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-label strong { color: var(--editor-ui-text, #182230) !important; font-size: var(--editor-ui-label-size, 13px) !important; font-weight: var(--editor-ui-label-weight, 600) !important; }
 html body #root .canvas-editor-shell .text-editor-flow > .editor-field-v2 .editor-field-v2-control textarea { min-height: 78px !important; font-size: 16px !important; line-height: 1.6 !important; }
 html body #root .canvas-editor-shell .text-editor-design-controls :is(.editor-control-v2-copy strong,.editor-number-control > label,.color > span) { color: var(--editor-ui-text, #182230) !important; font-size: var(--editor-ui-label-size, 13px) !important; font-weight: var(--editor-ui-label-weight, 600) !important; }
 html body #root .canvas-editor-shell .text-editor-flow .editor-number-value > input { font-size: var(--editor-ui-value-size, 14px) !important; }
 html body #root .canvas-editor-shell .text-editor-design-controls .color-main > input[type='text'] { font-size: 14px !important; }
+
+/* Design-source context stays accurate but no longer appears as a second
+   settings card underneath the same color control. Scope to text only. */
+html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-source {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin: -4px 0 2px;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-source-summary {
+  justify-content: flex-start;
+  gap: 7px;
+}
+html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-source-detail {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: 8px;
+}
+html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-align-notice {
+  margin: 0 0 3px;
+  padding: 3px 0 3px 9px;
+  background: transparent;
+  line-height: 1.5;
+}
+@container editor-inspector (max-width: 300px) {
+  html body #root .canvas-editor-shell .text-editor-design-controls .editor-theme-source-detail {
+    justify-content: flex-start;
+  }
+}
+

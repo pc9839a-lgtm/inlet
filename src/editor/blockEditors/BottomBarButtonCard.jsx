@@ -22,10 +22,12 @@ export default function BottomBarButtonCard({ button, index, page, onChange }) {
         <input
           value={button.label || ''}
           onChange={(event) => onChange({ label: event.target.value })}
+          aria-label={`버튼 ${index + 1} 문구`}
+          data-bottom-button-label-index={index}
           placeholder={`${BUTTON_LABEL} ${index + 1}`}
         />
       </EditorField>
-      <BottomLinkCompact button={button} page={page} onChange={onChange} />
+      <BottomLinkCompact button={button} index={index} page={page} onChange={onChange} />
     </div>
   );
 }

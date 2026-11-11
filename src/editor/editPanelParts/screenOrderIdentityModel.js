@@ -77,11 +77,37 @@ export function createScreenOrderIdentities(blocks) {
         ? [s.widgetMode === 'youtube' ? '' : previewCodeContent(s.html)]
         : [s.title, s.heading, s.label, s.caption];
     const detail = fields.map(previewText).find(Boolean) || '';
+    // Put the visitor-facing content before the technical block type.
+    // Read-only derivation: editing, search, undo and publishing use the
+    // original block model; never store these labels in page data.
+    const itemList = Array.isArray(s.items) ? s.items : [];
+    const contentTitle = ({
+      hero: previewText(s.title),
+      text: previewText(s.title || s.body),
+      form: previewText(s.title),
+      links: previewText(s.title || itemList[0]?.label || itemList[0]?.title || itemList[0]?.text),
+      cards: previewText(s.title || itemList[0]?.title),
+      faq: previewText(s.title || itemList[0]?.question),
+      schedule: previewText(s.title),
+      download: previewText(s.title),
+    })[block?.type] || '';
+    const contentSummary = ({
+      hero: previewText(s.body),
+      text: previewText(s.title ? s.body : ''),
+      form: [Array.isArray(s.questions) ? `질문 ${s.questions.length}개` : '', previewText(s.submit)].filter(Boolean).join(' · '),
+      links: itemList.length ? `링크 ${itemList.length}개` : '',
+      cards: itemList.length ? `항목 ${itemList.length}개` : '',
+      faq: itemList.length ? `질문 ${itemList.length}개` : '',
+      schedule: previewText(s.desc),
+      download: previewText(s.desc),
+    })[block?.type] || '';
     return {
       repeated: (totals.get(kind) || 0) > 1,
       occurrence,
       customLabel,
       detail,
+      contentTitle,
+      contentSummary,
       thumbnail: previewThumbnail(block),
     };
   });

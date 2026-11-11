@@ -23,7 +23,10 @@ const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js',
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
 const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderList.jsx', 'utf8');
+const normalBlockSelection = await readFile('src/editor/useNormalBlockSelection.js', 'utf8');
+const selectionProps = await readFile('src/editor/editPanelSectionProps/screenOrderListProps.js', 'utf8');
 const screenOrderListItems = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
+const globalFixedBlocks = await readFile('src/editor/editPanelParts/GlobalFixedBlocks.jsx', 'utf8');
 const screenOrderSettings = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const screenOrderRowIdentity = await readFile('src/editor/editPanelParts/ScreenOrderRowIdentity.jsx', 'utf8');
@@ -72,7 +75,10 @@ assert(pageOptionsList.includes('AnimationOptionsCard') && pageOptionsList.inclu
 assert(!pageOptionsProps.includes('topNavBlock') && !pageOptionsProps.includes('bottomBlock') && !pageOptionsProps.includes('footerBlock'), 'page option props must stay global-only');
 assert(fixedBlocksProps.includes('topNavBlock: selection.topNavBlock') && fixedBlocksProps.includes('bottomBlock: selection.bottomBlock') && fixedBlocksProps.includes('footerBlock: selection.footerBlock'), 'fixed block props must own top, bottom, and footer editors');
 assert(sectionProps.includes('fixedBlocksProps: createFixedBlocksProps'), 'edit panel section props must expose fixed blocks separately');
-assert(editLayout.includes("only={['topnav']} compositionRow") && editLayout.includes("only={['bottom', 'footer']} compositionRow"), 'screen order mode must render fixed entries in the persistent composition');
+assert(editLayout.includes("only={['topnav']}") && editLayout.includes("only={['bottom', 'footer']}")
+  && editLayout.includes('renderInlineEditor={() => renderFixedSettings')
+  && globalFixedBlocks.includes('props.renderInlineEditor?.(cardProps.block)'),
+  'fixed entries must expand under the matching row, not in a separate Inspector');
 assert(editLayout.includes('groupId="top" title="상단 고정"')
   && editLayout.includes('groupId="bottom" title="하단 고정"')
   && editLayout.includes('aria-label={`${title} 영역`}')
@@ -83,15 +89,36 @@ assert(editLayout.includes('groupId="top" title="상단 고정"')
   'fixed blocks must keep labeled, keyboard-accessible top/bottom groups, and reveal selected fixed blocks');
 assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row') && fixedBlocksCss.includes('.fixed-composition-row .fixed-block-head'), 'fixed region section must own inline row geometry');
-assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 30px !important') && fixedBlocksCss.includes('grid-template-columns: 14px minmax(0, 1fr) 28px !important') && fixedBlocksCss.includes('overflow-wrap: anywhere'), 'fixed block rows must align with normal block controls and wrap long Korean names');
+assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 35px !important;')
+  && fixedBlocksCss.includes('grid-template-columns: 36px minmax(0,1fr) !important;')
+  && fixedBlocksCss.includes('overflow-wrap: anywhere'),
+  'fixed rows must match normal block geometry and preserve long-name wrapping');
 assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share option must not repeat an explanatory subtitle');
 assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'mobile share position choices must use a readable 2x2 grid');
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
 assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.includes('.screen-order-v2-card { padding: 10px;'), 'screen order must retain its compact mobile card contract');
-assert(editLayout.includes('editor-page-settings-button') && !editLayout.includes('edit-section-tabs') && editLayout.includes('구성') && editLayout.includes('listOnly selectBlock={chooseBlock}'), 'screen order must live in the restored left editor flow without a redundant selected-settings shell');
-assert(editLayout.includes('페이지 설정') && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps}') && editLayout.includes('updateTheme={updatePageTheme}') && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page options and theme controls must live in the restored left editor mode');
+assert(normalBlockSelection.includes('setOpenId(blockId);')
+  && !normalBlockSelection.includes("current === blockId ? '' : blockId")
+  && normalBlockSelection.includes('clearBlockSelection')
+  && selectionProps.includes('clearBlockSelection: selection.clearBlockSelection')
+  && editLayout.includes('screenOrderListProps.clearBlockSelection()'),
+  'selecting the same block must retain its settings; page settings must clear selection explicitly');
+assert(editLayout.includes('editor-page-settings-button')
+  && !editLayout.includes('edit-section-tabs')
+  && editLayout.includes('블록 편집')
+  && editLayout.includes('listOnly')
+  && editLayout.includes('selectBlock={chooseBlock}'),
+  'ordered stack must retain accessible selection and one add entry');
+assert(editLayout.includes('페이지 설정')
+  && editLayout.includes('<PageGlobalOptions')
+  && editLayout.includes('updateTheme={updatePageTheme}')
+  && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'),
+  'the inline page design panel must reuse the existing theme and page settings models');
 assert(!pageOptions.includes('PageGlobalOptionsHeader') && pageOptions.includes('aria-label="페이지 동작"'), 'page behavior must have an accessible group label without repeating a visible settings heading');
-assert(editLayout.includes('<h2>블록</h2>') && !screenOrderList.includes('ScreenOrderListHeader'), 'composition must have one block heading instead of repeating the normal-block heading');
+assert(editLayout.includes('<h2>블록 편집</h2>')
+  && editLayout.includes('editor-composition-total')
+  && !screenOrderList.includes('ScreenOrderListHeader'),
+  'block stack must have one identifiable title and count');
 assert(mobileScreenOrderCss.includes('grid-template-columns: 44px minmax(0,1fr) 44px 44px'), 'mobile screen order must reserve full touch columns without horizontal overflow');
 assert(/\.screen-order-v2-drag\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile drag handle must expose a 44px touch target');
 assert(/\.screen-order-v2-visibility-button,[\s\S]*?\.screen-order-v2-action\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile visibility and action controls must expose 44px touch targets');
@@ -100,9 +127,23 @@ assert(editorControls.includes("className = ''") && editorControls.includes('cla
 assert(fixedBlocksCss.includes('min-height: 44px !important') && fixedBlocksCss.includes('.fixed-composition-select'), 'fixed rows must remain at least 44px high with a reachable selection button');
 assert(fixedBlocksCss.includes('.screen-order-v2-visibility-button') && !fixedBlocksCss.includes('.fixed-open-button') && !fixedBlockCard.includes('fixed-open-button'), 'fixed row must retain visibility and a single selection button without duplicate edit actions');
 assert(screenOrderCss.includes('.screen-order-v2-item') && screenOrderCss.includes('.screen-order-v2-head') && screenOrderCss.includes('.screen-order-v2-menu'), 'screen order V2 stylesheet must remain the normal-block layout owner');
-assert(screenOrderList.includes('<ScreenOrderSettings') && !screenOrderList.includes('hidden={!!selectedBlock}') && editLayout.includes('editor-composition-panel') && !screenOrderItem.includes('renderBlockEditor'), 'selected settings must render beside the persistent block list');
-assert(!editLayout.includes('selectedBlockSettingsProps') && !screenOrderItem.includes('SelectedBlockSettings'), 'redundant selected block settings component must stay removed');
-assert(screenOrderSettings.includes('className="screen-order-v2-settings"') && screenOrderSettings.includes('data-block-settings-id={block.id}') && screenOrderSettings.includes('{renderBlockEditor(block)}') && screenOrderSettings.includes('tabIndex={-1}') && screenOrderSettings.includes('role="group"') && editLayout.includes('role="region" aria-label="선택 항목 편집" tabIndex={0}'), 'focused settings must identify the active block and use one keyboard-accessible inspector scroll region');
+assert(screenOrderListItems.includes('<ScreenOrderSettings')
+  && screenOrderListItems.includes('editor-inline-settings')
+  && screenOrderListItems.includes('selectedId === block.id')
+  && editLayout.includes('editor-composition-panel')
+  && !screenOrderItem.includes('renderBlockEditor'),
+  'selected real widget settings must expand immediately beneath their own row');
+assert(!editLayout.includes('selectedBlockSettingsProps')
+  && !screenOrderItem.includes('SelectedBlockSettings')
+  && screenOrderListItems.includes('renderBlockEditor={renderBlockEditor}'),
+  'new block stack must reuse the real widget editors without retired wrappers');
+assert(screenOrderSettings.includes('className="screen-order-v2-settings"')
+  && screenOrderSettings.includes('data-block-settings-id={block.id}')
+  && screenOrderSettings.includes('{renderBlockEditor(block)}')
+  && screenOrderSettings.includes('tabIndex={-1}')
+  && screenOrderSettings.includes('role="group"')
+  && screenOrderListItems.includes('role="region" aria-label="선택 항목 편집" tabIndex={0}'),
+  'expanded settings must be labeled, keyboard reachable and reuse existing fields');
 assert(!workspaceShellCss.includes('selected-block-settings-body') && !workspaceShellCss.includes('selected-block-settings-card'), 'workspace shell must not own retired selected-settings styles');
 assert(screenOrderCss.includes('Selected block-editor controls owned by ScreenOrder') && screenOrderCss.includes('.screen-order-v2-settings .block-editor-v2'), 'ScreenOrder component stylesheet must own inline block-editor controls');
 assert(screenOrderCss.includes('Desktop block-settings readability owner — ScreenOrder') && screenOrderCss.includes('.block-editor-anchor-control') && editorExpandedShellCss.includes('.editor-tabs-v2-panel') && !screenOrderCss.includes('.editor-tabs-v2-list') && editorExpandedControlsCss.includes('.editor-field-v2--compact-text') && !screenOrderCss.includes('.editor-field-v2') && !editorWorkspaceCss.includes('screen-order-v2-settings'), 'ScreenOrder must own inspector layout while shared fields have one control stylesheet owner');
@@ -114,13 +155,28 @@ assert(!codeEditorCss.includes('.code-editor-name {') && !codeEditorCss.includes
   && !codeEditor.includes('block-editor-anchor-control code-editor-name-control'),
   'code block must not retain retired widget-row overrides or duplicate name layouts');
 assert(screenOrderIdentityModel.includes("block?.type === 'code'") && screenOrderIdentityModel.includes('previewText(s.editorLabel)') && screenOrderRowIdentity.includes('identity?.customLabel') && screenOrderRowIdentity.includes('displayLabel') && screenOrderRowIdentity.includes('<strong title={primaryLabel}>{primaryLabel}</strong>'), 'screen order must promote the stored custom label while preserving the full accessible identity');
-assert(editLayout.includes("data-editor-section={showPageOptions ? 'options' : section}"), 'editor subsection must resolve to page options when no block is selected');
+assert(editLayout.includes("const showPageOptions = section === 'options' || !selectedBlockId;")
+  && editLayout.includes('data-editor-section="options"')
+  && editLayout.includes('{showPageOptions && ('),
+  'an empty selection must present page design inside the editable stack');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('.editor-page-settings-button') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
-assert(screenOrderCss.includes('Desktop ScreenOrder surface owner') && fixedBlocksCss.includes('Fixed regions use the same compact composition-row language as normal blocks'), 'screen order and fixed region rows must retain separate component owners');
+assert(screenOrderCss.includes('Littly-style block composition')
+  && fixedBlocksCss.includes('Fixed entries use the same compact block-row vocabulary'),
+  'normal and fixed rows must share geometry while keeping their own CSS owners');
 assert(pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('.page-option-head') && screenOrderCss.includes('border-radius: 0 !important'), 'page settings and block rows must retain separate flat component surface owners');
-assert(screenOrderCss.includes('.screen-order-v2-list') && screenOrderCss.includes('gap: 0 !important') && screenOrderCss.includes('border-bottom: 1px solid var(--product-line) !important') && !editorWorkspaceCss.includes('.screen-order-v2-card'), 'PC screen order must retain a flat compact list in its component owner');
-assert(/\.screen-order-v2-head\s*\{[^}]*min-height:\s*38px;[^}]*gap:\s*2px;/s.test(screenOrderCss), 'desktop screen-order rows must keep the tightened 38px / 2px density');
-assert(screenOrderCss.includes('min-height: 44px !important;') && screenOrderCss.includes('grid-template-columns: 34px minmax(0, 1fr) 36px 36px !important'), 'PC screen-order rows must retain readable compact geometry and both existing action controls');
+assert(screenOrderCss.includes('.screen-order-v2-list')
+  && screenOrderCss.includes('gap: 0 !important;')
+  && screenOrderCss.includes('border: 1px solid #e2e6ef !important;')
+  && !editorWorkspaceCss.includes('.screen-order-v2-card'),
+  'block component must own compact card rows rather than workspace-wide list CSS');
+assert(screenOrderCss.includes('min-height: 61px !important;')
+  && screenOrderCss.includes('grid-template-columns: 20px minmax(0,1fr) 35px !important;'),
+  'new stacked block rows must use one readable 61px geometry');
+assert(screenOrderCss.includes('min-height: 61px !important;')
+  && screenOrderCss.includes('grid-template-columns: 20px minmax(0,1fr) 35px !important;')
+  && screenOrderCss.includes('.screen-order-v2-action')
+  && screenOrderCss.includes('.screen-order-v2-drag'),
+  'new block rows must keep drag and accessible overflow actions');
 assert(editorExpandedControlsCss.includes('min-height: var(--editor-ui-input-height, 42px) !important;') && editorExpandedControlsCss.includes('min-height: 84px !important;') && editorExpandedControlsCss.includes('min-height: 64px !important;'), 'shared editor fields must keep readable compact input and textarea heights');
 assert(legacyScreenOrderTokens.every((token) => !workspaceShellCss.includes(token)), 'workspace shell must not restore legacy normal-block selectors');
 assert(['.screen-icon-action', '.fixed-open-button', '.switch-clean'].every((token) => editorSharedUiCss.includes(token)) && fixedBlocksCss.includes('.fixed-block-head'), 'shared controls and fixed-block visuals must live with their current owners');

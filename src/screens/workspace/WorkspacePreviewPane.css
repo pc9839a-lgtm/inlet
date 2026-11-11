@@ -1,7 +1,44 @@
 /* WorkspacePreviewPane — owns editor preview presentation and viewport parity. */
-.preview-workspace { min-width: 0; display: flex; justify-content: center; overflow: auto; background: #f8f9fc; }
+.preview-workspace { min-width: 0; display: flex; justify-content: center; overflow: auto; background: #eef2f8; }
 .preview-sticky { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; }
-.preview-workspace .phone-frame { --landing-runtime-width: 390px; box-sizing: border-box; width: 394px; max-width: none; height: calc(100dvh - 176px); min-height: 420px; max-height: 820px; border: 2px solid #cbd5e1; border-radius: 20px; background: #fff; overflow: hidden; box-shadow: 0 5px 18px #17203912; }
+html body #root .canvas-editor-shell .preview-stage-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 0 2px;
+  color: #273651;
+}
+html body #root .canvas-editor-shell .preview-stage-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+html body #root .canvas-editor-shell .preview-stage-label strong {
+  font-size: 13px;
+  font-weight: 720;
+  line-height: 1.3;
+}
+html body #root .canvas-editor-shell .preview-stage-signal {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3168da;
+}
+html body #root .canvas-editor-shell .preview-stage-width {
+  flex: 0 0 auto;
+  color: #677791;
+  font-size: 12px;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+}
+.preview-workspace .phone-frame { --landing-runtime-width: 390px; box-sizing: border-box; width: 394px; max-width: none; height: calc(100dvh - 216px); min-height: 420px; max-height: 820px; border: 2px solid #cbd5e1; border-radius: 14px; background: #fff; overflow: hidden; box-shadow: 0 10px 30px rgba(39, 54, 81, .12); }
 .preview-workspace [data-preview-selected='true'] { scroll-margin-block: 120px; }
 /* Hover is a light dashed affordance; selected is the solid blue boundary. */
 html body #root .canvas-editor-shell .preview-workspace .editor-preview .landing-section:hover:not(.preview-selected-block) {
@@ -10,12 +47,43 @@ html body #root .canvas-editor-shell .preview-workspace .editor-preview .landing
 }
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block { outline: 2px solid #2454ff !important; outline-offset: -2px !important; box-shadow: none !important; }
 html body #root .canvas-editor-shell .preview-workspace .preview-selected-block::after { content: none !important; display: none !important; }
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 2; grid-row: 2; min-width: 0 !important; height: 100% !important; min-height: 0 !important; padding: 18px clamp(4px, 2vw, 32px) 24px !important; justify-content: center !important; align-items: flex-start !important; background: #f8f9fc !important; overflow: auto !important; }
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 2; grid-row: 2; min-width: 0 !important; height: 100% !important; min-height: 0 !important; padding: 28px clamp(4px, 2vw, 32px) 32px !important; justify-content: center !important; align-items: flex-start !important; background: #eef2f8 !important; overflow: auto !important; }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-sticky { position: relative !important; top: auto !important; flex: 0 0 auto; width: min(394px, 100%) !important; min-width: 0 !important; max-width: 100% !important; height: auto !important; max-height: none !important; overflow: visible !important; gap: 0 !important; margin: 0 auto !important; }
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 394px !important; max-width: none !important; margin: 0 auto !important; height: calc(100dvh - 176px) !important; min-height: 0 !important; max-height: 820px !important; flex: 0 0 auto !important; border: 2px solid #cbd5e1 !important; border-radius: 20px !important; background: #fff; }
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 394px !important; max-width: none !important; margin: 0 auto !important; height: calc(100dvh - 216px) !important; min-height: 0 !important; max-height: 820px !important; flex: 0 0 auto !important; border: 2px solid #cbd5e1 !important; border-radius: 14px !important; background: #fff; }
 @media (min-width:900px) and (max-width:1100px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { padding-inline: 4px !important; } }
-@media (min-width:900px) and (max-width:950px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 392px !important; border-width: 1px !important; border-radius: 18px !important; } }
+@media (min-width:900px) and (max-width:950px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame { width: 392px !important; border-width: 1px !important; border-radius: 12px !important; } }
 @media (max-width:899px) { html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace { grid-column: 1; grid-row: 3; height: auto !important; min-height: 540px !important; } }
+
+/* Page-first editing: only the selected form exposes an explicit shortcut
+   to its existing button-copy field. It never submits a lead or changes the
+   published landing renderer. */
+html body #root .canvas-editor-shell .editor-preview .form .editor-preview-submit-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 34px;
+  margin: 10px 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid #c8d6ff;
+  border-radius: 7px;
+  background: #f1f5ff;
+  color: #1e4ac4;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  cursor: pointer;
+}
+html body #root .canvas-editor-shell .editor-preview .form .editor-preview-submit-edit:hover {
+  background: #e6edff;
+}
+html body #root .canvas-editor-shell .editor-preview .form .editor-preview-submit-edit:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 2px;
+}
+html body #root .canvas-editor-shell .editor-preview .form :is(h2, [class^='form-desc-align-']) {
+  cursor: pointer;
+}
 
 /* Editor preview viewport parity with the public landing width. */
 html body #root .builder-shell.edit-mode-shell .preview-workspace .phone-frame .landing-page {
@@ -127,5 +195,175 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .
     height: 760px !important;
     min-height: 620px !important;
     max-height: none !important;
+  }
+}
+
+/* Image clicks use the existing Inspector media picker in editor mode only. */
+.editor-preview .image-sec img { cursor: pointer; }
+
+/* Only the selected editor-only photo offers direct replacement. */
+.editor-preview .image-sec { position: relative; }
+.editor-preview .editor-preview-image-replace {
+  position: absolute;
+  z-index: 5;
+  top: 10px;
+  right: 10px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #182230;
+  box-shadow: 0 1px 5px #1018281f;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.editor-preview .editor-preview-image-replace:focus-visible { outline: 2px solid #2454ff; outline-offset: 2px; }
+
+/* Exact gallery slot actions appear only inside a selected editor preview. */
+.editor-preview .image-gallery-grid-item { position: relative; }
+.editor-preview .image-gallery-grid-item .editor-preview-image-replace { top: 6px; right: 6px; padding: 6px 8px; font-size: 11px; }
+.editor-preview .image-wrap > .editor-preview-image-replace { top: 10px; right: 10px; }
+
+
+/* Clean mobile canvas: the actual page stays 390px wide. Context actions
+   occupy one compact bar ABOVE the page, never a floating overlay. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace {
+  padding-top: 24px !important;
+  background: #eaedf3 !important;
+  background-image: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-stage-heading {
+  min-height: 30px;
+  margin: 0 0 12px;
+  padding: 0;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-stage-label strong {
+  color: #283450;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -.02em;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-stage-signal {
+  background: #4256d5;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-stage-width {
+  color: #677389;
+  font-size: 11px;
+  font-weight: 600;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  flex: 0 0 auto;
+  width: 394px;
+  max-width: 100%;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame {
+  border-color: #d7dce7 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 48px rgba(33,43,68,.13), 0 2px 8px rgba(33,43,68,.05) !important;
+  height: calc(100dvh - 216px) !important;
+  min-height: 0 !important;
+  max-height: 820px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools {
+  position: static !important;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 1px solid #e3e7ef;
+  border-radius: 11px;
+  background: #fff;
+  color: #202b42;
+  box-shadow: 0 1px 6px rgba(35,49,78,.06);
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools::before {
+  display: none;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 !important;
+  border: 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading span {
+  display: none;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading strong {
+  min-width: 0; max-width: 100px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: 12px; font-weight: 750;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading small {
+  color: #909aac; font-size: 10px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-primary {
+  display: flex; align-items: center;
+  gap: 5px;
+  padding: 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button {
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  gap: 5px;
+  min-height: 35px; padding: 6px 9px;
+  border: 1px solid #e2e7ef; border-radius: 7px;
+  background: #f9fafc; color: #3d4960;
+  font: inherit; font-size: 11px; font-weight: 650; cursor: pointer;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:hover:not(:disabled) {
+  border-color: #c4cdf2; background: #f1f3ff; color: #344acb;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:focus-visible {
+  outline: 2px solid #465cf0; outline-offset: 2px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:disabled {
+  opacity: .32; cursor: default;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools .editor-canvas-add-after {
+  border-color: #263154; background: #263154; color: #fff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools .editor-canvas-add-after:hover:not(:disabled) {
+  background: #192446; color: #fff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary {
+  display: flex; align-items: center; gap: 3px; padding: 0;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary button {
+  min-width: 27px; min-height: 30px; padding: 4px;
+  border-color: transparent;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add {
+  width: 100%; min-height: 43px; margin: 12px 0 0;
+  padding: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border: 1px dashed #b4bfd2; border-radius: 10px;
+  background: #fff; color: #3f509a;
+  font: inherit; font-size: 12px; font-weight: 680; cursor: pointer;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add:focus-visible {
+  outline: 2px solid #465cf0; outline-offset: 2px;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-workspace .preview-selected-block {
+  outline: 2px solid #465cf0 !important;
+  outline-offset: -2px !important;
+  box-shadow: inset 0 0 0 1px rgba(70,92,240,.13) !important;
+}
+@media (min-width: 900px) and (max-width: 950px) {
+  html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap { width: 392px; }
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools {
+    gap: 4px; padding-inline: 5px;
   }
 }

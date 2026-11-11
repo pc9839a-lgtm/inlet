@@ -1,50 +1,63 @@
-/* Editor geometry: persistent block list, selected settings, one live mobile page. */
+/* Editor workbench: Littly-style block stack at left, real 390px page at right.
+   Public landing layout and workspace operations routes are not changed. */
 html body #root .builder-shell.canvas-editor-shell {
-  /* Reference: enough space for navigator AND editable properties.
-     Keep the 390px phone fully visible on narrow desktops. */
-  --editor-list-width: clamp(220px, 16vw, 240px);
-  /* At 900px reserve exactly 400px for the 392px phone and 4px gutters;
-     keep the full editor capped at 700px on wide monitors. */
-  --editor-edit-width: clamp(500px, calc(100vw - 410px), 700px);
-  --editor-settings-width: calc(var(--editor-edit-width) - var(--editor-list-width));
+  --editor-list-width: clamp(220px, 15.6vw, 264px);
+  --editor-edit-width: clamp(500px, 42vw, 660px);
+  --editor-settings-width: var(--editor-edit-width);
   display: grid;
   grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;
   grid-template-rows: 64px minmax(0, 1fr);
   height: 100dvh !important;
-  min-height: 0;
   max-height: 100dvh !important;
+  min-height: 0;
   overflow: clip !important;
+  background: #f4f5f9;
 }
-html body #root .canvas-editor-shell > .left-workspace { display: contents !important; }
-html body #root .canvas-editor-shell #workspace-panel-edit { height: auto; min-height: 100%; padding: 0; margin: 0; overflow: visible; }
+html body #root .canvas-editor-shell > .left-workspace {
+  display: contents !important;
+}
+html body #root .canvas-editor-shell #workspace-panel-edit {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
 html body #root .canvas-editor-shell .work-panel {
-  grid-column: 1;
-  grid-row: 2;
+  grid-column: 1; grid-row: 2;
   width: 100%;
   max-width: none !important;
   min-height: 0;
   height: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  /* Only this outer editing workspace owns a vertical scrollbar. */
-  overflow: hidden auto !important;
-  overscroll-behavior-y: contain;
-  border-right: 1px solid #e7eaf2;
-  background: #fff;
+  margin: 0 !important; padding: 0 !important;
+  overflow: hidden !important;
+  border-right: 1px solid #dfe4ee;
+  background: #f4f5f9;
 }
-/* Desktop zoom keeps both surfaces reachable; phones retain operations mode. */
+/* On narrow browsers the editor and 390px page remain independently usable. */
 @media (max-width: 899px) {
-  body:has(.canvas-editor-shell), #root:has(.canvas-editor-shell) { height: auto !important; overflow: auto !important; }
+  body:has(.canvas-editor-shell),
+  #root:has(.canvas-editor-shell) {
+    height: auto !important;
+    overflow: auto !important;
+  }
   html body #root .builder-shell.canvas-editor-shell {
-    --editor-list-width: min(240px, 38vw);
     --editor-edit-width: 100%;
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: auto auto auto !important;
     height: auto !important;
-    min-height: 100dvh !important;
     max-height: none !important;
+    min-height: 100dvh !important;
     overflow: visible !important;
   }
-  html body #root .canvas-editor-shell .work-panel { grid-column: 1; grid-row: 2; height: auto !important; min-height: 640px; overflow: auto !important; }
-  html body #root .canvas-editor-shell #workspace-panel-edit { height: auto; overflow: visible; }
+  html body #root .canvas-editor-shell .work-panel {
+    grid-column: 1; grid-row: 2;
+    min-height: 650px;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  html body #root .canvas-editor-shell #workspace-panel-edit {
+    height: auto;
+    overflow: visible;
+  }
 }

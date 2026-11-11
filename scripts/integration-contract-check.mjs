@@ -537,10 +537,13 @@ requireAll(lazyEditorBoundary, [
 const normalBlockSelection = await read('src/editor/useNormalBlockSelection.js');
 requireAll(normalBlockSelection, [
   'isSelectedOpenIdNormalBlock(normalBlocks, openId)',
-  "setOpenId((current) => (current === blockId ? '' : blockId))",
+  'setOpenId(blockId);',
+  'clearBlockSelection',
   'setAddOpen(false)',
   'openBlockSettings',
-], 'shared screen order selection and same-row toggle contract');
+], 'shared screen order stable selection and explicit page-option clear contract');
+assert(!normalBlockSelection.includes("current === blockId ? '' : blockId"),
+  'repeat selection must not collapse an active block editor');
 
 const screenOrderRow = await read('src/editor/editPanelParts/ScreenOrderRow.jsx');
 requireAll(screenOrderRow, [

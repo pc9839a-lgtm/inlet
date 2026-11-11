@@ -8,13 +8,29 @@ import { useNormalBlockSelection } from './useNormalBlockSelection.js';
 
 export function useEditPanelSelection({ page, openId, setOpenId, setAddOpen }) {
   const { topNavBlock, bottomBlock, footerBlock, normalBlocks } = React.useMemo(() => getEditPanelSelectionBlocks(page), [page]);
+
+  // Open the first visible content editor on initial entry, not the global
+  // design form. This runs once per page: explicitly opening Page Settings
+  // must never reselect a block, and an existing selection always wins.
+  const firstSelectionPageRef = React.useRef('');
+  const pageIdentity = String(page?.id || page?.slug || 'unsaved');
+  React.useEffect(() => {
+    if (firstSelectionPageRef.current === pageIdentity) return;
+    const firstVisibleBlock = normalBlocks.find((block) => block.visible !== false);
+    if (!firstVisibleBlock) return;
+    firstSelectionPageRef.current = pageIdentity;
+    const activeSelectionExists = normalBlocks.some((block) => block.id === openId)
+      || [topNavBlock?.id, bottomBlock?.id, footerBlock?.id].filter(Boolean).includes(openId);
+    if (!activeSelectionExists) setOpenId(firstVisibleBlock.id);
+  }, [normalBlocks, openId, pageIdentity, setOpenId, topNavBlock?.id, bottomBlock?.id, footerBlock?.id]);
+
   const { fixedOpenId, toggleBlockOpen } = useFixedBlockSelection({
     setAddOpen,
     setOpenId,
     openId,
     fixedBlockIds: [topNavBlock?.id, bottomBlock?.id, footerBlock?.id].filter(Boolean),
   });
-  const { normalSelectedId, selectBlock, openBlockSettings } = useNormalBlockSelection({
+  const { normalSelectedId, selectBlock, clearBlockSelection, openBlockSettings } = useNormalBlockSelection({
     normalBlocks,
     openId,
     setOpenId,
@@ -33,6 +49,7 @@ export function useEditPanelSelection({ page, openId, setOpenId, setAddOpen }) {
     fixedOpenId,
     toggleBlockOpen,
     selectBlock,
+    clearBlockSelection,
     openBlockSettings,
   };
 }

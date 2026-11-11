@@ -4,7 +4,7 @@ import BottomWidgetTargetSelect from './BottomWidgetTargetSelect.jsx';
 import { resolveBottomLinkTarget } from './bottomLinkTargetModel.js';
 import { changeTargetMode } from '../targetControlModel.js';
 
-export function BottomLinkCompact({ button, page, onChange }) {
+export function BottomLinkCompact({ button, index, page, onChange }) {
   const blocks = (page?.blocks || []).filter((block) => block.type !== 'bottombar');
   const { currentWidget, mode } = resolveBottomLinkTarget(button, blocks);
 
@@ -21,8 +21,8 @@ export function BottomLinkCompact({ button, page, onChange }) {
   };
 
   return (
-    <div className="bottom-link-compact bottom-link-tabs">
-      <span>이동</span>
+    <div className="bottom-link-compact bottom-link-tabs" data-bottom-button-target-index={index}>
+      <span>누르면</span>
       <div className="bottom-link-controls">
         <BottomLinkModeTabs mode={mode} onChange={setMode} />
 

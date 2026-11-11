@@ -132,7 +132,7 @@ function BgEffectLayer({ effect }) {
   );
 }
 
-function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, templatePreview = false, editorPreview = false, publicView = false }) {
+function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '', onSelectBlock, onEditPreviewText, onReplacePreviewImage, onEditPreviewLinkItem, onEditPreviewBottomButton, templatePreview = false, editorPreview = false, publicView = false }) {
   const blocks = visiblePreviewBlocks(page);
   const bottom = blocks.find(b=>b.type==='bottombar');
   // Preserve the editor's exact order, including a HERO placed after text.
@@ -326,10 +326,25 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   }, [selectedBlockId, blocks.length]);
 
   const handlePreviewSelect = (event) => {
+    if (editorPreview && event.target.closest?.('.editor-inline-text-edit')) return;
     const section = event.target.closest?.('[id^="block-"]');
     if (!section) return;
     const id = section.id.replace('block-', '');
-    onSelectBlock?.(id);
+    const imageClick = editorPreview && section.classList.contains('image-sec')
+      && !!event.target.closest?.('.image-wrap, .image-gallery-grid, .image-placeholder')
+      && !event.target.closest?.('button, a, input, textarea, select, label');
+    const slot = imageClick ? event.target.closest?.('[data-preview-gallery-index]')?.getAttribute('data-preview-gallery-index') : null;
+    const galleryIndex = slot != null && /^\d+$/.test(slot) ? Number(slot) : undefined;
+    const block = blocks.find((entry) => entry.id === id);
+    // Title/description in a preview form are not inline text controls:
+    // a click opens the matching, existing Inspector field instead.
+    // Direct hero/text inline editors keep their own double-click behavior.
+    const focusField = editorPreview && block?.type === 'form'
+      ? event.target.closest?.('h2') ? 'title'
+        : event.target.closest?.('.form-desc-align-left, .form-desc-align-center, .form-desc-align-right') ? 'description'
+        : ''
+      : '';
+    onSelectBlock?.(id, { imageClick, galleryIndex, focusField });
   };
 
   const go = (target, url, labelText) => {
@@ -353,12 +368,12 @@ function LandingRenderer({ page, leads = [], addLead, track, selectedBlockId = '
   const bgEffect = pickSafe(page.theme.bgEffect || 'none', ['none','snow','petals','sparkle'], 'none');
   const bgEffectOpacity = Math.max(0.1, Math.min(0.9, Number(page.theme.bgEffectOpacity ?? 45) / 100));
   const globalAlign = pickSafe(page.theme.globalAlign, ['left','center','right'], '');
-  const bottomNode = bottomActive ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView} hiddenForForm={formInputActive}/> : null;
+  const bottomNode = bottomActive ? <RenderBottom block={bottom} blocks={blocks} accent={page.theme.accent} buttonEffect={buttonEffect} go={go} publicView={publicView} hiddenForForm={formInputActive} editorPreview={editorPreview} onEditButton={editorPreview ? onEditPreviewBottomButton : undefined}/> : null;
   const pageClassName = `landing-page font-${page.theme.font} font-family-${page.theme.fontFamily || 'pretendard'} ${globalAlign ? `global-align-${globalAlign}` : ''} bgmode-${page.theme.bgMode || 'solid'} bg-effect-${bgEffect} button-effect-${buttonEffect} ${publicView ? 'public-render' : ''} ${templatePreview ? 'template-preview' : ''} ${editorPreview ? 'editor-preview' : ''} ${bottomActive ? 'has-bottom-bar' : ''} ${formInputActive ? 'is-form-input-active' : ''} ${page.theme.animOn ? `anim-on anim-${page.theme.animType || 'fade'} anim-${page.theme.animPlayback === 'loop' ? 'loop' : 'once'}` : ''}`;
 
   const pageNode = (
     <div ref={pageRef} onClickCapture={templatePreview || publicView ? undefined : handlePreviewSelect} className={pageClassName} style={{'--accent':page.theme.accent,'--button':page.theme.accent,'--button-text':'#ffffff','--bg':pageBg,'--card':page.theme.card,'--text':page.theme.text,'--radius':`${page.theme.radius}px`,'--bg-effect-opacity':bgEffectOpacity,'--page-fixed-top-height':`${fixedUiHeights.top}px`,'--page-fixed-bottom-height':`${fixedUiHeights.bottom}px`,background:pageBg,color:page.theme.text,backgroundSize:bgSize,backgroundPosition:bgPosition,backgroundRepeat:'no-repeat'}}>
-      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={editorPreview ? simulateEditorPreviewLead : addLead} track={editorPreview ? undefined : track} go={go} editorPreview={editorPreview}/>)}</div>
+      <div className="landing-content">{normal.map(b=><RenderBlock key={b.id} page={page} block={b} blocks={blocks} leads={leads} addLead={editorPreview ? simulateEditorPreviewLead : addLead} track={editorPreview ? undefined : track} go={go} editorPreview={editorPreview} selectedBlockId={selectedBlockId} onReplacePreviewImage={editorPreview ? onReplacePreviewImage : undefined} onEditPreviewLinkItem={editorPreview ? onEditPreviewLinkItem : undefined} onEditPreviewText={editorPreview ? onEditPreviewText : undefined} onEditPreviewFormSubmit={editorPreview ? (id) => onSelectBlock?.(id, { focusField: 'submit' }) : undefined}/>)}</div>
       <BgEffectLayer effect={bgEffect} />
       {!editorPreview && page.share?.enabled !== false && <PageShareButton page={page} publicView={publicView} />}
       {!publicView && bottomNode}
@@ -414,20 +429,20 @@ function RenderBlock(props) {
   );
 }
 
-function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false }) {
+function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, go, editorPreview = false, selectedBlockId, onReplacePreviewImage, onEditPreviewLinkItem, onEditPreviewText, onEditPreviewFormSubmit }) {
   const globalAlign = pickSafe(page?.theme?.globalAlign, ['left','center','right'], '');
   const renderBlock = globalAlign
     ? { ...block, s: { ...(block.s || {}), align: globalAlign, textAlign: globalAlign } }
     : block;
   if(block.type==='topnav')return <LayoutRenderTopNav block={renderBlock} blocks={blocks} go={go}/>;
-  if(block.type==='hero')return <ContentRenderHero block={renderBlock}/>;
-  if(block.type==='image')return <MediaRenderImage block={renderBlock}/>;
-  if(block.type==='text')return <ContentRenderText block={renderBlock}/>;
+  if(block.type==='hero')return <ContentRenderHero block={renderBlock} editorPreview={editorPreview} onEditPreviewText={onEditPreviewText}/>;
+  if(block.type==='image')return <MediaRenderImage block={renderBlock} editorPreview={editorPreview} selected={selectedBlockId===block.id} onReplaceImage={onReplacePreviewImage}/>;
+  if(block.type==='text')return <ContentRenderText block={renderBlock} editorPreview={editorPreview} onEditPreviewText={onEditPreviewText}/>;
   if(block.type==='cards')return <ContentRenderCards block={renderBlock}/>;
   if(block.type==='map')return <InfoRenderMap block={renderBlock} page={page}/>;
   if(block.type==='schedule')return <InfoRenderSchedule block={renderBlock}/>;
   if(block.type==='faq')return <InfoRenderFaq block={renderBlock}/>;
-  if(block.type==='links')return <LinkRenderLinks block={renderBlock} track={track} go={go}/>;
+  if(block.type==='links')return <LinkRenderLinks block={renderBlock} track={track} go={go} editorPreview={editorPreview} onEditItem={onEditPreviewLinkItem}/>;
   if(block.type==='download')return <LinkRenderDownload block={renderBlock} track={track}/>;
   if(block.type==='timer')return <SignalRenderTimer block={renderBlock} go={go}/>;
   if(block.type==='activity')return <SignalRenderActivity block={renderBlock} leads={leads}/>;
@@ -437,7 +452,7 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
     ? <section id={`block-${block.id}`} className="landing-section code-widget-empty" role="note">외부 동영상은 발행본에서 재생할 수 있습니다.</section>
     : <UtilityRenderCode block={renderBlock} editorPreview={editorPreview}/>;
   if(block.type==='search')return <UtilityRenderPageSearch block={renderBlock}/>;
-  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
+  if(block.type==='form')return <FormRenderForm block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview} selected={selectedBlockId === block.id} onEditSubmit={editorPreview ? onEditPreviewFormSubmit : undefined}/>;
   if(block.type==='reservation')return <FormRenderReservation block={renderBlock} addLead={addLead} track={track} editorPreview={editorPreview}/>;
   if(block.type==='footer')return <LayoutRenderFooter block={renderBlock}/>;
   return <section className="landing-section block-render-fallback"><strong>지원하지 않는 블록</strong></section>;
@@ -531,9 +546,9 @@ function PageShareButton({ page, publicView = false }) {
   );
 }
 
-function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = 'fill', go, publicView = false, hiddenForForm = false }) {
+function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = 'fill', go, publicView = false, hiddenForForm = false, editorPreview = false, onEditButton }) {
   const s=block.s || {};
-  const btns=normalizeButtons(s.buttons,s.count).slice(0,Number(s.count||1)).filter((b)=>b.enabled!==false);
+  const btns=normalizeButtons(s.buttons,s.count).slice(0,Number(s.count||1)).map((button,index)=>({...button,editorIndex:index})).filter((b)=>b.enabled!==false);
   const timerSource = getSyncedTimerSettings(blocks);
   const showTimer = !!s.timerEnabled && !!timerSource;
   if(!btns.length && !showTimer) return null;
@@ -555,7 +570,7 @@ function RenderBottom({ block, blocks = [], accent = '#111827', buttonEffect = '
       <div className="bottom-bar-actions">
         <div className="bottom-bar-buttons">
           {btns.map(b=>(
-            <button key={b.id} type="button" className={b.icon ? '' : 'no-icon'} title={b.label || '버튼'} onClick={()=>go(b.target,b.url,b.label)}>
+            <button key={b.id} type="button" className={b.icon ? '' : 'no-icon'} title={editorPreview ? '버튼 문구와 연결 대상 편집' : (b.label || '버튼')} aria-label={editorPreview ? `${b.label || '버튼'} 설정 편집` : undefined} data-preview-bottom-index={editorPreview ? b.editorIndex : undefined} onClick={editorPreview ? ()=>onEditButton?.(block.id,b.editorIndex) : ()=>go(b.target,b.url,b.label)}>
               {b.icon && <span>{b.icon}</span>}
               <b>{b.label}</b>
             </button>

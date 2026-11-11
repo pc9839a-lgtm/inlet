@@ -1,0 +1,160 @@
+name: PageRo editor review — preview only
+
+# Temporary review workflow, scoped to the isolated preview branch.
+# Neither main nor the protected production Pages branch may be targeted.
+on:
+  push:
+    branches:
+      - preview/pagero-editor-review-20261106
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pagero-editor-review-preview-20261106
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    if: ${{ github.repository == 'pc9839a-lgtm/inlet' && github.ref == 'refs/heads/preview/pagero-editor-review-20261106' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact review commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build exact review source
+        run: npm run build
+
+      # npm run build already performs artifact checks before safe asset pruning.
+
+      - name: Verify Cloudflare target is a preview branch only
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Preview deploy credentials unavailable; no upload attempted."
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/inlet" \
+            -o /tmp/pagero-editor-preview-target.json
+          node --input-type=module - /tmp/pagero-editor-preview-target.json <<'NODE'
+          import fs from 'node:fs';
+          const response = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const project = response?.result || {};
+          if (response.success !== true || project.name !== 'inlet' || project.production_branch !== 'main') {
+            console.error('::error::Preview target project or production branch was not verified; upload blocked.');
+            process.exit(1);
+          }
+          console.log('Verified Pages project inlet with separate main production branch.');
+          NODE
+
+      - name: Publish isolated preview and verify environment metadata
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: eec4828f6c3ab1c52683f0d47767e8fc
+          PREVIEW_BRANCH: pagero-editor-review-20261106
+        run: |
+          set -euo pipefail
+          if [ "${PREVIEW_BRANCH}" = main ] || [ "${GITHUB_REF}" != "refs/heads/preview/pagero-editor-review-20261106" ]; then
+            echo "::error::Refusing a non-preview deployment."
+            exit 1
+          fi
+          npx wrangler pages deploy dist \
+            --project-name inlet \
+            --branch "${PREVIEW_BRANCH}" \
+            --commit-hash "${GITHUB_SHA}" \
+            --commit-message "Editor visual review only" 2>&1 | tee /tmp/pagero-editor-preview-wrangler.log
+
+          # Cloudflare deployment-list metadata can lag the Wrangler success response.
+          # Keep fail-closed SHA/branch/environment checks; never infer success
+          # from Wrangler output or a public preview alias alone.
+          for attempt in 1 2 3 4 5 6 7 8; do
+            curl --fail-with-body --silent --show-error \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/inlet/deployments?env=preview&per_page=20" \
+              -o /tmp/pagero-editor-preview-deployments.json
+            if node --input-type=module - /tmp/pagero-editor-preview-deployments.json "${GITHUB_SHA}" "${PREVIEW_BRANCH}" <<'NODE'
+          import fs from 'node:fs';
+          const data = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const sha = process.argv[3];
+          const branch = process.argv[4];
+          const deployments = Array.isArray(data.result) ? data.result : [];
+          // Wrangler receives a short Pages alias, but Cloudflare may report
+          // the full GitHub preview ref as the branch metadata. Both names
+          // identify ONLY this reviewed preview branch; SHA and env still
+          // require exact matches before we expose a review URL.
+          const allowedBranches = new Set([branch, `preview/${branch}`]);
+          const match = deployments.find(item =>
+            item?.deployment_trigger?.metadata?.commit_hash === sha &&
+            allowedBranches.has(item?.deployment_trigger?.metadata?.branch) &&
+            item?.environment === 'preview');
+          if (data.success !== true || !match) {
+            // Non-secret diagnostics distinguish API lag from CLI metadata drift.
+            const candidates = deployments.filter(item =>
+              item?.environment === 'preview' &&
+              allowedBranches.has(item?.deployment_trigger?.metadata?.branch)).slice(0, 5);
+            console.log('Exact-SHA preview metadata pending:', JSON.stringify({
+              success: data.success === true,
+              inspected: deployments.length,
+              latestPreview: deployments.filter(item => item?.environment === 'preview').slice(0, 5).map(item => ({
+                branch: String(item?.deployment_trigger?.metadata?.branch || ''),
+                hashPrefix: String(item?.deployment_trigger?.metadata?.commit_hash || '').slice(0, 12),
+              })),
+              branchCandidates: candidates.map(item => ({
+                hashPrefix: String(item?.deployment_trigger?.metadata?.commit_hash || '').slice(0, 12),
+                status: item?.latest_stage?.status || '',
+              })),
+            }));
+            process.exit(2);
+          }
+          const url = String(match.url || '');
+          if (!/^https:\/\/[a-z0-9-]+\.inlet-8mr\.pages\.dev\/?$/i.test(url)) {
+            console.error('::error::A verified Pages deployment URL was not returned.');
+            process.exit(1);
+          }
+          console.log('Verified preview environment for exact SHA:', sha);
+          console.log('Review URL:', url);
+          // Only expose the editor route. No authenticated API or data writes.
+          const app = new URL('/app', url).toString();
+          console.log('Editor route:', app);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+            '### PageRo editor review (not production)',
+            '',
+            'Preview-only deployment:',
+            '',
+            url,
+            '',
+            'SHA: ' + sha,
+            '',
+            'Branch: ' + branch,
+            '',
+            'Protected main / production unchanged.',
+            '',
+          ].join('\n'));
+          NODE
+            then
+              exit 0
+            fi
+            echo "Preview metadata not yet verified; attempt ${attempt}/8."
+            sleep 5
+          done
+          echo "::error::Exact-SHA preview environment could not be confirmed. Do not share this deployment."
+          exit 1
