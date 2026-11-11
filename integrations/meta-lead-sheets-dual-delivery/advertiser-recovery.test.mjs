@@ -40,3 +40,12 @@ test('customer data and bearer Webhook do not appear in public HTML',()=>{
   assert.match(page,/type="password"/);
   assert.doesNotMatch(page,/ctwh_XHQF78|localStorage|sessionStorage/);
 });
+
+test('automatic advertiser recovery is restricted to one Meta ID and second attempt',()=>{
+  const server=readFileSync(new URL('../../functions/api/integrations/meta-sheets/relay.js',import.meta.url),'utf8');
+  assert.match(server,/event_id='meta-l1870743443942053' AND ad_status='REVIEW' AND ad_attempts=1/);
+  assert.match(server,/oneTimeRecovery && id === 'meta-l1870743443942053'/);
+  assert.match(server,/ad_status='REVIEW' AND ad_attempts=1/);
+  assert.match(server,/ad_status='PENDING'/);
+  assert.doesNotMatch(server,/UPDATE meta_sheet_dual_queue SET ct_status='SENDING'.*oneTimeRecovery/);
+});
