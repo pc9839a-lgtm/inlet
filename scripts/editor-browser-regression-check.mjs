@@ -3026,8 +3026,8 @@ async function run() {
     assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '13px' && screenOrderShellStyle?.rowBorder === '1px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.addBackground === 'rgb(237, 242, 255)', `reference full-width add action must keep the light-blue primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius?.startsWith('11px') && screenOrderShellStyle?.rowBorder === '1px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.addBackground === 'rgb(32, 43, 77)', `reference full-width add action must keep its high-contrast navy primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 900 || desktopViewport.width === 1024) {
         await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
