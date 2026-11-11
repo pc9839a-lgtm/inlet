@@ -42,11 +42,14 @@ test('customer data and bearer Webhook do not appear in public HTML',()=>{
 });
 
 
-test('server never replays REVIEW advertiser leads without operator confirmation',()=>{
+test('only owner-confirmed missing Meta lead is eligible for exactly one automatic resend',()=>{
   const server=readFileSync(new URL('../../functions/api/integrations/meta-sheets/relay.js',import.meta.url),'utf8');
-  assert.match(server,/ad_status='PENDING' ORDER BY created_at LIMIT 10/);
-  assert.doesNotMatch(server,/oneTimeRecovery/);
-  assert.doesNotMatch(server,/OR \(event_id='meta-l1870743443942053'/);
+  assert.match(server,/APPROVED_ADVERTISER_RECOVERY_EVENT_ID = 'meta-l1870743443942053'/);
+  assert.match(server,/event_id=\? AND ad_status IN \('REVIEW','SENT'\) AND ad_attempts=1/);
+  assert.match(server,/record\.event_id === APPROVED_ADVERTISER_RECOVERY_EVENT_ID/);
+  assert.match(server,/approvedOneTimeReplay && id === APPROVED_ADVERTISER_RECOVERY_EVENT_ID/);
+  assert.match(server,/ad_status='PENDING'/);
+  assert.doesNotMatch(server,/ct_status='SENDING'.*approvedOneTimeReplay/);
 });
 test('successful Make blueprint request exactly matches current advertiser fields',async()=>{
   const { advertiserForm } = await import('../../functions/api/integrations/meta-sheets/relay.js');
