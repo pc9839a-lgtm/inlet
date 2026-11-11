@@ -115,7 +115,7 @@ assert(editLayout.includes('페이지 설정')
   && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'),
   'the inline page design panel must reuse the existing theme and page settings models');
 assert(!pageOptions.includes('PageGlobalOptionsHeader') && pageOptions.includes('aria-label="페이지 동작"'), 'page behavior must have an accessible group label without repeating a visible settings heading');
-assert(editLayout.includes('<h2>블록 편집</h2>')
+assert(editLayout.includes('<h2>블록 편집 <span className="editor-composition-total">')
   && editLayout.includes('editor-composition-total')
   && !screenOrderList.includes('ScreenOrderListHeader'),
   'block stack must have one identifiable title and count');
