@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { Script, createContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { normalizePhone, normalizeSheetLead, advertiserForm, explicitAdvertiserSuccess, makeCompatibleHttpAccepted, onRequest, ADVERTISER_ITEM, readConfig } from '../../functions/api/integrations/meta-sheets/relay.js';
+import { normalizePhone, normalizeSheetLead, advertiserForm, explicitAdvertiserSuccess, makeCompatibleHttpAccepted, onRequest, ADVERTISER_ITEM, readConfig, dispatchPending } from '../../functions/api/integrations/meta-sheets/relay.js';
 
 const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)),'Code.gs'),'utf8');
 const headers = ['id','created_time','ad_id','ad_name','adset_id','adset_name',
@@ -223,4 +223,25 @@ test('opt-in Make transport prevents Cloudflare advertiser POST without disablin
   assert.equal(readConfig({}).advertiserTransport,'direct');
   assert.equal(readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'invalid'}).advertiserTransport,'direct');
   assert.equal(readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'make',META_SHEETS_DISPATCH_ENABLED:'0'}),null);
+});
+
+test('Make transport does not issue an advertiser fetch for PENDING leads',async()=>{
+  const bound=[];
+  const db={prepare(sql){
+    return {
+      args:[],bind(...args){this.args=args;bound.push({sql,args});return this;},
+      async run(){return {meta:{changes:1}};},
+      async all(){return {results:[{
+        event_id:'meta-example',payload_json:'{}',ct_status:'SENT',ad_status:'PENDING'
+      }]};}
+    };
+  }};
+  const savedFetch=globalThis.fetch;
+  let called=0;
+  globalThis.fetch=async()=>{called++;throw Error('advertiser must not be sent in Make mode');};
+  try {
+    await dispatchPending(db,{},readConfig({META_SHEETS_ADVERTISER_TRANSPORT:'make'}));
+  } finally {globalThis.fetch=savedFetch;}
+  assert.equal(called,0);
+  assert.ok(bound.some(x=>x.sql.includes('ad_status=') && x.args.length===1 && x.args[0]===0));
 });
