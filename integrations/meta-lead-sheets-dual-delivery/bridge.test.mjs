@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { Script, createContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { normalizePhone, normalizeSheetLead, advertiserForm, explicitAdvertiserSuccess, makeCompatibleHttpAccepted, onRequest } from '../../functions/api/integrations/meta-sheets/relay.js';
+import { normalizePhone, normalizeSheetLead, advertiserForm, explicitAdvertiserSuccess, makeCompatibleHttpAccepted, onRequest, ADVERTISER_ITEM, readConfig } from '../../functions/api/integrations/meta-sheets/relay.js';
 
 const source = readFileSync(join(dirname(fileURLToPath(import.meta.url)),'Code.gs'),'utf8');
 const headers = ['id','created_time','ad_id','ad_name','adset_id','adset_name',
@@ -102,7 +102,7 @@ test('Cloudflare handles Meta field mapping, Make-compatible phone and advertise
   assert.equal(mapped.eventId,'meta-l2013932282624321');
   assert.equal(mapped.money,'3000만원');
   assert.equal(mapped.content,'개인회생 상담');
-  assert.match(advertiserForm(mapped),/ITEM=41/);
+  assert.match(advertiserForm(mapped),/ITEM=40/);
   assert.match(advertiserForm(mapped),/DATAS_phone=010-2345-6789/);
   assert.equal(normalizeSheetLead(dummy),null);
 });
@@ -186,7 +186,7 @@ test('Make blueprint field names take precedence over alternate Meta form aliase
   assert.deepEqual([...form.keys()],[
     'ITEM','DATAS_name','DATAS_phone','DATAS_money','DATAS_area','DATAS_calldate','DATAS_data'
   ]);
-  assert.equal(form.get('ITEM'),'41');
+  assert.equal(form.get('ITEM'),'40');
   assert.equal(form.get('DATAS_phone'),'010-1234-5678');
   assert.equal(form.get('DATAS_name'),'원본이름');
   assert.equal(form.get('DATAS_money'),'원본채무');
@@ -202,4 +202,16 @@ test('Make-compatible 2xx transport result does not turn explicit rejection into
   assert.equal(makeCompatibleHttpAccepted(200,'{"status":"failed"}'),false);
   assert.equal(makeCompatibleHttpAccepted(302,'OK'),false);
   assert.equal(makeCompatibleHttpAccepted(403,'OK'),false);
+});
+
+test('advertiser ITEM is locked to 40 even when the old 41 or 64 is supplied via environment or call',()=>{
+  assert.equal(ADVERTISER_ITEM,'40');
+  for(const attempted of ['41','64','40','0','']) {
+    const result=readConfig({META_SHEETS_ADVERTISER_ITEM:attempted});
+    assert.equal(result.item,'40');
+    const actual=new URLSearchParams(advertiserForm({name:'dummy',phone:'01012345678'},attempted));
+    assert.equal(actual.get('ITEM'),'40');
+    assert.equal([...actual.keys()][0],'ITEM');
+  }
+  assert.equal(readConfig({META_SHEETS_DISPATCH_ENABLED:'0'}),null);
 });
