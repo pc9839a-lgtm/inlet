@@ -36,14 +36,17 @@ assert(actions.includes('commitLocalPageDraft({ ...p, blocks: ensureUniqueAnchor
 assert(sectionProps.includes('addSectionPattern') && dockProps.includes('addSectionPattern') && app.includes('addSectionPattern'), 'section pattern action prop chain is incomplete');
 
 assert(!css.includes('.section-add-modes') && !css.includes('.section-pattern-card') && !css.includes('.section-pattern-tags'), 'removed recommendation picker styles must not leak back into the primary editor bundle');
-assert(browser.includes("!!document.querySelector('.add-panel .widget-group-grid')"), 'browser regression must open the simplified block grid directly');
-assert(browser.includes("must not expose recommendation/industry mode tabs") && browser.includes("must not expose the removed search field"), 'browser regression must lock removal of recommendation tabs and search');
+assert(browser.includes("!!document.querySelector('.editor-gallery-dialog .widget-group-grid')"),
+  'browser regression must open the full block gallery with every original block type');
+assert(browser.includes("must not expose recommendation/industry mode tabs")
+  && browser.includes("the new gallery offers content-first block search"),
+  'browser regression must retain simple direct insertion while testing searchable gallery categories');
 
 console.log(JSON.stringify({
   ok: true,
   checks: 17,
   scope: 'pagero-section-patterns-e2',
-  primaryAddModes: ['basic-block-grid-only'],
+  primaryAddModes: ['quick-gallery', 'searchable-basic-blocks'],
   industryCoverage: ['개인회생', '분양', '청첩장'],
   bundleMutation: 'single-undo-step',
   existingRendererReused: true,
