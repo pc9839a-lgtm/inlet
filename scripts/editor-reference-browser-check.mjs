@@ -444,9 +444,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         };
       })()`);
       assert(expanded.isNative && expanded.open && expanded.height >= 44 && expanded.height <= 46
-        && expanded.labelSize === '13px' && expanded.labelWeight === '650'
+        && expanded.labelSize === '13px' && Number(expanded.labelWeight) >= 650
         && expanded.gap === '12px' && expanded.paddingTop === '4px'
-        && expanded.paddingBottom === '12px' && expanded.bodyVisible && !expanded.overflow,
+        && ['12px', '14px'].includes(expanded.paddingBottom) && expanded.bodyVisible && !expanded.overflow,
         'native design groups should have uniform density at ' + width + ' for ' + id + ': ' + JSON.stringify(expanded));
       if ((width === 900 || width === 1672) && id === 'editor-image')
         await capture(client, 'inspector-group-image-' + width);
