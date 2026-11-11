@@ -19,8 +19,10 @@ export function useEditPanelSelection({ page, openId, setOpenId, setAddOpen }) {
     const firstVisibleBlock = normalBlocks.find((block) => block.visible !== false);
     if (!firstVisibleBlock) return;
     firstSelectionPageRef.current = pageIdentity;
-    if (!openId) setOpenId(firstVisibleBlock.id);
-  }, [normalBlocks, openId, pageIdentity, setOpenId]);
+    const activeSelectionExists = normalBlocks.some((block) => block.id === openId)
+      || [topNavBlock?.id, bottomBlock?.id, footerBlock?.id].includes(openId);
+    if (!activeSelectionExists) setOpenId(firstVisibleBlock.id);
+  }, [normalBlocks, openId, pageIdentity, setOpenId, topNavBlock?.id, bottomBlock?.id, footerBlock?.id]);
 
   const { fixedOpenId, toggleBlockOpen } = useFixedBlockSelection({
     setAddOpen,
