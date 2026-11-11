@@ -41,11 +41,31 @@ test('customer data and bearer Webhook do not appear in public HTML',()=>{
   assert.doesNotMatch(page,/ctwh_XHQF78|localStorage|sessionStorage/);
 });
 
-test('automatic advertiser recovery is restricted to one Meta ID and second attempt',()=>{
+
+test('server never replays REVIEW advertiser leads without operator confirmation',()=>{
   const server=readFileSync(new URL('../../functions/api/integrations/meta-sheets/relay.js',import.meta.url),'utf8');
-  assert.match(server,/event_id='meta-l1870743443942053' AND ad_status='REVIEW' AND ad_attempts=1/);
-  assert.match(server,/oneTimeRecovery && id === 'meta-l1870743443942053'/);
-  assert.match(server,/ad_status='REVIEW' AND ad_attempts=1/);
-  assert.match(server,/ad_status='PENDING'/);
-  assert.doesNotMatch(server,/UPDATE meta_sheet_dual_queue SET ct_status='SENDING'.*oneTimeRecovery/);
+  assert.match(server,/ad_status='PENDING' ORDER BY created_at LIMIT 10/);
+  assert.doesNotMatch(server,/oneTimeRecovery/);
+  assert.doesNotMatch(server,/OR \(event_id='meta-l1870743443942053'/);
+});
+test('successful Make blueprint request exactly matches current advertiser fields',async()=>{
+  const { advertiserForm } = await import('../../functions/api/integrations/meta-sheets/relay.js');
+  const encoded=advertiserForm({
+    name:'임의 테스트',phone:'01012345678',money:'2000만원 이상',
+    area:'서울',calldate:'오후 3시',content:'개인회생 상담',email:'private@example.com'
+  },'64');
+  const form=new URLSearchParams(encoded);
+  assert.deepEqual([...form.keys()],[
+    'ITEM','DATAS_name','DATAS_phone','DATAS_money',
+    'DATAS_area','DATAS_calldate','DATAS_data'
+  ]);
+  assert.equal(form.get('ITEM'),'64');
+  assert.equal(form.get('DATAS_phone'),'010-1234-5678');
+  assert.equal(form.get('DATAS_name'),'임의 테스트');
+  assert.equal(form.get('DATAS_area'),'서울');
+  assert.equal(form.has('DATAS_email'),false);
+  assert.equal(form.has('DATAS_insert_ad'),false);
+  assert.deepEqual([...new URLSearchParams(advertiserForm({phone:'01012345678'},'64')).keys()],[
+    'ITEM','DATAS_name','DATAS_phone','DATAS_money','DATAS_area','DATAS_calldate','DATAS_data'
+  ]);
 });
