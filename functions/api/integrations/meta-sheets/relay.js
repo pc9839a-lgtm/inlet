@@ -44,21 +44,19 @@ export function normalizeSheetLead(row) {
     submitted: dt && !Number.isNaN(Date.parse(dt)) ? new Date(dt).toISOString() : new Date().toISOString()
   };
 }
-// Mirror the proven Make HTTP form shape: exactly seven fields in the same order.
+// Match the confirmed Make ITEM=64 HTTP 200/SUCCESS payload: six fields in order.
 // Production advertiser campaign is explicitly locked to ITEM=64.
 // Do not use any previously tested campaign item (40 or 41).
 export const ADVERTISER_ITEM = '64';
 export function advertiserForm(lead) {
-  const raw = String(lead?.phone || '').replace(/\D/g, '');
-  const phone = /^010\d{8}$/.test(raw)
-    ? raw.slice(0, 3) + '-' + raw.slice(3, 7) + '-' + raw.slice(7)
-    : raw;
+  // Advertiser expects an 11-digit domestic mobile number (010XXXXXXXX)
+  // without international prefix, letter prefix, spaces or hyphens.
+  const phone = normalizePhone(lead?.phone);
   const form = new URLSearchParams();
   form.set('ITEM', ADVERTISER_ITEM);
   form.set('DATAS_name', String(lead?.name || ''));
   form.set('DATAS_phone', phone);
   form.set('DATAS_money', String(lead?.money || ''));
-  form.set('DATAS_area', String(lead?.area || ''));
   form.set('DATAS_calldate', String(lead?.calldate || ''));
   form.set('DATAS_data', String(lead?.content || ''));
   return form.toString();

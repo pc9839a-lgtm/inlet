@@ -49,7 +49,8 @@ test('logs retain useful JSON error codes but no exact submitted field values',(
 test('request shape only includes field names, not customer values',()=>{
   const shape=requestShape({name:'김테스트',phone:'01012345678',money:'3000만원',
     area:'',calldate:'오후',content:'문의내용'},'64');
-  assert.deepEqual(shape.empty,['DATAS_area']);
+  assert.deepEqual(shape.empty,[]);
+  assert.equal(shape.supplied.includes('DATAS_area'),false);
   assert.equal(shape.item,'64');
   assert.doesNotMatch(JSON.stringify(shape),/김테스트|01012345678|3000만원/);
 });
@@ -77,11 +78,11 @@ test('recovery is forbidden for GET and unauthorized POST without reading custom
   assert.equal(unauthorized.status,401);
   assert.equal(accessed.length,0);
 });
-test('previous Make request seven fields are preserved',()=>{
+test('confirmed Make ITEM=64 request has exactly six fields',()=>{
   const form=new URLSearchParams(advertiserForm({name:'test',phone:'01012345678',
     money:'2천만원',area:'',calldate:'오후',content:'상담',email:'ignore@example.com'}));
   assert.deepEqual([...form.keys()],['ITEM','DATAS_name','DATAS_phone',
-    'DATAS_money','DATAS_area','DATAS_calldate','DATAS_data']);
+    'DATAS_money','DATAS_calldate','DATAS_data']);
   assert.equal(form.get('ITEM'),'64');
   assert.equal(form.has('DATAS_email'),false);
 });

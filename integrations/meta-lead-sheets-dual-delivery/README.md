@@ -7,7 +7,7 @@ Meta 인스턴트 양식 → Google Sheets (시트1, A:R) → **Apps Script 74�
 - Apps Script는 신규 행을 HTTPS로 Cloudflare에 **전달만** 합니다. 전화번호 변환, 업체 API 전송, 콜태그 등록 및 재시도는 하지 않습니다.
 - Cloudflare는 Meta ID로 중복을 차단하고 D1에 접수한 뒤, 각 목적지의 전송 상태를 분리 관리합니다.
 - 콜태그는 기존 Webhook 식별 키로 수신 계정 소유자를 조회해 **기존 범용 리드 저장 함수를 호출**하므로 앱 패치나 별도 Webhook 필드 매핑이 필요하지 않습니다.
-- 광고주에게는 HTTPS POST + application/x-www-form-urlencoded, **ITEM=64 고정** 및 7개 필드를 원본 순서대로 전송. 과거 Make 블루프린트의 ITEM=41과 임시 테스트 ITEM=40은 사용하지 않습니다.
+- 광고주에게는 HTTPS POST + application/x-www-form-urlencoded, **ITEM=64 고정** 및 확인된 Make 성공 요청과 동일한 6개 필드를 전송. 과거 Make 블루프린트의 ITEM=41과 임시 테스트 ITEM=40은 사용하지 않습니다.
 - 콜태그 실패는 최대 3회 재시도. 광고주는 원본 Make 설정과 같이 리다이렉트를 따라가고 최종 HTTP 2xx를 전송 성공으로 표시하되, 명시적 실패 내용은 REVIEW로 분류합니다. `SENT`는 HTTP 수락 기록이지 광고주 전산 등록을 증명하지 않습니다. 불확실한 전송은 자동 재시도하지 않습니다.
 - 기존 콜태그 Webhook 주소를 Apps Script 스크립트 속성에만 입력합니다. Cloudflare는 기존 활성 Webhook의 해시로 인증합니다. 실제 URL은 공개 GitHub 코드나 시트 셀에 넣지 않습니다.
 
@@ -46,7 +46,7 @@ Cloudflare Pages 프로젝트 **inlet** (pagero.kr)에서 인증과 고객 처�
 - POST /api/integrations/meta-sheets/relay
 - Cloudflare의 D1 meta_sheet_dual_queue 테이블에 수신 기록을 저장합니다.
 - 콜태그: calltag_webhook_connections 테이블에서 Webhook secret의 해시로 소유자 검색 → intakeCanonicalLead 호출 → FCM 신규 리드 알림 시도.
-- 광고주: 정확히 ITEM, DATAS_name, DATAS_phone, DATAS_money, DATAS_area, DATAS_calldate, DATAS_data 필드로 POST. 원본과 같이 followRedirect 활성화. 최종 HTTP 2xx이며 명시적 거부가 아닌 경우 SENT(HTTP 전송 단계만 수락), 그 외 REVIEW.
+- 광고주: 정확히 ITEM, DATAS_name, DATAS_phone, DATAS_money, DATAS_calldate, DATAS_data 6개 필드로 POST. 원본과 같이 followRedirect 활성화. 최종 HTTP 2xx이며 명시적 거부가 아닌 경우 SENT(HTTP 전송 단계만 수락), 그 외 REVIEW.
 - 이미 받은 ID는 INSERT OR IGNORE로 무시됩니다.
 - 한 번에 최대 5행. 1분 주기 스크립트가 새 리드를 전달하고 서버에 재처리 신호를 보냅니다.
 - 콜태그 도중 중단된 상태는 3분 뒤 재시도. 광고주 전송 도중 중단은 REVIEW로 표시해 중복을 방지합니다.
@@ -61,8 +61,8 @@ GAS 코드는 사용자가 구글시트에 수동으로 붙여넣어야 합니�
 ## 원본 Make JSON과의 차이 및 운영 주의
 
 - 원본 필드 우선순위: `이름`, `총_채무액_선택_(2,000미만_불가)`, `거주지역을_입력해주세요`, `상담가능시간`, `문의내용_(ex.개인회생/파산_등)`. 새 Meta 양식의 별칭은 기존 호환용으로 유지합니다.
-- 전화번호: `P:+821012345678` 또는 `P:01012345678` → `010-1234-5678`. 원본에서 GPT가 맡던 결과 형식을 결정적 코드로 구현했습니다.
-- **현재 시트에는 거주지역 질문 열이 없는 것으로 파악됨.** 원본 JSON과 같은 요청 필드 자체는 전송하지만 실제 데이터가 없으면 `DATAS_area` 값은 비어 있습니다. 거주지역을 임의 생성하지 않습니다. 서버 진단 로그에 누락 필드명을 기록합니다.
+- 전화번호: 콜태그와 광고주 POST 모두 **하이픈 없는 010XXXXXXXX (11자리)**로 정규화합니다. `P:+82...`, `p:+82...`, `010-....-....` 모두 010 번호로 변환합니다. 광고주 전송 형식은 사용자가 명시한 01011111111 형식을 우선합니다.
+- **현재 시트에는 거주지역 질문 열이 없는 것으로 파악됨.** Make의 실제 HTTP 200/SUCCESS 입력에는 `DATAS_area`가 아예 없습니다. 따라서 광고주 POST에는 이 키를 넣지 않으며 콜태그 내용에만 지역이 존재하면 표시합니다.
 - 2026-11-11 사용자 명시 요청에 따라 운영 POST의 `ITEM`은 **항상 64**입니다. 과거의 40과 41은 차단하며 Cloudflare 환경변수 오버라이드도 무시합니다. 기존의 GET/HEAD 진단 로그에 표시되는 ITEM=64는 과거 기록으로 변경되지 않습니다.
 - 기존 광고주 전송 시도 `REVIEW` 및 `SENT` 고객에 대한 자동 재전송은 없습니다. 배포만으로 기존 고객이 다시 전송되지 않습니다.
 - **HTTP 403은 양식 수정만으로 해결을 보장할 수 없습니다.** GET/HEAD/무효번호를 사용한 별도 테스트에서 접근 거부가 확인됐으며, 실제 광고주 DB 접수는 별도 검증이 필요합니다.
@@ -70,8 +70,14 @@ GAS 코드는 사용자가 구글시트에 수동으로 붙여넣어야 합니�
 ## 기존 Make 서버를 광고주 전송 경로로 사용하는 경우
 
 - 현재 개인회생 메타 양식 ID는 `1635966914677428` (구글시트 실제 리드에서 확인). 원본 Make 파일의 예전 양식 ID `1484699249313068`은 다릅니다. 기존 블루프린트를 그대로 가져오면 현재 리드를 받는다고 보장할 수 없습니다.
-- 별도로 제공한 갱신 Make 블루프린트에서 Meta Webhook을 **현재 페이지/폼에 다시 연결**해야 합니다. `ITEM`은 오직 64이고 실제 시트의 `full_name`, `phone_number`, `총_채무액(2,000만원_이상_가능)`, `상담가능시간`, `문의내용(ex개인회생/파산_등)`을 매핑합니다. `DATAS_area`는 현재 양식에 해당 질문이 없어 빈값입니다.
+- 별도로 제공한 갱신 Make 블루프린트에서 Meta Webhook을 **현재 페이지/폼에 다시 연결**해야 합니다. `ITEM`은 오직 64이고 실제 시트의 `full_name`, `phone_number`, `총_채무액(2,000만원_이상_가능)`, `상담가능시간`, `문의내용(ex개인회생/파산_등)`을 매핑합니다. 성공한 HTTP 모듈처럼 `DATAS_area`는 전달하지 않습니다.
 - **Make 실제 HTTP 모듈에서 광고주가 2xx로 응답하고 접수 확인이 되었을 때에만** Cloudflare Pages의 `META_SHEETS_ADVERTISER_TRANSPORT=make`로 변경합니다. 그 이전에는 `direct`(기본값)를 유지합니다.
 - `make` 모드는 Cloudflare에서 광고주 POST를 전송하지 않습니다. 단, Google Sheet→Cloudflare→콜태그 경로와 콜태그 재시도는 그대로 작동합니다. 광고주 전송 결과를 Cloudflare가 알 수 없으므로 해당 큐의 `ad_status`는 `PENDING` 상태로 남으며, Make 전송 성공으로 허위 표시하지 않습니다.
 - `META_SHEETS_DISPATCH_ENABLED=0`을 Make 전환 스위치로 사용하지 마세요. 이는 CallTag까지 차단합니다.
 - 과거에 2회 시도한 고객 데이터를 임의로 재전송하거나 신규 테스트 리드를 실제 광고주 CRM에 등록하지 않습니다. Make 시나리오 활성화 전에 중복 발송 경로와 테스트 데이터 취급을 확인하세요.
+
+## 2026-11-11 Make 성공 요청 대조
+
+- Make HTTP (legacy): POST /dbapi/, form-urlencoded, ITEM=64, **정확히 6개 필드**, HTTP 200 + 본문 SUCCESS. 광고주 전산 실접수도 사용자 확인.
+- 기존 Cloudflare 구현은 DATAS_area를 포함한 7개 필드를 보내고, 전화번호를 010-xxxx-xxxx로 변경하여 Make와 전송 값이 달랐습니다. 이번 패치에서는 6개 키를 유지하면서 전화번호는 사용자가 지정한 11자리 010 숫자로만 전송합니다.
+- 주의: Cloudflare / Google 서버에서 GET·HEAD도 HTTP 403을 받았으므로, **서버 출발지 차단 가능성은 여전히 존재**합니다. 페이로드를 일치시켜도 403 해결을 보장할 수 없습니다. 고객을 중복 등록하는 재전송 테스트는 수행하지 않습니다. Make 성공 사실만으로 Cloudflare 운영 전송 성공으로 기록하지 않습니다.
