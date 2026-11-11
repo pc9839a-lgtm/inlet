@@ -426,7 +426,7 @@ function RenderBlockContent({ page, block, blocks, leads = [], addLead, track, g
     ? { ...block, s: { ...(block.s || {}), align: globalAlign, textAlign: globalAlign } }
     : block;
   if(block.type==='topnav')return <LayoutRenderTopNav block={renderBlock} blocks={blocks} go={go}/>;
-  if(block.type==='hero')return <ContentRenderHero block={renderBlock}/>;
+  if(block.type==='hero')return <ContentRenderHero block={renderBlock} editorPreview={editorPreview} onEditPreviewText={onEditPreviewText}/>;
   if(block.type==='image')return <MediaRenderImage block={renderBlock} editorPreview={editorPreview} selected={selectedBlockId===block.id} onReplaceImage={onReplacePreviewImage}/>;
   if(block.type==='text')return <ContentRenderText block={renderBlock} editorPreview={editorPreview} onEditPreviewText={onEditPreviewText}/>;
   if(block.type==='cards')return <ContentRenderCards block={renderBlock}/>;
