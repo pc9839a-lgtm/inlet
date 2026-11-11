@@ -156,12 +156,16 @@ export async function dispatchPending(db, env, config) {
   for (const record of queue.results || []) {
     let lead;
     try { lead = JSON.parse(record.payload_json); } catch { continue; }
-    if (record.ct_status === 'PENDING' || record.ct_status === 'RETRY') {
-      await sendCallTag(db, env, config, record.event_id, lead);
-    }
+    // Run each destination independently. CallTag FCM push must never block the
+    // advertiser's POST (or vice versa) within the Cloudflare waitUntil budget.
+    const deliveries = [];
     if (record.ad_status === 'PENDING') {
-      await sendAdvertiser(db, config, record.event_id, lead);
+      deliveries.push(sendAdvertiser(db, config, record.event_id, lead));
     }
+    if (record.ct_status === 'PENDING' || record.ct_status === 'RETRY') {
+      deliveries.push(sendCallTag(db, env, config, record.event_id, lead));
+    }
+    await Promise.allSettled(deliveries);
   }
   await db.prepare("DELETE FROM meta_sheet_dual_queue WHERE created_at < datetime('now','-14 days') AND ct_status NOT IN ('PENDING','RETRY','SENDING') AND ad_status NOT IN ('PENDING','SENDING')").run();
 }
@@ -217,7 +221,7 @@ async function sendAdvertiser(db, config, id, lead) {
     const body = (await res.text()).slice(0,10000);
     await setState(db,id,'ad',
       explicitAdvertiserSuccess(res.status,body) ? 'SENT' : 'REVIEW',
-      res.ok ? '광고주 응답 확인 필요' : 'HTTP ' + res.status);
+      res.ok ? 'HTTP ' + res.status + ', 광고주 응답 확인 필요' : 'HTTP ' + res.status);
   } catch {
     // Do not duplicate a potentially chargeable advertisement lead.
     await setState(db,id,'ad','REVIEW','광고주 수신 불확실 - 수동 확인 필요');
