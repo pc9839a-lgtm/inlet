@@ -5,6 +5,7 @@ export function createScreenOrderListProps({ selection, dragId, setDragId, toggl
     dragId,
     setDragId,
     selectBlock: selection.selectBlock,
+    clearBlockSelection: selection.clearBlockSelection,
     toggleVisible,
     duplicateBlock,
     removeBlock,
