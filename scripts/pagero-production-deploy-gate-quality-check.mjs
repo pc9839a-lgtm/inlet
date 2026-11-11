@@ -46,7 +46,7 @@ const approvedManualSecretWriter = 'calltag-admin-cloudflare-bootstrap.yml';
 // Only this exact, reviewed workflow may deploy the isolated editor review preview.
 // Pinning the complete Git blob makes any change fail closed until re-reviewed.
 const approvedReviewPreviewWriter = 'pagero-editor-review-preview-20261106.yml';
-const approvedReviewPreviewBlob = 'c659a8ff86d40edfc39b9d9191bcc71de0d3c805';
+const approvedReviewPreviewBlob = '78253c4d39951db1df6664fd8b0f229a34ee77db';
 const gitBlobSha = (content) => createHash('sha1')
   .update(`blob ${Buffer.byteLength(content, 'utf8')}\0`)
   .update(content)
@@ -85,8 +85,10 @@ for (const workflow of workflowNames) {
     assert.match(body, /project\.production_branch !== 'main'/, 'review preview must verify production branch');
     assert.match(body, /item\?\.deployment_trigger\?\.metadata\?\.commit_hash === sha/,
       'review preview must require a full exact deployment SHA');
-    assert.match(body, /item\?\.deployment_trigger\?\.metadata\?\.branch === branch/,
-      'review preview must require the exact preview branch');
+    assert.match(body, /const allowedBranches = new Set\(\[branch, \`preview\/\$\{branch\}\`\]\)/,
+      'review preview must allow only the exact alias or fully qualified GitHub preview branch');
+    assert.match(body, /allowedBranches\.has\(item\?\.deployment_trigger\?\.metadata\?\.branch\)/,
+      'review preview must not accept unrelated preview branches');
     assert.match(body, /item\?\.environment === 'preview'/,
       'review preview must require Cloudflare preview environment');
     assert.match(body, /env=preview&per_page=20/,
