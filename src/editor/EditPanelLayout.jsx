@@ -172,6 +172,10 @@ export function EditPanelLayout({
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']} compositionRow selectedId={fixedBlocksProps.openId} openId="" toggleBlockOpen={chooseFixed} />
           </FixedCompositionGroup>
+          <div className="editor-composition-group-caption">
+            <span>콘텐츠 블록</span>
+            <span>{screenOrderListProps.normalBlocks.length}개</span>
+          </div>
           <ScreenOrderList {...screenOrderListProps} listOnly selectBlock={chooseBlock} />
           <FixedCompositionGroup
             groupId="bottom" title="하단 고정" keys={['bottom', 'footer']}

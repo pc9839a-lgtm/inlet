@@ -376,22 +376,22 @@ assert(!headerSource.includes('panel-save-status operations-save-status')
 
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('--editor-list-width: clamp(220px, 16.8vw, 280px);')
-  && css.includes('--editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 420px)), 700px);')
+assert(css.includes('--editor-list-width: clamp(220px, 15.6vw, 264px);')
+  && css.includes('--editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 376px)), 640px);')
   && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;')
   && editPanelLayoutCss.includes('.editor-inspector-panel { padding: 0 24px 44px;')
   && editPanelLayoutCss.includes('.builder-shell.canvas-editor-shell .editor-inspector-panel { padding-inline: 8px;')
   && css.includes('overflow: hidden !important;'),
-  'visual redesign: 280px navigator, 420px Inspector, fixed 390px page without outer scroll');
+  'page-first workbench: compact navigator, readable Inspector, exact 390px page without outer scroll');
 assert(!editPanelLayoutCss.includes('.editor-inspector-panel:has(.editor-selection-empty)') && layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;") && layout.includes('{showPageOptions ? ('), 'unselected editor must keep inspector open with useful page settings');
 assert(layout.includes('editor-composition-heading') && editPanelLayoutCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;'), 'block list and inspector must share compact editor space');
 assert(css.includes('overflow: hidden !important;') && editPanelLayoutCss.includes('.editor-composition-content {') && editPanelLayoutCss.includes('overflow-y: auto !important;') && editPanelLayoutCss.includes('.editor-inspector-panel {') && editPanelLayoutCss.includes('overflow-x: hidden !important;'), 'edit workspace must keep independent navigator and Inspector scrolls without outer scroll');
 assert(previewPaneCss.includes('width: 394px !important;') && previewPaneCss.includes('width: 392px !important;') && previewPaneCss.includes('--landing-runtime-width: 390px;') && previewPaneCss.includes('justify-content: center !important;'), 'single 390px phone must be centered in its right-side stage, not pushed to the browser edge');
-assert(addDockCss.includes('/* Active editor dock geometry.')
-  && addDockCss.includes('position: static !important;')
-  && addDockCss.includes('max-height: none !important;')
-  && addDockCss.includes('overflow-y: visible !important;')
-  && !css.includes('.fixed-add-dock'), 'editor add catalog must expand inline without nested scrolling');
+assert(addDockCss.includes('.editor-gallery-backdrop')
+  && addDockCss.includes('.editor-gallery-quick-grid')
+  && addDockCss.includes('.editor-gallery-dialog-scroll')
+  && !css.includes('.fixed-add-dock'),
+  'block creation must use the accessible visual gallery outside the narrow navigator');
 assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;') && css.includes('overflow: auto !important;'), 'zoomed desktop must preserve reachable page and inspector');
 assert(layout.includes('className="editor-page-settings-button"')
   && layout.includes('aria-controls="editor-selection-panel"')

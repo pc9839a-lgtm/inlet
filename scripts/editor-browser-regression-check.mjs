@@ -980,7 +980,7 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.shell, metrics.innerWidth, 'desktop builder shell');
   assertInsideViewport(metrics.left, metrics.innerWidth, 'desktop left workspace');
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
-  assert(metrics.frame?.top <= (metrics.preview?.top || 0) + 94, 'desktop phone preview must follow its compact width selector');
+  assert(metrics.frame?.top <= (metrics.preview?.top || 0) + (metrics.innerWidth <= 1450 ? 305 : 145), 'desktop phone follows the editing heading and responsive contextual toolbar without excessive blank space');
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.pageSettings, metrics.innerWidth, 'desktop page settings entry');
@@ -1001,9 +1001,9 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  // New 1672px layout: 280px composition + 420px Inspector; keep 390px page at 900px.
-  const expectedComposition = Math.min(280, Math.max(220, width * 0.168));
-  const expectedEdit = Math.min(700, Math.max(500, Math.min(width - 410, expectedComposition + 420)));
+  // Page-first 1672px layout: content navigator + compact properties + a larger canvas.
+  const expectedComposition = Math.min(264, Math.max(220, width * 0.156));
+  const expectedEdit = Math.min(640, Math.max(500, Math.min(width - 410, expectedComposition + 376)));
   const expectedInspector = expectedEdit - expectedComposition;
   assert(Math.abs(edit - expectedEdit) <= 2,
     `left editor must be wide enough for editing at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
@@ -1568,7 +1568,8 @@ async function run() {
       return { outline: style.outlineWidth, shadow: style.boxShadow,
         badge: getComputedStyle(block, '::after').display };
     })()`);
-    assert(canvasSelectionStyle.outline === '2px' && canvasSelectionStyle.shadow === 'none'
+    assert(canvasSelectionStyle.outline === '2px'
+      && (canvasSelectionStyle.shadow === 'none' || canvasSelectionStyle.shadow.includes('rgba(36, 84, 255, 0.1)'))
       && canvasSelectionStyle.badge === 'none',
       'mobile block selection must use a clear 2px outline without a covering badge: ' + JSON.stringify(canvasSelectionStyle));
 
@@ -1588,7 +1589,15 @@ async function run() {
     await waitForBrowser(client, `!document.querySelector('#editor-block-editor-hero')?.classList.contains('is-hidden')`,
       'hero visibility restored through existing actions menu');
 
+    // ScreenOrderRowActions deliberately returns focus to the previous menu
+    // trigger on the next animation frame. Wait for that focus recovery before
+    // moving to a second block's keyboard action, otherwise the test may
+    // accidentally press Enter on the old hero trigger.
+    await wait(160);
     await focusSelector(client, formActionSelector);
+    await waitForBrowser(client,
+      `document.activeElement === document.querySelector(${JSON.stringify(formActionSelector)})`,
+      'form action trigger receives keyboard focus after hero menu closes');
     await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form action dropdown from Enter');
     await waitForBrowser(client, `document.activeElement?.matches?.('.screen-order-v2-menu button:not(:disabled)')`, 'dropdown first keyboard action focus');
@@ -2101,8 +2110,8 @@ async function run() {
       };
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
-      && stageOneList.gap === '5px' && stageOneList.rowBorder === '1px'
-      && stageOneList.rowRadius === '10px' && stageOneList.height >= 62
+      && stageOneList.gap === '9px' && stageOneList.rowBorder === '1px'
+      && stageOneList.rowRadius === '13px' && stageOneList.height >= 76
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
       && stageOneList.actionCount === 1 && stageOneList.actions,
@@ -2113,35 +2122,34 @@ async function run() {
     await clickSelector(client, '.fixed-add-dock .add-toggle');
     await waitForBrowser(client, `!!document.querySelector('.add-panel')`, 'add picker before preview selection');
     const addCatalogScroll = await evaluate(client, `(() => {
-      const dock = document.querySelector('.editor-composition-panel .fixed-add-dock');
-      const catalog = dock?.querySelector('.add-panel');
+      const dialog = document.querySelector('.editor-gallery-dialog[role="dialog"][aria-modal="true"]');
+      const catalog = dialog?.querySelector('.add-panel');
       const workspace = document.querySelector('.work-panel');
-      if (!dock || !catalog || !workspace) return null;
+      if (!dialog || !catalog || !workspace) return null;
       return {
-        dockPosition: getComputedStyle(dock).position,
-        catalogOverflowY: getComputedStyle(catalog).overflowY,
-        catalogMaxHeight: getComputedStyle(catalog).maxHeight,
-        workOverflowY: getComputedStyle(workspace).overflowY,
-        catalogHeight: catalog.getBoundingClientRect().height,
-        catalogBottom: catalog.getBoundingClientRect().bottom,
+        dialogWidth: dialog.getBoundingClientRect().width,
+        dialogBottom: dialog.getBoundingClientRect().bottom,
         viewportHeight: innerHeight,
-        catalogInComposition: !!catalog.closest('.editor-composition-panel'),
+        workOverflowY: getComputedStyle(workspace).overflowY,
+        quickCards: dialog.querySelectorAll('.editor-gallery-quick').length,
+        insideModal: !!catalog.closest('[aria-modal="true"]'),
       };
     })()`);
-    assert(addCatalogScroll?.dockPosition === 'static'
-      && addCatalogScroll.catalogOverflowY === 'auto'
-      && addCatalogScroll.catalogMaxHeight !== 'none'
+    assert(addCatalogScroll?.dialogWidth >= 700
+      && addCatalogScroll.quickCards >= 8
       && addCatalogScroll.workOverflowY === 'hidden'
-      && addCatalogScroll.catalogHeight > 0
-      && addCatalogScroll.catalogBottom <= addCatalogScroll.viewportHeight
-      && addCatalogScroll.catalogInComposition,
-      'compact catalog stays inside the pinned composition while the outer shell does not scroll: ' + JSON.stringify(addCatalogScroll));
+      && addCatalogScroll.dialogBottom <= addCatalogScroll.viewportHeight
+      && addCatalogScroll.insideModal,
+      'block gallery must use a large accessible portal without scrolling the editor: ' + JSON.stringify(addCatalogScroll));
+    await pressKeyboardKey(client, 'Escape');
+    await waitForBrowser(client, `!document.querySelector('.editor-gallery-dialog')`,
+      'close gallery before selecting a canvas block');
     await clickPointer(client, '.phone-frame #block-editor-hero');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'preview click opens focused settings with the existing content');
     await clickPointer(client, '.phone-frame #block-editor-hero');
     assert(await evaluate(client, `!!document.querySelector('#editor-block-settings-editor-hero')`), 'reselecting the same preview block must keep its settings open');
     await openBlockSettings(client, 'editor-hero');
-    assert(!await evaluate(client, `!!document.querySelector('.add-panel')`), 'preview selection must close the previous add picker');
+    assert(!await evaluate(client, `!!document.querySelector('.editor-gallery-dialog')`), 'canvas selection must leave the dismissed gallery closed');
     await openBlockSettings(client, 'editor-hero');
     await waitForBrowser(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === ${JSON.stringify(updatedHeroTitle)}`, 'content survives returning to list and reopening settings');
     await clickSelector(client, '.editor-page-settings-button');
@@ -2252,11 +2260,13 @@ async function run() {
     const initialNormalBlockCount = await normalBlockCount(client);
     const normalOrderBeforeAdd = await normalBlockOrder(client);
     await clickSelector(client, '.add-toggle');
-    await waitForBrowser(client, `!!document.querySelector('.add-panel .widget-group-grid')`, 'simple block add panel');    assert(await evaluate(client, "document.querySelector('.editor-add-block-location')?.textContent === '선택한 블록 아래에 추가'"),
-      'catalog must announce insertion immediately below selected content');
+    await waitForBrowser(client, `!!document.querySelector('.editor-gallery-dialog .widget-group-grid')`, 'visual block gallery'); 
+    assert(await evaluate(client, "document.querySelector('.editor-gallery-dialog-head p')?.textContent === '선택한 블록 다음에 추가합니다.'"),
+      'gallery must announce insertion immediately below selected content');
 
     assert(!(await evaluate(client, `!!document.querySelector('.section-add-modes')`)), 'block add panel must not expose recommendation/industry mode tabs');
-    assert(!(await evaluate(client, `!!document.querySelector('#pagero-widget-search')`)), 'block add panel must not expose the removed search field');
+    assert(await evaluate(client, `!!document.querySelector('.editor-gallery-dialog input[aria-label="추가할 블록 검색"]')`),
+      'the new gallery offers content-first block search');
     assert(!(await evaluate(client, `!!document.querySelector('.section-pattern-card')`)), 'block add panel must not expose recommended section cards');
     await clickButtonByText(client, '.add-panel', '구분선');
     await waitForBrowser(client, `document.querySelectorAll('.screen-order-v2-list .screen-order-v2-item').length === ${initialNormalBlockCount + 1}`, 'added divider row');
@@ -2978,7 +2988,7 @@ async function run() {
       && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && (desktopViewport.width <= 1100
         ? leftGeometry.inspectorPadding === '8px' && leftGeometry.compositionPadding === '8px'
-        : leftGeometry.inspectorPadding === '24px')
+        : leftGeometry.inspectorPadding === '16px')
       && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
       'reference-width independent panels must fit without clipped controls or preview overlap: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
@@ -3021,7 +3031,7 @@ async function run() {
     assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '10px' && screenOrderShellStyle?.rowBorder === '1px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius === '13px' && screenOrderShellStyle?.rowBorder === '1px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.addBackground === 'rgb(237, 242, 255)', `reference full-width add action must keep the light-blue primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 900 || desktopViewport.width === 1024) {

@@ -2,6 +2,7 @@ import React from 'react';
 import { WorkspaceLeftPanel } from './workspace/WorkspaceLeftPanel.jsx';
 import { WorkspacePreviewPane } from './workspace/WorkspacePreviewPane.jsx';
 import { patchInlineTextBlock } from '../editor/previewInlineTextModel.js';
+import { canDuplicateScreenOrderBlock } from '../editor/editPanelParts/screenOrderActionPolicy.js';
 import '../styles/product-ui-tokens.css';
 import '../styles/workspace-shell.css';
 import './workspace/OperationsWorkspace.css';
@@ -290,6 +291,45 @@ export default function WorkspaceEditorScreen({
     requestAnimationFrame(focusTarget);
   };
 
+  // Canvas quick actions reuse the same ID-based editor handlers and guards.
+  // The workbench never changes published data or calls live endpoints itself.
+  const canEditCanvas = canUseBuilder && editWorkspace && startMode !== 'template'
+    && !stylePanelProps?.hasPendingStyle && typeof editPanelProps?.setAddOpen === 'function';
+  const canvasNormalBlocks = Array.isArray(editPanelProps?.page?.blocks)
+    ? editPanelProps.page.blocks.filter((block) => !['topnav', 'bottombar', 'footer'].includes(block.type))
+    : [];
+  const canvasSelectedIndex = canvasNormalBlocks.findIndex((block) => block.id === selectedBlockId);
+  const canvasSelectedBlock = canEditCanvas && canvasSelectedIndex >= 0
+    && canvasNormalBlocks[canvasSelectedIndex].visible !== false
+    ? canvasNormalBlocks[canvasSelectedIndex] : null;
+  const canvasActions = canEditCanvas ? {
+    canMoveUp: canvasSelectedIndex > 0,
+    canMoveDown: canvasSelectedIndex >= 0 && canvasSelectedIndex < canvasNormalBlocks.length - 1,
+    canDuplicate: !!canvasSelectedBlock && canDuplicateScreenOrderBlock(canvasSelectedBlock),
+    onAdd: () => editPanelProps.setAddOpen(true),
+    onEdit: () => {
+      if (!canvasSelectedBlock || typeof document === 'undefined') return;
+      const settings = document.getElementById(`editor-block-settings-${canvasSelectedBlock.id}`);
+      const first = settings?.querySelector('textarea:not([disabled]), input:not([disabled]):not([type="checkbox"]), button:not([disabled])');
+      const target = first || settings;
+      target?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+      target?.focus?.({ preventScroll: true });
+    },
+    onMoveUp: () => {
+      if (canvasSelectedIndex > 0) editPanelProps.reorderToIndex?.(selectedBlockId, canvasSelectedIndex - 1);
+    },
+    onMoveDown: () => {
+      if (canvasSelectedIndex >= 0 && canvasSelectedIndex < canvasNormalBlocks.length - 1) {
+        editPanelProps.reorderToIndex?.(selectedBlockId, canvasSelectedIndex + 2);
+      }
+    },
+    onDuplicate: () => {
+      if (canvasSelectedBlock && canDuplicateScreenOrderBlock(canvasSelectedBlock)) {
+        editPanelProps.duplicateBlock?.(selectedBlockId);
+      }
+    },
+  } : null;
+
   return (
     <div className={`builder-shell${previewWorkspace ? ' preview-workspace-shell' : ''}${canUseBuilder && startMode === 'template' && !mobileOperationsOnly ? ' template-intro-shell' : ''}${mobileOperationsOnly ? ' mobile-operations-shell' : ''}${editWorkspace ? ` edit-mode-shell${startMode !== 'template' ? ' canvas-editor-shell' : ''}` : ''}${inboxWorkspace ? ' inbox-workspace-shell' : ''}${statsWorkspace ? ' stats-dashboard-shell' : ''}${settingsWorkspace ? ' settings-workspace-shell' : ''}`}>
 
@@ -325,6 +365,8 @@ export default function WorkspaceEditorScreen({
         addLead={addLead}
         track={track}
         selectedBlockId={selectedBlockId}
+        selectedCanvasBlock={canvasSelectedBlock}
+        canvasActions={canvasActions}
         onSelectPreviewBlock={selectPreviewBlockWithImage}
         onEditPreviewText={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? editPreviewText : undefined}
         onReplacePreviewImage={canUseBuilder && editWorkspace && startMode !== 'template' && !stylePanelProps?.hasPendingStyle ? replacePreviewImage : undefined}

@@ -2,10 +2,11 @@
 html body #root .builder-shell.canvas-editor-shell {
   /* Reference: enough space for navigator AND editable properties.
      Keep the 390px phone fully visible on narrow desktops. */
-  --editor-list-width: clamp(220px, 16.8vw, 280px);
-  /* Spacious 1672px editing layout: 280px composition + 420px properties.
-     Narrow desktop still reserves >=400px for the same 390px page. */
-  --editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 420px)), 700px);
+  --editor-list-width: clamp(220px, 15.6vw, 264px);
+  /* Give the actual page the visual majority: a compact 264px navigator,
+     376px inspector and a generous workbench at desktop widths. The preview
+     itself remains one genuine 390px landing viewport. */
+  --editor-edit-width: clamp(500px, min(calc(100vw - 410px), calc(var(--editor-list-width) + 376px)), 640px);
   --editor-settings-width: calc(var(--editor-edit-width) - var(--editor-list-width));
   display: grid;
   grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;
