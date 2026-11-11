@@ -194,7 +194,7 @@ test('Make blueprint field names take precedence over alternate Meta form aliase
   assert.equal(form.get('DATAS_phone'),'01012345678');
   assert.equal(form.get('DATAS_name'),'원본이름');
   assert.equal(form.get('DATAS_money'),'원본채무');
-  assert.equal(form.get('DATAS_area'),'인천');
+  assert.equal(form.has('DATAS_area'),false); // Make success payload has no area field
   assert.equal(form.get('DATAS_data'),'원본문의');
 });
 test('Make-compatible 2xx transport result does not turn explicit rejection into success',()=>{
