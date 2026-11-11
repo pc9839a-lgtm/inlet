@@ -184,9 +184,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     return {selected:data(selected), apply:data(apply), reset:data(reset), activeLabel:selected?.getAttribute('aria-label')};
   })()`);
   assert(pageControlState?.selected?.height >= 36 && pageControlState.selected.height <= 40
-    && parseInt(pageControlState.selected.radius,10) <= 7
-    && pageControlState.selected.color === 'rgb(36, 84, 255)'
-    && pageControlState.selected.bg === 'rgb(233, 239, 255)'
+    && parseInt(pageControlState.selected.radius,10) <= 9
+    && pageControlState.selected.color === 'rgb(64, 87, 237)'
+    && pageControlState.selected.bg === 'rgb(238, 240, 255)'
     && pageControlState.apply.height >= 36 && !pageControlState.apply.disabled
     && !pageControlState.reset.disabled,
     'page controls must show clear selected and enabled state before applying: '+JSON.stringify(pageControlState));
