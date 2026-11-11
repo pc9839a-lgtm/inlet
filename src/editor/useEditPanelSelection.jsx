@@ -14,7 +14,7 @@ export function useEditPanelSelection({ page, openId, setOpenId, setAddOpen }) {
     openId,
     fixedBlockIds: [topNavBlock?.id, bottomBlock?.id, footerBlock?.id].filter(Boolean),
   });
-  const { normalSelectedId, selectBlock, openBlockSettings } = useNormalBlockSelection({
+  const { normalSelectedId, selectBlock, clearBlockSelection, openBlockSettings } = useNormalBlockSelection({
     normalBlocks,
     openId,
     setOpenId,
@@ -33,6 +33,7 @@ export function useEditPanelSelection({ page, openId, setOpenId, setAddOpen }) {
     fixedOpenId,
     toggleBlockOpen,
     selectBlock,
+    clearBlockSelection,
     openBlockSettings,
   };
 }

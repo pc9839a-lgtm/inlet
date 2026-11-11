@@ -119,7 +119,11 @@ assert.equal(normalHook(normalArgs).normalSelectedId, '', 'fixed block must not 
 normalHook(normalArgs).selectBlock('ordinary-1');
 assert.equal(normalHook(normalArgs).normalSelectedId, 'ordinary-1');
 normalHook(normalArgs).selectBlock('ordinary-1');
-assert.equal(openId, '', 'normal row selection should toggle closed');
+assert.equal(openId, 'ordinary-1', 'selecting an active row must keep its settings open');
+normalHook(normalArgs).selectBlock('missing');
+assert.equal(openId, 'ordinary-1', 'a removed block must not steal the selection');
+normalHook(normalArgs).clearBlockSelection();
+assert.equal(openId, '', 'page settings can explicitly clear a normal row selection');
 setOpenId('footer-1');
 assert.equal(normalHook(normalArgs).normalSelectedId, '', 'switching to fixed should clear normal selection');
 

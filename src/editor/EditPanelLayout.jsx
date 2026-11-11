@@ -134,7 +134,7 @@ export function EditPanelLayout({
   }, [selectedBlockId, showPageOptions]);
 
   const openPageOptions = () => {
-    if (screenOrderListProps?.selectedId) screenOrderListProps.selectBlock(screenOrderListProps.selectedId);
+    if (screenOrderListProps?.selectedId) screenOrderListProps.clearBlockSelection();
     else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
     setSection('options');
   };
