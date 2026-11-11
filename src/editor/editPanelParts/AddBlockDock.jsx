@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { AddBlockDockToggle } from './AddBlockDockToggle.jsx';
 import { AddBlockPanel } from './AddBlockPanel.jsx';
+import '../../styles/editor-widget-add-dock.css';
 
 export function AddBlockDock({ addOpen, setAddOpen, addBlock, addSectionPattern, afterSelected = false, embedded = false, compact = false }) {
   const panelOpen = embedded || addOpen;
