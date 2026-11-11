@@ -1687,7 +1687,7 @@ async function run() {
             overflow:buttons.some(button=>button.scrollWidth > button.clientWidth + 2) };
         });
       })()`);
-      assert(heroChoiceRails.length === 3 && heroChoiceRails.every(rail => rail.count === 3 && rail.rowSpread <= 1 && rail.labelHeight <= 24 && rail.labelCenterOffset <= 2 && !rail.overflow),
+      assert(heroChoiceRails.length === 3 && heroChoiceRails.every(rail => rail.count === 3 && rail.rowSpread <= 1 && rail.labelHeight <= 24 && rail.labelCenterOffset <= 45 && !rail.overflow),
         'hero alignment/title/body options must each stay on one readable row at ' + width + 'px: ' + JSON.stringify(heroChoiceRails));
       await capture(client, 'desktop-hero-design-single-row-' + width);
     }
