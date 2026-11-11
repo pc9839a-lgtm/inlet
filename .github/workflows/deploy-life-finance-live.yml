@@ -1,0 +1,115 @@
+name: Deploy LIFE finance to live Cloudflare Pages
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/deploy-life-finance-live.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: life-pages-source-locked-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      TARGET_SHA: eae1ab201dd5e41ce72db1aa62cebd52b298143e
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: pc9839a-lgtm/life-pagero
+          ref: eae1ab201dd5e41ce72db1aa62cebd52b298143e
+          persist-credentials: false
+          path: life
+      - name: Check target Pages project and legacy redirect
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C life rev-parse HEAD)" = "$TARGET_SHA"
+          test -n "$CLOUDFLARE_API_TOKEN" && test -n "$CLOUDFLARE_ACCOUNT_ID"
+          python - <<'PY'
+          import os,json,urllib.request,sys
+          token=os.environ['CLOUDFLARE_API_TOKEN']
+          acct=os.environ['CLOUDFLARE_ACCOUNT_ID']
+          headers={'Authorization':'Bearer '+token,'Accept':'application/json'}
+          base='https://api.cloudflare.com/client/v4'
+          def api(path):
+            with urllib.request.urlopen(urllib.request.Request(base+path,headers=headers),timeout=25) as r:
+              result=json.load(r)
+            if not result.get('success'):sys.exit('Cloudflare API rejected '+path)
+            return result.get('result')
+          project=api('/accounts/'+acct+'/pages/projects/life-pagero')
+          if project.get('name')!='life-pagero' or project.get('production_branch')!='main':
+            sys.exit('Refusing to touch unexpected project or branch')
+          domains=set(project.get('domains') or [])
+          if not domains.issubset({'life.pagero.kr','life-pagero.pages.dev'}):
+            sys.exit('Unexpected domain association')
+          print('PROJECT VERIFIED',project['name'],'branch',project['production_branch'])
+          zones=api('/zones?name=pagero.kr&per_page=50')
+          candidates=[x for x in zones if x.get('name')=='pagero.kr']
+          if len(candidates)!=1:sys.exit('Cannot validate canonical zone')
+          ruleset=api('/zones/'+candidates[0]['id']+'/rulesets/phases/http_request_dynamic_redirect/entrypoint')
+          rules=ruleset.get('rules') or []
+          if not any(x.get('description')=='PAGERO canonical LIFE hostname 301' and x.get('enabled') for x in rules):
+            sys.exit('Legacy host redirect is not protected')
+          print('CANONICAL LEGACY REDIRECT VERIFIED')
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Build complete LIFE site
+        working-directory: life
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          node scripts/verify-finance-experience.mjs
+          node scripts/verify-trimmed-life-ui.mjs
+          node - <<'JS'
+          const fs=require('fs');
+          const html=fs.readFileSync('dist/finance/index.html','utf8');
+          if(!html.includes('은행 금리와 대출 상환액, 공식 공시를 확인하세요.'))throw Error('Finance update missing');
+          if(html.includes('LIFE FINANCE')||html.includes('finance-index-primary')||html.includes('finance-index-icon'))throw Error('Old finance design present');
+          if(!html.includes('rel="canonical" href="https://pagero.kr/life/finance/"'))throw Error('Canonical lost');
+          const imgs=JSON.parse(fs.readFileSync('dist/food-images/manifest.json','utf8'));
+          if(Object.keys(imgs).length<28)throw Error('Food images incomplete');
+          console.log('BUILD_VERIFIED',Object.keys(imgs).length,'food images and updated finance HTML');
+          JS
+      - name: Install Cloudflare CLI (pinned)
+        working-directory: life
+        run: npm install --no-save --no-package-lock wrangler@4.95.0
+      - name: Deploy isolated LIFE project only
+        working-directory: life
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./node_modules/.bin/wrangler pages deploy dist --project-name life-pagero --branch main --commit-hash "$TARGET_SHA" --commit-message "Apply editorial finance design to production"
+      - name: Verify live origin and public canonical finance URL
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request,time,sys
+          expected='은행 금리와 대출 상환액, 공식 공시를 확인하세요.'
+          for url,kind in [('https://life-pagero.pages.dev/finance/','origin'),('https://pagero.kr/life/finance/','public')]:
+            for n in range(15):
+              try:
+                request=urllib.request.Request(url+'?verify='+str(time.time_ns()),
+                  headers={'Cache-Control':'no-cache','User-Agent':'Mozilla/5.0 LIFE-PRODUCTION-VERIFY'})
+                with urllib.request.urlopen(request,timeout=20) as r:
+                  html=r.read().decode('utf-8','replace')
+                  hdr=r.headers
+                  final=r.geturl()
+                ok=expected in html and 'LIFE FINANCE' not in html and 'finance-index-icon' not in html
+                if kind=='public' and hdr.get('X-Pagero-Life-Proxy')!='1':ok=False
+                if ok:
+                  print('LIVE_CONFIRMED',kind,url,'bytes',len(html),'final',final)
+                  break
+                print('STALE',kind,n+1,'expected',expected in html,'proxy',hdr.get('X-Pagero-Life-Proxy'))
+              except Exception as e:print('RETRY',kind,n+1,str(e)[:110])
+              time.sleep(8)
+            else:sys.exit('Failed to verify real production finance page '+kind)
+          PY
