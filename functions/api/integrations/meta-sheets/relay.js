@@ -43,18 +43,21 @@ export function normalizeSheetLead(row) {
     submitted: dt && !Number.isNaN(Date.parse(dt)) ? new Date(dt).toISOString() : new Date().toISOString()
   };
 }
+// Mirror the proven Make HTTP form shape: exactly seven fields in the same order.
+// ITEM=64 is the current campaign; the old successful blueprint used ITEM=41.
 export function advertiserForm(lead, item = '64') {
-  const form = new URLSearchParams({ ITEM: String(item) });
-  const phone = /^010\d{8}$/.test(lead.phone)
-    ? lead.phone.slice(0,3) + '-' + lead.phone.slice(3,7) + '-' + lead.phone.slice(7)
-    : lead.phone;
-  const fields = {
-    DATAS_name: lead.name, DATAS_phone: phone, DATAS_money: lead.money,
-    DATAS_area: lead.area, DATAS_calldate: lead.calldate,
-    DATAS_data: lead.content, DATAS_email: lead.email,
-    DATAS_insert_ad: 'Meta Lead Ads'
-  };
-  Object.entries(fields).forEach(([key,value]) => { if (value) form.set(key,value); });
+  const raw = String(lead?.phone || '').replace(/\D/g, '');
+  const phone = /^010\d{8}$/.test(raw)
+    ? raw.slice(0, 3) + '-' + raw.slice(3, 7) + '-' + raw.slice(7)
+    : raw;
+  const form = new URLSearchParams();
+  form.set('ITEM', String(item));
+  form.set('DATAS_name', String(lead?.name || ''));
+  form.set('DATAS_phone', phone);
+  form.set('DATAS_money', String(lead?.money || ''));
+  form.set('DATAS_area', String(lead?.area || ''));
+  form.set('DATAS_calldate', String(lead?.calldate || ''));
+  form.set('DATAS_data', String(lead?.content || ''));
   return form.toString();
 }
 export function explicitAdvertiserSuccess(status, body) {
@@ -145,20 +148,24 @@ export async function onRequest({ request, env, ctx }) {
   }
 }
 export async function dispatchPending(db, env, config) {
-  // A crashed CallTag attempt can safely be retried because its external_id is idempotent.
+  // Safe to retry CallTag because the external event ID is idempotent.
   await db.prepare("UPDATE meta_sheet_dual_queue SET ct_status='RETRY', updated_at=CURRENT_TIMESTAMP WHERE ct_status='SENDING' AND ct_attempts<3 AND updated_at < datetime('now','-3 minutes')").run();
-  // Advertiser delivery must never be retried automatically after an ambiguous send.
+  // Advertiser may have accepted an interrupted request; never replay automatically.
   await db.prepare("UPDATE meta_sheet_dual_queue SET ad_status='REVIEW', ad_error='전송 중단: 수동 확인' WHERE ad_status='SENDING' AND updated_at < datetime('now','-3 minutes')").run();
   const queue = await db.prepare("SELECT event_id, payload_json, ct_status, ad_status FROM meta_sheet_dual_queue WHERE (ct_status IN ('PENDING','RETRY') AND ct_attempts < 3) OR ad_status='PENDING' ORDER BY created_at LIMIT 10").all();
   for (const record of queue.results || []) {
     let lead;
     try { lead = JSON.parse(record.payload_json); } catch { continue; }
-    if (record.ct_status === 'PENDING' || record.ct_status === 'RETRY') {
-      await sendCallTag(db, env, config, record.event_id, lead);
-    }
+    // Run each destination independently. CallTag FCM push must never block the
+    // advertiser's POST (or vice versa) within the Cloudflare waitUntil budget.
+    const deliveries = [];
     if (record.ad_status === 'PENDING') {
-      await sendAdvertiser(db, config, record.event_id, lead);
+      deliveries.push(sendAdvertiser(db, config, record.event_id, lead));
     }
+    if (record.ct_status === 'PENDING' || record.ct_status === 'RETRY') {
+      deliveries.push(sendCallTag(db, env, config, record.event_id, lead));
+    }
+    await Promise.allSettled(deliveries);
   }
   await db.prepare("DELETE FROM meta_sheet_dual_queue WHERE created_at < datetime('now','-14 days') AND ct_status NOT IN ('PENDING','RETRY','SENDING') AND ad_status NOT IN ('PENDING','SENDING')").run();
 }
@@ -206,7 +213,7 @@ async function sendAdvertiser(db, config, id, lead) {
   try {
     const res = await fetch(config.advertiser, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8' },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: advertiserForm(lead, config.item),
       redirect: 'manual',
       signal: AbortSignal.timeout(12000)
@@ -214,7 +221,7 @@ async function sendAdvertiser(db, config, id, lead) {
     const body = (await res.text()).slice(0,10000);
     await setState(db,id,'ad',
       explicitAdvertiserSuccess(res.status,body) ? 'SENT' : 'REVIEW',
-      res.ok ? '광고주 응답 확인 필요' : 'HTTP ' + res.status);
+      res.ok ? 'HTTP ' + res.status + ', 광고주 응답 확인 필요' : 'HTTP ' + res.status);
   } catch {
     // Do not duplicate a potentially chargeable advertisement lead.
     await setState(db,id,'ad','REVIEW','광고주 수신 불확실 - 수동 확인 필요');
