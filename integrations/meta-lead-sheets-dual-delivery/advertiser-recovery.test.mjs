@@ -69,3 +69,11 @@ test('successful Make blueprint request exactly matches current advertiser field
     'ITEM','DATAS_name','DATAS_phone','DATAS_money','DATAS_area','DATAS_calldate','DATAS_data'
   ]);
 });
+
+test('CallTag push and advertiser POST run independently, without head-of-line blocking',()=>{
+  const src=readFileSync(new URL('../../functions/api/integrations/meta-sheets/relay.js',import.meta.url),'utf8');
+  assert.match(src,/const deliveries = \[\]/);
+  assert.match(src,/deliveries\.push\(sendAdvertiser\(/);
+  assert.match(src,/deliveries\.push\(sendCallTag\(/);
+  assert.match(src,/Promise\.allSettled\(deliveries\)/);
+});
