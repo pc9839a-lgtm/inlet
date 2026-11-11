@@ -89,8 +89,8 @@ assert(editLayout.includes('groupId="top" title="상단 고정"')
   'fixed blocks must keep labeled, keyboard-accessible top/bottom groups, and reveal selected fixed blocks');
 assert(fixedBlocks.includes("import './FixedBlocksSection.css';"), 'fixed block group must load its own styles after leaving page options');
 assert(fixedBlocksCss.includes('.screen-order-fixed-blocks .fixed-composition-row') && fixedBlocksCss.includes('.fixed-composition-row .fixed-block-head'), 'fixed region section must own inline row geometry');
-assert(fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 35px !important;')
-  && fixedBlocksCss.includes('grid-template-columns: 36px minmax(0,1fr) !important;')
+assert(fixedBlocksCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
+  && fixedBlocksCss.includes('grid-template-columns: 32px minmax(0,1fr) !important;')
   && fixedBlocksCss.includes('overflow-wrap: anywhere'),
   'fixed rows must match normal block geometry and preserve long-name wrapping');
 assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share option must not repeat an explanatory subtitle');
