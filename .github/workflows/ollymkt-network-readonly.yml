@@ -69,3 +69,41 @@ jobs:
             'bodyByteCountMax':len(content)
           },ensure_ascii=False))
           PY
+
+      - name: Single synthetic POST with Make fields and ITEM 64 (invalid phone, no real customer)
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.error, urllib.parse, json, time, re
+          fields={
+            'ITEM':'64',
+            'DATAS_name':'연동진단_실고객아님',
+            'DATAS_phone':'00000000000',
+            'DATAS_money':'2000만원 이상',
+            'DATAS_area':'서울',
+            'DATAS_calldate':'오후',
+            'DATAS_data':'시스템 전송 진단. 실제 상담 신청이 아니며 접수되면 삭제 대상.'
+          }
+          body=urllib.parse.urlencode(fields).encode('utf-8')
+          request=urllib.request.Request('https://ollymkt.shop/dbapi/',
+            method='POST',data=body,headers={'Content-Type':'application/x-www-form-urlencoded'})
+          started=time.time()
+          try: response=urllib.request.urlopen(request,timeout=15)
+          except urllib.error.HTTPError as e: response=e
+          except Exception as e:
+            print('SYNTHETIC_POST '+json.dumps({'errorType':type(e).__name__,
+              'elapsedMs':round((time.time()-started)*1000)}))
+            raise SystemExit(0)
+          raw=response.read(5000).decode('utf-8','replace')
+          title=re.search(r'<title[^>]*>(.*?)</title>',raw,re.I|re.S)
+          print('SYNTHETIC_POST '+json.dumps({
+            'status':response.status,'elapsedMs':round((time.time()-started)*1000),
+            'headers':{k:response.headers.get(k) for k in ['server','cf-ray','content-type']
+              if response.headers.get(k)},
+            'title':re.sub(r'\s+',' ',title.group(1))[:80] if title else '',
+            'jsonSuccessFlag':bool(re.search(r'"(ok|success)"\s*:\s*true',raw,re.I)),
+            'requestHasAllMakeFields':True,
+            'item':64, 'containsRealLead':False,
+            'bodyCategory':'html' if '<html' in raw.lower() else ('json' if raw.strip().startswith('{') else 'other')
+          },ensure_ascii=False))
+          PY
