@@ -499,8 +499,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         group: css('.style-panel-v17 .style-primary-group'),
       };
     })()`);
-    assert(pageType.status?.size === '14px' && pageType.status?.weight === '650'
-      && pageType.heading?.size === '13px' && pageType.heading?.weight === '650'
+    assert(pageType.status?.size === '15px' && pageType.status?.weight === '650'
+      && pageType.heading?.size === '14px' && pageType.heading?.weight === '650'
       && pageType.label?.size === '14px' && pageType.label?.weight === '600'
       && pageType.panel?.gap === '18px' && pageType.group?.gap === '12px',
       'page-level design inspector matches editor type and spacing at ' + width + ': ' + JSON.stringify(pageType));
