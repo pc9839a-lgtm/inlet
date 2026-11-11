@@ -1,0 +1,39 @@
+name: Diagnose ollymkt read-only access from GitHub runner
+on:
+  push:
+    branches: [ops/compare-ollymkt-github-vs-cloudflare-20261111]
+    paths: [.github/workflows/ollymkt-network-readonly.yml]
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe GET and HEAD without lead data
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.error, time, re, json
+          def probe(method, path):
+            url='https://ollymkt.shop'+path
+            request=urllib.request.Request(url,method=method,headers={'User-Agent':'Mozilla/5.0 (compatible; NetworkDiagnostics/1.0)','Accept':'text/html,application/json;q=0.9,*/*;q=0.5'})
+            t=time.time()
+            try:
+              response=urllib.request.urlopen(request,timeout=12)
+            except urllib.error.HTTPError as e:
+              response=e
+            except Exception as e:
+              return {'path':path,'method':method,'errorType':type(e).__name__,'elapsedMs':round((time.time()-t)*1000)}
+            body=response.read(4096) if method=='GET' else b''
+            text=body.decode('utf-8','replace')
+            title=re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S)
+            return {'path':path,'method':method,'status':response.status,'elapsedMs':round((time.time()-t)*1000),
+              'headers':{k:response.headers.get(k) for k in ['server','cf-ray','content-type','allow','via','x-cache'] if response.headers.get(k)},
+              'title':(re.sub(r'\s+',' ',title.group(1))[:100] if title else ''),
+              'bodyCategory':'html' if '<html' in text.lower() else ('json' if text.strip().startswith('{') else 'other'),
+              'bodyBytesAtMost':len(body)}
+          for path in ['/','/dbapi/']:
+            for method in ['GET','HEAD']:
+              print('NETWORK_PROBE '+json.dumps(probe(method,path),ensure_ascii=False),flush=True)
+          PY
