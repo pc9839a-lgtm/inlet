@@ -508,7 +508,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   }
   await setViewport(client, 1672, 941, false);
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
-  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('.inspector-primary-heading') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy text inspector');
+  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('#editor-block-settings-editor-text')?.closest('.editor-inline-settings') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy inline text editor');
 
   // The redesigned first view keeps design closed. Open it deliberately for
   // secondary-control sizing and focus tests, rather than treating hidden
@@ -986,11 +986,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     }
   })()`);
   assert(longInspector?.scrolled > 250
-    && longInspector.titleTop >= longInspector.inspectorTop
-    && longInspector.titleTop <= longInspector.inspectorTop + 120
-    && longInspector.inspectorOverflow === 'auto'
+    && longInspector.inspectorOverflow === 'visible'
     && longInspector.navigatorOverflow === 'auto' && longInspector.outerOverflow === 'hidden',
-    'long navigator scroll must not move the independently scrollable Inspector: ' + JSON.stringify(longInspector));
+    'the selected inline editor must move with the single long block-stack scroller: ' + JSON.stringify(longInspector));
   const before = await evaluate(client, `[...document.querySelectorAll('.text-editor-flow textarea')].map(el => el.value)`);
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
