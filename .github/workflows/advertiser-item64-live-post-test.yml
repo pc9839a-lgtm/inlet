@@ -1,0 +1,47 @@
+name: Live advertiser API ITEM64 POST response test
+on:
+  push:
+    branches: [ops/advertiser-item64-live-post-test-20261111]
+    paths: [.github/workflows/advertiser-item64-live-post-test.yml]
+permissions: {contents: read}
+jobs:
+  post-item64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: POST ITEM64 exactly 7 Make-style URL-encoded fields without real lead
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request,urllib.parse,urllib.error,json,re,time
+          url='https://ollymkt.shop/dbapi/'
+          fields=[
+            ('ITEM','64'),
+            ('DATAS_name','INTEGRATION_TEST_NOT_A_CUSTOMER'),
+            ('DATAS_phone','000-0000-0000'),
+            ('DATAS_money','TEST_ONLY'),
+            ('DATAS_area','TEST_ONLY'),
+            ('DATAS_calldate','TEST_ONLY'),
+            ('DATAS_data','TEST_ONLY_DO_NOT_REGISTER_OR_BILL')]
+          req=urllib.request.Request(url,data=urllib.parse.urlencode(fields).encode('utf-8'),
+            method='POST',headers={'Content-Type':'application/x-www-form-urlencoded'})
+          t=time.monotonic()
+          try:
+            resp=urllib.request.urlopen(req,timeout=18)
+          except urllib.error.HTTPError as err:
+            resp=err
+          except Exception as err:
+            print('ITEM64_HTTP_TEST '+json.dumps({'error':type(err).__name__,
+              'ms':round((time.monotonic()-t)*1000)}));raise SystemExit()
+          text=resp.read(4000).decode('utf-8','replace')
+          title=re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S)
+          print('ITEM64_HTTP_TEST '+json.dumps({
+             'url':url,'item':'64','method':'POST','fields':len(fields),
+             'contentType':'application/x-www-form-urlencoded',
+             'httpStatus':resp.status,'server':resp.headers.get('server',''),
+             'responseContentType':resp.headers.get('content-type',''),
+             'pageTitle':title.group(1).strip()[:100] if title else '',
+             'responsePreview':re.sub('<[^>]*>',' ',text).strip()[:250],
+             'elapsedMs':round((time.monotonic()-t)*1000),'realCustomerData':False
+          },ensure_ascii=False))
+          PY
