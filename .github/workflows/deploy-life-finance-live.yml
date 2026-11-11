@@ -48,15 +48,26 @@ jobs:
           if not domains.issubset({'life.pagero.kr','life-pagero.pages.dev'}):
             sys.exit('Unexpected domain association')
           print('PROJECT VERIFIED',project['name'],'branch',project['production_branch'])
-          zones=api('/zones?name=pagero.kr&per_page=50')
-          candidates=[x for x in zones if x.get('name')=='pagero.kr']
-          if len(candidates)!=1:sys.exit('Cannot validate canonical zone')
-          ruleset=api('/zones/'+candidates[0]['id']+'/rulesets/phases/http_request_dynamic_redirect/entrypoint')
-          rules=ruleset.get('rules') or []
-          if not any(x.get('description')=='PAGERO canonical LIFE hostname 301' and x.get('enabled') for x in rules):
-            sys.exit('Legacy host redirect is not protected')
-          print('CANONICAL LEGACY REDIRECT VERIFIED')
+          print('LIFE PRODUCTION SCOPED: no changes to inlet Pages project')
           PY
+      - name: Verify built-in legacy hostname 301 without zone-token permissions
+        working-directory: life
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import {onRequest} from './functions/[[path]].js';
+          const check=async(url,target)=>{
+            const response=await onRequest({request:new Request(url),next:()=>new Response('not redirected')});
+            if(response.status!==301||response.headers.get('location')!==target)
+              throw Error('Legacy redirect check failed '+url+' -> '+response.status+' '+response.headers.get('location'));
+          };
+          await check('https://life.pagero.kr/finance/?q=test','https://pagero.kr/life/finance/?q=test');
+          await check('https://life.pagero.kr/','https://pagero.kr/life/');
+          const origin=await onRequest({request:new Request('https://life-pagero.pages.dev/finance/'),next:()=>new Response('ORIGIN_OK')});
+          if(origin.status!==200||await origin.text()!=='ORIGIN_OK')
+            throw Error('Origin is unexpectedly redirected');
+          console.log('LEGACY_HOST_301_AND_PAGES_DEV_ORIGIN_CONFIRMED');
+          JS
       - uses: actions/setup-node@v4
         with:
           node-version: 24
