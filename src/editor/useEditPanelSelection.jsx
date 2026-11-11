@@ -20,7 +20,7 @@ export function useEditPanelSelection({ page, openId, setOpenId, setAddOpen }) {
     if (!firstVisibleBlock) return;
     firstSelectionPageRef.current = pageIdentity;
     const activeSelectionExists = normalBlocks.some((block) => block.id === openId)
-      || [topNavBlock?.id, bottomBlock?.id, footerBlock?.id].includes(openId);
+      || [topNavBlock?.id, bottomBlock?.id, footerBlock?.id].filter(Boolean).includes(openId);
     if (!activeSelectionExists) setOpenId(firstVisibleBlock.id);
   }, [normalBlocks, openId, pageIdentity, setOpenId, topNavBlock?.id, bottomBlock?.id, footerBlock?.id]);
 
