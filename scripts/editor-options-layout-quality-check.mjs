@@ -160,8 +160,8 @@ assert(editLayout.includes("const showPageOptions = section === 'options' || !se
   && editLayout.includes('{showPageOptions && ('),
   'an empty selection must present page design inside the editable stack');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('.editor-page-settings-button') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
-assert(screenOrderCss.includes('Littly-style block composition')
-  && fixedBlocksCss.includes('Fixed entries use the same compact block-row vocabulary'),
+assert(screenOrderCss.includes('One quiet composition list')
+  && fixedBlocksCss.includes('Pinned rows use the same flat'),
   'normal and fixed rows must share geometry while keeping their own CSS owners');
 assert(pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('.page-option-head') && screenOrderCss.includes('border-radius: 0 !important'), 'page settings and block rows must retain separate flat component surface owners');
 assert(screenOrderCss.includes('.screen-order-v2-list')
