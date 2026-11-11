@@ -45,9 +45,9 @@ export function normalizeSheetLead(row) {
   };
 }
 // Mirror the proven Make HTTP form shape: exactly seven fields in the same order.
-// Production advertiser campaign is explicitly locked to ITEM=40.
-// Do not reuse the archived Make campaign (41) or legacy Cloudflare setting (64).
-export const ADVERTISER_ITEM = '40';
+// Production advertiser campaign is explicitly locked to ITEM=64.
+// Do not use any previously tested campaign item (40 or 41).
+export const ADVERTISER_ITEM = '64';
 export function advertiserForm(lead) {
   const raw = String(lead?.phone || '').replace(/\D/g, '');
   const phone = /^010\d{8}$/.test(raw)
