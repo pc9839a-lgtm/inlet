@@ -166,14 +166,14 @@ assert(screenOrderCss.includes('One quiet composition list')
 assert(pageOptionsCss.includes('border-radius: 0;') && pageOptionsCss.includes('.page-option-head') && screenOrderCss.includes('border-radius: 0 !important'), 'page settings and block rows must retain separate flat component surface owners');
 assert(screenOrderCss.includes('.screen-order-v2-list')
   && screenOrderCss.includes('gap: 0 !important;')
-  && screenOrderCss.includes('border: 1px solid #e2e6ef !important;')
+  && screenOrderCss.includes('border-bottom: 1px solid #eceef1 !important;')
   && !editorWorkspaceCss.includes('.screen-order-v2-card'),
-  'block component must own compact card rows rather than workspace-wide list CSS');
-assert(screenOrderCss.includes('min-height: 61px !important;')
-  && screenOrderCss.includes('grid-template-columns: 20px minmax(0,1fr) 35px !important;'),
-  'new stacked block rows must use one readable 61px geometry');
-assert(screenOrderCss.includes('min-height: 61px !important;')
-  && screenOrderCss.includes('grid-template-columns: 20px minmax(0,1fr) 35px !important;')
+  'block component must own flat divider rows rather than workspace-wide CSS');
+assert(screenOrderCss.includes('min-height: 55px !important;')
+  && screenOrderCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;'),
+  'new stacked block rows must use one readable 55px geometry');
+assert(screenOrderCss.includes('min-height: 55px !important;')
+  && screenOrderCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
   && screenOrderCss.includes('.screen-order-v2-action')
   && screenOrderCss.includes('.screen-order-v2-drag'),
   'new block rows must keep drag and accessible overflow actions');
