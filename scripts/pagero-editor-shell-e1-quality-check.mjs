@@ -351,8 +351,8 @@ assert(!compactRowSource.includes('<ScreenOrderRowVisibility')
   && compactRowActions.includes('role="switch"')
   && compactRowActions.includes('onClick={() => run(onToggleVisible)}')
   && !fixedCard.includes('fixed-open-button')
-  && rowCss.includes('grid-template-columns: 20px minmax(0,1fr) 35px !important;')
-  && fixedBlocksCss.includes('grid-template-columns: 20px minmax(0, 1fr) 35px !important;')
+  && rowCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
+  && fixedBlocksCss.includes('grid-template-columns: 18px minmax(0,1fr) 31px !important;')
   && rowIdentity.includes("failed ? <ImageOff size={16} />")
   && rowCss.includes('screen-order-v2-type-icon.thumbnail-error'),
   'new stack rows must preserve visibility/menu keyboard control and image failure fallback');
