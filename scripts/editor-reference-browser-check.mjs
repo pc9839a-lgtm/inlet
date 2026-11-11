@@ -638,7 +638,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   assert(switchMetrics.width === 46 && switchMetrics.height >= 44
     && switchMetrics.off === 'rgb(208, 213, 221)'
-    && switchMetrics.on === 'rgb(36, 84, 255)'
+    && switchMetrics.on === 'rgb(64, 87, 237)'
     && Number(switchMetrics.disabledOpacity) <= .5 && switchMetrics.restored,
     'switch must retain 44px target, clear off/on color and disabled appearance: ' + JSON.stringify(switchMetrics));
   await capture(client, 'control-states-bottom-toggle');
