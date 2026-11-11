@@ -23,6 +23,8 @@ const editorLabels = await readFile('src/editor/editPanelParts/editorLabels.js',
 const editLayout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
 const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderList.jsx', 'utf8');
+const normalBlockSelection = await readFile('src/editor/useNormalBlockSelection.js', 'utf8');
+const selectionProps = await readFile('src/editor/editPanelSectionProps/screenOrderListProps.js', 'utf8');
 const screenOrderListItems = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
 const screenOrderSettings = await readFile('src/editor/editPanelParts/ScreenOrderSettings.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
@@ -88,6 +90,12 @@ assert(!shareCard.includes('<em>공개 페이지 공유 버튼</em>'), 'share op
 assert(shareCss.includes('grid-template-columns: repeat(2, minmax(0, 1fr))'), 'mobile share position choices must use a readable 2x2 grid');
 assert(shareCss.includes('min-height: 42px'), 'mobile share position choices must keep large tap targets');
 assert(screenOrderCss.includes('@media (max-width: 760px)') && screenOrderCss.includes('.screen-order-v2-card { padding: 10px;'), 'screen order must retain its compact mobile card contract');
+assert(normalBlockSelection.includes('setOpenId(blockId);')
+  && !normalBlockSelection.includes("current === blockId ? '' : blockId")
+  && normalBlockSelection.includes('clearBlockSelection')
+  && selectionProps.includes('clearBlockSelection: selection.clearBlockSelection')
+  && editLayout.includes('screenOrderListProps.clearBlockSelection()'),
+  'selecting the same block must retain its settings; page settings must clear selection explicitly');
 assert(editLayout.includes('editor-page-settings-button') && !editLayout.includes('edit-section-tabs') && editLayout.includes('구성') && editLayout.includes('listOnly selectBlock={chooseBlock}'), 'screen order must live in the restored left editor flow without a redundant selected-settings shell');
 assert(editLayout.includes('페이지 설정') && editLayout.includes('<PageGlobalOptions {...pageGlobalOptionsProps}') && editLayout.includes('updateTheme={updatePageTheme}') && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page options and theme controls must live in the restored left editor mode');
 assert(!pageOptions.includes('PageGlobalOptionsHeader') && pageOptions.includes('aria-label="페이지 동작"'), 'page behavior must have an accessible group label without repeating a visible settings heading');
