@@ -557,6 +557,9 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .ed
   color: #273042; font: inherit; font-size: 14px;
 }
 .editor-gallery-search input::placeholder { color: #9aa2af; }
+/* The search wrapper owns the focus indication; never draw a second ring
+   inside it around the input itself. */
+.editor-gallery-search input:focus-visible { outline: none !important; }
 .editor-gallery-section-title {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; margin: 0 0 12px;
