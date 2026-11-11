@@ -65,6 +65,11 @@ export function useWorkspaceShellActions({
           const inspector = document.querySelector('.canvas-editor-shell .editor-inspector-panel');
           if (settings && inspector?.contains(settings)) {
             settings.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+            // Preview selection is user initiated. Initial editor auto-selection
+            // never uses this path, so workspace navigation focus is preserved.
+            settings.closest('.screen-order-v2-settings-view')
+              ?.querySelector('.screen-order-v2-settings-title h2')
+              ?.focus({ preventScroll: true });
           }
           const row = document.getElementById(`editor-block-${id}`);
           const list = document.querySelector('.canvas-editor-shell .editor-composition-content');
