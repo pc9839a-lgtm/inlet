@@ -610,6 +610,6 @@ html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-primar
 }
 @media (max-width: 1100px) and (min-width: 900px) {
   html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
-    padding-inline: 12px;
+    padding-inline: 8px;
   }
 }
