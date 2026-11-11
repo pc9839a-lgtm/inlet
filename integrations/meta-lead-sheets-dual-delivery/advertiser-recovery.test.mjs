@@ -79,10 +79,10 @@ test('recovery is forbidden for GET and unauthorized POST without reading custom
 });
 test('previous Make request seven fields are preserved',()=>{
   const form=new URLSearchParams(advertiserForm({name:'test',phone:'01012345678',
-    money:'2천만원',area:'',calldate:'오후',content:'상담',email:'ignore@example.com'},'64'));
+    money:'2천만원',area:'',calldate:'오후',content:'상담',email:'ignore@example.com'}));
   assert.deepEqual([...form.keys()],['ITEM','DATAS_name','DATAS_phone',
     'DATAS_money','DATAS_area','DATAS_calldate','DATAS_data']);
-  assert.equal(form.get('ITEM'),'64');
+  assert.equal(form.get('ITEM'),'41');
   assert.equal(form.has('DATAS_email'),false);
 });
 
@@ -100,4 +100,13 @@ test('GET and HEAD safe probes store only header allowlist and do not create adv
   assert.equal(result.allow,'POST');
   assert.equal(result['set-cookie'],undefined);
   assert.equal(result.authorization,undefined);
+});
+
+test('advertiser POST follows redirects as in Make blueprint while HEAD/GET diagnostic remains no-lead',()=>{
+  assert.match(server,/redirect:'follow', \/\/ Mirror Make blueprint followRedirect=true/);
+  assert.match(server,/META_SHEETS_ADVERTISER_ITEM \|\| '41'/);
+  assert.match(recovery,/META_SHEETS_ADVERTISER_ITEM\|\|'41'/);
+  assert.match(server,/method:'POST'/);
+  assert.match(server,/ad_status === 'PENDING'/);
+  assert.doesNotMatch(recovery,/retry-advertiser/);
 });
