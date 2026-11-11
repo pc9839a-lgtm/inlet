@@ -2988,7 +2988,7 @@ async function run() {
       && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && (desktopViewport.width <= 1100
         ? leftGeometry.inspectorPadding === '8px' && leftGeometry.compositionPadding === '8px'
-        : leftGeometry.inspectorPadding === '24px')
+        : leftGeometry.inspectorPadding === '16px')
       && Math.abs(leftGeometry.rightEdge - leftGeometry.previewLeft) <= 2,
       'reference-width independent panels must fit without clipped controls or preview overlap: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
