@@ -967,3 +967,77 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel :is
   outline: 2px solid #2454ff;
   outline-offset: 1px;
 }
+
+
+/* Content cards: the composition is an editable stack of actual page
+   sections, not a compact file explorer. Only the navigator row is restyled;
+   the Inspector and published landing keep their existing contracts. */
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-list {
+  gap: 9px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item {
+  border: 1px solid #e2e7f0 !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 6px rgba(38, 58, 94, .035) !important;
+  transition: border-color .14s, background-color .14s, box-shadow .14s;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item:is(:hover,:focus-within) {
+  border-color: #bfcff0 !important;
+  background: #fff !important;
+  box-shadow: 0 4px 14px rgba(38, 58, 94, .08) !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true'] {
+  border-color: #7da0fa !important;
+  background: #f5f8ff !important;
+  box-shadow: inset 3px 0 0 #2454ff, 0 4px 16px rgba(46, 91, 191, .09) !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head {
+  grid-template-columns: 14px minmax(0, 1fr) 29px !important;
+  gap: 4px !important;
+  min-height: 84px !important;
+  padding: 11px 7px 11px 6px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-drag {
+  height: 43px !important;
+  opacity: .5;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-title-wrap {
+  grid-template-columns: 42px minmax(0, 1fr) !important;
+  gap: 9px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  border-radius: 10px;
+  background: #eef2f8;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon svg {
+  width: 19px;
+  height: 19px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy {
+  gap: 5px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong {
+  font-size: 13.5px !important;
+  line-height: 1.36 !important;
+  font-weight: 720 !important;
+  -webkit-line-clamp: 2;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-detail {
+  font-size: 11px !important;
+  line-height: 1.36;
+  color: #738198 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item.is-hidden {
+  border-style: dashed !important;
+  background: #f8f9fc !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item.is-hidden .screen-order-v2-type-icon {
+  background: #eceef3 !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item { transition: none; }
+}

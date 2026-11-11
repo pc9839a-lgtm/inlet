@@ -9,9 +9,9 @@ const previewSelection = read('src/runtime/useWorkspaceShellActions.js');
 const browser = read('scripts/editor-browser-regression-check.mjs');
 const preview = read('src/screens/workspace/WorkspacePreviewPane.css');
 
-assert.ok(shell.includes('clamp(220px, 16.8vw, 280px)'), 'redesigned navigator measures 280px at 1672px');
-assert.ok(shell.includes('calc(var(--editor-list-width) + 420px)') && shell.includes('700px'),
-  'redesigned Inspector must have 420px at the reference viewport');
+assert.ok(shell.includes('clamp(220px, 15.6vw, 264px)'), 'page-first navigator stays compact at the reference width');
+assert.ok(shell.includes('calc(var(--editor-list-width) + 376px)') && shell.includes('640px'),
+  'selected-content Inspector must remain usable beside the enlarged canvas');
 assert.ok(shell.includes('calc(100vw - 410px)') && shell.includes('clamp(500px,'),
   '900px editor must reserve a 400px preview stage');
 assert.ok(shell.includes('overflow: hidden !important;'),
@@ -39,8 +39,8 @@ assert.ok(preview.includes('--landing-runtime-width: 390px'),
 assert.ok(browser.includes('long-page navigator and Inspector must remain isolated')
   && browser.includes('900px long-page keeps two independently reachable editing regions'),
   'real Chrome must exercise both scrollers on the 36-block page');
-assert.ok(browser.includes('const expectedComposition = Math.min(280, Math.max(220, width * 0.168));'),
-  'Chrome checks actual redesigned 280px list width instead of historical dimensions');
+assert.ok(browser.includes('const expectedComposition = Math.min(264, Math.max(220, width * 0.156));'),
+  'Chrome checks actual page-first navigator geometry at desktop widths');
 assert.ok(browser.includes("inspectorScroll.footerPinned && inspectorScroll.innerOverflowY === 'visible'"),
   'Chrome checks pinned page settings and no third nested settings scrollbar');
 console.log('Editor reference panel geometry and independent scrolling quality check passed');

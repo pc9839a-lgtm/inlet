@@ -47,14 +47,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && visual.buttonWidth >= visual.headingWidth - 24
       && visual.buttonHeight >= 39 && visual.searchBelowButton
       && ['rgb(237, 242, 255)', 'rgb(227, 235, 255)'].includes(visual.buttonBackground)
-      && visual.listNameSize === '14px' && visual.fixedNameSize === '14px'
-      && visual.normalRowHeight >= 62 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
-      && Math.abs(visual.compositionWidth - (referenceWidth === 1672 ? 280 : 220)) <= 3
-      && visual.inspectorWidth >= (referenceWidth === 1672 ? 400 : 255)
-      && visual.compositionBackground === 'rgb(247, 249, 252)'
+      && visual.listNameSize === '13.5px' && visual.fixedNameSize === '13.5px'
+      && visual.normalRowHeight >= 76 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 6
+      && Math.abs(visual.compositionWidth - (referenceWidth === 1672 ? 1672 * .156 : 220)) <= 3
+      && visual.inspectorWidth >= (referenceWidth === 1672 ? 370 : 255)
+      && visual.compositionBackground === 'rgb(248, 250, 252)'
       && visual.inspectorBackground === 'rgb(255, 255, 255)'
-      && visual.stageBackground === 'rgb(238, 242, 248)'
-      && visual.stageHeading === '실시간 미리보기' && visual.stageWidth === '모바일 · 390px'
+      && visual.stageBackground === 'rgb(247, 249, 253)'
+      && visual.stageHeading === '페이지 화면' && visual.stageWidth === '모바일 · 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
       'redesigned 1672/900 editor must separate composition, properties and live page with readable layers: '
       + JSON.stringify({ referenceWidth, visual }));
@@ -153,9 +153,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 699 && unselected.editorWidth <= 701
-    && unselected.listWidth >= 279 && unselected.listWidth <= 281
-    && unselected.inspectorWidth >= 417 && unselected.inspectorWidth <= 421,
+    && unselected.editorWidth >= 635 && unselected.editorWidth <= 642
+    && unselected.listWidth >= 259 && unselected.listWidth <= 265
+    && unselected.inspectorWidth >= 370 && unselected.inspectorWidth <= 380,
     'no-selection must show actual page controls in the wide left editor: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
@@ -391,13 +391,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           tokens: Object.fromEntries(['--editor-ui-title-size','--editor-ui-section-size','--editor-ui-label-size','--editor-ui-row-size','--editor-ui-space-4'].map(k=>[k,getComputedStyle(document.querySelector('.edit-layout')).getPropertyValue(k).trim()])),
         };
       })()`);
-      assert(uiType.listTitle?.size === '18px' && uiType.listTitle?.weight === '750'
-        && uiType.detailTitle?.size === '19px' && uiType.detailTitle?.weight === '750'
-        && uiType.contentHeading?.size === '13px' && uiType.contentHeading?.weight === '700'
+      assert(uiType.listTitle?.size === '20px' && uiType.listTitle?.weight === '780'
+        && uiType.detailTitle?.size === '20px' && uiType.detailTitle?.weight === '780'
+        && uiType.contentHeading?.size === '14px' && uiType.contentHeading?.weight === '760'
         && uiType.disclosure?.size === '13px' && uiType.disclosure?.weight === '650'
-        && uiType.normalRow?.size === '14px' && uiType.normalRow?.weight === '650'
-        && uiType.fixedRow?.size === '14px' && uiType.fixedRow?.weight === '650'
-        && uiType.normalDetail?.size === '12px' && uiType.normalDetail?.weight === '500'
+        && uiType.normalRow?.size === '13.5px' && uiType.normalRow?.weight === '720'
+        && uiType.fixedRow?.size === '13.5px' && uiType.fixedRow?.weight === '720'
+        && uiType.normalDetail?.size === '11px' && uiType.normalDetail?.weight === '500'
         && uiType.label?.size === '13px' && uiType.label?.weight === '600'
         && uiType.editor?.gap === '18px'
         && uiType.tokens['--editor-ui-title-size'] === '18px'
@@ -1053,9 +1053,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 280) <= 1
-    && geometry.inspector.width >= 418 && geometry.inspector.width <= 421,
-    'redesigned 1672px viewport must provide 280px navigator and 420px settings: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 1672 * .156) <= 2
+    && geometry.inspector.width >= 370 && geometry.inspector.width <= 380,
+    'page-first desktop must reserve more space for canvas without collapsing the inspector: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'editing columns must start below the 64px toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
@@ -1086,15 +1086,17 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         stageCentered: Math.abs((box(stage).left + box(stage).right) / 2 - (box(frame).left + box(frame).right) / 2) <= 4,
         frameInside: box(frame).left >= box(preview).left - 2 && box(frame).right <= box(preview).right + 2,
         children: stage.children.length,
-        hasToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
+        hasLegacyToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
+        canvasAdd: !!stage.querySelector('.editor-canvas-bottom-add'),
+        canvasTools: !!stage.querySelector('.editor-canvas-tools'),
         selectedBlocks: frame.querySelectorAll('[data-preview-selected="true"]').length,
       };
     })()`);
     const expectedWidth = width <= 950 ? 392 : 394;
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
       && parseInt(chrome.radius, 10) <= 20 && chrome.stageCentered && chrome.frameInside
-      && chrome.children === 2 && !chrome.hasToolbar,
-      'mobile editor preview must contain only the 390px phone without auxiliary bars at ' + width + ': ' + JSON.stringify(chrome));
+      && chrome.children === 5 && chrome.canvasAdd && !chrome.hasLegacyToolbar,
+      'canvas workbench must keep exactly one 390px mobile page plus editor-only actions at ' + width + ': ' + JSON.stringify(chrome));
     if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
   }
   await setViewport(client, 1672, 941, false);
@@ -1113,15 +1115,17 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const stage = await evaluate(client, `(() => {
       const phone = document.querySelector('.preview-workspace .phone-frame');
       const picked = phone.querySelector('[data-preview-selected="true"]');
+      const tools = document.querySelector('.editor-canvas-tools');
       return { width: phone.querySelector('.landing-page')?.clientWidth,
-        picked: picked?.id || '', noDock: !document.querySelector('.preview-selection-toolbar') };
+        picked: picked?.id || '', toolbarId: tools?.dataset.canvasBlockId || '' };
     })()`);
-    assert(stage.width === 390 && stage.noDock,
-      'selected block must not create an action row above the 390px page: ' + JSON.stringify(stage));
+    assert(stage.width === 390 && (blockId === 'editor-bottom'
+      ? !stage.toolbarId : stage.toolbarId === blockId),
+      'selecting a normal section must show its exact editor-only canvas actions, while fixed controls remain in the navigator: ' + JSON.stringify(stage));
   }
   await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
-    'return to selected text without stage actions');
+    'return to selected text with its contextual canvas actions');
   assert(apiState.saveCount === 0, 'preview selections never publish or mutate the saved page');
 
   const menu = '.workspace-editor-nav > summary';
@@ -1131,9 +1135,28 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await pressKeyboardKey(client, 'Escape');
   assert(await evaluate(client, `!document.querySelector('.workspace-editor-nav').open && document.activeElement === document.querySelector('.workspace-editor-nav > summary')`), 'workspace menu Escape restores trigger focus');
   await clickPointer(client, '.add-toggle');
-  await waitForBrowser(client, `!!document.querySelector('.add-panel')`, 'compact add catalog');
+  await waitForBrowser(client, `!!document.querySelector('.editor-gallery-dialog[aria-modal="true"] .editor-gallery-quick-grid')`,
+    'full-size block gallery opens from navigator');
+  const gallery = await evaluate(client, `(() => {
+    const dialog = document.querySelector('.editor-gallery-dialog');
+    return { width: dialog?.getBoundingClientRect().width,
+      quickCards: dialog?.querySelectorAll('.editor-gallery-quick').length,
+      searchFocused: document.activeElement === dialog?.querySelector('input[aria-label="추가할 블록 검색"]'),
+      categoryCount: dialog?.querySelectorAll('.editor-gallery-categories button').length,
+      catalog: !!dialog?.querySelector('.widget-group-grid') };
+  })()`);
+  assert(gallery.width >= 760 && gallery.quickCards === 8
+    && gallery.searchFocused && gallery.categoryCount >= 5 && gallery.catalog,
+    'Littly-style block picker must be readable and keyboard-ready: ' + JSON.stringify(gallery));
+  await capture(client, 'editor-visual-block-gallery-1672');
   await pressKeyboardKey(client, 'Escape');
-  await waitForBrowser(client, `!document.querySelector('.add-panel')`, 'compact add catalog Escape');
+  await waitForBrowser(client, `!document.querySelector('.editor-gallery-dialog')`, 'gallery Escape closes modal');
+  await clickPointer(client, '.editor-canvas-tools button[aria-label="선택한 블록 아래에 추가"]');
+  await waitForBrowser(client, `!!document.querySelector('.editor-gallery-dialog[aria-modal="true"]')`,
+    'on-canvas add opens same gallery without selecting a different block');
+  await pressKeyboardKey(client, 'Escape');
+  await waitForBrowser(client, `!document.querySelector('.editor-gallery-dialog')`,
+    'canvas-initiated gallery closes by keyboard');
   await clickPointer(client, '#editor-block-settings-editor-text .block-editor-advanced-settings > summary');
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .block-editor-advanced-settings').open`, 'single advanced group opens the anchor control');
   await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop = 0`);

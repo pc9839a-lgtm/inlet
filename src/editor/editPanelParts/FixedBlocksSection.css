@@ -268,3 +268,46 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-compositi
   height: 32px !important;
   min-height: 32px !important;
 }
+
+
+/* Pinned sections are recognizably part of the page composition, but remain
+   non-draggable. The exact fixed-block edit/visibility handlers do not change. */
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row {
+  margin: 4px 0 8px !important;
+  border: 1px solid #e2e7f0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 6px rgba(38,58,94,.035) !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row:hover {
+  border-color: #bfcff0 !important;
+  background: #fff !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row[data-selected='true'] {
+  border-color: #7da0fa !important;
+  background: #f5f8ff !important;
+  box-shadow: inset 3px 0 0 #2454ff, 0 4px 16px rgba(46,91,191,.09) !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-fixed-blocks .fixed-composition-row .fixed-block-head {
+  grid-template-columns: 14px minmax(0, 1fr) 29px !important;
+  gap: 4px !important;
+  min-height: 78px !important;
+  padding: 10px 7px 10px 6px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .fixed-composition-select {
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 9px;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .screen-order-v2-type-icon {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .screen-order-v2-type-icon svg {
+  width: 19px; height: 19px;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-composition-row .screen-order-v2-identity-copy strong {
+  font-size: 13.5px !important;
+  font-weight: 720 !important;
+}

@@ -227,3 +227,227 @@ body .builder-shell.preview-workspace-shell:not(.edit-mode-shell) .phone-frame .
 .editor-preview .image-gallery-grid-item { position: relative; }
 .editor-preview .image-gallery-grid-item .editor-preview-image-replace { top: 6px; right: 6px; padding: 6px 8px; font-size: 11px; }
 .editor-preview .image-wrap > .editor-preview-image-replace { top: 10px; right: 10px; }
+
+
+/* Canvas-first editor workbench — only the authenticated editing surface.
+   The phone's landing content remains exactly 390px; floating tools live
+   OUTSIDE the public page renderer, not inside its persisted block DOM. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace {
+  background-color: #f7f9fd !important;
+  background-image: radial-gradient(#dce4f0 .75px, transparent .75px) !important;
+  background-size: 18px 18px !important;
+  padding-top: 31px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-stage-heading {
+  min-height: 27px;
+  margin-bottom: 6px;
+  padding-inline: 0;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-stage-label strong {
+  color: #1b2740;
+  font-size: 15px;
+  font-weight: 780;
+  letter-spacing: -.035em;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-stage-width {
+  padding: 5px 9px;
+  border: 1px solid #e0e6f1;
+  border-radius: 7px;
+  background: #fff;
+  color: #5e6c85;
+  font-size: 11px;
+  font-weight: 650;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-stage-signal {
+  width: 8px;
+  height: 8px;
+  background: #2454ff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  margin: 0 0 18px;
+  color: #758298;
+  font-size: 12px;
+  line-height: 1.45;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-hint svg { color: #6379ab; }
+html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: 394px;
+  max-width: none;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame {
+  border-color: #d7e0ef !important;
+  border-radius: 19px !important;
+  box-shadow: 0 19px 62px rgba(35, 58, 106, .19), 0 3px 12px rgba(35, 58, 106, .07) !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools {
+  position: absolute;
+  top: var(--canvas-tools-top, 76px);
+  left: calc(100% + 18px);
+  z-index: 5;
+  display: grid;
+  width: 174px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #dce4f0;
+  border-radius: 12px;
+  background: rgba(255,255,255,.98);
+  box-shadow: 0 12px 40px rgba(30, 52, 94, .14), 0 2px 7px rgba(30,52,94,.06);
+  color: #192640;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools::before {
+  content: '';
+  position: absolute;
+  top: 22px;
+  right: 100%;
+  width: 18px;
+  height: 1px;
+  background: #95aafa;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 3px 4px 12px;
+  border-bottom: 1px solid #ebeff6;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading span {
+  color: #496bd2;
+  font-size: 10px;
+  font-weight: 750;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 750;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading small {
+  color: #8390a4;
+  font-size: 11px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-primary {
+  display: grid;
+  gap: 6px;
+  padding: 11px 0 7px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid #dee5ee;
+  border-radius: 7px;
+  background: #fff;
+  color: #34445f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:hover:not(:disabled) {
+  border-color: #b8cafa;
+  background: #eef3ff;
+  color: #2454ff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 2px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:disabled {
+  opacity: .32;
+  cursor: default;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button.editor-canvas-add-after {
+  border-color: #2454ff;
+  background: #2454ff;
+  color: #fff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button.editor-canvas-add-after:hover {
+  background: #1945dc;
+  color: #fff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  padding-top: 3px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary button {
+  min-width: 0;
+  min-height: 30px;
+  padding: 4px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 42px;
+  margin: 14px 0 0;
+  padding: 7px 10px;
+  border: 1px dashed #bbc9e4;
+  border-radius: 10px;
+  background: rgba(255,255,255,.9);
+  color: #385ac5;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add:hover {
+  border-color: #668cf1;
+  background: #edf2ff;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 2px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-caption {
+  display: block;
+  margin: 12px 0 0;
+  color: #98a2b3;
+  font-size: 10px;
+  line-height: 1.35;
+  text-align: center;
+}
+html body #root .builder-shell.canvas-editor-shell .preview-workspace .preview-selected-block {
+  outline: 2px solid #2454ff !important;
+  outline-offset: -2px !important;
+  box-shadow: inset 0 0 0 2px rgba(36,84,255,.10) !important;
+}
+@media (max-width: 1450px) {
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools {
+    position: static;
+    order: -1;
+    display: grid;
+    grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+    width: 100%;
+    margin: 0 0 12px;
+    padding: 9px;
+  }
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools::before { display: none; }
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading {
+    padding: 4px 8px 3px 2px; border: 0; align-self: center;
+  }
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-primary { padding: 0; gap: 5px; }
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary { grid-column: 1 / -1; }
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-primary button { min-height: 32px; }
+}
+@media (max-width: 950px) {
+  html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap { width: 392px; }
+  html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add { max-width: 100%; }
+}

@@ -506,3 +506,118 @@ html body #root .canvas-editor-shell .editor-add-block-location {
   font-size: 12px;
   color: var(--editor-ui-muted, #667085);
 }
+
+
+/* Revised editor information architecture: navigator = page structure,
+   Inspector = one selected task, canvas = primary live interaction.
+   These are editor-only rules; no public landing styles are changed. */
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel {
+  background: #f8fafc !important;
+  border-right-color: #e4eaf3;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading {
+  min-height: 143px;
+  gap: 17px;
+  padding-top: 23px;
+  padding-bottom: 18px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e8edf4;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 {
+  font-size: 20px;
+  font-weight: 780;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading .editor-panel-kicker {
+  color: #546dc4;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .06em;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-total {
+  align-self: end;
+  color: #60708b;
+  font-size: 12px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-content {
+  padding: 9px 0 22px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-search {
+  min-height: 45px;
+  margin: 12px 0 0;
+  border-color: #dfe7f1;
+  border-radius: 10px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-group-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0 10px;
+  padding: 0 6px;
+  color: #344761;
+  font-size: 12px;
+  font-weight: 750;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-group-caption > span:last-child {
+  color: #8291a7;
+  font-size: 11px;
+  font-weight: 600;
+}
+html body #root .builder-shell.canvas-editor-shell .screen-order-fixed-blocks h3 {
+  margin: 14px 0 6px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-fixed-group-toggle {
+  min-height: 30px;
+  padding: 0 6px;
+  color: #596d88;
+  font-weight: 730;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-footer {
+  background: #f8fafc;
+  min-height: 68px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
+  background: #fff;
+  padding: 0 16px 48px;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings-header {
+  padding: 23px 0 17px;
+  margin-bottom: 23px;
+}
+html body #root .canvas-editor-shell .editor-inspector-section-label {
+  margin-bottom: 14px;
+  color: #5270d1;
+  font-weight: 760;
+  letter-spacing: .055em;
+}
+html body #root .canvas-editor-shell .editor-inspector-kind-icon {
+  flex-basis: 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #eef3ff;
+}
+html body #root .canvas-editor-shell .editor-inspector-selected-copy > h2 {
+  font-size: 20px !important;
+  font-weight: 780;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-primary-heading {
+  margin: 3px 0 18px;
+  padding: 0 0 0 10px;
+  border-left: 3px solid #2454ff;
+  color: #243551;
+  font-size: 14px;
+  font-weight: 760;
+}
+@media (max-width: 1100px) and (min-width: 900px) {
+  html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
+    padding-inline: 8px;
+  }
+}
+
+/* Narrow-PC property forms need >=340px of actual content at 1180px, not
+   375px panel minus two 24px paddings. Keep the 900px compact 12px rule. */
+@media (min-width: 1101px) and (max-width: 1280px) {
+  html body #root .builder-shell.canvas-editor-shell .editor-inspector-panel {
+    padding-inline: 16px;
+  }
+}
