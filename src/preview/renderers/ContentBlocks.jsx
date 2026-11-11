@@ -2,14 +2,19 @@ import { hexToRgb, pickSafe, rich, widgetBoxClass, widgetBoxVars } from './previ
 import { EditorInlineTextField } from '../EditorInlineTextField.jsx';
 import { canInlineEditTextMarkup } from '../../editor/previewInlineTextModel.js';
 
-function HeroContent({ s }) {
+function HeroContent({ s, blockId, editorPreview = false, onEditPreviewText }) {
   const badges = Array.isArray(s.badges) ? s.badges.filter(Boolean).slice(0, 3) : [];
   const body = String(s.body || '').trim();
+  const canQuickEdit = editorPreview && typeof onEditPreviewText === 'function';
   return (
     <div>
       {s.kicker && <span className="hero-kicker">{rich(s.kicker)}</span>}
-      <h1>{rich(s.title)}</h1>
-      {body ? <p>{rich(body)}</p> : null}
+      {canQuickEdit && canInlineEditTextMarkup(s.title)
+        ? <EditorInlineTextField as="h1" blockId={blockId} field="title" label="히어로 제목" htmlValue={s.title} onCommit={onEditPreviewText} />
+        : <h1>{rich(s.title)}</h1>}
+      {body ? (canQuickEdit && canInlineEditTextMarkup(s.body)
+        ? <EditorInlineTextField as="p" blockId={blockId} field="body" label="히어로 설명" htmlValue={s.body} onCommit={onEditPreviewText} />
+        : <p>{rich(body)}</p>) : null}
       {!!badges.length && (
         <div className="hero-badges">
           {badges.map((badge) => <em key={badge}>{badge}</em>)}
@@ -19,7 +24,7 @@ function HeroContent({ s }) {
   );
 }
 
-export function RenderHero({ block }) {
+export function RenderHero({ block, editorPreview = false, onEditPreviewText }) {
   const s = block.s || {};
   const imageMode = pickSafe(s.imageMode, ['top','background','full'], 'top');
   const imageFit = pickSafe(s.imageFit || 'contain', ['cover','contain'], 'contain');
@@ -48,7 +53,7 @@ export function RenderHero({ block }) {
             {showText && s.overlay !== false && <i style={{ background: overlay }} />}
             {showText && (
               <div className="hero-full-content">
-                <HeroContent s={s} />
+                <HeroContent s={s} blockId={block.id} editorPreview={editorPreview} onEditPreviewText={onEditPreviewText} />
               </div>
             )}
           </div>
@@ -73,7 +78,7 @@ export function RenderHero({ block }) {
       className={`landing-section hero hero-${imageMode} align-${align} title-${titleSize} body-${bodySize} height-${height} fit-${imageFit} ${s.bold ? 'is-bold' : ''} ${s.underline ? 'is-underline' : ''}`}
     >
       {imageMode === 'top' && s.image && <img className="hero-img" src={s.image} alt="" />}
-      <HeroContent s={s} />
+      <HeroContent s={s} blockId={block.id} editorPreview={editorPreview} onEditPreviewText={onEditPreviewText} />
     </section>
   );
 }
