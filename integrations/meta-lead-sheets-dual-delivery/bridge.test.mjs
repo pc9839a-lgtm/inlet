@@ -101,10 +101,12 @@ test('Cloudflare handles Meta field mapping, Make-compatible phone and advertise
   const mapped=normalizeSheetLead(lead);
   assert.equal(mapped.eventId,'meta-l2013932282624321');
   assert.equal(mapped.money,'3000만원');
-  assert.equal(mapped.advertiserPhone,'P:+821023456789');
+  assert.equal(mapped.phone,'01023456789');
   assert.equal(mapped.content,'개인회생 상담');
   assert.match(advertiserForm(mapped),/ITEM=64/);
-  assert.equal(new URLSearchParams(advertiserForm(mapped)).get('DATAS_phone'),'P:+821023456789');
+  assert.equal(new URLSearchParams(advertiserForm(mapped)).get('DATAS_phone'),'01023456789');
+  assert.equal(new URLSearchParams(advertiserForm({phone:'010-1111-1111'})).get('DATAS_phone'),'01011111111');
+  assert.equal(new URLSearchParams(advertiserForm({phone:'p:+821051278822'})).get('DATAS_phone'),'01051278822');
   assert.equal(new URLSearchParams(advertiserForm(mapped)).has('DATAS_area'),false);
   assert.equal(normalizeSheetLead(dummy),null);
 });
@@ -189,7 +191,7 @@ test('Make blueprint field names take precedence over alternate Meta form aliase
     'ITEM','DATAS_name','DATAS_phone','DATAS_money','DATAS_calldate','DATAS_data'
   ]);
   assert.equal(form.get('ITEM'),'64');
-  assert.equal(form.get('DATAS_phone'),'P:+821012345678');
+  assert.equal(form.get('DATAS_phone'),'01012345678');
   assert.equal(form.get('DATAS_name'),'원본이름');
   assert.equal(form.get('DATAS_money'),'원본채무');
   assert.equal(form.get('DATAS_area'),'인천');
