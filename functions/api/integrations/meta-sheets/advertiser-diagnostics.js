@@ -73,14 +73,15 @@ export async function ensureAdvertiserDiagnosticsSchema(db) {
 export async function recordAdvertiserHttpLog(db, record) {
   await ensureAdvertiserDiagnosticsSchema(db);
   const url=new URL(record.advertiserUrl);
-  const shape=requestShape(record.lead,record.item);
+  const method=record.method === 'HEAD' ? 'HEAD' : 'POST';
+  const shape=method==='HEAD' ? {item:String(record.item || ''),supplied:[],empty:[]} : requestShape(record.lead,record.item);
   await db.prepare('INSERT OR REPLACE INTO meta_sheet_advertiser_http_logs '+
     '(event_id,attempt,method,host,path,item,content_type_sent,supplied_fields,empty_fields,'+
     'elapsed_ms,http_status,response_type,response_preview,redirect_host,redirect_path,'+
     'exception_type,exception_code,outcome) '+
-    'VALUES (?, ?, \'POST\', ?, ?, ?, \'application/x-www-form-urlencoded\', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(record.eventId,record.attempt,url.hostname.slice(0,120),url.pathname.slice(0,200),
-      shape.item,JSON.stringify(shape.supplied),JSON.stringify(shape.empty),
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(record.eventId,record.attempt,method,url.hostname.slice(0,120),url.pathname.slice(0,200),
+      shape.item,method==='POST'?'application/x-www-form-urlencoded':'',JSON.stringify(shape.supplied),JSON.stringify(shape.empty),
       Math.max(0,Math.round(Number(record.duration)||0)),Number(record.status||0),
       String(record.contentType||'').slice(0,100),String(record.preview||'').slice(0,700),
       String(record.redirect?.host||''),String(record.redirect?.path||''),
