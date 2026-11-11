@@ -30,13 +30,14 @@ export function normalizeSheetLead(row) {
   if (!row || typeof row !== 'object' || Array.isArray(row)) return null;
   if (isMetaTestLead(row)) return null;
   const external = pick(row, FIELD.id).slice(0, 120);
-  const phone = normalizePhone(pick(row, FIELD.phone));
+  const advertiserPhone = pick(row, FIELD.phone).slice(0, 80);
+  const phone = normalizePhone(advertiserPhone);
   if (!external || !/^[\w:-]+$/.test(external) || !/^01\d{8,9}$/.test(phone)) return null;
   const dt = pick(row, FIELD.created);
   return {
     eventId: 'meta-' + external.replace(/[^a-zA-Z0-9_-]/g, ''),
     name: pick(row, FIELD.name).slice(0, 120),
-    phone, email: pick(row, FIELD.email).slice(0, 240),
+    phone, advertiserPhone, email: pick(row, FIELD.email).slice(0, 240),
     money: pick(row, FIELD.money).slice(0, 240),
     calldate: pick(row, FIELD.time).slice(0, 240),
     content: pick(row, FIELD.message).slice(0, 1200),
@@ -44,22 +45,25 @@ export function normalizeSheetLead(row) {
     submitted: dt && !Number.isNaN(Date.parse(dt)) ? new Date(dt).toISOString() : new Date().toISOString()
   };
 }
-// Mirror the proven Make HTTP form shape: exactly seven fields in the same order.
+// Match the confirmed Make ITEM=64 HTTP 200/SUCCESS payload: six fields in order.
 // Production advertiser campaign is explicitly locked to ITEM=64.
 // Do not use any previously tested campaign item (40 or 41).
 export const ADVERTISER_ITEM = '64';
 export function advertiserForm(lead) {
   const raw = String(lead?.phone || '').replace(/\D/g, '');
-  const phone = /^010\d{8}$/.test(raw)
-    ? raw.slice(0, 3) + '-' + raw.slice(3, 7) + '-' + raw.slice(7)
-    : raw;
+  // Make forwards the Meta phone field verbatim (e.g. p:+82...), not the
+  // CallTag-normalized number. Preserve it when a new Sheet row supplies it.
+  const phone = String(lead?.advertiserPhone || '').trim() || (
+    /^010\d{8}$/.test(raw)
+      ? raw.slice(0, 3) + '-' + raw.slice(3, 7) + '-' + raw.slice(7)
+      : raw
+  );
   const form = new URLSearchParams();
   form.set('ITEM', ADVERTISER_ITEM);
   form.set('DATAS_name', String(lead?.name || ''));
   form.set('DATAS_phone', phone);
   form.set('DATAS_money', String(lead?.money || ''));
-  form.set('DATAS_area', String(lead?.area || ''));
-  form.set('DATAS_calldate', String(lead?.calldate || ''));
+   form.set('DATAS_calldate', String(lead?.calldate || ''));
   form.set('DATAS_data', String(lead?.content || ''));
   return form.toString();
 }
