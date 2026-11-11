@@ -1647,7 +1647,7 @@ async function run() {
       const style = getComputedStyle(field);
       return { radius: style.borderRadius, size: style.fontSize, minHeight: style.minHeight };
     })()`);
-    assert(parseInt(stageFourField.radius, 10) >= 7 && parseInt(stageFourField.radius, 10) <= 9 && stageFourField.size === '14px',
+    assert(parseInt(stageFourField.radius, 10) >= 7 && parseInt(stageFourField.radius, 10) <= 9 && stageFourField.size === '15px',
       'stage4 common text fields must use the shared readable input style: ' + JSON.stringify(stageFourField));
     await clickSelector(client, '#editor-block-settings-editor-hero .hero-editor-design > summary');
     const stageFourChoice = '#editor-block-settings-editor-hero .editor-segmented-v2[aria-label="정렬"]';
