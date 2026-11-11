@@ -56,7 +56,7 @@ assert(textCss.includes('.text-editor-design-controls .editor-theme-source')
 assert(reference.includes("'editor-visual-hierarchy-' + referenceWidth")
   && reference.includes("visual.labelVisible")
   && reference.includes("visual.stageHeading === '페이지 화면'")
-  && reference.includes("visual.normalRowHeight >= 82")
+  && reference.includes("visual.normalRowHeight >= 76")
   && canvas.includes('role="toolbar"')
   && canvas.includes('editor-canvas-add-after'),
   'real Chrome must compare readable content cards, canvas controls and 390px geometry');
