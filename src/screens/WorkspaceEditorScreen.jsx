@@ -71,7 +71,7 @@ export default function WorkspaceEditorScreen({
   React.useEffect(() => () => pendingFormFocusRef.current?.(), []);
   const focusPreviewFormField = (id, field) => {
     if (!canUseBuilder || !editWorkspace || startMode === 'template' || stylePanelProps?.hasPendingStyle
-      || !['title', 'description'].includes(field)) return;
+      || !['title', 'description', 'submit'].includes(field)) return;
     const form = editPanelProps?.page?.blocks?.find((block) => block.id === id && block.type === 'form');
     if (!form || form.visible === false || typeof document === 'undefined'
       || typeof MutationObserver !== 'function') return;
@@ -94,7 +94,9 @@ export default function WorkspaceEditorScreen({
       if (!settings) return;
       const selector = field === 'title'
         ? '.form-basic-grid .field-title input'
-        : '.form-basic-grid .editor-field-v2 textarea';
+        : field === 'submit'
+          ? '.form-editor-flow > .field-title input'
+          : '.form-basic-grid .editor-field-v2 textarea';
       const input = settings.querySelector(selector);
       if (!input || input.disabled) return;
       cleanup();
