@@ -76,7 +76,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm ci
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
           npm run build
           node scripts/verify-finance-experience.mjs
           node scripts/verify-trimmed-life-ui.mjs
