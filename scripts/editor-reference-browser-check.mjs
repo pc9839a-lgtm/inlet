@@ -1135,9 +1135,28 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await pressKeyboardKey(client, 'Escape');
   assert(await evaluate(client, `!document.querySelector('.workspace-editor-nav').open && document.activeElement === document.querySelector('.workspace-editor-nav > summary')`), 'workspace menu Escape restores trigger focus');
   await clickPointer(client, '.add-toggle');
-  await waitForBrowser(client, `!!document.querySelector('.add-panel')`, 'compact add catalog');
+  await waitForBrowser(client, `!!document.querySelector('.editor-gallery-dialog[aria-modal="true"] .editor-gallery-quick-grid')`,
+    'full-size block gallery opens from navigator');
+  const gallery = await evaluate(client, `(() => {
+    const dialog = document.querySelector('.editor-gallery-dialog');
+    return { width: dialog?.getBoundingClientRect().width,
+      quickCards: dialog?.querySelectorAll('.editor-gallery-quick').length,
+      searchFocused: document.activeElement === dialog?.querySelector('input[aria-label="추가할 블록 검색"]'),
+      categoryCount: dialog?.querySelectorAll('.editor-gallery-categories button').length,
+      catalog: !!dialog?.querySelector('.widget-group-grid') };
+  })()`);
+  assert(gallery.width >= 760 && gallery.quickCards === 8
+    && gallery.searchFocused && gallery.categoryCount >= 5 && gallery.catalog,
+    'Littly-style block picker must be readable and keyboard-ready: ' + JSON.stringify(gallery));
+  await capture(client, 'editor-visual-block-gallery-1672');
   await pressKeyboardKey(client, 'Escape');
-  await waitForBrowser(client, `!document.querySelector('.add-panel')`, 'compact add catalog Escape');
+  await waitForBrowser(client, `!document.querySelector('.editor-gallery-dialog')`, 'gallery Escape closes modal');
+  await clickPointer(client, '.editor-canvas-tools button[aria-label="선택한 블록 아래에 추가"]');
+  await waitForBrowser(client, `!!document.querySelector('.editor-gallery-dialog[aria-modal="true"]')`,
+    'on-canvas add opens same gallery without selecting a different block');
+  await pressKeyboardKey(client, 'Escape');
+  await waitForBrowser(client, `!document.querySelector('.editor-gallery-dialog')`,
+    'canvas-initiated gallery closes by keyboard');
   await clickPointer(client, '#editor-block-settings-editor-text .block-editor-advanced-settings > summary');
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .block-editor-advanced-settings').open`, 'single advanced group opens the anchor control');
   await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop = 0`);
