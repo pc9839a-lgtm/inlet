@@ -127,4 +127,53 @@ assert.equal(openId, '', 'page settings can explicitly clear a normal row select
 setOpenId('footer-1');
 assert.equal(normalHook(normalArgs).normalSelectedId, '', 'switching to fixed should clear normal selection');
 
+// First entry prioritizes the actual page content; explicit Page Settings
+// keeps the inspector in page mode until the user chooses a block again.
+const selectionSource = sources.selection.slice(sources.selection.indexOf('export function useEditPanelSelection'))
+  .replace('export function useEditPanelSelection', 'function useEditPanelSelection');
+const firstSelectionRefs = [];
+let firstSelectionRefIndex = 0;
+let selectionEffects = [];
+let autoSelectedId = '';
+const firstSelectionReact = {
+  useMemo: (read) => read(),
+  useRef: (initial) => {
+    const index = firstSelectionRefIndex++;
+    if (!firstSelectionRefs[index]) firstSelectionRefs[index] = { current: initial };
+    return firstSelectionRefs[index];
+  },
+  useEffect: (run) => selectionEffects.push(run),
+};
+const firstEntryHook = vm.runInNewContext(`${selectionSource}\nuseEditPanelSelection`, {
+  React: firstSelectionReact,
+  getEditPanelSelectionBlocks: (page) => ({
+    topNavBlock: null, bottomBlock: null, footerBlock: null, normalBlocks: page.blocks,
+  }),
+  shouldHideTopNavControl: () => false,
+  useFixedBlockSelection: () => ({ fixedOpenId: '', toggleBlockOpen: () => {} }),
+  useNormalBlockSelection: () => ({
+    normalSelectedId: '', selectBlock: () => {}, clearBlockSelection: () => {}, openBlockSettings: () => {},
+  }),
+});
+function enterEditor(page) {
+  firstSelectionRefIndex = 0;
+  selectionEffects = [];
+  firstEntryHook({ page, openId: autoSelectedId, setOpenId: (id) => { autoSelectedId = id; }, setAddOpen: () => {} });
+  for (const run of selectionEffects) run();
+}
+const initialPage = { id: 'page-one', blocks: [
+  { id: 'hidden-content', visible: false }, { id: 'visible-content', visible: true },
+] };
+enterEditor(initialPage);
+assert.equal(autoSelectedId, 'visible-content', 'first entry must select visible content, not a hidden row');
+autoSelectedId = '';
+enterEditor(initialPage);
+assert.equal(autoSelectedId, '', 'opening Page Settings must not trigger a second auto-selection');
+enterEditor({ id: 'page-two', blocks: [{ id: 'other-content', visible: true }] });
+assert.equal(autoSelectedId, 'other-content', 'changing pages must initialize the new page independently');
+firstSelectionRefs.length = 0;
+autoSelectedId = 'already-selected';
+enterEditor(initialPage);
+assert.equal(autoSelectedId, 'already-selected', 'existing explicit selection must take priority on initial entry');
+
 console.log('editor controls accessibility: source contracts and selection hook regressions passed');
