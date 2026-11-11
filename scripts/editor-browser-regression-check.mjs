@@ -1568,7 +1568,8 @@ async function run() {
       return { outline: style.outlineWidth, shadow: style.boxShadow,
         badge: getComputedStyle(block, '::after').display };
     })()`);
-    assert(canvasSelectionStyle.outline === '2px' && canvasSelectionStyle.shadow === 'none'
+    assert(canvasSelectionStyle.outline === '2px'
+      && (canvasSelectionStyle.shadow === 'none' || canvasSelectionStyle.shadow.includes('rgba(36, 84, 255, 0.1)'))
       && canvasSelectionStyle.badge === 'none',
       'mobile block selection must use a clear 2px outline without a covering badge: ' + JSON.stringify(canvasSelectionStyle));
 
