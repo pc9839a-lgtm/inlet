@@ -779,7 +779,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
 
   // 18th patch: image-only navigator name, separate from public caption.
   await setInputValue(client, searchInput, '');
-  await clickPointer(client, '#editor-block-editor-image .screen-order-v2-head');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-composition-search input')?.value === ''`,
+    'image nickname selection waits until search clears');
+  await focusSelector(client, '#editor-block-editor-image .screen-order-v2-title-wrap');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-image')?.dataset.selected === 'true'`,
+    'image row keyboard activation selects its inline editor after search clears');
   await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-image input[aria-label="이미지 목록 구분 이름"]')`,
     'image editor offers list-only nickname');
   const originalCaption = await evaluate(client, `document.querySelector('#editor-block-settings-editor-image input[placeholder="이미지 설명을 입력하세요"]')?.value`);

@@ -1882,8 +1882,8 @@ async function run() {
     })()`);
     assert(fixedSelection.selectPressed === 'true' && !fixedSelection.duplicateEditButton
       && fixedSelection.rowEditors === 0
-      && fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
-      'fixed selection must behave as a normal row with settings only in the shared inspector: ' + JSON.stringify(fixedSelection));
+      && !fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
+      'fixed selection must expand its real settings directly below the matching block row: ' + JSON.stringify(fixedSelection));
     const fixedAdvancedState = await evaluate(client, `(() => {
       const details = document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings');
       const root = details?.closest('.block-editor-v2-content');
@@ -2073,11 +2073,11 @@ async function run() {
         helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
       };
     })()`);
-    assert(stageTwoSettings.listVisible && stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
-      && stageTwoSettings.title === '히어로' && stageTwoSettings.headingVisible
+    assert(stageTwoSettings.listVisible && !stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
+      && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.headingVisible
       && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.paneWidth
       && stageTwoSettings.fixedVisible && stageTwoSettings.addVisible && stageTwoSettings.helperCopyRemoved,
-      'stage 2 must focus the selected block without expanding rows or mixing unrelated controls: ' + JSON.stringify(stageTwoSettings));
+      'stage 2 must preserve the list and open an edited-title block directly in its stack: ' + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
     await openBlockSettings(client, 'editor-hero');
     await focusSelector(client, '#editor-block-editor-hero .screen-order-v2-title-wrap');
@@ -2106,12 +2106,12 @@ async function run() {
       };
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
-      && stageOneList.gap === '9px' && stageOneList.rowBorder === '1px'
-      && stageOneList.rowRadius === '13px' && stageOneList.height >= 76
+      && stageOneList.gap === '0px' && stageOneList.rowBorder === '1px'
+      && stageOneList.rowRadius.startsWith('11px 11px') && stageOneList.height >= 55 && stageOneList.height <= 70
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
       && stageOneList.actionCount === 1 && stageOneList.actions,
-      'compact block list must show two-line-ready names and one reachable actions menu: ' + JSON.stringify(stageOneList));
+      'inline editor stack must use readable compact rows and one reachable actions menu: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
       && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
@@ -3026,8 +3026,8 @@ async function run() {
     assert(screenOrderShellStyle?.padding === '0px' && screenOrderShellStyle?.borderWidth === '0px'
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.rowRadius === '13px' && screenOrderShellStyle?.rowBorder === '1px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.addBackground === 'rgb(237, 242, 255)', `reference full-width add action must keep the light-blue primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.rowRadius?.startsWith('11px') && screenOrderShellStyle?.rowBorder === '1px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.addBackground === 'rgb(32, 43, 77)', `reference full-width add action must keep its high-contrast navy primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 900 || desktopViewport.width === 1024) {
         await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
@@ -3059,8 +3059,10 @@ async function run() {
           };
         })()`);
         assert(questionLayout.controlFits && questionLayout.leftWidth >= 100
-          && questionLayout.columns === (desktopViewport.width === 900 ? 1 : 2),
-          'narrow form editor must stack at 900px and retain usable controls at 1024px: '
+          && questionLayout.inner >= questionLayout.rowWidth
+          && questionLayout.rightLeft >= questionLayout.leftRight - 1
+          && [1, 2].includes(questionLayout.columns),
+          'narrow inline form questions must preserve readable, nonoverlapping controls: '
             + JSON.stringify({ width:desktopViewport.width, questionLayout }));
         await capture(client, `inspector-form-width-${desktopViewport.width}`);
         await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
