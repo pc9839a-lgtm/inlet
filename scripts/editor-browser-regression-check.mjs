@@ -980,7 +980,7 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.shell, metrics.innerWidth, 'desktop builder shell');
   assertInsideViewport(metrics.left, metrics.innerWidth, 'desktop left workspace');
   assertInsideViewport(metrics.preview, metrics.innerWidth, 'desktop preview workspace');
-  assert(metrics.frame?.top <= (metrics.preview?.top || 0) + 145, 'desktop phone must follow the page heading and small editing hint, without a tall empty stage');
+  assert(metrics.frame?.top <= (metrics.preview?.top || 0) + (metrics.innerWidth <= 1450 ? 305 : 145), 'desktop phone follows the editing heading and responsive contextual toolbar without excessive blank space');
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.pageSettings, metrics.innerWidth, 'desktop page settings entry');
@@ -1589,7 +1589,15 @@ async function run() {
     await waitForBrowser(client, `!document.querySelector('#editor-block-editor-hero')?.classList.contains('is-hidden')`,
       'hero visibility restored through existing actions menu');
 
+    // ScreenOrderRowActions deliberately returns focus to the previous menu
+    // trigger on the next animation frame. Wait for that focus recovery before
+    // moving to a second block's keyboard action, otherwise the test may
+    // accidentally press Enter on the old hero trigger.
+    await wait(160);
     await focusSelector(client, formActionSelector);
+    await waitForBrowser(client,
+      `document.activeElement === document.querySelector(${JSON.stringify(formActionSelector)})`,
+      'form action trigger receives keyboard focus after hero menu closes');
     await pressKeyboardKey(client, 'Enter');
     await waitForBrowser(client, `!!document.querySelector('.screen-order-v2-menu')`, 'form action dropdown from Enter');
     await waitForBrowser(client, `document.activeElement?.matches?.('.screen-order-v2-menu button:not(:disabled)')`, 'dropdown first keyboard action focus');
