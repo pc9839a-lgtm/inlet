@@ -1,0 +1,30 @@
+name: ITEM64 Cloudflare single-use egress smoke
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/api/integrations/meta-sheets/item64-smoke.js"
+
+permissions:
+  contents: read
+
+jobs:
+  cloudflare-origin-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Trigger and record exactly one Cloudflare-origin ITEM64 synthetic POST
+        shell: bash
+        run: |
+          set -u
+          for i in $(seq 1 36); do
+            response=$(curl -sS --max-time 23 'https://pagero.kr/api/integrations/meta-sheets/item64-smoke?k=VdgGhBt--pZPN9q8AACsQeZIYNpFgOOAy7saXapvqlU' || true)
+            if [[ "$response" == *'"executed":true'* ]] || [[ "$response" == *'"ALREADY_EXECUTED"'* ]]; then
+              echo "CLOUDFLARE_SMOKE_RESULT=$response"
+              exit 0
+            fi
+            echo "Probe not yet available (attempt $i); retrying discovery only."
+            sleep 10
+          done
+          echo "ERROR: Cloudflare route never responded with smoke result."
+          exit 1
