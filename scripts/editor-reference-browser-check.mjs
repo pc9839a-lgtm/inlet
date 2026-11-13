@@ -161,6 +161,31 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'one optional text design disclosure must reveal original text style and spacing actions: '
     + JSON.stringify(optionalText));
   await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
+  // PageRo's design shortcuts navigate the existing editor, rather than
+  // maintaining parallel content/design state or duplicating form fields.
+  const inspectorShortcuts = await evaluate(client, `(() => {
+    const panel = document.querySelector('.editor-properties-panel');
+    const shortcuts = panel?.querySelectorAll('.editor-inspector-jump button') || [];
+    return { labels: [...shortcuts].map(button => button.textContent.trim()),
+      scrollArea: !!panel?.querySelector('.editor-properties-content'),
+      buttonHeight: shortcuts[0]?.getBoundingClientRect().height || 0 };
+  })()`);
+  assert(JSON.stringify(inspectorShortcuts.labels) === JSON.stringify(['내용', '디자인'])
+    && inspectorShortcuts.scrollArea && inspectorShortcuts.buttonHeight >= 34,
+    'selected block must expose accessible content and design shortcuts: ' + JSON.stringify(inspectorShortcuts));
+  await clickPointer(client, '.editor-inspector-jump button:nth-child(2)');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'design shortcut expands the original text design disclosure');
+  await clickPointer(client, '.editor-inspector-jump button:first-child');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-properties-content')?.scrollTop <= 40`,
+    'content shortcut returns to the beginning of the separate settings inspector');
+  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === false`,
+    'closing design after shortcut preserves the disclosure's original semantics');
+  assert(apiState.saveCount === 0, 'inspector shortcuts must never persist or publish settings');
   // Prior QA scenarios may leave a block selected. Explicitly enter page-level
   // editing to verify that clearing the selected block never hides the inspector.
   await clickNavigatorRow('.editor-page-settings-button');
