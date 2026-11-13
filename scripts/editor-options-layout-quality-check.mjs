@@ -198,6 +198,13 @@ await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsBody.jsx
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsHeader.jsx');
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 
+assert(editLayout.includes('data-editor-layout="three-pane"')
+  && editLayout.includes('aria-controls="editor-composition-panel"')
+  && editLayout.includes('editor-properties-panel')
+  && editorWorkspaceCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width)')
+  && editPanelLayoutCss.includes('.editor-properties-content'),
+  'the approved block list, live page and independent settings must remain distinct');
+
 console.log(JSON.stringify({
   ok: true,
   scope: 'editor-options-layout',
@@ -217,9 +224,3 @@ console.log(JSON.stringify({
   legacyScreenOrderMenuSourcesRemoved: true,
 }, null, 2));
 
-assert(editLayout.includes('data-editor-layout="three-pane"')
-  && editLayout.includes('aria-controls="editor-composition-panel"')
-  && editLayout.includes('editor-properties-panel')
-  && editorWorkspaceCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width)')
-  && editPanelLayoutCss.includes('.editor-properties-content'),
-  'the approved block list, live page and independent settings must remain distinct');
