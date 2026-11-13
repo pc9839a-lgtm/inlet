@@ -1,5 +1,5 @@
 import { injectPortfolioGa4 } from './lib/portfolioGa4.js';
-import { handlePublicOgImageRequest, injectPublicPageMeta } from './lib/publicPageMeta.js';
+import { handlePublicOgImageRequest, injectPublicPageMeta, stripPlatformAdsFromCustomerPage } from './lib/publicPageMeta.js';
 
 const RUNTIME_RECOVERY_QUERY_KEYS = ['__fresh', '__runtime', '__runtimefix', '__hardreset'];
 const RUNTIME_RESET_PATH = '/__pagero_runtime_reset';
@@ -50,13 +50,17 @@ function applyNoStoreHeaders(headers, { clearSiteCache = false } = {}) {
   return headers;
 }
 
-function noStoreHtmlResponse(response, { clearSiteCache = false, runtimeVersion = 'edge-reset-v2', noindex = false } = {}) {
+async function noStoreHtmlResponse(response, { clearSiteCache = false, runtimeVersion = 'edge-reset-v2', noindex = false } = {}) {
   const headers = applyNoStoreHeaders(new Headers(response.headers), { clearSiteCache });
   headers.set('Content-Type', 'text/html; charset=utf-8');
   headers.set('X-Pagero-Runtime-Shell', runtimeVersion);
   if (noindex) headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   headers.delete('Content-Length');
-  return new Response(response.body, {
+  // This shell is used for login, signup, dashboards and recovery, not
+  // public editorial pages. Keep the UI/JS unchanged but never load Auto ads
+  // on authenticated or reset screens.
+  const html = stripPlatformAdsFromCustomerPage(await response.text());
+  return new Response(html, {
     status: response.status,
     statusText: response.statusText,
     headers,
