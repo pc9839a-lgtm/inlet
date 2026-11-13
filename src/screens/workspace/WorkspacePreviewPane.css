@@ -326,3 +326,45 @@ html body #root .builder-shell.canvas-editor-shell .preview-workspace .preview-s
   html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap { width: 392px; }
   html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools { gap: 3px; padding-inline: 0; }
 }
+
+/* Mobile content width controls change the real preview viewport, not its scale. */
+html body #root .canvas-editor-shell .preview-device-widths {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid #dce3ed;
+  border-radius: 9px;
+  background: #fff;
+}
+html body #root .canvas-editor-shell .preview-device-widths button {
+  min-width: 42px;
+  min-height: 29px;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #69778b;
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+html body #root .canvas-editor-shell .preview-device-widths button[aria-pressed='true'] {
+  background: #e7efff;
+  color: #0c55d9;
+  font-weight: 700;
+}
+html body #root .canvas-editor-shell .preview-device-widths button:focus-visible {
+  outline: 2px solid #1558ec;
+  outline-offset: 2px;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .preview-sticky {
+  width: min(var(--editor-preview-frame-width, 394px), 100%) !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap {
+  width: var(--editor-preview-frame-width, 394px) !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame {
+  --landing-runtime-width: var(--editor-preview-content-width, 390px);
+  width: var(--editor-preview-frame-width, 394px) !important;
+}
