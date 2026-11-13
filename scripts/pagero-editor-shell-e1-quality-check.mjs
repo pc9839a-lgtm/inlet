@@ -212,10 +212,11 @@ assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 
 assert(active.includes('stylePanelProps={stylePanelProps}'), 'edit workspace must receive theme controls');
 assert(editPanel.includes('stylePanelProps={stylePanelProps}'), 'EditPanel must forward theme controls');
 
-assert(layout.includes('data-editor-layout="littly-block-stack"')
+assert(layout.includes('data-editor-layout="three-pane"')
   && layout.includes('className="editor-composition-panel"')
-  && !layout.includes('inspectorOnly'),
-  'editor must use one stacked composer rather than a detached inspector');
+  && layout.includes('className="editor-properties-panel"')
+  && layout.includes('<ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />'),
+  'editor must separate composition list from the real selected block editor');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor')
   && stackItems.includes('<ScreenOrderSettings')
@@ -323,7 +324,8 @@ assert(heroImageSection.includes('InspectorDisclosure label="이미지 배치·�
   && !previewPaneCss.includes('--editor-ui-space-4'),
   'disclosures must keep native semantics, owner-level token spacing and no canvas-style leakage');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
-assert(!css.includes('editor-inspector-pane'), 'editor workspace CSS must not restore the right inspector column');
+assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 340px;'),
+  'editor workspace must size the separate settings column without restoring old abandoned components');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
 assert(!css.includes('.block-editor-v2-header') && !css.includes('.editor-field-v2') && !css.includes('.editor-section-v2-trigger') && !css.includes('.editor-segmented-v2') && !css.includes('.image-mode-toolbar'), 'workspace geometry must not own block editor internals');
@@ -375,35 +377,37 @@ assert(!headerSource.includes('panel-save-status operations-save-status')
 
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('--editor-edit-width: clamp(500px, 42vw, 660px);')
-  && css.includes('grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;')
-  && editPanelLayoutCss.includes('.editor-inspector-panel.editor-inline-settings')
-  && editPanelLayoutCss.includes('border-radius: 0 !important;')
+assert(css.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width) !important;')
+  && editPanelLayoutCss.includes('.editor-properties-panel')
+  && editPanelLayoutCss.includes('.editor-properties-content')
   && css.includes('overflow: hidden !important;'),
-  'the new editor must present inline expandable blocks beside one actual 390px phone');
+  'the editor must provide separate block list, mobile page and property inspector');
 assert(layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;")
   && layout.includes('{showPageOptions && (')
   && layout.includes('<PageThemeStylePanel {...stylePanelProps} />'),
   'no selected block must expose accessible page design controls inside the stack');
 assert(layout.includes('editor-composition-heading')
-  && !editPanelLayoutCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;')
-  && stackItems.includes('editor-inline-settings'),
-  'block settings must be expanded in the list rather than consuming a second editor column');
+  && stackItems.includes('!listOnly && selectedId === block.id')
+  && layout.includes('listOnly')
+  && layout.includes('editor-properties-content'),
+  'composition rows must remain visible and real block editors belong to the selected settings panel');
 assert(css.includes('overflow: hidden !important;')
   && editPanelLayoutCss.includes('.editor-composition-content')
-  && editPanelLayoutCss.includes('overflow-y: auto !important;')
-  && editPanelLayoutCss.includes('overflow: visible !important;')
+  && editPanelLayoutCss.includes('.editor-properties-content')
+  && editPanelLayoutCss.includes('overflow-y: auto;')
   && !editPanelLayoutCss.includes('overflow-y: auto !important;\n  overflow-x: hidden !important;\n  overscroll-behavior-y: contain;'),
-  'new block stack must own one scroll without a nested inspector scrollbar');
-assert(previewPaneCss.includes('width: 394px !important;') && previewPaneCss.includes('width: 392px !important;') && previewPaneCss.includes('--landing-runtime-width: 390px;') && previewPaneCss.includes('justify-content: center !important;'), 'single 390px phone must be centered in its right-side stage, not pushed to the browser edge');
+  'navigator and property editor must have independent, nonnested scroll regions');
+assert(previewPaneCss.includes('--editor-preview-frame-width') && previewPaneCss.includes('--landing-runtime-width: 390px;')
+  && previewPaneCss.includes('justify-content: center !important;'), 'real preview must preserve 390px as default while offering width selections');
 assert(addDockCss.includes('.editor-gallery-backdrop')
   && addDockCss.includes('.editor-gallery-quick-grid')
   && addDockCss.includes('.editor-gallery-dialog-scroll')
   && !css.includes('.fixed-add-dock'),
   'block creation must use the accessible visual gallery outside the narrow navigator');
 assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;')
-  && css.includes('overflow: visible !important;'),
-  'zoomed desktop must preserve a readable stacked edit region and page');
+  && css.includes('overflow: visible !important;')
+  && editPanelLayoutCss.includes('@media (max-width: 899px)'),
+  'zoomed desktop must keep actual page and settings accessible');
 assert(layout.includes('className="editor-page-settings-button"')
   && layout.includes('aria-controls="editor-selection-panel"')
   && !layout.includes('edit-section-tabs') && !editPanelLayoutCss.includes('edit-section-tabs'),
@@ -499,7 +503,7 @@ console.log(JSON.stringify({
   ok: true,
   checks: 23,
   scope: 'pagero-editor-canvas-and-inspector',
-  shell: ['left-composition-and-settings', 'right-page-preview'],
+  shell: ['left-composition', 'center-live-page-preview', 'right-settings'],
   separateStyleTab: false,
   legacyStyleRouteNormalized: true,
 }, null, 2));
