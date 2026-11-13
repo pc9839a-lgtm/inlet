@@ -1,9 +1,16 @@
 // The owner reference defines the chrome. Content below is a disposable QA page.
 export async function checkReferenceEditor({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState }) {
+  const setEditorViewport = async (width) => {
+    await setViewport(client, width, 941, false);
+    if (width >= 900 && width < 1280) await evaluate(client, `(() => {
+      const trigger = document.querySelector('.editor-navigator-drawer-trigger');
+      if (trigger?.getAttribute('aria-expanded') !== 'true') trigger?.click();
+    })()`);
+  };
   // Visual reference: a named, full-width add action and readable flat
   // composition rows at both the chosen 1672px size and narrow 900px PC.
   for (const referenceWidth of [1672, 900]) {
-    await setViewport(client, referenceWidth, 941, false);
+    await setEditorViewport(referenceWidth);
     const visual = await evaluate(client, `(() => {
       const heading = document.querySelector('.editor-composition-heading');
       const button = heading?.querySelector('.add-dock-compact .add-toggle');
@@ -31,34 +38,33 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         normalRowHeight: rect(row.closest('.screen-order-v2-head')).height,
         fixedRowHeight: rect(fixedRow.closest('.fixed-block-head')).height,
         compositionWidth: rect(document.querySelector('.editor-composition-panel')).width,
-        inspectorWidth: rect(document.querySelector('.editor-inspector-panel')).width,
+        inspectorWidth: rect(document.querySelector('.editor-properties-panel')).width,
         compositionBackground: getComputedStyle(document.querySelector('.editor-composition-panel')).backgroundColor,
-        inspectorBackground: getComputedStyle(document.querySelector('.editor-inspector-panel')).backgroundColor,
+        inspectorBackground: getComputedStyle(document.querySelector('.editor-properties-panel')).backgroundColor,
         stageBackground: getComputedStyle(document.querySelector('.preview-workspace')).backgroundColor,
         stageHeading: document.querySelector('.preview-stage-label strong')?.textContent.trim(),
-        stageWidth: document.querySelector('.preview-stage-width')?.textContent.trim(),
+        stageWidth: document.querySelector('.preview-device-widths button[aria-pressed="true"]')?.textContent.trim(),
         phoneWidth: frame.clientWidth,
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     })()`);
-    const expectedComposerWidth = Math.min(660, Math.max(500, referenceWidth * .42));
-    assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '내 페이지'
+    const expectedComposerWidth = referenceWidth < 1280 ? 252 : 246;
+    assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '페이지 구성'
       && /[0-9]+개 블록/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
-      && visual.buttonWidth >= 96 && visual.buttonWidth <= 135
-      && visual.buttonHeight >= 35 && visual.buttonHeight <= 40 && visual.searchBelowButton
-      && visual.buttonBackground === 'rgb(246, 247, 249)'
+      && visual.buttonWidth >= visual.headingWidth - 6
+      && visual.buttonHeight >= 42 && visual.buttonHeight <= 46
+      && visual.searchBelowButton && visual.buttonBackground === 'rgb(23, 89, 238)'
       && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
-      && visual.normalRowHeight >= 54 && visual.normalRowHeight <= 60
-      && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
+      && visual.normalRowHeight >= 54 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
       && Math.abs(visual.compositionWidth - expectedComposerWidth) <= 3
-      && visual.inspectorWidth >= visual.compositionWidth - 85
+      && Math.abs(visual.inspectorWidth - 340) <= 3
       && visual.compositionBackground === 'rgb(255, 255, 255)'
-      && visual.inspectorBackground === 'rgb(250, 251, 252)'
+      && visual.inspectorBackground === 'rgb(255, 255, 255)'
       && visual.stageBackground === 'rgb(243, 244, 246)'
-      && visual.stageHeading === '페이지 화면' && visual.stageWidth === '모바일 · 390px'
+      && visual.stageHeading === '페이지 화면' && visual.stageWidth === '390'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
-      'quiet block stack must prioritize page content, compact add, and readable 390px result: '
+      'approved three-pane editor keeps list, canvas and inspector independent: '
       + JSON.stringify({ referenceWidth, visual }));
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
@@ -152,14 +158,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const work = document.querySelector('.work-panel');
     const preview = document.querySelector('.preview-workspace');
     return { hasPageOptions:!!pageOptions, inspectorDisplay:getComputedStyle(inspector).display,
-      listWidth:composition.getBoundingClientRect().width, inspectorWidth:inspector.getBoundingClientRect().width,
+      listWidth:composition.getBoundingClientRect().width, inspectorWidth:document.querySelector('.editor-properties-panel').getBoundingClientRect().width,
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 658 && unselected.editorWidth <= 662
+    && unselected.editorWidth >= 240 && unselected.editorWidth <= 250
     && Math.abs(unselected.listWidth - unselected.editorWidth) <= 3
-    && unselected.inspectorWidth >= unselected.editorWidth - 85,
-    'page settings must open inline without replacing the block stack: ' + JSON.stringify(unselected));
+    && Math.abs(unselected.inspectorWidth - 340) <= 3,
+    'page settings must open in the independent inspector without replacing the block list: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
   await waitForBrowser(client, `!!document.querySelector('.style-panel-v17 .style-more-groups > .style-advanced-group')`, 'page theme design available');
@@ -251,7 +257,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // UX-003/010/011/014/035: mixed 30+ block navigation fixture. DOM-only;
   // no persisted blocks, live account data, or published page are modified.
   for (const width of [900, 1024, 1440, 1672]) {
-    await setViewport(client, width, 941, false);
+    await setEditorViewport(width);
     await evaluate(client, `(() => {
       const list = document.querySelector('.screen-order-v2-list');
       const seed = list?.querySelector('.screen-order-v2-slot');
@@ -338,7 +344,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // UX-017/024: all primary widget types share one actual inspector hierarchy
   // (not a second row of shortcuts pointing at nested design controls).
   for (const width of [900, 1024, 1440, 1672]) {
-    await setViewport(client, width, 941, false);
+    await setEditorViewport(width);
     for (const [id, designClass, expectedHeading, expectedDesign, expectedBehavior] of [
       ['editor-hero', 'hero-editor-design', '내용 수정', '디자인', ''],
       ['editor-text', 'text-editor-design', '내용 수정', '디자인 조정', ''],
@@ -481,7 +487,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     if (width === 1024 || width === 1672) await capture(client, 'single-hierarchy-form-' + width);
   }
   for (const width of [900, 1440]) {
-    await setViewport(client, width, 941, false);
+    await setEditorViewport(width);
     await clickPointer(client, '.editor-page-settings-button');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel-v17')`, 'unified design inspector is mounted');
     const pageType = await evaluate(client, `(() => {
@@ -555,7 +561,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // Check computed styles at compact and wide inspector widths. Keep model
   // values unchanged; disabled states below are DOM-only and immediately reset.
   for (const width of [900, 1024, 1440, 1672]) {
-    await setViewport(client, width, 941, false);
+    await setEditorViewport(width);
     const metrics = await evaluate(client, `(() => {
       const scope = document.querySelector('#editor-block-settings-editor-text');
       const details = scope?.querySelector('.text-editor-flow');
@@ -1079,7 +1085,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // 21st patch: preview stage is the page itself. No redundant resolution,
   // zoom, fullscreen, or floating block-action toolbars above the phone.
   for (const width of [900, 1024, 1440, 1672]) {
-    await setViewport(client, width, 941, false);
+    await setEditorViewport(width);
     const chrome = await evaluate(client, `(() => {
       const preview = document.querySelector('.preview-workspace');
       const stage = preview.querySelector('.preview-sticky');
