@@ -76,7 +76,7 @@ export default function WorkspaceEditorScreen({
     const form = editPanelProps?.page?.blocks?.find((block) => block.id === id && block.type === 'form');
     if (!form || form.visible === false || typeof document === 'undefined'
       || typeof MutationObserver !== 'function') return;
-    const inspector = document.querySelector('.editor-composition-content');
+    const inspector = document.querySelector('.editor-properties-content');
     if (!inspector) return;
     pendingFormFocusRef.current?.();
     let finished = false;
@@ -123,9 +123,9 @@ export default function WorkspaceEditorScreen({
     const galleryIndex = Number.isInteger(interaction.galleryIndex) && selectedImage.s?.mode === 'gallery'
       && selectedImage.s?.gallery?.[interaction.galleryIndex] ? interaction.galleryIndex : undefined;
     // ImageEditor is lazy-loaded; five animation frames can expire before
-    // its uploader appears. Observe the persistent block stack: inline settings\n    // mount only after selection, so observing the previous panel would fail.\n    // Stop on
+    // its uploader appears. Observe the persistent block stack: inline settings\n    // mount only after selection, so observe the persistent settings panel.\n    // Stop on
     // success or after a bounded timeout, without opening file dialogs.
-    const inspector = document.querySelector('.editor-composition-content');
+    const inspector = document.querySelector('.editor-properties-content');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
     let timeoutId = 0;
@@ -206,7 +206,7 @@ export default function WorkspaceEditorScreen({
     if (!block || block.visible === false || !Array.isArray(block.s?.items) || !block.s.items[index]) return;
     pendingLinkFocusRef.current?.();
     onSelectPreviewBlock?.(id);
-    const inspector = document.querySelector('.editor-composition-content');
+    const inspector = document.querySelector('.editor-properties-content');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
     let timeoutId = 0;
@@ -259,7 +259,7 @@ export default function WorkspaceEditorScreen({
     if (!bottom || bottom.visible === false || bottom.s?.buttons?.[index]?.enabled === false) return;
     pendingBottomFocusRef.current?.();
     onSelectPreviewBlock?.(id);
-    const inspector = document.querySelector('.editor-composition-content');
+    const inspector = document.querySelector('.editor-properties-content');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
     let timeoutId = 0;
