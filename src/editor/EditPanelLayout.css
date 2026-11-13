@@ -553,3 +553,20 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
 @media (prefers-reduced-motion: reduce) {
   html body #root .canvas-editor-shell .editor-composition-panel { transition: none; }
 }
+
+/* Primary creation action is a single full-width control in the navigator. */
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading { gap: 12px; }
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading .add-dock-compact {
+  width: 100% !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading .add-dock-compact .add-toggle {
+  width: 100% !important;
+  min-height: 44px !important;
+  border-color: #1759ee !important;
+  background: #1759ee !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading .add-dock-compact .add-toggle:hover {
+  background: #064cd6 !important;
+}
