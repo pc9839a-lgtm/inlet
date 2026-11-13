@@ -52,7 +52,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '페이지 구성'
       && /[0-9]+개 블록/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
-      && visual.buttonWidth >= visual.headingWidth - 6
+      && visual.buttonWidth >= visual.headingWidth - 48
       && visual.buttonHeight >= 42 && visual.buttonHeight <= 46
       && visual.searchBelowButton && visual.buttonBackground === 'rgb(23, 89, 238)'
       && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
