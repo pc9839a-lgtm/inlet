@@ -1096,7 +1096,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(geometry.labels.length >= 4
     && geometry.labels.every(label => label.whiteSpace === 'normal' && label.height <= label.lineHeight * 2 + 2),
     'long Korean block names must fit within two lines without overlapping actions: ' + JSON.stringify(geometry.labels));
-  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 2 && geometry.widthOptions === 3
+  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 3
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
     && geometry.inspectorScroll === 'auto'
