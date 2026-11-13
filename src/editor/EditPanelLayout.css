@@ -556,3 +556,9 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
   html body #root .canvas-editor-shell .editor-composition-panel { transition: none; }
 }
 
+
+/* The editor grid already allocates its list column. Shared preview-workspace
+   padding must not subtract 36px from the navigator's usable width. */
+html body #root .builder-shell.canvas-editor-shell .work-panel {
+  padding: 0 !important;
+}
