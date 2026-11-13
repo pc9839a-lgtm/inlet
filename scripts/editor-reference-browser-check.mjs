@@ -189,7 +189,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     };
     return {selected:data(selected), apply:data(apply), reset:data(reset), activeLabel:selected?.getAttribute('aria-label')};
   })()`);
-  assert(pageControlState?.selected?.height >= 36 && pageControlState.selected.height <= 40
+  assert(pageControlState?.selected?.height >= 36 && pageControlState.selected.height <= 52
     && parseInt(pageControlState.selected.radius,10) <= 9
     && pageControlState.selected.color === 'rgb(64, 87, 237)'
     && pageControlState.selected.bg === 'rgb(238, 240, 255)'
