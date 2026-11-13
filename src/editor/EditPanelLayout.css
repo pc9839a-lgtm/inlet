@@ -509,12 +509,14 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
     width: 252px !important;
     height: calc(100dvh - 64px) !important;
     transform: translateX(-105%);
+    visibility: hidden;
     transition: transform .16s ease;
     box-shadow: 8px 0 22px #192a4b14;
     pointer-events: none;
   }
   html body #root .canvas-editor-shell .editor-composition-panel[data-drawer-open='true'] {
     transform: translateX(0);
+    visibility: visible;
     pointer-events: auto;
   }
   html body #root .canvas-editor-shell .editor-navigator-drawer-trigger[aria-expanded='true'] {
