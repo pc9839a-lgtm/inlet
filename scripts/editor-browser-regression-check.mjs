@@ -1675,7 +1675,9 @@ async function run() {
         const inspector = document.querySelector('.editor-inspector-panel');
         const design = inspector.querySelector('.hero-editor-design');
         const header = inspector.querySelector('.screen-order-v2-settings-header');
-        inspector.closest('.editor-composition-content').scrollTop += design.getBoundingClientRect().top - inspector.getBoundingClientRect().top - header.offsetHeight - 12;
+        const scroller = inspector.closest('.editor-properties-content');
+        if (!scroller || !design || !header) return [];
+        scroller.scrollTop += design.getBoundingClientRect().top - scroller.getBoundingClientRect().top - header.offsetHeight - 12;
         return [...design.querySelectorAll('.editor-segmented-v2')].map(group => {
           const buttons = [...group.querySelectorAll('button')];
           const boxes = buttons.map(button => button.getBoundingClientRect());
