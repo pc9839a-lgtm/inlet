@@ -974,8 +974,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const seed = list?.querySelector('.screen-order-v2-slot');
     const scroller = document.querySelector('.editor-composition-content');
     const header = document.querySelector('.screen-order-v2-settings-header');
-    const inspector = document.querySelector('.editor-inspector-panel');
-    if (!seed || !header || !scroller) return null;
+    const inspector = document.querySelector('.editor-properties-panel');
+    const properties = document.querySelector('.editor-properties-content');
+    if (!seed || !header || !scroller || !inspector || !properties) return null;
     const clones = [];
     try {
       for (let index = 0; index < 30; index++) {
@@ -990,7 +991,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       const title = header.getBoundingClientRect();
       return { scrolled: scroller.scrollTop,
         titleTop: title.top, inspectorTop: inspectorBox.top,
-        inspectorOverflow: getComputedStyle(inspector).overflowY,
+        inspectorOverflow: getComputedStyle(properties).overflowY,
         navigatorOverflow: getComputedStyle(scroller).overflowY,
         outerOverflow: getComputedStyle(document.querySelector('.work-panel')).overflowY };
     } finally {
@@ -999,9 +1000,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     }
   })()`);
   assert(longInspector?.scrolled > 250
-    && longInspector.inspectorOverflow === 'visible'
-    && longInspector.navigatorOverflow === 'auto' && longInspector.outerOverflow === 'hidden',
-    'the selected inline editor must move with the single long block-stack scroller: ' + JSON.stringify(longInspector));
+    && longInspector.inspectorOverflow === 'auto'
+    && longInspector.navigatorOverflow === 'auto'
+    && longInspector.outerOverflow === 'hidden'
+    && longInspector.titleTop >= longInspector.inspectorTop,
+    'long block navigation must not displace the separate settings inspector: ' + JSON.stringify(longInspector));
   const before = await evaluate(client, `[...document.querySelectorAll('.text-editor-flow textarea')].map(el => el.value)`);
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
@@ -1049,12 +1052,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const rect = el => { const r = el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width,top:r.top,height:r.height}; };
     const stage = document.querySelector('.preview-workspace');
     const list = document.querySelector('.editor-composition-panel');
-    const inspector = document.querySelector('.editor-inspector-panel');
+    const inspector = document.querySelector('.editor-properties-panel');
+    const properties = document.querySelector('.editor-properties-content');
     return { header: rect(document.querySelector('.workspace-persistent-header')), list:rect(list), inspector:rect(inspector), stage:rect(stage), phone:rect(document.querySelector('.phone-frame')), pageWidth:document.querySelector('.phone-frame .landing-page').clientWidth,
-      phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-width-option').length, documentWidth:document.documentElement.scrollWidth,
+      phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-device-widths button').length, documentWidth:document.documentElement.scrollWidth,
       listScroll:getComputedStyle(list).overflowY,
       navigatorScroll:getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
-      inspectorScroll:getComputedStyle(inspector).overflowY,
+      inspectorScroll:getComputedStyle(properties).overflowY,
       labels:[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy strong')].map(el => ({
         label: el.textContent, whiteSpace:getComputedStyle(el).whiteSpace, height:el.getBoundingClientRect().height,
         lineHeight:parseFloat(getComputedStyle(el).lineHeight), clipped:el.scrollWidth>el.clientWidth
@@ -1064,23 +1068,25 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 660) <= 3
-    && geometry.inspector.width >= 575 && geometry.inspector.width <= geometry.list.width,
-    'single block-stack editor must have a full-width inline settings section at 1672px: ' + JSON.stringify(geometry));
-  assert(Math.abs(geometry.list.top - 64) <= 1 && geometry.inspector.top >= geometry.list.top,
-    'selected block must expand below the shared 64px workspace toolbar: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 246) <= 3
+    && Math.abs(geometry.inspector.width - 340) <= 3
+    && geometry.inspector.left > geometry.stage.left
+    && geometry.inspector.left >= geometry.stage.right - 2,
+    'approved three-pane geometry must keep navigation, real canvas, settings separated at 1672px: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
+    'both side panels must remain aligned below the shared 64px workspace toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
     && geometry.ancestors[1].scrollTop === 0,
     'work panel must remain stationary while the two editing regions scroll: ' + JSON.stringify(geometry));
   assert(geometry.labels.length >= 4
     && geometry.labels.every(label => label.whiteSpace === 'normal' && label.height <= label.lineHeight * 2 + 2),
     'long Korean block names must fit within two lines without overlapping actions: ' + JSON.stringify(geometry.labels));
-  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0
+  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 2 && geometry.widthOptions === 3
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
-    && geometry.inspectorScroll === 'visible'
+    && geometry.inspectorScroll === 'auto'
     && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
-    'reference editor must have one scrolling block stack and a centered real phone: ' + JSON.stringify(geometry));
+    'real page must remain centered with independent list and inspector scrolling: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
   // zoom, fullscreen, or floating block-action toolbars above the phone.
@@ -1105,7 +1111,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         selectedBlocks: frame.querySelectorAll('[data-preview-selected="true"]').length,
       };
     })()`);
-    const expectedWidth = width <= 950 ? 392 : 394;
+    const expectedWidth = 394;
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
       && parseInt(chrome.radius, 10) <= 20 && chrome.stageCentered && chrome.frameInside
       && chrome.children === 2 && (chrome.canvasTools || chrome.canvasAdd) && !chrome.hasLegacyToolbar,
@@ -1113,6 +1119,17 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
   }
   await setViewport(client, 1672, 941, false);
+
+    // Changing device width must update the actual landing viewport, not scale it.
+  await clickPointer(client, '.preview-device-widths button:nth-child(1)');
+  await waitForBrowser(client, `document.querySelector('.phone-frame .landing-page')?.clientWidth === 360`,
+    '360px responsive page preview');
+  await clickPointer(client, '.preview-device-widths button:nth-child(3)');
+  await waitForBrowser(client, `document.querySelector('.phone-frame .landing-page')?.clientWidth === 430`,
+    '430px responsive page preview');
+  await clickPointer(client, '.preview-device-widths button:nth-child(2)');
+  await waitForBrowser(client, `document.querySelector('.phone-frame .landing-page')?.clientWidth === 390`,
+    '390px default preview restored before editing');
 
   // Selection continues to use the same block ID in the left list and the
   // phone, but edits/visibility/reordering remain in the existing inspector.
