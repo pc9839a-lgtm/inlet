@@ -44,7 +44,7 @@ async function checkPost(relative) {
       if (!html.includes('<link rel="canonical" href="' + url + '">')) failures.push('canonical');
       if (!html.includes('<meta name="robots" content="index,follow')) failures.push('robots');
       if (!html.includes('<h1>' + esc(post.title) + '</h1>')) failures.push('current_source_title');
-      const liveRevision = html.match(/"dateModified"\\s*:\\s*"([^"]+)"/)?.[1] || 'missing';
+      const liveRevision = html.match(/"dateModified"\s*:\s*"([^"]+)"/)?.[1] || 'missing';
       if (liveRevision !== post.updatedAt) {
         failures.push('source_updatedAt expected=' + post.updatedAt + ' live=' + liveRevision);
       }
