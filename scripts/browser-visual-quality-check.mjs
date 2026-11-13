@@ -752,7 +752,9 @@ async function waitForBrowserEndpoint(port) {
   const endpoint = `http://127.0.0.1:${port}/json/version`;
   const started = Date.now();
   let lastError = '';
-  while (Date.now() - started < 10000) {
+  // GitHub hosted runners occasionally need longer than 10 s to initialize Chrome.
+  // Only the disposable QA browser is affected; every real DOM assertion remains.
+  while (Date.now() - started < 30000) {
     try {
       return await fetchJson(endpoint);
     } catch (error) {
@@ -1087,6 +1089,7 @@ if (!targetUrl) {
     // These flags affect only the disposable QA Chrome process, never users.
     '--no-sandbox',
     '--disable-dev-shm-usage',
+    '--disable-background-networking',
     '--no-first-run',
     '--no-default-browser-check',
     '--window-size=1280,900',
