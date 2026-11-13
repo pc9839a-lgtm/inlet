@@ -2086,17 +2086,17 @@ async function run() {
         title: document.querySelector('.screen-order-v2-settings-title h2')?.textContent,
         headingVisible: heading?.getClientRects().length > 0,
         panelWidth: panel?.getBoundingClientRect().width,
-        paneWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
+        paneWidth: document.querySelector('.editor-properties-panel').getBoundingClientRect().width,
         fixedVisible: document.querySelector('.screen-order-fixed-blocks').getClientRects().length > 0,
         addVisible: document.querySelector('.fixed-add-dock').getClientRects().length > 0,
         helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
       };
     })()`);
-    assert(stageTwoSettings.listVisible && !stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
+    assert(stageTwoSettings.listVisible && stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
       && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.headingVisible
       && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.paneWidth
       && stageTwoSettings.fixedVisible && stageTwoSettings.addVisible && stageTwoSettings.helperCopyRemoved,
-      'stage 2 must preserve the list and open an edited-title block directly in its stack: ' + JSON.stringify(stageTwoSettings));
+      'stage 2 must preserve the list and independently edit the selected title in its right inspector: ' + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
     await openBlockSettings(client, 'editor-hero');
     await focusSelector(client, '#editor-block-editor-hero .screen-order-v2-title-wrap');
@@ -2982,33 +2982,37 @@ async function run() {
     const leftGeometry = await evaluate(client, `(() => {
       const rect = (el) => el?.getBoundingClientRect();
       const list = document.querySelector('.editor-composition-panel');
-      const inspector = document.querySelector('.editor-inspector-panel');
+      const inspector = document.querySelector('.editor-properties-content');
+      const properties = document.querySelector('.editor-properties-panel');
       const preview = document.querySelector('.preview-workspace');
       const phone = preview?.querySelector('.phone-frame');
-      const i = rect(inspector);
+      const style = inspector ? getComputedStyle(inspector) : null;
       return {
-        list: rect(list)?.width, inspector: i?.width,
-        inspectorInner: inspector?.clientWidth - parseFloat(getComputedStyle(inspector).paddingLeft)
-          - parseFloat(getComputedStyle(inspector).paddingRight),
-        inspectorPadding: getComputedStyle(inspector).paddingLeft,
-        compositionPadding: getComputedStyle(list).paddingLeft,
-        preview: rect(preview)?.width, phone: rect(phone)?.width,
+        list: rect(list)?.width,
+        properties: rect(properties)?.width,
+        inspectorInner: inspector?.clientWidth - parseFloat(style?.paddingLeft || '0')
+          - parseFloat(style?.paddingRight || '0'),
+        inspectorPadding: style?.paddingLeft,
+        preview: rect(preview)?.width,
+        phone: rect(phone)?.width,
         listSpills: (list?.scrollWidth || 0) > (list?.clientWidth || 0) + 2,
         inspectorSpills: (inspector?.scrollWidth || 0) > (inspector?.clientWidth || 0) + 2,
         editorScroll: getComputedStyle(document.querySelector('.work-panel')).overflowY,
-        inspectorScroll: getComputedStyle(inspector).overflowY,
+        inspectorScroll: style?.overflowY,
         navigatorScroll: getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
-        rightEdge: i?.right, previewLeft: rect(preview)?.left,
+        propertiesLeft: rect(properties)?.left, previewRight: rect(preview)?.right,
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
-      && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 300 : 340)
-      && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
-      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'visible' && leftGeometry.navigatorScroll === 'auto'
+      && leftGeometry.inspectorInner >= 260
+      && Math.abs(leftGeometry.properties - 340) <= 3
+      && leftGeometry.phone >= 392 && leftGeometry.preview >= 500
+      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'auto'
+      && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
-      && leftGeometry.rightEdge <= leftGeometry.previewLeft - 15
-      && Math.abs(leftGeometry.list - (desktopViewport.width <= 1190 ? 500 : Math.min(660, desktopViewport.width * .42))) <= 4,
-      'inline block settings must fit within their editor stack without clipping or overlapping the real phone: '
+      && leftGeometry.propertiesLeft >= leftGeometry.previewRight - 2
+      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 252 : 246)) <= 4,
+      'selected properties must remain readable in their own panel without covering the real mobile canvas: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
     const pageOptionsShellStyle = await evaluate(client, `(() => {
