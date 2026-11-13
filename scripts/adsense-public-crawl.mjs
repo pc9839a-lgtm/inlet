@@ -37,7 +37,7 @@ function manifest() {
   return walk(dir).filter(x => x.endsWith('.json'))
     .map(file => JSON.parse(fs.readFileSync(file, 'utf8')))
     .filter(post => !post.noindex)
-    .map(post => ({ pathname: '/life/' + post.category + '/' + post.slug + '/', title: post.title, category: post.category }))
+    .map(post => ({ pathname: '/life/' + post.category + '/' + post.slug + '/', title: post.title, category: post.category, updatedAt: post.updatedAt, reviewedAt: post.reviewedAt }))
     .sort((a,b) => a.pathname.localeCompare(b.pathname));
 }
 const articles = manifest();
@@ -134,7 +134,9 @@ for (const resource of guideResources) {
 got('pagero_guide_hub', 'Checked canonical crawlable guide hub and its four verified practical resources on public main site');
 
 if (lifeSitemap.status !== 200 || !lifeSitemap.html.includes('<urlset')) warn('life_sitemap', 'Invalid LIFE sitemap response');
-if (!index.html.includes('LIFE EDITORIAL ARCHIVE')) warn('life_home_archive', 'Life editorial archive missing');
+if (!index.html.includes('class="modern-all-articles"') || !index.html.includes('class="life-archive')) {
+  warn('life_home_archive', 'Current LIFE editorial archive is missing from the public homepage');
+}
 
 const decisionPaths = [
   ['/life/car/car-inspection-period/','검사기간 확인'],
@@ -146,7 +148,9 @@ const decisionPaths = [
   ['/life/support/basic-pension-2026/','기초연금'],
   ['/life/support/livelihood-benefit-2026/','생계급여'],
 ];
-if (!index.html.includes('id="life-pathways-title"')) warn('life_decision_hub', 'Situation-first editorial navigation is missing from public homepage');
+if (!index.html.includes('class="life-home-service-grid"') || !index.html.includes('aria-label="주요 서비스 바로가기"')) {
+  warn('life_decision_hub', 'Current six-service editorial navigation is missing from the public homepage');
+}
 for (const [url, label] of decisionPaths) {
   if (!index.html.includes('href="'+url+'"')) warn('life_decision_link_missing', label+': '+url);
 }
@@ -181,12 +185,35 @@ if (!standards.html.includes('작성·검수 기준 확인일: 2026-10-23')) {
 }
 got('reader_decisions', 'Eight canonical LIFE guides must contain a situation-based comparison section');
 for (const slug of ['car-tax-annual-payment-2026', 'car-tax-second-half-2026']) {
-  const loc=ROOT+'/life/car/'+slug+'/';
-  if (!lifeSitemap.html.includes('<loc>'+loc+'</loc><lastmod>2026-10-26</lastmod>')) {
-    warn('life_tax_article_sitemap', 'Officially corrected 2026 car-tax article lacks changed lastmod: '+loc);
+  const pathname = '/life/car/' + slug + '/';
+  const post = articles.find(item => item.pathname === pathname);
+  const loc = ROOT + pathname;
+  if (!post?.updatedAt || !lifeSitemap.html.includes('<loc>'+loc+'</loc><lastmod>'+post.updatedAt+'</lastmod>')) {
+    warn('life_tax_article_sitemap', 'Live lastmod does not match current article updatedAt: '+loc+' expected='+post?.updatedAt);
   }
 }
-got('tax_deadline_accuracy','Verified 2 publicly corrected October 2026 tax articles and their sitemap dates');
+got('tax_deadline_accuracy','Compared 2 2026 car-tax sitemap dates with live source revision dates');
+
+// These former article URLs no longer exist in the published 48-post manifest.
+// A static-content site must respond 404, not an SPA-style 200 homepage fallback.
+const retiredArticles = [
+  '/life/support/culture-card-2026/',
+  '/life/support/energy-voucher-2026/',
+  '/life/support/earned-income-tax-credit-late-2026/',
+];
+for (const pathname of retiredArticles) {
+  if (articles.some(post => post.pathname === pathname)) continue;
+  try {
+    const response = await get(ROOT + pathname);
+    if (response.status !== 404) warn('life_soft_404', 'Retired URL must be HTTP 404, got '+response.status+': '+pathname);
+    if (response.status === 404 && !/noindex/i.test(response.html)) {
+      warn('life_404_noindex', 'Retired 404 content must carry noindex metadata: '+pathname);
+    }
+  } catch (error) {
+    warn('life_retired_url_probe', pathname+': '+String(error));
+  }
+}
+got('retired_urls', 'Checked 3 retired LIFE article URLs for true HTTP 404 and noindex semantics');
 
 const batches = [];
 for (let i = 0; i < articles.length; i += 8) batches.push(articles.slice(i,i+8));
@@ -224,8 +251,8 @@ for (const batch of batches) {
         }
       }
       if (post.pathname === '/life/car/car-tax-second-half-2026/') {
-        if (!html.includes('2026년 10월 26일 현재')
-            || !html.includes('12월 16~31일')
+        if (!html.includes('12월 16~31일')
+            || !html.includes('12월 1일')
             || html.includes('2026년 9월 현재')) {
           problems.push('stale_second_half_car_tax_advice');
         }
