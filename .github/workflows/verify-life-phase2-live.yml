@@ -33,5 +33,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      # The production LIFE build hydrates compressed reviewed content bundles
+      # and applies editorial patches before rendering Article JSON-LD and
+      # sitemap lastmod. Raw Git files can have older updatedAt than output.
+      - name: Materialize the published LIFE content revisions locally
+        run: node scripts/apply-content-updates.mjs
+        working-directory: life-source
       - name: Verify five current canonical LIFE articles, metadata, homepage links and sitemap
         run: node scripts/verify-life-phase2-public.mjs
