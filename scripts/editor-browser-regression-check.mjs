@@ -3561,12 +3561,13 @@ async function run() {
     // deep selection in place, and the page-settings footer stays visible.
     const longScroll = await evaluate(longPageClient, `(() => {
       const list = document.querySelector('.editor-composition-content');
-      const inspector = document.querySelector('.editor-inspector-panel');
+      const inspector = document.querySelector('.editor-properties-content');
       const composition = document.querySelector('.editor-composition-panel');
       const settings = document.querySelector('#editor-block-settings-editor-long-25 .block-editor-v2');
       const outer = document.querySelector('.work-panel');
       if (!list || !inspector || !composition || !settings || !outer) return null;
       const previousMinHeight = settings.style.minHeight;
+      const previousInspectorTop = inspector.scrollTop;
       const listBefore = list.scrollTop;
       let metrics;
       try {
@@ -3589,17 +3590,18 @@ async function run() {
         };
       } finally {
         settings.style.minHeight = previousMinHeight;
-        inspector.scrollTop = 0;
+        inspector.scrollTop = previousInspectorTop;
       }
       return metrics;
     })()`);
     assert(longScroll?.navigatorOverflowY === 'auto'
-      && longScroll.inspectorOverflowY === 'visible' && longScroll.workOverflowY === 'hidden'
-      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop === 0
+      && longScroll.inspectorOverflowY === 'auto' && longScroll.workOverflowY === 'hidden'
+      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop > 0
       && longScroll.independent && longScroll.footerVisible && longScroll.outerTop === 0,
-      '36-block page must use one stacked editor scroller without nested form scrolling: ' + JSON.stringify(longScroll));
+      '36-block page must preserve independent navigator and settings scroll positions: ' + JSON.stringify(longScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-1672');
     await setViewport(longPageClient, 900, 780, false);
+    await showBlockList(longPageClient);
     await waitForBrowser(longPageClient,
       "!!document.querySelector('.phone-frame #block-editor-long-25')",
       'narrow desktop retains 36-block mobile preview');
@@ -3611,7 +3613,7 @@ async function run() {
       '900px long page preserves 390px preview and inspector: ' + JSON.stringify(narrow));
     const narrowScroll = await evaluate(longPageClient, `(() => {
       const list = document.querySelector('.editor-composition-content');
-      const inspector = document.querySelector('.editor-inspector-panel');
+      const inspector = document.querySelector('.editor-properties-content');
       const footer = document.querySelector('.editor-composition-footer');
       const panel = document.querySelector('.editor-composition-panel');
       return {
@@ -3625,8 +3627,8 @@ async function run() {
     })()`);
     assert(narrowScroll.listHeight > 150 && narrowScroll.listScrollHeight > narrowScroll.listHeight
       && narrowScroll.listOverflowY === 'auto'
-      && narrowScroll.inspectorOverflowY === 'visible' && narrowScroll.footerPinned,
-      '900px long page keeps all expanded block controls reachable in one stack: ' + JSON.stringify(narrowScroll));
+      && narrowScroll.inspectorOverflowY === 'auto' && narrowScroll.footerPinned,
+      '900px long page keeps block navigator and inspector independently reachable: ' + JSON.stringify(narrowScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-900');
     // Shared SPA bootstrap requests AdSense and Pretendard even before a
     // block is edited; the CDP mock blocks both remote resources. This test
