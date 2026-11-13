@@ -251,8 +251,8 @@ html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap {
   flex: 0 0 auto; width: 394px; max-width: 100%;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-workspace .phone-frame {
-  border-color: #dfe2e8 !important; border-radius: 15px !important;
-  box-shadow: 0 10px 32px rgba(32, 41, 58, .09) !important;
+  border-color: #d9e0eb !important; border-radius: 12px !important;
+  box-shadow: 0 5px 22px rgba(32, 41, 58, .07) !important;
   height: calc(100dvh - 200px) !important;
   min-height: 0 !important; max-height: 820px !important;
 }
@@ -319,8 +319,8 @@ html body #root .builder-shell.canvas-editor-shell .editor-canvas-bottom-add:foc
   outline: 2px solid #4c64cd; outline-offset: 2px;
 }
 html body #root .builder-shell.canvas-editor-shell .preview-workspace .preview-selected-block {
-  outline: 2px solid #9daabc !important; outline-offset: -2px !important;
-  box-shadow: inset 0 0 0 1px rgba(128, 145, 168, .08) !important;
+  outline: 2px solid #2454ff !important; outline-offset: -2px !important;
+  box-shadow: none !important;
 }
 @media (min-width: 900px) and (max-width: 950px) {
   html body #root .builder-shell.canvas-editor-shell .editor-preview-frame-wrap { width: 392px; }
