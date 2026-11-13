@@ -7,6 +7,15 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       if (trigger?.getAttribute('aria-expanded') !== 'true') trigger?.click();
     })()`);
   };
+  // Selecting a block closes the laptop navigator drawer by design.
+  // Reopen it for subsequent list interactions while leaving the preview visible.
+  const clickNavigatorRow = async (selector) => {
+    await evaluate(client, `(() => {
+      const trigger = document.querySelector('.editor-navigator-drawer-trigger');
+      if (innerWidth >= 900 && innerWidth < 1280 && trigger?.getAttribute('aria-expanded') !== 'true') trigger?.click();
+    })()`);
+    await clickPointer(client, selector);
+  };
   // Visual reference: a named, full-width add action and readable flat
   // composition rows at both the chosen 1672px size and narrow 900px PC.
   for (const referenceWidth of [1672, 900]) {
@@ -101,7 +110,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     ['editor-form', '문의 폼 편집', '.form-editor-flow .form-question-title', '.form-behavior-detail'],
     ['editor-code', '코드 편집', '.code-editor-box textarea', '.code-editor-options'],
   ]) {
-    await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+    await clickNavigatorRow(`#editor-block-${id} .screen-order-v2-head`);
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-${id} ${primarySelector}')`,
       'content-first primary task loads for ' + id);
@@ -132,8 +141,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       await capture(client, 'inspector-content-first-' + id);
     }
   }
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
-  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
+  await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
   const optionalText = await evaluate(client, `(() => {
     const panel = document.querySelector('#editor-block-settings-editor-text');
     return {
@@ -145,10 +154,10 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(optionalText.open && optionalText.spacingVisible && optionalText.colorVisible,
     'one optional text design disclosure must reveal original text style and spacing actions: '
     + JSON.stringify(optionalText));
-  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
   // Prior QA scenarios may leave a block selected. Explicitly enter page-level
   // editing to verify that clearing the selected block never hides the inspector.
-  await clickPointer(client, '.editor-page-settings-button');
+  await clickNavigatorRow('.editor-page-settings-button');
   await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack')`,
     'unselected page shows real design controls in the permanent inspector');
   const unselected = await evaluate(client, `(() => {
@@ -350,7 +359,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       ['editor-text', 'text-editor-design', '내용 수정', '디자인 조정', ''],
       ['editor-form', 'form-design-detail', '문의 폼 편집', '디자인 조정', '중복 접수와 외부 연동'],
     ]) {
-      await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+      await clickNavigatorRow(`#editor-block-${id} .screen-order-v2-head`);
       await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-${id}')?.closest('.editor-inline-settings')?.querySelector('.screen-order-v2-settings-title h2')`, 'inline block heading for ' + id);
       await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .${designClass} > summary > strong')?.textContent?.trim() === ${JSON.stringify(expectedDesign)}`, 'optional inspector design group for ' + id);
       const hierarchy = await evaluate(client, `(() => {
@@ -421,18 +430,18 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       ['editor-image', '.image-editor-more'],
       ['editor-form', '.form-design-detail'],
     ]) {
-      await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+      await clickNavigatorRow(`#editor-block-${id} .screen-order-v2-head`);
       await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-${id} ${selector} > summary')`,
         'shared design disclosure exists for ' + id);
       const before = await evaluate(client, `(() => {
         const detail = document.querySelector('#editor-block-settings-${id} ${selector}');
         return { open: detail?.open, bodyVisible: !!detail?.querySelector(':scope > .inspector-disclosure-body')?.getClientRects().length };
       })()`);
-      await clickPointer(client, `#editor-block-settings-${id} ${selector} > summary`);
+      await clickNavigatorRow(`#editor-block-settings-${id} ${selector} > summary`);
       await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} ${selector}')?.open !== ${before.open}`,
         'design disclosure toggles natively for ' + id);
       if (before.open) {
-        await clickPointer(client, `#editor-block-settings-${id} ${selector} > summary`);
+        await clickNavigatorRow(`#editor-block-settings-${id} ${selector} > summary`);
         await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} ${selector}')?.open === true`,
           'design disclosure restores open state for ' + id);
       }
@@ -457,18 +466,18 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       if ((width === 900 || width === 1672) && id === 'editor-image')
         await capture(client, 'inspector-group-image-' + width);
       if (!before.open) {
-        await clickPointer(client, `#editor-block-settings-${id} ${selector} > summary`);
+        await clickNavigatorRow(`#editor-block-settings-${id} ${selector} > summary`);
         await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} ${selector}')?.open === false`,
           'design group recloses for ' + id);
       }
     }
-    await clickPointer(client, '#editor-block-editor-hero .screen-order-v2-head');
+    await clickNavigatorRow('#editor-block-editor-hero .screen-order-v2-head');
     const heroImageBefore = await evaluate(client, `(() => {
       const d = document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments');
       return {open:d?.open, native:d?.classList.contains('inspector-disclosure')};
     })()`);
     assert(heroImageBefore.native, 'hero image effects must share native disclosure component');
-    await clickPointer(client, '#editor-block-settings-editor-hero .hero-image-adjustments > summary');
+    await clickNavigatorRow('#editor-block-settings-editor-hero .hero-image-adjustments > summary');
     await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments')?.open !== ${heroImageBefore.open}`,
       'hero image effects native disclosure expands');
     const heroImageState = await evaluate(client, `(() => {
@@ -480,7 +489,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     assert(heroImageState.height >= 44 && heroImageState.gap === '12px' && heroImageState.visible,
       'hero image effects must follow disclosure rhythm: ' + JSON.stringify(heroImageState));
-    await clickPointer(client, '#editor-block-settings-editor-hero .hero-image-adjustments > summary');
+    await clickNavigatorRow('#editor-block-settings-editor-hero .hero-image-adjustments > summary');
     await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments')?.open === ${heroImageBefore.open}`,
       'hero image disclosure restores original state');
     assert(apiState.saveCount === 0, 'inspector group expand/collapse must never write or publish');
@@ -488,7 +497,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   }
   for (const width of [900, 1440]) {
     await setEditorViewport(width);
-    await clickPointer(client, '.editor-page-settings-button');
+    await clickNavigatorRow('.editor-page-settings-button');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel-v17')`, 'unified design inspector is mounted');
     const pageType = await evaluate(client, `(() => {
       const css = selector => {
@@ -513,14 +522,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     await capture(client, 'unified-page-design-type-' + width);
   }
   await setViewport(client, 1672, 941, false);
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('#editor-block-settings-editor-text')?.closest('.editor-inline-settings') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy inline text editor');
 
   // The redesigned first view keeps design closed. Open it deliberately for
   // secondary-control sizing and focus tests, rather than treating hidden
   // fields as a visual regression.
   if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
-    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+    await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
   }
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
     'optional text design is opened for control geometry tests');
@@ -622,10 +631,10 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(focusRing.focused && focusRing.width === '2px' && focusRing.style === 'solid',
     'keyboard focus must be visible on HEX input: ' + JSON.stringify(focusRing));
 
-  await clickPointer(client, '#editor-block-editor-bottom .fixed-block-head');
+  await clickNavigatorRow('#editor-block-editor-bottom .fixed-block-head');
   await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-bottom .bottom-bar-editor-design > summary')`,
     'bottom fixed CTA exposes real design controls');
-  await clickPointer(client, '#editor-block-settings-editor-bottom .bottom-bar-editor-design > summary');
+  await clickNavigatorRow('#editor-block-settings-editor-bottom .bottom-bar-editor-design > summary');
   await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-bottom .editor-toggle-row-v2 button[role="switch"]')`,
     'bottom CTA shows semantic on/off control');
   const switchMetrics = await evaluate(client, `(() => {
@@ -692,7 +701,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`, 'both fixed groups restore the original buttons and selectors');
   assert(apiState.saveCount === 0, 'collapsing fixed navigation must not save, publish or reorder the page');
 
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .text-editor-flow')`,
     'control QA returns to original text editor without draft or public save');
   assert(apiState.saveCount === 0, 'control styling, temporary disabled attributes and navigation must never publish');
@@ -962,7 +971,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     document.querySelectorAll('[data-qa-deep-switch-clone]').forEach((node) => node.remove());
     document.querySelector('.editor-composition-content').scrollTop = 0;
   })()`);
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
     'deep inspector regression returns to the original text editor');
   assert(apiState.saveCount === 0, 'inspector navigation must not save or publish the page');
@@ -1014,7 +1023,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // Styling is initially hidden, but may already be expanded by a prior
   // control-focus test. Preserve either state without closing it accidentally.
   if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
-    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+    await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
   }
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
     'text design controls remain reachable explicitly');
@@ -1153,7 +1162,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       ? !stage.toolbarId : stage.toolbarId === blockId),
       'selecting a normal section must show its exact editor-only canvas actions, while fixed controls remain in the navigator: ' + JSON.stringify(stage));
   }
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
     'return to selected text with its contextual canvas actions');
   assert(apiState.saveCount === 0, 'preview selections never publish or mutate the saved page');
@@ -1189,7 +1198,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await pressKeyboardKey(client, 'Escape');
   await waitForBrowser(client, `!document.querySelector('.editor-gallery-dialog')`,
     'canvas-initiated gallery closes by keyboard');
-  await clickPointer(client, '#editor-block-settings-editor-text .block-editor-advanced-settings > summary');
+  await clickNavigatorRow('#editor-block-settings-editor-text .block-editor-advanced-settings > summary');
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .block-editor-advanced-settings').open`, 'single advanced group opens the anchor control');
   await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop = 0`);
   await waitForBrowser(client, `document.querySelector('.editor-composition-content').scrollTop === 0`, 'navigator scroll remains independently available');
