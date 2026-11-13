@@ -184,7 +184,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
   await waitForBrowser(client,
     `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === false`,
-    'closing design after shortcut preserves the disclosure's original semantics');
+    'closing design after shortcut preserves original disclosure semantics');
   assert(apiState.saveCount === 0, 'inspector shortcuts must never persist or publish settings');
   // Prior QA scenarios may leave a block selected. Explicitly enter page-level
   // editing to verify that clearing the selected block never hides the inspector.
