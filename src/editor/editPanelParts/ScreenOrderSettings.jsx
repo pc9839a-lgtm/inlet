@@ -3,6 +3,16 @@ import { META } from '../../config/blockMeta.jsx';
 import { InspectorBlockSwitch } from './InspectorBlockSwitch.jsx';
 import { isExplicitlyHidden } from './screenOrderIdentityModel.js';
 
+// Direct section shortcuts reuse each widget's existing content/design
+// controls; there is no duplicated editor state or extra settings panel.
+const DESIGN_SECTION = {
+  hero: '.hero-editor-design',
+  text: '.text-editor-design',
+  image: '.image-editor-more',
+  form: '.form-design-detail',
+};
+
+
 // The selected block edits in place, just below its row. Its type and label
 // are the only visual hierarchy before the existing editor fields.
 export function ScreenOrderSettings({ block, identity, renderBlockEditor, actions, navigation }) {
@@ -10,6 +20,29 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
   const meta = META[metaType] || META.text;
   const title = identity?.customLabel || identity?.contentTitle || meta.label;
   const Icon = meta.icon;
+  const designSelector = DESIGN_SECTION[block.type];
+  const jumpToSection = (section) => {
+    const settings = document.getElementById(`editor-block-settings-${block.id}`);
+    const scroller = settings?.closest('.editor-properties-content');
+    if (!scroller) return;
+    const destination = section === 'design'
+      ? settings.querySelector(designSelector)
+      : settings.querySelector('.block-editor-v2') || settings;
+    if (!destination) return;
+    if (section === 'design' && !destination.open) {
+      destination.querySelector('summary')?.click();
+    }
+    requestAnimationFrame(() => {
+      const viewport = scroller.getBoundingClientRect();
+      const bounds = destination.getBoundingClientRect();
+      scroller.scrollTo({
+        top: Math.max(0, scroller.scrollTop + bounds.top - viewport.top - 12),
+        behavior: 'smooth',
+      });
+      if (section === 'design') destination.querySelector('summary')?.focus({ preventScroll: true });
+    });
+  };
+
 
   return (
     <div className="screen-order-v2-settings-view">
@@ -24,6 +57,14 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
           {actions}
         </div>
         <InspectorBlockSwitch navigation={navigation} />
+        {designSelector && (
+          <div className="editor-inspector-jump" role="group" aria-label="설정 바로가기">
+            <button type="button" aria-controls={`editor-block-settings-${block.id}`}
+              onClick={() => jumpToSection('content')}>내용</button>
+            <button type="button" aria-controls={`editor-block-settings-${block.id}`}
+              onClick={() => jumpToSection('design')}>디자인</button>
+          </div>
+        )}
       </header>
       <div
         id={`editor-block-settings-${block.id}`}
