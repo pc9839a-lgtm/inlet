@@ -39,5 +39,13 @@ jobs:
       - name: Materialize the published LIFE content revisions locally
         run: node scripts/apply-content-updates.mjs
         working-directory: life-source
+      # The production build applies these exact two official-source curation
+      # stages after the compressed content patch. Curation can add reviewed
+      # sections and legitimately advance updatedAt (e.g. 2026-10-21 to 10-23).
+      - name: Apply source curation stages used by the LIFE production build
+        working-directory: life-source
+        run: |
+          node scripts/curate-redundant-homepage-citations.mjs
+          node scripts/curate-published-primary-sources.mjs
       - name: Verify five current canonical LIFE articles, metadata, homepage links and sitemap
         run: node scripts/verify-life-phase2-public.mjs
