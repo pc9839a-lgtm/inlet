@@ -58,7 +58,7 @@ jobs:
           INLET_BROWSER_QA_REQUIRE: '1'
           INLET_BROWSER_QA_VIEWPORTS: desktop
           INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-life-post,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='/life/']"
-          INLET_BROWSER_QA_EXPECT_TEXT: "생활에 필요한 정보,생활정보 전체보기,문의가 오면"
+          INLET_BROWSER_QA_EXPECT_TEXT: "자동차·지원금, 필요한 정보만,생활정보 전체보기,문의가 오면"
           INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-life-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|display|block"
         run: node scripts/browser-visual-quality-check.mjs
       - name: Verify hydrated, publicly visible home (mobile)
@@ -67,17 +67,17 @@ jobs:
           INLET_BROWSER_QA_REQUIRE: '1'
           INLET_BROWSER_QA_VIEWPORTS: mobile
           INLET_BROWSER_QA_EXPECT_SELECTOR: ".pagero-exact-home .c63-life-bridge,.pagero-exact-home .c63-life-post,.pagero-exact-home .c63-calltag-bridge,.pagero-exact-home .footer-links a[href='/life/']"
-          INLET_BROWSER_QA_EXPECT_TEXT: "생활에 필요한 정보,생활정보 전체보기,문의가 오면"
+          INLET_BROWSER_QA_EXPECT_TEXT: "자동차·지원금, 필요한 정보만,생활정보 전체보기,문의가 오면"
           INLET_BROWSER_QA_EXPECT_COMPUTED: ".pagero-exact-home .c63-life-bridge|display|block;.pagero-exact-home .c63-calltag-bridge|display|block"
         run: node scripts/browser-visual-quality-check.mjs
-      - name: Verify LIFE 45-guide editorial archive is visible after rendering
+      - name: Verify current LIFE editorial service grid and article archive are visible after rendering
         env:
           INLET_BROWSER_QA_URL: https://pagero.kr/life/
           INLET_BROWSER_QA_REQUIRE: '1'
           INLET_BROWSER_QA_VIEWPORTS: mobile
-          INLET_BROWSER_QA_EXPECT_SELECTOR: ".life-archive-grid,.life-archive-group,.life-archive-note"
-          INLET_BROWSER_QA_EXPECT_TEXT: "분야별 생활정보 전체보기,LIFE EDITORIAL ARCHIVE"
-          INLET_BROWSER_QA_EXPECT_COMPUTED: ".life-archive-grid|display|grid"
+          INLET_BROWSER_QA_EXPECT_SELECTOR: ".life-home-service-grid,.modern-all-articles,.life-archive"
+          INLET_BROWSER_QA_EXPECT_TEXT: "오늘 필요한 정보,전체 글 목록"
+          INLET_BROWSER_QA_EXPECT_COMPUTED: ".life-home-service-grid|display|grid"
         run: node scripts/browser-visual-quality-check.mjs
   publish-result:
     needs: [indexability-and-discovery, visible-browser]
