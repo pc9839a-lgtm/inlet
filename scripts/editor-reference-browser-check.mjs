@@ -6,6 +6,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       const trigger = document.querySelector('.editor-navigator-drawer-trigger');
       if (trigger?.getAttribute('aria-expanded') !== 'true') trigger?.click();
     })()`);
+    if (width >= 900 && width < 1280) await waitForBrowser(client,
+      `document.querySelector('.editor-composition-panel')?.getBoundingClientRect().left >= -1`,
+      'laptop navigator drawer fully opened before selecting a row');
   };
   // Selecting a block closes the laptop navigator drawer by design.
   // Reopen it for subsequent list interactions while leaving the preview visible.
@@ -14,6 +17,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       const trigger = document.querySelector('.editor-navigator-drawer-trigger');
       if (innerWidth >= 900 && innerWidth < 1280 && trigger?.getAttribute('aria-expanded') !== 'true') trigger?.click();
     })()`);
+    await waitForBrowser(client,
+      `innerWidth >= 1280 || document.querySelector('.editor-composition-panel')?.getBoundingClientRect().left >= -1`,
+      'laptop drawer fully visible and hit-testable before selecting its next row');
     await clickPointer(client, selector);
   };
   // Visual reference: a named, full-width add action and readable flat
