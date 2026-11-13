@@ -209,8 +209,8 @@ export function EditPanelLayout({
                 {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
               </span></h2>
             </div>
-            <AddBlockDock {...addBlockDockProps} compact />
           </div>
+          <AddBlockDock {...addBlockDockProps} compact />
         </header>
         <BlockNavigatorSearch
           blocks={screenOrderListProps.normalBlocks}
