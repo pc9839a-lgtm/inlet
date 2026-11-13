@@ -13,8 +13,8 @@ const DESIGN_SECTION = {
 };
 
 
-// The selected block edits in place, just below its row. Its type and label
-// are the only visual hierarchy before the existing editor fields.
+// The selected block edits in a dedicated inspector; its real fields and
+// existing disclosure state remain shared with the live page.
 export function ScreenOrderSettings({ block, identity, renderBlockEditor, actions, navigation }) {
   const metaType = block.s?.widgetMode === 'youtube' ? 'youtube' : block.type;
   const meta = META[metaType] || META.text;
