@@ -2501,7 +2501,7 @@ async function run() {
         collapsed: cards.every((node) => node.querySelector('.page-option-expand')?.getAttribute('aria-expanded') === 'false'),
         shareControlsHidden: !document.querySelector('.share-position-control')?.getClientRects().length,
         rowWidth: document.querySelector('.page-global-options-card').getBoundingClientRect().width,
-        paneWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
+        paneWidth: document.querySelector('.editor-properties-panel').getBoundingClientRect().width,
       };
     })()`);
     assert(stageThreePageSettings.pageEntrySelected && stageThreePageSettings.redundantTabs === 0
