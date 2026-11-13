@@ -1083,6 +1083,10 @@ if (!targetUrl) {
   const browser = spawn(chromeExecutable, [
     '--headless=new',
     '--disable-gpu',
+    // CI runners can lack the browser sandbox and have small /dev/shm.
+    // These flags affect only the disposable QA Chrome process, never users.
+    '--no-sandbox',
+    '--disable-dev-shm-usage',
     '--no-first-run',
     '--no-default-browser-check',
     '--window-size=1280,900',
