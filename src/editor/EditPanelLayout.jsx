@@ -57,6 +57,7 @@ export function EditPanelLayout({
 }) {
   const [section, setSection] = React.useState('order');
   const [fixedSearchReveal, setFixedSearchReveal] = React.useState(null);
+  const [navigatorOpen, setNavigatorOpen] = React.useState(false);
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
   // A blank selection is page-level context, not a reason to collapse the editor.
   // Show the existing page design and options until a block is selected.
@@ -76,11 +77,13 @@ export function EditPanelLayout({
   const chooseBlock = (id) => {
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
     setSection('order');
+    setNavigatorOpen(false);
     focusInspectorHeading(id);
   };
   const chooseFixed = (id) => {
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
+    setNavigatorOpen(false);
     focusInspectorHeading(id);
   };
   const revealFixedSearch = (id) => {
@@ -142,8 +145,9 @@ export function EditPanelLayout({
     if (screenOrderListProps?.selectedId) screenOrderListProps.clearBlockSelection();
     else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
     setSection('options');
+    setNavigatorOpen(false);
     requestAnimationFrame(() => {
-      document.querySelector('.canvas-editor-shell .editor-composition-content')
+      document.querySelector('.canvas-editor-shell .editor-properties-content')
         ?.scrollTo({ top: 0, behavior: 'instant' });
     });
   };
@@ -160,30 +164,47 @@ export function EditPanelLayout({
   // D05: row selection must not auto-scroll the outer editor. An explicit
   // preview-to-editor click is handled by useWorkspaceShellActions.
 
-  const renderFixedSettings = (keys) => {
-    if (showPageOptions || !fixedSelected || !keys.includes(fixedSelected.key)) return null;
+  // Keep real widget editors mounted in the separate settings area. Never
+  // create an alternate page model; the page list and canvas share selection.
+  const renderFixedSettings = () => {
+    if (showPageOptions || !fixedSelected) return null;
     return (
-      <section className="editor-inspector-panel editor-inline-settings"
-        role="region" aria-label="선택 항목 편집" tabIndex={0}>
-        <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
-          <ScreenOrderSettings
-            block={fixedSelected.block}
-            identity={{ customLabel: fixedSelected.title }}
-            renderBlockEditor={fixedSelected.renderEditor}
-            navigation={inspectorNavigation}
-          />
-        </div>
-      </section>
+      <ScreenOrderSettings
+        block={fixedSelected.block}
+        identity={{ customLabel: fixedSelected.title }}
+        renderBlockEditor={fixedSelected.renderEditor}
+        navigation={inspectorNavigation}
+      />
     );
   };
 
   return (
-    <div className="edit-layout" data-editor-layout="littly-block-stack">
-      <aside className="editor-composition-panel" aria-label="페이지 블록 편집">
+    <div className="edit-layout" data-editor-layout="three-pane">
+      <button
+        type="button"
+        className="editor-navigator-drawer-trigger"
+        aria-controls="editor-composition-panel"
+        aria-expanded={navigatorOpen}
+        onClick={() => setNavigatorOpen((open) => !open)}
+      >
+        {navigatorOpen ? '블록 닫기' : '블록'}
+      </button>
+      <aside
+        id="editor-composition-panel"
+        className="editor-composition-panel"
+        data-drawer-open={navigatorOpen ? 'true' : 'false'}
+        aria-label="페이지 블록 목록"
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && navigatorOpen) {
+            setNavigatorOpen(false);
+            document.querySelector('.editor-navigator-drawer-trigger')?.focus();
+          }
+        }}
+      >
         <header className="editor-composition-heading">
           <div className="editor-composition-title-row">
             <div className="editor-composition-title-copy">
-              <span className="editor-panel-kicker">내 페이지</span>
+              <span className="editor-panel-kicker">페이지 구성</span>
               <h2>블록 편집 <span className="editor-composition-total">
                 {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
               </span></h2>
@@ -198,10 +219,66 @@ export function EditPanelLayout({
           onSelect={chooseSearchResult}
           onRevealSelected={revealFixedSearch}
         />
-        <div className="editor-composition-content" role="region" aria-label="블록 목록과 편집" tabIndex={0}>
+        <div className="editor-composition-content" role="region" aria-label="블록 순서" tabIndex={0}>
+          <FixedCompositionGroup
+            groupId="top" title="상단 고정" keys={['topnav']}
+            descriptors={fixedDescriptors}
+            selectedId={fixedBlocksProps.openId}
+            revealRequest={fixedSearchReveal}
+          >
+            <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']}
+              compositionRow selectedId={fixedBlocksProps.openId}
+              openId="" toggleBlockOpen={chooseFixed} />
+          </FixedCompositionGroup>
+          <div className="editor-composition-group-caption">
+            <span>페이지 블록</span>
+            <span>{screenOrderListProps.normalBlocks.length}</span>
+          </div>
+          <ScreenOrderList
+            {...screenOrderListProps}
+            listOnly
+            selectBlock={chooseBlock}
+            inspectorNavigation={inspectorNavigation}
+          />
+          <FixedCompositionGroup
+            groupId="bottom" title="하단 고정" keys={['bottom', 'footer']}
+            descriptors={fixedDescriptors}
+            selectedId={fixedBlocksProps.openId}
+            revealRequest={fixedSearchReveal}
+          >
+            <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']}
+              compositionRow selectedId={fixedBlocksProps.openId}
+              openId="" toggleBlockOpen={chooseFixed} />
+          </FixedCompositionGroup>
+        </div>
+        <footer className="editor-composition-footer">
+          <button
+            className="editor-page-settings-button"
+            type="button"
+            aria-pressed={showPageOptions}
+            aria-controls="editor-selection-panel"
+            onClick={openPageOptions}
+            title={stylePanelProps?.hasPendingStyle ? '전체 디자인 · 미적용' : '전체 디자인'}
+          >
+            <Settings2 size={17} aria-hidden="true" />
+            <span>전체 디자인 · 페이지 설정</span>
+            {stylePanelProps?.hasPendingStyle && (
+              <>
+                <span className="editor-settings-pending" aria-hidden="true" />
+                <span className="editor-visually-hidden"> · 미적용</span>
+              </>
+            )}
+          </button>
+        </footer>
+      </aside>
+      <aside className="editor-properties-panel" aria-label="선택 블록 설정">
+        <header className="editor-properties-heading">
+          <span>설정</span>
+          <span className="editor-properties-context">{showPageOptions ? '페이지 전체' : '선택한 블록'}</span>
+        </header>
+        <div className="editor-properties-content" role="region" aria-label="선택 항목 편집" tabIndex={0}>
           {showPageOptions && (
-            <section className="editor-inspector-panel editor-inline-settings editor-page-inline-settings"
-              role="region" aria-label="페이지 전체 설정" tabIndex={0}>
+            <section className="editor-inspector-panel editor-inline-settings editor-page-inline-settings">
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="options">
                 <div className="editor-page-options-stack">
                   <header className="editor-page-options-heading">
@@ -222,58 +299,21 @@ export function EditPanelLayout({
               </div>
             </section>
           )}
-          <FixedCompositionGroup
-            groupId="top" title="상단 고정" keys={['topnav']}
-            descriptors={fixedDescriptors}
-            selectedId={fixedBlocksProps.openId}
-            revealRequest={fixedSearchReveal}
-          >
-            <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']}
-              compositionRow selectedId={fixedBlocksProps.openId}
-              openId="" toggleBlockOpen={chooseFixed}
-              renderInlineEditor={() => renderFixedSettings(['topnav'])} />
-          </FixedCompositionGroup>
-          <div className="editor-composition-group-caption">
-            <span>페이지 블록</span>
-            <span>{screenOrderListProps.normalBlocks.length}</span>
-          </div>
-          <ScreenOrderList
-            {...screenOrderListProps}
-            listOnly
-            selectBlock={chooseBlock}
-            inspectorNavigation={inspectorNavigation}
-          />
-          <FixedCompositionGroup
-            groupId="bottom" title="하단 고정" keys={['bottom', 'footer']}
-            descriptors={fixedDescriptors}
-            selectedId={fixedBlocksProps.openId}
-            revealRequest={fixedSearchReveal}
-          >
-            <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']}
-              compositionRow selectedId={fixedBlocksProps.openId}
-              openId="" toggleBlockOpen={chooseFixed}
-              renderInlineEditor={() => renderFixedSettings(['bottom', 'footer'])} />
-          </FixedCompositionGroup>
+          {!showPageOptions && fixedSelected && (
+            <section className="editor-inspector-panel editor-inline-settings">
+              <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
+                {renderFixedSettings()}
+              </div>
+            </section>
+          )}
+          {!showPageOptions && !fixedSelected && (
+            <section className="editor-inspector-panel editor-inline-settings">
+              <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
+                <ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />
+              </div>
+            </section>
+          )}
         </div>
-        <footer className="editor-composition-footer">
-          <button
-            className="editor-page-settings-button"
-            type="button"
-            aria-pressed={showPageOptions}
-            aria-controls="editor-selection-panel"
-            onClick={openPageOptions}
-            title={stylePanelProps?.hasPendingStyle ? '페이지 설정 · 미적용' : '페이지 설정'}
-          >
-            <Settings2 size={17} aria-hidden="true" />
-            <span>전체 디자인 · 페이지 설정</span>
-            {stylePanelProps?.hasPendingStyle && (
-              <>
-                <span className="editor-settings-pending" aria-hidden="true" />
-                <span className="editor-visually-hidden"> · 미적용</span>
-              </>
-            )}
-          </button>
-        </footer>
       </aside>
     </div>
   );
