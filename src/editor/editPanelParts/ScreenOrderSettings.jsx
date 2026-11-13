@@ -25,9 +25,12 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
     const settings = document.getElementById(`editor-block-settings-${block.id}`);
     const scroller = settings?.closest('.editor-properties-content');
     if (!scroller) return;
-    const destination = section === 'design'
-      ? settings.querySelector(designSelector)
-      : settings.querySelector('.block-editor-v2') || settings;
+    if (section === 'content') {
+      // Return to the inspector heading and the first editable fields.
+      scroller.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const destination = settings.querySelector(designSelector);
     if (!destination) return;
     if (section === 'design' && !destination.open) {
       destination.querySelector('summary')?.click();
