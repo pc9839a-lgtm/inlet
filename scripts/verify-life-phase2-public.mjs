@@ -44,7 +44,10 @@ async function checkPost(relative) {
       if (!html.includes('<link rel="canonical" href="' + url + '">')) failures.push('canonical');
       if (!html.includes('<meta name="robots" content="index,follow')) failures.push('robots');
       if (!html.includes('<h1>' + esc(post.title) + '</h1>')) failures.push('current_source_title');
-      if (!html.includes('"dateModified":"' + post.updatedAt + '"')) failures.push('source_updatedAt');
+      const liveRevision = html.match(/"dateModified"\s*:\s*"([^"]+)"/)?.[1] || 'missing';
+      if (liveRevision !== post.updatedAt) {
+        failures.push('source_updatedAt expected=' + post.updatedAt + ' live=' + liveRevision);
+      }
       if (!html.includes('class="article-content"')) failures.push('article_body');
       if (!html.includes('class="source-box"')) failures.push('official_sources');
       if (html.includes('생활비서 연결 오류')) failures.push('proxy_error');
