@@ -76,9 +76,10 @@ assert(!pageOptionsProps.includes('topNavBlock') && !pageOptionsProps.includes('
 assert(fixedBlocksProps.includes('topNavBlock: selection.topNavBlock') && fixedBlocksProps.includes('bottomBlock: selection.bottomBlock') && fixedBlocksProps.includes('footerBlock: selection.footerBlock'), 'fixed block props must own top, bottom, and footer editors');
 assert(sectionProps.includes('fixedBlocksProps: createFixedBlocksProps'), 'edit panel section props must expose fixed blocks separately');
 assert(editLayout.includes("only={['topnav']}") && editLayout.includes("only={['bottom', 'footer']}")
-  && editLayout.includes('renderInlineEditor={() => renderFixedSettings')
+  && editLayout.includes('renderFixedSettings()')
+  && editLayout.includes('className="editor-properties-panel"')
   && globalFixedBlocks.includes('props.renderInlineEditor?.(cardProps.block)'),
-  'fixed entries must expand under the matching row, not in a separate Inspector');
+  'fixed entries must share the selected properties panel without losing their own editors');
 assert(editLayout.includes('groupId="top" title="상단 고정"')
   && editLayout.includes('groupId="bottom" title="하단 고정"')
   && editLayout.includes('aria-label={`${title} 영역`}')
@@ -113,7 +114,7 @@ assert(editLayout.includes('페이지 설정')
   && editLayout.includes('<PageGlobalOptions')
   && editLayout.includes('updateTheme={updatePageTheme}')
   && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'),
-  'the inline page design panel must reuse the existing theme and page settings models');
+  'the page design inspector must reuse the existing theme and page settings models');
 assert(!pageOptions.includes('PageGlobalOptionsHeader') && pageOptions.includes('aria-label="페이지 동작"'), 'page behavior must have an accessible group label without repeating a visible settings heading');
 assert(editLayout.includes('<h2>블록 편집 <span className="editor-composition-total">')
   && editLayout.includes('editor-composition-total')
@@ -132,7 +133,9 @@ assert(screenOrderListItems.includes('<ScreenOrderSettings')
   && screenOrderListItems.includes('selectedId === block.id')
   && editLayout.includes('editor-composition-panel')
   && !screenOrderItem.includes('renderBlockEditor'),
-  'selected real widget settings must expand immediately beneath their own row');
+  && screenOrderListItems.includes('!listOnly && selectedId === block.id')
+  && editLayout.includes('editor-properties-content'),
+  'navigation-only rows must stay compact while the real widget editor is rendered independently');
 assert(!editLayout.includes('selectedBlockSettingsProps')
   && !screenOrderItem.includes('SelectedBlockSettings')
   && screenOrderListItems.includes('renderBlockEditor={renderBlockEditor}'),
@@ -158,7 +161,7 @@ assert(screenOrderIdentityModel.includes("block?.type === 'code'") && screenOrde
 assert(editLayout.includes("const showPageOptions = section === 'options' || !selectedBlockId;")
   && editLayout.includes('data-editor-section="options"')
   && editLayout.includes('{showPageOptions && ('),
-  'an empty selection must present page design inside the editable stack');
+  'an empty selection must present page design in the right-hand settings panel');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('.editor-page-settings-button') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
 assert(screenOrderCss.includes('One quiet composition list')
   && fixedBlocksCss.includes('Pinned rows use the same flat'),
@@ -213,3 +216,10 @@ console.log(JSON.stringify({
   legacyScreenOrderCssRemoved: true,
   legacyScreenOrderMenuSourcesRemoved: true,
 }, null, 2));
+
+assert(editLayout.includes('data-editor-layout="three-pane"')
+  && editLayout.includes('aria-controls="editor-composition-panel"')
+  && editLayout.includes('editor-properties-panel')
+  && editorWorkspaceCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width)')
+  && editPanelLayoutCss.includes('.editor-properties-content'),
+  'the approved block list, live page and independent settings must remain distinct');
