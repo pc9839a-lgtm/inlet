@@ -1762,7 +1762,7 @@ async function run() {
     // Independent navigator and Inspector scrolling, pinned page options.
     const inspectorScroll = await evaluate(client, `(() => {
       const settings = document.querySelector('#editor-block-settings-editor-hero');
-      const panel = settings?.closest('.editor-inspector-panel');
+      const panel = settings?.closest('.editor-properties-content');
       const composition = document.querySelector('.editor-composition-panel');
       const list = document.querySelector('.editor-composition-content');
       const workPanel = document.querySelector('.work-panel');
@@ -1811,17 +1811,18 @@ async function run() {
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
       && inspectorScroll.label?.includes('선택 항목 편집')
       && inspectorScroll.listRole === 'region' && inspectorScroll.listTabIndex === 0
-      && inspectorScroll.listLabel?.includes('블록 목록'),
+      && inspectorScroll.listLabel?.includes('블록 순서'),
       'D01 list and Inspector must remain keyboard-accessible regions: ' + JSON.stringify(inspectorScroll));
-    assert(inspectorScroll.inspectorOverflowY === 'visible'
+    assert(inspectorScroll.inspectorOverflowY === 'auto'
       && inspectorScroll.compositionOverflowY === 'hidden'
       && inspectorScroll.navigatorOverflowY === 'auto'
       && inspectorScroll.workOverflowY === 'hidden'
+      && inspectorScroll.inspectorScrollHeight > inspectorScroll.inspectorHeight
       && inspectorScroll.navigatorScrollHeight > inspectorScroll.navigatorHeight
-      && inspectorScroll.workScrollTop === 0 && inspectorScroll.inspectorScrollTop === 0
+      && inspectorScroll.workScrollTop === 0 && inspectorScroll.inspectorScrollTop > 0
       && inspectorScroll.navigatorScrollTop > 0 && inspectorScroll.independentScroll
       && inspectorScroll.footerPinned && inspectorScroll.innerOverflowY === 'visible',
-      'D01 one block-stack scroller must keep page settings pinned and prevent nested forms: ' + JSON.stringify(inspectorScroll));
+      'D01 independent block list and selected settings scrollers must preserve a pinned page-settings entry: ' + JSON.stringify(inspectorScroll));
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
