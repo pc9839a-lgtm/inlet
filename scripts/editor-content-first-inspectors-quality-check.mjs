@@ -56,6 +56,14 @@ assert(css.includes('.editor-inspector-kind-icon') && css.includes('.editor-insp
   && css.includes('.editor-inspector-panel.editor-inline-settings')
   && css.includes('padding: 12px 0 10px !important;'),
   'inline selected block must have one compact identity header before its existing editable fields');
+assert(inspector.includes('editor-inspector-jump')
+  && inspector.includes("jumpToSection('content')")
+  && inspector.includes("jumpToSection('design')")
+  && inspector.includes("destination.querySelector('summary')?.click()")
+  && inspector.includes("closest('.editor-properties-content')")
+  && css.includes('.editor-inspector-jump > button:focus-visible')
+  && browser.includes('inspectorShortcuts'),
+  'selected text, image, form and hero blocks must use real design disclosure shortcuts in the independent inspector');
 assert(disclosure.includes('expandedByBlock = new Map()')
   && disclosure.includes('expandedByBlock.has(persistKey)')
   && disclosure.includes('rememberExpanded(persistKey, next)')
