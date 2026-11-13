@@ -132,7 +132,7 @@ assert(screenOrderListItems.includes('<ScreenOrderSettings')
   && screenOrderListItems.includes('editor-inline-settings')
   && screenOrderListItems.includes('selectedId === block.id')
   && editLayout.includes('editor-composition-panel')
-  && !screenOrderItem.includes('renderBlockEditor'),
+  && !screenOrderItem.includes('renderBlockEditor')
   && screenOrderListItems.includes('!listOnly && selectedId === block.id')
   && editLayout.includes('editor-properties-content'),
   'navigation-only rows must stay compact while the real widget editor is rendered independently');
