@@ -10,9 +10,20 @@ on:
       - functions/index.js
       - public/ads.txt
       - public/robots.txt
+      - public/sitemap.xml
+      - public/_headers
       - public/_redirects
       - scripts/adsense-build-check.mjs
       - scripts/build.mjs
+  pull_request:
+    paths:
+      - .github/workflows/verify-adsense-public.yml
+      - public/ads.txt
+      - public/robots.txt
+      - public/sitemap.xml
+      - public/_headers
+      - functions/life/**
+      - functions/_middleware.js
   workflow_dispatch:
 
 permissions:
@@ -59,4 +70,63 @@ jobs:
             if attempt<10:time.sleep(20)
           if pending:raise SystemExit('FAIL production endpoint(s): '+', '.join(pending))
           print('PASS: published AdSense identity, ads.txt, robots and canonical /life content',flush=True)
+          # Validate real public XML responses, not just repository files or
+          # a 200 SPA HTML fallback. These checks are read-only.
+          import xml.etree.ElementTree as ET
+          def sitemap_urls(url):
+            req=urllib.request.Request(url,headers={
+              'User-Agent':'Mozilla/5.0 (compatible; PageRoSitemapAudit/1.0)',
+              'Cache-Control':'no-cache'})
+            with urllib.request.urlopen(req,timeout=18) as response:
+              status=response.status
+              final=response.url
+              mime=response.headers.get('Content-Type','').lower()
+              body=response.read(3000000)
+            if status!=200 or final!=url or 'xml' not in mime:
+              raise SystemExit(f'FAIL sitemap HTTP/URL/MIME: {url} status={status} final={final} mime={mime}')
+            try:
+              document=ET.fromstring(body)
+            except ET.ParseError as error:
+              raise SystemExit(f'FAIL sitemap XML parse: {url}: {error}')
+            ns='{http://www.sitemaps.org/schemas/sitemap/0.9}'
+            if document.tag != ns+'urlset':
+              raise SystemExit(f'FAIL sitemap XML root: {url} tag={document.tag}')
+            urls=[(node.findtext(ns+'loc') or '').strip() for node in document.findall(ns+'url')]
+            if not urls or any(not loc for loc in urls) or len(urls)!=len(set(urls)):
+              raise SystemExit(f'FAIL sitemap empty/invalid/duplicate loc: {url}')
+            print(f'SITEMAP_OK {url} mime={mime} urls={len(urls)}',flush=True)
+            return urls
+
+          main_urls=sitemap_urls('https://pagero.kr/sitemap.xml')
+          life_urls=sitemap_urls('https://pagero.kr/life/sitemap.xml')
+          if len(main_urls)<20 or len(life_urls)<30:
+            raise SystemExit(f'FAIL sitemap unexpected coverage: main={len(main_urls)} life={len(life_urls)}')
+          if any(not url.startswith('https://pagero.kr/') or url.startswith('https://pagero.kr/life/') for url in main_urls):
+            raise SystemExit('FAIL main sitemap has noncanonical or duplicate LIFE section URL')
+          if any(not url.startswith('https://pagero.kr/life/') for url in life_urls):
+            raise SystemExit('FAIL LIFE sitemap has a URL outside canonical /life/')
+          if set(main_urls).intersection(life_urls):
+            raise SystemExit('FAIL URLs duplicated between main and LIFE sitemaps')
+          required_main={
+            'https://pagero.kr/',
+            'https://pagero.kr/guide/',
+            'https://pagero.kr/tools/lead-calculator/',
+            'https://pagero.kr/tools/form-planner/',
+          }
+          required_life={
+            'https://pagero.kr/life/',
+            'https://pagero.kr/life/car/car-inspection-period/',
+          }
+          if required_main.difference(main_urls) or required_life.difference(life_urls):
+            raise SystemExit('FAIL required canonical URLs missing from sitemaps: '
+              +str(sorted(required_main.difference(main_urls)|required_life.difference(life_urls))))
+          req=urllib.request.Request('https://pagero.kr/robots.txt',headers={'Cache-Control':'no-cache'})
+          with urllib.request.urlopen(req,timeout=12) as response:
+            live_robots=response.read(200000).decode('utf-8','replace')
+          for declared in ('Sitemap: https://pagero.kr/sitemap.xml',
+                           'Sitemap: https://pagero.kr/life/sitemap.xml'):
+            if declared not in live_robots:
+              raise SystemExit('FAIL robots.txt missing sitemap declaration: '+declared)
+          print('PASS: live robots declarations, both XML sitemaps, canonical scopes, coverage and uniqueness',flush=True)
+
           PY
