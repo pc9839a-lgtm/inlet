@@ -449,6 +449,14 @@ assert(editPanelLayoutCss.includes('.editor-composition-footer > .editor-page-se
   && layout.includes('<BlockNavigatorSearch')
   && layout.includes('onSelect={chooseSearchResult}'),
   'page settings and the persistent block search must remain accessible');
+assert(layout.includes('aria-controls="editor-composition-panel"')
+  && layout.includes('aria-expanded={navigatorOpen}')
+  && layout.includes("if (event.key === 'Escape' && navigatorOpen)")
+  && layout.includes('setNavigatorOpen(false)'),
+  'laptop block drawer must announce expansion and close via Escape even when the trigger retains focus');
+assert(layout.includes("?.scrollTo({ top: 0, behavior: 'instant' })")
+  && layout.includes('}, [selectedBlockId]);'),
+  'changing selected blocks must reset the independently scrolling property inspector');
 assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
 assert(previewPaneCss.includes('border: 2px solid #cbd5e1')
   && previewPaneCss.includes('border-radius: 14px')
