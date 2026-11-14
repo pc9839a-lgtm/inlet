@@ -139,6 +139,10 @@ export function EditPanelLayout({
 
   React.useEffect(() => {
     if (selectedBlockId) setSection('order');
+    // A different selected block has a different starting context. Reusing
+    // the previous block's deep scroll makes the new content appear empty.
+    document.querySelector('.canvas-editor-shell .editor-properties-content')
+      ?.scrollTo({ top: 0, behavior: 'instant' });
   }, [selectedBlockId]);
 
   const openPageOptions = () => {
