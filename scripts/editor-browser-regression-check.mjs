@@ -1045,7 +1045,7 @@ function assertNarrowDesktop(metrics, width) {
   assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 40),
     `selected inspector headings must stay accessible: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
   assert(!metrics.cockpit, 'narrow desktop preview must not expose removed conversion cockpit');
-  assert(String(metrics.shellGridColumns || '').trim().split(/\\s+/).length === (stacked ? 1 : 2),
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (stacked ? 1 : 2),
     `editor shell must use ${stacked ? 'stacked' : 'canvas + settings'} layout at ${width}px: ${metrics.shellGridColumns}`);
   if (stacked) {
     assert(metrics.composition?.width >= width - 6 && metrics.inspector?.width >= width - 6,
