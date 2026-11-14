@@ -190,6 +190,14 @@ export function EditPanelLayout({
         aria-controls="editor-composition-panel"
         aria-expanded={navigatorOpen}
         onClick={() => setNavigatorOpen((open) => !open)}
+        onKeyDown={(event) => {
+          // Focus remains on the trigger after opening the laptop drawer.
+          // Escape must work there as well as inside the block list.
+          if (event.key === 'Escape' && navigatorOpen) {
+            event.preventDefault();
+            setNavigatorOpen(false);
+          }
+        }}
       >
         {navigatorOpen ? '블록 닫기' : '블록'}
       </button>
