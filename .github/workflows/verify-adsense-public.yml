@@ -120,13 +120,19 @@ jobs:
           if required_main.difference(main_urls) or required_life.difference(life_urls):
             raise SystemExit('FAIL required canonical URLs missing from sitemaps: '
               +str(sorted(required_main.difference(main_urls)|required_life.difference(life_urls))))
-          req=urllib.request.Request('https://pagero.kr/robots.txt',headers={'Cache-Control':'no-cache'})
+          req=urllib.request.Request('https://pagero.kr/robots.txt',headers={
+            'User-Agent':'Mozilla/5.0 (compatible; PageRoAdSenseSmoke/1.0)',
+            'Cache-Control':'no-cache'})
           with urllib.request.urlopen(req,timeout=12) as response:
             live_robots=response.read(200000).decode('utf-8','replace')
+            robots_mime=response.headers.get('Content-Type','').lower()
+          if 'text/plain' not in robots_mime:
+            raise SystemExit('FAIL robots.txt invalid MIME: '+robots_mime)
           for declared in ('Sitemap: https://pagero.kr/sitemap.xml',
                            'Sitemap: https://pagero.kr/life/sitemap.xml'):
             if declared not in live_robots:
-              raise SystemExit('FAIL robots.txt missing sitemap declaration: '+declared)
+              raise SystemExit('FAIL robots.txt missing sitemap declaration: '+declared
+                +' body_head='+repr(live_robots[:180]))
           print('PASS: live robots declarations, both XML sitemaps, canonical scopes, coverage and uniqueness',flush=True)
 
           PY
