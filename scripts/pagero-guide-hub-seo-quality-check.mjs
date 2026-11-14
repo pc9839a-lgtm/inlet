@@ -11,6 +11,7 @@ const referencePaths=[
   'guide/form-submission-debug/',
   'guide/lead-funnel-metrics/',
   'tools/lead-calculator/',
+  'tools/form-planner/',
 ];
 assert.match(guide,/^<!doctype html>/i);
 assert.equal((guide.match(/<h1\b/gi)||[]).length,1,'Guide hub must have one H1');
@@ -29,6 +30,17 @@ for(const resource of referencePaths){
   assert(fs.existsSync(file), 'Hub linked to missing static file '+file);
   assert(read(file).includes('href="/guide/"'), 'Resource lacks hub backlink '+file);
 }
+
+// The protected main already exposes these paths in its static HTML.
+// Keep the actual homepage untouched and verify discovery through the hub.
+const productionHome = read('functions/index.js');
+for (const resource of ['/guide/', '/tools/lead-calculator/', '/tools/form-planner/']) {
+  assert(productionHome.includes('href="'+resource+'"'), 'Public root lost crawlable resource link '+resource);
+}
+const formPlanner = read('public/tools/form-planner/index.html');
+assert(sitemap.includes('<loc>https://pagero.kr/tools/form-planner/</loc>'), 'Existing planner must be present in main sitemap');
+assert(formPlanner.includes('href="/guide/"'), 'Form planner lacks guide hub backlink');
+assert(formPlanner.includes('href="/guide/contact-form/"'), 'Planner must link its related product guide');
 
 const detailedManuals = ["getting-started","editor-overview","contact-form","preview-publish","inbox-management","analytics","seo-tracking","troubleshooting"];
 for(const slug of detailedManuals){
@@ -284,4 +296,4 @@ const served=await onRequest({
 assert.equal(nextCalls,1,'Guide route must use a real static asset, not a protected SPA');
 assert.equal(served.status,200);
 assert((await served.text()).includes('증상부터 찾는 빠른 진단표'));
-console.log(JSON.stringify({ok:true,hub:'/guide/',resourceLinks:4,canonical:'https://pagero.kr/guide/',rootStaticLinked:true,staticResponse:true,externalWrites:false,protectedRoutesChanged:false},null,2));
+console.log(JSON.stringify({ok:true,hub:'/guide/',resourceLinks:5,canonical:'https://pagero.kr/guide/',rootStaticLinked:true,staticResponse:true,externalWrites:false,protectedRoutesChanged:false},null,2));
