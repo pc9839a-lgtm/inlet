@@ -956,6 +956,27 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await clickPointer(client, '.editor-block-switch-actions button[aria-label="다음 블록"]');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
     'inspector next returns to the text block');
+  // A repeated previous/next keyboard action must not place focus on the
+  // heading or document body every time the selected editor remounts.
+  const inspectorNext = '.editor-block-switch-actions button[aria-label="다음 블록"]';
+  await focusSelector(client, inspectorNext);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'
+      && document.activeElement === document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]')`,
+    'Enter navigates from text to form while retaining next-button keyboard focus');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-code')?.dataset.selected === 'true'
+      && document.activeElement === document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]')`,
+    'another Enter navigates from form to code without re-tabbing through the inspector');
+  await clickPointer(client, '.editor-block-switch-actions button[aria-label="이전 블록"]');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'`,
+    'keyboard-navigation regression returns to the form');
+  await clickPointer(client, '.editor-block-switch-actions button[aria-label="이전 블록"]');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
+    'keyboard-navigation regression restores the text fixture');
+  assert(apiState.saveCount === 0, 'repeated inspector keyboard navigation must not save or publish');
 
   // 16th patch: a deep composition should keep the selected row visible when
   // switching via inspector previous/next, rather than resetting scrollTop=0.
