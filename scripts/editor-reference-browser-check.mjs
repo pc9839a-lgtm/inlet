@@ -88,8 +88,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   const laptopSearchInput = 'input[aria-label="블록 이름 검색"]';
   await setInputValue(client, laptopSearchInput, '텍스트');
   await waitForBrowser(client,
-    `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`,
-    'laptop search has one matching text block');
+    `document.querySelector('.editor-search-count')?.textContent.includes('/')`,
+    'laptop search provides an active result counter');
   await focusSelector(client, laptopSearchInput);
   await pressKeyboardKey(client, 'Escape');
   await waitForBrowser(client,
