@@ -74,17 +74,17 @@ export function EditPanelLayout({
       else if (attempts > 0) focusInspectorHeading(id, attempts - 1);
     });
   };
-  const chooseBlock = (id) => {
+  const chooseBlock = (id, { focusHeading = true } = {}) => {
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
     setSection('order');
     setNavigatorOpen(false);
-    focusInspectorHeading(id);
+    if (focusHeading) focusInspectorHeading(id);
   };
-  const chooseFixed = (id) => {
+  const chooseFixed = (id, { focusHeading = true } = {}) => {
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
     setNavigatorOpen(false);
-    focusInspectorHeading(id);
+    if (focusHeading) focusInspectorHeading(id);
   };
   const revealFixedSearch = (id) => {
     if (fixedDescriptors.some((item) => item.block.id === id)) setFixedSearchReveal({ id });
@@ -127,11 +127,27 @@ export function EditPanelLayout({
   };
   const switchBlock = (id) => {
     if (!id || id === selectedBlockId) return;
+    // Inspector navigation is a repeated keyboard action, not a new list
+    // selection. Keep focus in the previous/next controls so Enter can step
+    // through neighboring blocks without losing the tab position each time.
+    const direction = id === blockNavigation?.nextId ? 'next' : 'previous';
     if (fixedDescriptors.some((item) => item.block.id === id)) {
       revealFixedSearch(id);
-      chooseFixed(id);
-    } else chooseBlock(id);
+      chooseFixed(id, { focusHeading: false });
+    } else chooseBlock(id, { focusHeading: false });
     revealInspectorSelection(id);
+    const restoreSwitchFocus = (attempts = 5) => requestAnimationFrame(() => {
+      const settings = document.querySelector('.canvas-editor-shell .editor-properties-content [data-block-settings-id]');
+      if (settings?.getAttribute('data-block-settings-id') !== id) {
+        if (attempts > 0) restoreSwitchFocus(attempts - 1);
+        return;
+      }
+      const buttons = [...document.querySelectorAll('.canvas-editor-shell .editor-block-switch-actions button')];
+      const primary = buttons.find((button) => button.getAttribute('aria-label') === (direction === 'next' ? '다음 블록' : '이전 블록'));
+      const fallback = buttons.find((button) => !button.disabled);
+      (primary && !primary.disabled ? primary : fallback)?.focus({ preventScroll: true });
+    });
+    restoreSwitchFocus();
   };
   const inspectorNavigation = blockNavigation
     ? { ...blockNavigation, onNavigate: switchBlock }
