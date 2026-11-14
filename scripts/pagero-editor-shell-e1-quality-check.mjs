@@ -149,6 +149,7 @@ const screen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 'utf8');
 const active = await readFile('src/screens/workspace/WorkspaceActivePanel.jsx', 'utf8');
 const editPanel = await readFile('src/editor/EditPanel.jsx', 'utf8');
 const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
+const blockSearch = await readFile('src/editor/editPanelParts/BlockNavigatorSearch.jsx', 'utf8');
 const stackItems = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
 const fixedItems = await readFile('src/editor/editPanelParts/GlobalFixedBlocks.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
@@ -449,6 +450,13 @@ assert(editPanelLayoutCss.includes('.editor-composition-footer > .editor-page-se
   && layout.includes('<BlockNavigatorSearch')
   && layout.includes('onSelect={chooseSearchResult}'),
   'page settings and the persistent block search must remain accessible');
+assert(blockSearch.includes("event.key === 'Escape' && query.trim()")
+  && blockSearch.includes('event.stopPropagation()')
+  && blockSearch.includes('navigate(activeIndex)')
+  && blockSearch.includes('navigate(activeIndex - 1)')
+  && blockSearch.includes('navigate(activeIndex + 1)')
+  && blockSearch.includes('Math.min(currentIndex, Math.max(0, matches.length - 1))'),
+  'block search must clear before closing the laptop drawer and keep result navigation aligned with the counter');
 assert(layout.includes('aria-controls="editor-composition-panel"')
   && layout.includes('aria-expanded={navigatorOpen}')
   && layout.includes("if (event.key === 'Escape' && navigatorOpen)")
