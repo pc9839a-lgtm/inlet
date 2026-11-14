@@ -3,11 +3,12 @@ import { ScreenOrderItem } from './ScreenOrderItem.jsx';
 import { ScreenOrderSettings } from './ScreenOrderSettings.jsx';
 import { createScreenOrderIdentities } from './screenOrderIdentityModel.js';
 
-// The editor is one ordered stack. A selected block opens its real editor
-// directly underneath its row; it does not open a second detached inspector.
+// The composition list never expands settings when rendered as listOnly.
+// The selected widget editor lives in the independent properties panel.
 export function ScreenOrderListItems({
   normalBlocks,
   selectedId,
+  listOnly = false,
   dragId,
   setDragId,
   selectBlock,
@@ -39,7 +40,7 @@ export function ScreenOrderListItems({
             removeBlock={removeBlock}
             reorderToIndex={reorderToIndex}
           />
-          {selectedId === block.id && typeof renderBlockEditor === 'function' && (
+          {!listOnly && selectedId === block.id && typeof renderBlockEditor === 'function' && (
             <section className="editor-inspector-panel editor-inline-settings"
               role="region" aria-label="선택 항목 편집" tabIndex={0}>
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">

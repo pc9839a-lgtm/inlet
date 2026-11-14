@@ -1,5 +1,4 @@
-/* PageRo editor: Littly-inspired block stack, not a detachable inspector.
-   This file owns the EDITOR layout only. Public pages never use these rules. */
+/* PageRo editor list and inspector presentation. Public pages are untouched. */
 body .builder-shell .edit-layout,
 body .builder-shell .edit-layout * { box-sizing: border-box; }
 .editor-visually-hidden {
@@ -302,7 +301,11 @@ html body #root .canvas-editor-shell .editor-inspector-selected-copy {
   min-width: 0; flex: 1 1 auto;
 }
 html body #root .canvas-editor-shell .editor-inspector-section-label {
-  display: none;
+  display: block;
+  color: #8190a5;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 html body #root .canvas-editor-shell .editor-inspector-selected-copy > h2 {
   min-width: 0;
@@ -337,6 +340,42 @@ html body #root .canvas-editor-shell .editor-block-switch-actions button:hover:n
   background: #edf0ff; color: #3649ce;
 }
 html body #root .canvas-editor-shell .editor-block-switch-actions button:disabled { opacity: .35; }
+/* A pair of real shortcuts, not duplicate editors or stateful tabs.
+   Design reveals the selected block's existing disclosure. */
+html body #root .canvas-editor-shell .editor-inspector-jump {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+  padding: 3px;
+  border: 1px solid #e6eaf0;
+  border-radius: 9px;
+  background: #f5f7fa;
+}
+html body #root .canvas-editor-shell .editor-inspector-jump > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: #fff;
+  color: #40516c;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+html body #root .canvas-editor-shell .editor-inspector-jump > button:hover {
+  border-color: #c9d9f8;
+  color: #174ec9;
+  background: #edf3ff;
+}
+html body #root .canvas-editor-shell .editor-inspector-jump > button:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 2px;
+}
 html body #root .canvas-editor-shell .screen-order-v2-settings {
   width: 100%; min-width: 0;
   height: auto !important; max-height: none !important;
@@ -414,4 +453,152 @@ html body #root .canvas-editor-shell :is(.editor-page-settings-button, .screen-o
 }
 @media (prefers-reduced-motion: reduce) {
   html body #root .canvas-editor-shell .editor-fixed-group-toggle > svg { transition: none; }
+}
+
+/* Approved three-pane layout: the list remains compact while real block
+   editors scroll in a separate, persistent settings panel. */
+html body #root .canvas-editor-shell .editor-navigator-drawer-trigger { display: none; }
+html body #root .canvas-editor-shell .editor-properties-panel {
+  position: fixed;
+  z-index: 11;
+  top: 64px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  width: var(--editor-settings-width, 340px);
+  height: calc(100dvh - 64px);
+  min-width: 0;
+  border-left: 1px solid #e5e9f0;
+  background: #fff;
+  box-sizing: border-box;
+}
+html body #root .canvas-editor-shell .editor-properties-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  min-height: 64px;
+  padding: 0 20px;
+  border-bottom: 1px solid #e9edf2;
+  color: #1d2738;
+  font-size: 16px;
+  font-weight: 700;
+}
+html body #root .canvas-editor-shell .editor-properties-context {
+  color: #8a95a6;
+  font-size: 12px;
+  font-weight: 500;
+}
+html body #root .canvas-editor-shell .editor-properties-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 10px 20px 32px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-top: 12px;
+}
+html body #root .canvas-editor-shell .editor-properties-content:focus-visible {
+  outline: 2px solid #2356ed;
+  outline-offset: -2px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-properties-content .editor-inspector-panel.editor-inline-settings {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2-card {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html body #root .canvas-editor-shell .editor-properties-content .editor-page-options-heading {
+  padding-top: 6px;
+}
+html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2-settings-header {
+  padding-top: 6px !important;
+}
+/* The only collapsed element on laptop widths is the navigator. */
+@media (min-width: 900px) and (max-width: 1279px) {
+  html body #root .canvas-editor-shell .editor-navigator-drawer-trigger {
+    position: fixed;
+    display: block;
+    z-index: 35;
+    top: 76px;
+    left: 12px;
+    min-width: 58px;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid #dce3ee;
+    border-radius: 8px;
+    background: #fff;
+    color: #21314b;
+    font-size: 13px;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  html body #root .canvas-editor-shell .editor-composition-panel {
+    position: fixed;
+    z-index: 34;
+    top: 64px;
+    left: 0;
+    width: 252px !important;
+    height: calc(100dvh - 64px) !important;
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform .16s ease;
+    box-shadow: 8px 0 22px #192a4b14;
+    pointer-events: none;
+  }
+  html body #root .canvas-editor-shell .editor-composition-panel[data-drawer-open='true'] {
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+  }
+  html body #root .canvas-editor-shell .editor-navigator-drawer-trigger[aria-expanded='true'] {
+    left: 260px;
+  }
+  html body #root .canvas-editor-shell .editor-properties-panel { pointer-events: auto; }
+}
+@media (max-width: 899px) {
+  html body #root .builder-shell.canvas-editor-shell .edit-layout {
+    display: flex !important;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel {
+    flex: 0 0 auto;
+    height: min(50dvh, 550px) !important;
+    min-height: 300px;
+    max-height: none;
+  }
+  html body #root .builder-shell.canvas-editor-shell .editor-composition-content {
+    overflow-y: auto !important;
+  }
+  html body #root .canvas-editor-shell .editor-properties-panel {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    height: auto;
+    min-height: 420px;
+    border-left: 0;
+    border-top: 1px solid #e5e9f0;
+  }
+  html body #root .canvas-editor-shell .editor-properties-content { overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body #root .canvas-editor-shell .editor-composition-panel { transition: none; }
+}
+
+
+/* The editor grid already allocates its list column. Shared preview-workspace
+   padding must not subtract 36px from the navigator's usable width. */
+html body #root .builder-shell.canvas-editor-shell .work-panel {
+  padding: 0 !important;
 }

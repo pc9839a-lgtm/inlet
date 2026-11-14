@@ -609,7 +609,18 @@ async function setInputValue(client, selector, value) {
 }
 
 async function showBlockList(client) {
-  await waitForBrowser(client, `document.querySelector('.editor-composition-panel .screen-order-v2-list-view')?.getClientRects().length > 0`, 'composition list stays visible');
+  // On 900–1279px desktops the list is an off-canvas drawer; only the
+  // navigator trigger stays visible after selecting a block.
+  await evaluate(client, `(() => {
+    const trigger = document.querySelector('.editor-navigator-drawer-trigger');
+    if (innerWidth >= 900 && innerWidth < 1280 && trigger?.getAttribute('aria-expanded') !== 'true') trigger.click();
+  })()`);
+  await waitForBrowser(client, `(() => {
+    const panel = document.querySelector('.editor-composition-panel');
+    const rows = panel?.querySelector('.screen-order-v2-list-view');
+    return !!rows?.getClientRects().length
+      && (innerWidth < 900 || innerWidth >= 1280 || (panel.getBoundingClientRect().left >= -1 && getComputedStyle(panel).visibility === 'visible'));
+  })()`, 'composition list stays visible');
 }
 
 async function openBlockSettings(client, blockId) {
@@ -626,7 +637,7 @@ async function revealWorkspaceNavigation(client, selector) {
 
 async function clickSelector(client, selector) {
   await revealWorkspaceNavigation(client, selector);
-  if (/^#editor-block-(?!settings-)|^\.topnav-fixed-card|^\.fixed-add-dock|^\.add-toggle/.test(selector)) await showBlockList(client);
+  if (/^#editor-block-(?!settings-)|^\.topnav-fixed-card|^\.fixed-add-dock|^\.add-toggle|^\.editor-page-settings-button/.test(selector)) await showBlockList(client);
   const clicked = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
     if (!element || element.getClientRects().length === 0) return false;
@@ -876,10 +887,10 @@ async function collectDesktopMetrics(client) {
       preview: rect(preview),
       frame: rect(frame),
       composition: rect(document.querySelector('.editor-composition-panel')),
-      inspector: rect(document.querySelector('.editor-inspector-panel')),
+      inspector: rect(document.querySelector('.editor-properties-panel')),
       previewDirectChildren: preview?.children?.length || 0,
       previewFrameCount: preview?.querySelectorAll('.phone-frame').length || 0,
-      frameContentWidth: frame?.clientWidth || 0,
+      frameContentWidth: frame?.querySelector('.landing-page')?.clientWidth || 0,
       header: rect(header),
       workPanel: rect(workPanel),
       topTabs: rect(topTabs?.getClientRects().length ? topTabs : document.querySelector('.workspace-editor-nav > summary')),
@@ -910,8 +921,10 @@ async function collectNarrowDesktopMetrics(client) {
       workPanel: rect(document.querySelector('.work-panel')),
       editLayout: rect(document.querySelector('.edit-layout')),
       composition: rect(document.querySelector('.editor-composition-panel')),
-      inspector: rect(document.querySelector('.editor-inspector-panel')),
-      frameContentWidth: document.querySelector('.preview-workspace .phone-frame')?.clientWidth || 0,
+      drawerTrigger: rect(document.querySelector('.editor-navigator-drawer-trigger')),
+      drawerOpen: document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true',
+      inspector: rect(document.querySelector('.editor-properties-panel')),
+      frameContentWidth: document.querySelector('.preview-workspace .phone-frame .landing-page')?.clientWidth || 0,
       minIdentityWidth: Math.min(...[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy')].map(el => el.getBoundingClientRect().width)),
       inspectorGroupLabelHeights: [...document.querySelectorAll('.inspector-primary-heading, .inspector-disclosure > summary > strong')].map(el => el.getBoundingClientRect().height),
       duplicateInspectorNavigation: !!document.querySelector('.inspector-navigation'),
@@ -984,10 +997,13 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.pageSettings, metrics.innerWidth, 'desktop page settings entry');
+  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop right settings panel');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length >= 2, `desktop shell must keep two grid columns: ${metrics.shellGridColumns}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 3, `desktop shell must keep three grid columns: ${metrics.shellGridColumns}`);
   assertReferenceTracks(metrics, metrics.innerWidth);
+  assert(metrics.inspector.left >= metrics.preview.right - 3,
+    `right inspector must start where the centered canvas ends: ${JSON.stringify({canvas:metrics.preview, inspector:metrics.inspector})}`);
   assert(metrics.previewDirectChildren === 1 && metrics.previewFrameCount === 1,
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
@@ -1000,17 +1016,20 @@ function assertDesktop(metrics) {
 function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
-  const edit = metrics.workPanel?.width || metrics.left?.width || 0;
-  const expectedEdit = Math.min(660, Math.max(500, width * .42));
-  assert(Math.abs(edit - expectedEdit) <= 2,
-    `block-stack editor must preserve its width at ${width}px: ${JSON.stringify({edit,expectedEdit})}`);
-  assert(Math.abs(composition - expectedEdit) <= 2,
-    `a single editing stack must fill the left workbench: ${JSON.stringify({composition,expectedEdit})}`);
-  assert(inspector >= expectedEdit - 90 && inspector <= expectedEdit,
-    `selected settings must expand within their block instead of opening a separate column: ${JSON.stringify({edit,composition,inspector})}`);
+  const edit = metrics.workPanel?.width || 0;
+  const expectedList = width < 1280 ? 252 : 246;
+  assert(Math.abs(composition - expectedList) <= 3,
+    `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
+  assert(Math.abs(inspector - 340) <= 3,
+    `block properties must have a separate 340px column at ${width}px: ${JSON.stringify({inspector})}`);
+  assert(Math.abs(edit - (width < 1280 ? 0 : 246)) <= 3,
+    `collapsed laptop navigator must not consume the canvas: ${JSON.stringify({width,edit})}`);
 }
 
 function assertNarrowDesktop(metrics, width) {
+  // A laptop has a visible centered canvas and a right inspector; at 200%
+  // zoom, the same fine-pointer editor stacks into full-width sections.
+  const stacked = width < 900;
   assert(metrics.path === '/app', `narrow desktop editor route changed: ${metrics.path}`);
   assert(!metrics.mobile, 'narrow desktop unexpectedly entered mobile operations mode');
   assert(!metrics.fallback, 'narrow desktop rendered an error fallback');
@@ -1018,25 +1037,32 @@ function assertNarrowDesktop(metrics, width) {
   assert(metrics.documentScrollWidth <= width + 3, `narrow desktop document overflow: ${metrics.documentScrollWidth} > ${width}`);
   assertInsideViewport(metrics.shell, width, 'narrow desktop builder shell');
   assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
-  assertInsideViewport(metrics.workPanel, width, 'narrow desktop work panel');
-  assertInsideViewport(metrics.editLayout, width, 'narrow desktop edit layout');
   assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
-  assertInsideViewport(metrics.pageSettings, width, 'narrow desktop page settings entry');
-  assert(metrics.minIdentityWidth >= 60, `compact block names must have readable horizontal space at ${width}px: ${metrics.minIdentityWidth}`);
-  assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 30), `one Inspector group hierarchy must keep headings readable without a second navigator: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
-  assert(!metrics.cockpit, 'narrow desktop preview must not expose the removed conversion cockpit');
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (width >= 900 ? 2 : 1), `narrow desktop shell must stack into one grid column: ${metrics.shellGridColumns}`);
-  assert(metrics.workPanel?.width >= (width >= 900 ? 478 : width - 4), `narrow desktop work panel did not expand: ${metrics.workPanel?.width}px of ${width}px`);
-  assert(metrics.editLayout?.width >= (width >= 900 ? 478 : width - 48), `narrow desktop edit layout is still artificially capped: ${metrics.editLayout?.width}px of ${width}px`);
-  if (width >= 900) {
-    assertReferenceTracks(metrics, width);
-    assert(Math.abs(metrics.frameContentWidth - 390) <= 1, `single mobile preview content must stay 390px at ${width}px: ${metrics.frameContentWidth}px`);
-    assert(metrics.frame.left >= metrics.preview.left && metrics.frame.right <= width + 1,
-      `mobile preview must remain within its own canvas at ${width}px: ${JSON.stringify(metrics.frame)}`);
-    assert(Math.abs((metrics.preview.left + metrics.preview.right) / 2 - (metrics.frame.left + metrics.frame.right) / 2) <= 5,
-      `narrow desktop phone must be centered within the remaining stage at ${width}px: ${JSON.stringify(metrics.frame)}`);
-  }
+  assertInsideViewport(metrics.inspector, width, 'narrow desktop properties inspector');
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
+  if (!stacked) assertInsideViewport(metrics.drawerTrigger, width, 'laptop block navigator trigger');
+  assert(metrics.minIdentityWidth >= 60, `long Korean block names need space at ${width}px: ${metrics.minIdentityWidth}`);
+  assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 40),
+    `selected inspector headings must stay accessible: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
+  assert(!metrics.cockpit, 'narrow desktop preview must not expose removed conversion cockpit');
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (stacked ? 1 : 2),
+    `editor shell must use ${stacked ? 'stacked' : 'canvas + settings'} layout at ${width}px: ${metrics.shellGridColumns}`);
+  if (stacked) {
+    assert(metrics.composition?.width >= width - 6 && metrics.inspector?.width >= width - 6,
+      `zoomed desktop must keep full-width block and property editing areas: ${JSON.stringify({composition:metrics.composition,inspector:metrics.inspector})}`);
+    assert(metrics.inspector.top >= metrics.composition.top + 260,
+      `zoomed desktop properties must follow the block list, not overlay it: ${JSON.stringify({composition:metrics.composition,inspector:metrics.inspector})}`);
+  } else {
+    assertReferenceTracks(metrics, width);
+    assert(metrics.inspector.left >= metrics.preview.right - 2,
+      `narrow desktop settings must not overlap canvas at ${width}px`);
+  }
+  assert(Math.abs(metrics.frameContentWidth - 390) <= 1,
+    `narrow desktop real page must retain 390px default: ${metrics.frameContentWidth}`);
+  assert(metrics.frame.left >= metrics.preview.left - 2 && metrics.frame.right <= metrics.preview.right + 2,
+    `narrow desktop phone must remain in canvas at ${width}px: ${JSON.stringify(metrics.frame)}`);
+  assert(Math.abs((metrics.preview.left + metrics.preview.right) / 2 - (metrics.frame.left + metrics.frame.right) / 2) <= 5,
+    `narrow desktop phone must be centered at ${width}px: ${JSON.stringify(metrics.frame)}`);
 }
 
 function assertMobile(metrics, viewport) {
@@ -1675,7 +1701,9 @@ async function run() {
         const inspector = document.querySelector('.editor-inspector-panel');
         const design = inspector.querySelector('.hero-editor-design');
         const header = inspector.querySelector('.screen-order-v2-settings-header');
-        inspector.closest('.editor-composition-content').scrollTop += design.getBoundingClientRect().top - inspector.getBoundingClientRect().top - header.offsetHeight - 12;
+        const scroller = inspector.closest('.editor-properties-content');
+        if (!scroller || !design || !header) return [];
+        scroller.scrollTop += design.getBoundingClientRect().top - scroller.getBoundingClientRect().top - header.offsetHeight - 12;
         return [...design.querySelectorAll('.editor-segmented-v2')].map(group => {
           const buttons = [...group.querySelectorAll('button')];
           const boxes = buttons.map(button => button.getBoundingClientRect());
@@ -1760,7 +1788,7 @@ async function run() {
     // Independent navigator and Inspector scrolling, pinned page options.
     const inspectorScroll = await evaluate(client, `(() => {
       const settings = document.querySelector('#editor-block-settings-editor-hero');
-      const panel = settings?.closest('.editor-inspector-panel');
+      const panel = settings?.closest('.editor-properties-content');
       const composition = document.querySelector('.editor-composition-panel');
       const list = document.querySelector('.editor-composition-content');
       const workPanel = document.querySelector('.work-panel');
@@ -1809,17 +1837,18 @@ async function run() {
     assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
       && inspectorScroll.label?.includes('선택 항목 편집')
       && inspectorScroll.listRole === 'region' && inspectorScroll.listTabIndex === 0
-      && inspectorScroll.listLabel?.includes('블록 목록'),
+      && inspectorScroll.listLabel?.includes('블록 순서'),
       'D01 list and Inspector must remain keyboard-accessible regions: ' + JSON.stringify(inspectorScroll));
-    assert(inspectorScroll.inspectorOverflowY === 'visible'
+    assert(inspectorScroll.inspectorOverflowY === 'auto'
       && inspectorScroll.compositionOverflowY === 'hidden'
       && inspectorScroll.navigatorOverflowY === 'auto'
       && inspectorScroll.workOverflowY === 'hidden'
+      && inspectorScroll.inspectorScrollHeight > inspectorScroll.inspectorHeight
       && inspectorScroll.navigatorScrollHeight > inspectorScroll.navigatorHeight
-      && inspectorScroll.workScrollTop === 0 && inspectorScroll.inspectorScrollTop === 0
+      && inspectorScroll.workScrollTop === 0 && inspectorScroll.inspectorScrollTop > 0
       && inspectorScroll.navigatorScrollTop > 0 && inspectorScroll.independentScroll
       && inspectorScroll.footerPinned && inspectorScroll.innerOverflowY === 'visible',
-      'D01 one block-stack scroller must keep page settings pinned and prevent nested forms: ' + JSON.stringify(inspectorScroll));
+      'D01 independent block list and selected settings scrollers must preserve a pinned page-settings entry: ' + JSON.stringify(inspectorScroll));
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
@@ -1863,7 +1892,18 @@ async function run() {
       'D02 advanced anchor must close without dropping its value');
     // Fixed top-navigation blocks use a separate renderer and must share
     // the same disclosure placement and genuinely collapsed anchor controls.
+    // A deep settings scroll on one block must not carry over to the next.
+    const inspectorScrollBeforeSwitch = await evaluate(client, `(() => {
+      const scroller = document.querySelector('.editor-properties-content');
+      scroller.scrollTop = 240;
+      return scroller.scrollTop;
+    })()`);
+    assert(inspectorScrollBeforeSwitch > 100,
+      'scrollable inspector must allow editing deeper properties without moving the navigator');
     await clickSelector(client, '.topnav-fixed-card .fixed-composition-select');
+    await waitForBrowser(client,
+      `document.querySelector('.editor-properties-content')?.scrollTop <= 1`,
+      'changing block resets stale settings scroll position');
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')
         && document.querySelector('#editor-block-editor-topnav')?.dataset.selected === 'true'
@@ -1882,8 +1922,8 @@ async function run() {
     })()`);
     assert(fixedSelection.selectPressed === 'true' && !fixedSelection.duplicateEditButton
       && fixedSelection.rowEditors === 0
-      && !fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
-      'fixed selection must expand its real settings directly below the matching block row: ' + JSON.stringify(fixedSelection));
+      && fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
+      'fixed selection must keep its real settings in the independent right inspector: ' + JSON.stringify(fixedSelection));
     const fixedAdvancedState = await evaluate(client, `(() => {
       const details = document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings');
       const root = details?.closest('.block-editor-v2-content');
@@ -2067,17 +2107,17 @@ async function run() {
         title: document.querySelector('.screen-order-v2-settings-title h2')?.textContent,
         headingVisible: heading?.getClientRects().length > 0,
         panelWidth: panel?.getBoundingClientRect().width,
-        paneWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
+        paneWidth: document.querySelector('.editor-properties-panel').getBoundingClientRect().width,
         fixedVisible: document.querySelector('.screen-order-fixed-blocks').getClientRects().length > 0,
         addVisible: document.querySelector('.fixed-add-dock').getClientRects().length > 0,
         helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
       };
     })()`);
-    assert(stageTwoSettings.listVisible && !stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
+    assert(stageTwoSettings.listVisible && stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
       && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.headingVisible
       && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.paneWidth
       && stageTwoSettings.fixedVisible && stageTwoSettings.addVisible && stageTwoSettings.helperCopyRemoved,
-      'stage 2 must preserve the list and open an edited-title block directly in its stack: ' + JSON.stringify(stageTwoSettings));
+      'stage 2 must preserve the list and independently edit the selected title in its right inspector: ' + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
     await openBlockSettings(client, 'editor-hero');
     await focusSelector(client, '#editor-block-editor-hero .screen-order-v2-title-wrap');
@@ -2090,10 +2130,15 @@ async function run() {
       const item = document.querySelector('#editor-block-editor-hero');
       const row = getComputedStyle(item);
       const head = item.querySelector('.screen-order-v2-head').getBoundingClientRect();
+      const title = item.querySelector('.screen-order-v2-identity-copy strong').getBoundingClientRect();
+      const action = item.querySelector('.screen-order-v2-action').getBoundingClientRect();
       return {
         outerBorder: card.borderTopWidth, outerPadding: card.paddingTop,
         gap: list.rowGap, rowBorder: row.borderTopWidth, rowRadius: row.borderRadius,
         height: head.height,
+        titleHeight: title.height,
+        titleFitsRow: title.top >= head.top - 1 && title.bottom <= head.bottom + 1,
+        actionFitsRow: action.top >= head.top - 1 && action.bottom <= head.bottom + 1,
         titleWhiteSpace: getComputedStyle(item.querySelector('.screen-order-v2-identity-copy strong')).whiteSpace,
         chevrons: document.querySelectorAll('.screen-order-v2-chevron').length,
         visibilityInMenu: !item.querySelector('.screen-order-v2-visibility-button'),
@@ -2107,11 +2152,12 @@ async function run() {
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '0px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '0px' && stageOneList.height >= 54 && stageOneList.height <= 60
+      && stageOneList.rowRadius === '0px' && stageOneList.height >= 54 && stageOneList.height <= 82
+      && stageOneList.titleFitsRow && stageOneList.actionFitsRow && stageOneList.titleHeight > 0
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
       && stageOneList.actionCount === 1 && stageOneList.actions,
-      'inline editor stack must use readable compact rows and one reachable actions menu: ' + JSON.stringify(stageOneList));
+      'navigator rows must fit a two-line Korean title and retain a reachable actions menu: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
       && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
@@ -2158,6 +2204,16 @@ async function run() {
     // different ordinal identities, then undo to avoid affecting later QA.
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .text-editor-flow')`, 'text settings load directly without tabs');
+    // Content-first: the optional design disclosure can remember a prior open
+    // state, but it must be reachable before inspecting spacing controls.
+    const textDesignSummary = '#editor-block-settings-editor-text .text-editor-design > summary';
+    if (!(await evaluate(client,
+      `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`))) {
+      await clickSelector(client, textDesignSummary);
+      await waitForBrowser(client,
+        `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+        'optional text design disclosure opens from the selected inspector');
+    }
     const textFlow = await evaluate(client, `(() => {
       const panel = document.querySelector('#editor-block-settings-editor-text');
       return { tabs: panel.querySelectorAll('[role="tablist"]').length,
@@ -2185,7 +2241,6 @@ async function run() {
       throw new Error(error.message + ': ' + JSON.stringify(actual));
     });
     await capture(client, 'desktop-common-settings-spacing');
-    const textDesignSummary = '#editor-block-settings-editor-text .text-editor-design > summary';
     const textValues = await evaluate(client, `[...document.querySelectorAll('#editor-block-settings-editor-text textarea')].map((el) => el.value)`);
     await focusSelector(client, textDesignSummary);
     await pressKeyboardKey(client, 'Space');
@@ -2482,7 +2537,7 @@ async function run() {
         collapsed: cards.every((node) => node.querySelector('.page-option-expand')?.getAttribute('aria-expanded') === 'false'),
         shareControlsHidden: !document.querySelector('.share-position-control')?.getClientRects().length,
         rowWidth: document.querySelector('.page-global-options-card').getBoundingClientRect().width,
-        paneWidth: document.querySelector('.work-panel').getBoundingClientRect().width,
+        paneWidth: document.querySelector('.editor-properties-panel').getBoundingClientRect().width,
       };
     })()`);
     assert(stageThreePageSettings.pageEntrySelected && stageThreePageSettings.redundantTabs === 0
@@ -2963,33 +3018,37 @@ async function run() {
     const leftGeometry = await evaluate(client, `(() => {
       const rect = (el) => el?.getBoundingClientRect();
       const list = document.querySelector('.editor-composition-panel');
-      const inspector = document.querySelector('.editor-inspector-panel');
+      const inspector = document.querySelector('.editor-properties-content');
+      const properties = document.querySelector('.editor-properties-panel');
       const preview = document.querySelector('.preview-workspace');
       const phone = preview?.querySelector('.phone-frame');
-      const i = rect(inspector);
+      const style = inspector ? getComputedStyle(inspector) : null;
       return {
-        list: rect(list)?.width, inspector: i?.width,
-        inspectorInner: inspector?.clientWidth - parseFloat(getComputedStyle(inspector).paddingLeft)
-          - parseFloat(getComputedStyle(inspector).paddingRight),
-        inspectorPadding: getComputedStyle(inspector).paddingLeft,
-        compositionPadding: getComputedStyle(list).paddingLeft,
-        preview: rect(preview)?.width, phone: rect(phone)?.width,
+        list: rect(list)?.width,
+        properties: rect(properties)?.width,
+        inspectorInner: inspector?.clientWidth - parseFloat(style?.paddingLeft || '0')
+          - parseFloat(style?.paddingRight || '0'),
+        inspectorPadding: style?.paddingLeft,
+        preview: rect(preview)?.width,
+        phone: rect(phone)?.width,
         listSpills: (list?.scrollWidth || 0) > (list?.clientWidth || 0) + 2,
         inspectorSpills: (inspector?.scrollWidth || 0) > (inspector?.clientWidth || 0) + 2,
         editorScroll: getComputedStyle(document.querySelector('.work-panel')).overflowY,
-        inspectorScroll: getComputedStyle(inspector).overflowY,
+        inspectorScroll: style?.overflowY,
         navigatorScroll: getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
-        rightEdge: i?.right, previewLeft: rect(preview)?.left,
+        propertiesLeft: rect(properties)?.left, previewRight: rect(preview)?.right,
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
-      && leftGeometry.inspectorInner >= (desktopViewport.width <= 900 ? 300 : 340)
-      && leftGeometry.phone >= 392 && leftGeometry.preview >= 399
-      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'visible' && leftGeometry.navigatorScroll === 'auto'
+      && leftGeometry.inspectorInner >= 260
+      && Math.abs(leftGeometry.properties - 340) <= 3
+      && leftGeometry.phone >= 392 && leftGeometry.preview >= 500
+      && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
+      && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
-      && leftGeometry.rightEdge <= leftGeometry.previewLeft - 15
-      && Math.abs(leftGeometry.list - (desktopViewport.width <= 1190 ? 500 : Math.min(660, desktopViewport.width * .42))) <= 4,
-      'inline block settings must fit within their editor stack without clipping or overlapping the real phone: '
+      && leftGeometry.propertiesLeft >= leftGeometry.previewRight - 2
+      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 252 : 246)) <= 4,
+      'selected properties must remain readable in their own panel without covering the real mobile canvas: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
     const pageOptionsShellStyle = await evaluate(client, `(() => {
@@ -3031,7 +3090,7 @@ async function run() {
       && screenOrderShellStyle?.borderRadius === '0px', `screen order must retain a flat shell at every desktop width: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.background === 'rgba(0, 0, 0, 0)', `screen order shell must not introduce another filled card: ${JSON.stringify(screenOrderShellStyle)}`);
     assert(screenOrderShellStyle?.rowRadius === '0px' && screenOrderShellStyle?.rowBorder === '0px', `redesigned selection rows must retain their distinct shape at narrow widths: ${JSON.stringify(screenOrderShellStyle)}`);
-    assert(screenOrderShellStyle?.addBackground === 'rgb(246, 247, 249)', `reference full-width add action must keep its high-contrast navy primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
+    assert(screenOrderShellStyle?.addBackground === 'rgb(23, 89, 238)', `full-width block addition must retain the approved blue primary surface: ${JSON.stringify(screenOrderShellStyle)}`);
 
       if (desktopViewport.width === 900 || desktopViewport.width === 1024) {
         await clickSelector(client, '#editor-block-editor-form .screen-order-v2-head');
@@ -3538,12 +3597,13 @@ async function run() {
     // deep selection in place, and the page-settings footer stays visible.
     const longScroll = await evaluate(longPageClient, `(() => {
       const list = document.querySelector('.editor-composition-content');
-      const inspector = document.querySelector('.editor-inspector-panel');
+      const inspector = document.querySelector('.editor-properties-content');
       const composition = document.querySelector('.editor-composition-panel');
       const settings = document.querySelector('#editor-block-settings-editor-long-25 .block-editor-v2');
       const outer = document.querySelector('.work-panel');
       if (!list || !inspector || !composition || !settings || !outer) return null;
       const previousMinHeight = settings.style.minHeight;
+      const previousInspectorTop = inspector.scrollTop;
       const listBefore = list.scrollTop;
       let metrics;
       try {
@@ -3566,17 +3626,18 @@ async function run() {
         };
       } finally {
         settings.style.minHeight = previousMinHeight;
-        inspector.scrollTop = 0;
+        inspector.scrollTop = previousInspectorTop;
       }
       return metrics;
     })()`);
     assert(longScroll?.navigatorOverflowY === 'auto'
-      && longScroll.inspectorOverflowY === 'visible' && longScroll.workOverflowY === 'hidden'
-      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop === 0
+      && longScroll.inspectorOverflowY === 'auto' && longScroll.workOverflowY === 'hidden'
+      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop > 0
       && longScroll.independent && longScroll.footerVisible && longScroll.outerTop === 0,
-      '36-block page must use one stacked editor scroller without nested form scrolling: ' + JSON.stringify(longScroll));
+      '36-block page must preserve independent navigator and settings scroll positions: ' + JSON.stringify(longScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-1672');
     await setViewport(longPageClient, 900, 780, false);
+    await showBlockList(longPageClient);
     await waitForBrowser(longPageClient,
       "!!document.querySelector('.phone-frame #block-editor-long-25')",
       'narrow desktop retains 36-block mobile preview');
@@ -3588,7 +3649,7 @@ async function run() {
       '900px long page preserves 390px preview and inspector: ' + JSON.stringify(narrow));
     const narrowScroll = await evaluate(longPageClient, `(() => {
       const list = document.querySelector('.editor-composition-content');
-      const inspector = document.querySelector('.editor-inspector-panel');
+      const inspector = document.querySelector('.editor-properties-content');
       const footer = document.querySelector('.editor-composition-footer');
       const panel = document.querySelector('.editor-composition-panel');
       return {
@@ -3602,8 +3663,8 @@ async function run() {
     })()`);
     assert(narrowScroll.listHeight > 150 && narrowScroll.listScrollHeight > narrowScroll.listHeight
       && narrowScroll.listOverflowY === 'auto'
-      && narrowScroll.inspectorOverflowY === 'visible' && narrowScroll.footerPinned,
-      '900px long page keeps all expanded block controls reachable in one stack: ' + JSON.stringify(narrowScroll));
+      && narrowScroll.inspectorOverflowY === 'auto' && narrowScroll.footerPinned,
+      '900px long page keeps block navigator and inspector independently reachable: ' + JSON.stringify(narrowScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-900');
     // Shared SPA bootstrap requests AdSense and Pretendard even before a
     // block is edited; the CDP mock blocks both remote resources. This test
