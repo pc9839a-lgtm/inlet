@@ -2120,10 +2120,15 @@ async function run() {
       const item = document.querySelector('#editor-block-editor-hero');
       const row = getComputedStyle(item);
       const head = item.querySelector('.screen-order-v2-head').getBoundingClientRect();
+      const title = item.querySelector('.screen-order-v2-identity-copy strong').getBoundingClientRect();
+      const action = item.querySelector('.screen-order-v2-action').getBoundingClientRect();
       return {
         outerBorder: card.borderTopWidth, outerPadding: card.paddingTop,
         gap: list.rowGap, rowBorder: row.borderTopWidth, rowRadius: row.borderRadius,
         height: head.height,
+        titleHeight: title.height,
+        titleFitsRow: title.top >= head.top - 1 && title.bottom <= head.bottom + 1,
+        actionFitsRow: action.top >= head.top - 1 && action.bottom <= head.bottom + 1,
         titleWhiteSpace: getComputedStyle(item.querySelector('.screen-order-v2-identity-copy strong')).whiteSpace,
         chevrons: document.querySelectorAll('.screen-order-v2-chevron').length,
         visibilityInMenu: !item.querySelector('.screen-order-v2-visibility-button'),
@@ -2137,11 +2142,12 @@ async function run() {
     })()`);
     assert(stageOneList.outerBorder === '0px' && stageOneList.outerPadding === '0px'
       && stageOneList.gap === '0px' && stageOneList.rowBorder === '0px'
-      && stageOneList.rowRadius === '0px' && stageOneList.height >= 54 && stageOneList.height <= 60
+      && stageOneList.rowRadius === '0px' && stageOneList.height >= 54 && stageOneList.height <= 82
+      && stageOneList.titleFitsRow && stageOneList.actionFitsRow && stageOneList.titleHeight > 0
       && stageOneList.titleWhiteSpace === 'normal'
       && stageOneList.chevrons === 0 && stageOneList.visibilityInMenu
       && stageOneList.actionCount === 1 && stageOneList.actions,
-      'inline editor stack must use readable compact rows and one reachable actions menu: ' + JSON.stringify(stageOneList));
+      'navigator rows must fit a two-line Korean title and retain a reachable actions menu: ' + JSON.stringify(stageOneList));
     assert(stageOneList.panelWidth <= stageOneList.paneWidth + 1
       && stageOneList.layoutWidth <= stageOneList.panelWidth + 1,
       'editor controls must fit inside the desktop sidebar rather than being clipped: ' + JSON.stringify(stageOneList));
@@ -2188,6 +2194,16 @@ async function run() {
     // different ordinal identities, then undo to avoid affecting later QA.
     await clickSelector(client, '#editor-block-editor-text .screen-order-v2-head');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .text-editor-flow')`, 'text settings load directly without tabs');
+    // Content-first: the optional design disclosure can remember a prior open
+    // state, but it must be reachable before inspecting spacing controls.
+    const textDesignSummary = '#editor-block-settings-editor-text .text-editor-design > summary';
+    if (!(await evaluate(client,
+      `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`))) {
+      await clickSelector(client, textDesignSummary);
+      await waitForBrowser(client,
+        `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+        'optional text design disclosure opens from the selected inspector');
+    }
     const textFlow = await evaluate(client, `(() => {
       const panel = document.querySelector('#editor-block-settings-editor-text');
       return { tabs: panel.querySelectorAll('[role="tablist"]').length,
@@ -2215,7 +2231,6 @@ async function run() {
       throw new Error(error.message + ': ' + JSON.stringify(actual));
     });
     await capture(client, 'desktop-common-settings-spacing');
-    const textDesignSummary = '#editor-block-settings-editor-text .text-editor-design > summary';
     const textValues = await evaluate(client, `[...document.querySelectorAll('#editor-block-settings-editor-text textarea')].map((el) => el.value)`);
     await focusSelector(client, textDesignSummary);
     await pressKeyboardKey(client, 'Space');
