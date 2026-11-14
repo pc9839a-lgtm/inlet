@@ -1882,7 +1882,18 @@ async function run() {
       'D02 advanced anchor must close without dropping its value');
     // Fixed top-navigation blocks use a separate renderer and must share
     // the same disclosure placement and genuinely collapsed anchor controls.
+    // A deep settings scroll on one block must not carry over to the next.
+    const inspectorScrollBeforeSwitch = await evaluate(client, `(() => {
+      const scroller = document.querySelector('.editor-properties-content');
+      scroller.scrollTop = 240;
+      return scroller.scrollTop;
+    })()`);
+    assert(inspectorScrollBeforeSwitch > 100,
+      'scrollable inspector must allow editing deeper properties without moving the navigator');
     await clickSelector(client, '.topnav-fixed-card .fixed-composition-select');
+    await waitForBrowser(client,
+      `document.querySelector('.editor-properties-content')?.scrollTop <= 1`,
+      'changing block resets stale settings scroll position');
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')
         && document.querySelector('#editor-block-editor-topnav')?.dataset.selected === 'true'
