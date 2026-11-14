@@ -3033,8 +3033,8 @@ async function run() {
       && leftGeometry.inspectorInner >= 260
       && Math.abs(leftGeometry.properties - 340) <= 3
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 500
-      && leftGeometry.editorScroll === 'hidden' && leftGeometry.inspectorScroll === 'auto'
-      && leftGeometry.navigatorScroll === 'auto'
+      && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
+      && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
       && leftGeometry.propertiesLeft >= leftGeometry.previewRight - 2
       && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 252 : 246)) <= 4,
