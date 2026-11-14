@@ -953,6 +953,17 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await clickPointer(client, '.editor-block-switch-actions button[aria-label="이전 블록"]');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-hero')?.dataset.selected === 'true'`,
     'inspector previous selects the hero without a list scroll');
+  await focusSelector(client, '.editor-block-switch-actions button[aria-label="이전 블록"]');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-topnav')?.dataset.selected === 'true'
+      && document.activeElement === document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]')`,
+    'keyboard navigation crosses into the pinned top block and focuses its enabled next action');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-hero')?.dataset.selected === 'true'
+      && document.activeElement === document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]')`,
+    'keyboard navigation returns from pinned top to first content block without losing focus');
   await clickPointer(client, '.editor-block-switch-actions button[aria-label="다음 블록"]');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
     'inspector next returns to the text block');
