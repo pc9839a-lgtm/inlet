@@ -457,6 +457,12 @@ assert(blockSearch.includes("event.key === 'Escape' && query.trim()")
   && blockSearch.includes('navigate(activeIndex + 1)')
   && blockSearch.includes('Math.min(currentIndex, Math.max(0, matches.length - 1))'),
   'block search must clear before closing the laptop drawer and keep result navigation aligned with the counter');
+assert(layout.includes('const restoreSwitchFocus = (attempts = 5)')
+  && layout.includes("chooseBlock(id, { focusHeading: false })")
+  && layout.includes("chooseFixed(id, { focusHeading: false })")
+  && layout.includes("settings?.getAttribute('data-block-settings-id') !== id")
+  && layout.includes("(primary && !primary.disabled ? primary : fallback)?.focus({ preventScroll: true })"),
+  'previous/next navigation must focus the new inspector control without racing the remounted block title');
 assert(layout.includes('aria-controls="editor-composition-panel"')
   && layout.includes('aria-expanded={navigatorOpen}')
   && layout.includes("if (event.key === 'Escape' && navigatorOpen)")
