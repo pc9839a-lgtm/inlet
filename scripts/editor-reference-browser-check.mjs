@@ -83,6 +83,25 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       + JSON.stringify({ referenceWidth, visual }));
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
+  // On the 900px laptop drawer, Escape clears a search before it dismisses
+  // the drawer. Clearing a query must preserve the user's navigator context.
+  const laptopSearchInput = 'input[aria-label="블록 이름 검색"]';
+  await setInputValue(client, laptopSearchInput, '텍스트');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`,
+    'laptop search has one matching text block');
+  await focusSelector(client, laptopSearchInput);
+  await pressKeyboardKey(client, 'Escape');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-composition-search input')?.value === ''
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('.editor-composition-search input')`,
+    'first Escape clears block search while keeping the laptop list open and input focused');
+  await pressKeyboardKey(client, 'Escape');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
+      && document.activeElement === document.querySelector('.editor-navigator-drawer-trigger')`,
+    'second Escape closes the laptop block list and restores trigger focus');
   await setViewport(client, 1672, 941, false);
   // A real page-first workflow: selecting visible content edits the exact
   // existing field. Cancel must leave the staged and published page intact.
