@@ -87,16 +87,20 @@ function isRewritableText(contentType = '') {
     || type.includes('application/json');
 }
 
-function prepareHeaders(sourceHeaders) {
+function prepareHeaders(sourceHeaders, { publicCanonicalHost = false } = {}) {
   const headers = new Headers(sourceHeaders);
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.delete('etag');
-  // The Pages.dev content origin is intentionally noindex. Do not forward
-  // that origin-only X-Robots-Tag to the public pagero.kr/life canonical host.
-  // Article HTML retains its own index/noindex metadata, including noindex
-  // on continuation pages, so public SEO semantics remain page-specific.
-  headers.delete('X-Robots-Tag');
+  // Only pagero.kr is the public canonical LIFE host. Keep previews and
+  // www.pagero.kr/life noindex, even if the upstream omits its default header.
+  // The canonical host relies on each HTML page's own robots meta tag,
+  // including noindex on article continuation pages.
+  if (publicCanonicalHost) {
+    headers.delete('X-Robots-Tag');
+  } else {
+    headers.set('X-Robots-Tag', 'noindex, follow, noarchive');
+  }
   headers.set('X-Pagero-Life-Proxy', '1');
   headers.set('X-Pagero-Life-Upstream', 'life-production-alias');
   return headers;
@@ -150,7 +154,9 @@ export async function onRequest(context) {
     });
   }
 
-  const headers = prepareHeaders(upstreamResponse.headers);
+  const headers = prepareHeaders(upstreamResponse.headers, {
+    publicCanonicalHost: incoming.hostname.toLowerCase() === 'pagero.kr',
+  });
   const location = headers.get('location');
   if (location) headers.set('location', rewriteLifeLocation(location));
   const link = headers.get('link');
