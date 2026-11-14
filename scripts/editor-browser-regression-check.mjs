@@ -1027,6 +1027,9 @@ function assertReferenceTracks(metrics, width) {
 }
 
 function assertNarrowDesktop(metrics, width) {
+  // A laptop has a visible centered canvas and a right inspector; at 200%
+  // zoom, the same fine-pointer editor stacks into full-width sections.
+  const stacked = width < 900;
   assert(metrics.path === '/app', `narrow desktop editor route changed: ${metrics.path}`);
   assert(!metrics.mobile, 'narrow desktop unexpectedly entered mobile operations mode');
   assert(!metrics.fallback, 'narrow desktop rendered an error fallback');
@@ -1035,24 +1038,31 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.shell, width, 'narrow desktop builder shell');
   assertInsideViewport(metrics.left, width, 'narrow desktop left workspace');
   assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
-  assertInsideViewport(metrics.drawerTrigger, width, 'laptop block navigator trigger');
   assertInsideViewport(metrics.inspector, width, 'narrow desktop properties inspector');
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
+  if (!stacked) assertInsideViewport(metrics.drawerTrigger, width, 'laptop block navigator trigger');
   assert(metrics.minIdentityWidth >= 60, `long Korean block names need space at ${width}px: ${metrics.minIdentityWidth}`);
   assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 40),
     `selected inspector headings must stay accessible: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
   assert(!metrics.cockpit, 'narrow desktop preview must not expose removed conversion cockpit');
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 2,
-    `narrow desktop shell must keep preview and settings columns: ${metrics.shellGridColumns}`);
-  assertReferenceTracks(metrics, width);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\\s+/).length === (stacked ? 1 : 2),
+    `editor shell must use ${stacked ? 'stacked' : 'canvas + settings'} layout at ${width}px: ${metrics.shellGridColumns}`);
+  if (stacked) {
+    assert(metrics.composition?.width >= width - 6 && metrics.inspector?.width >= width - 6,
+      `zoomed desktop must keep full-width block and property editing areas: ${JSON.stringify({composition:metrics.composition,inspector:metrics.inspector})}`);
+    assert(metrics.inspector.top >= metrics.composition.top + 260,
+      `zoomed desktop properties must follow the block list, not overlay it: ${JSON.stringify({composition:metrics.composition,inspector:metrics.inspector})}`);
+  } else {
+    assertReferenceTracks(metrics, width);
+    assert(metrics.inspector.left >= metrics.preview.right - 2,
+      `narrow desktop settings must not overlap canvas at ${width}px`);
+  }
   assert(Math.abs(metrics.frameContentWidth - 390) <= 1,
     `narrow desktop real page must retain 390px default: ${metrics.frameContentWidth}`);
   assert(metrics.frame.left >= metrics.preview.left - 2 && metrics.frame.right <= metrics.preview.right + 2,
     `narrow desktop phone must remain in canvas at ${width}px: ${JSON.stringify(metrics.frame)}`);
   assert(Math.abs((metrics.preview.left + metrics.preview.right) / 2 - (metrics.frame.left + metrics.frame.right) / 2) <= 5,
     `narrow desktop phone must be centered at ${width}px: ${JSON.stringify(metrics.frame)}`);
-  assert(metrics.inspector.left >= metrics.preview.right - 2,
-    `narrow desktop settings must not overlap canvas at ${width}px`);
 }
 
 function assertMobile(metrics, viewport) {
