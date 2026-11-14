@@ -4,6 +4,7 @@ on:
     paths:
       - 'public/guide/**'
       - 'public/tools/lead-calculator/index.html'
+      - 'public/tools/form-planner/index.html'
       - 'public/sitemap.xml'
       - 'functions/lib/pageroRootSeo.js'
       - 'functions/_middleware.js'
@@ -13,6 +14,8 @@ on:
     branches: [main]
     paths:
       - 'public/guide/**'
+      - 'public/tools/lead-calculator/index.html'
+      - 'public/tools/form-planner/index.html'
       - 'public/sitemap.xml'
       - 'functions/lib/pageroRootSeo.js'
       - 'scripts/pagero-guide-hub-seo-quality-check.mjs'
