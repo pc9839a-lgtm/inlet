@@ -13,6 +13,9 @@ export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selec
     query,
     getBlockLabel: (block) => META[block.s?.widgetMode === 'youtube' ? 'youtube' : block.type]?.label || block.type,
   }), [blocks, fixedDescriptors, query]);
+  // Editing a block can reduce the matches without changing the query.
+  // Keep Enter, the counter and previous/next on the same visible result.
+  const activeIndex = Math.min(currentIndex, Math.max(0, matches.length - 1));
 
   // Locate a row inside the existing independent block-list scroller, without
   // resetting the selected Inspector or changing saved page order.
@@ -65,19 +68,26 @@ export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selec
         value={query}
         onChange={changeQuery}
         onKeyDown={(event) => {
-          if (event.key === 'Enter') { event.preventDefault(); navigate(currentIndex); }
-          if (event.key === 'Escape') { event.preventDefault(); setQuery(''); setCurrentIndex(0); }
+          if (event.key === 'Enter') { event.preventDefault(); navigate(activeIndex); }
+          if (event.key === 'Escape' && query.trim()) {
+            // First Escape clears the query, without also closing the laptop drawer.
+            // A second Escape bubbles to the drawer's own keyboard handler.
+            event.preventDefault();
+            event.stopPropagation();
+            setQuery('');
+            setCurrentIndex(0);
+          }
         }}
       />
       {query.trim() && (
         <>
           <output className="editor-search-count" aria-live="polite">
-            {matches.length ? `${Math.min(currentIndex, matches.length - 1) + 1}/${matches.length}` : '없음'}
+            {matches.length ? `${activeIndex + 1}/${matches.length}` : '없음'}
           </output>
-          <button type="button" aria-label="이전 검색 결과" title="이전 검색 결과" disabled={!matches.length} onClick={() => navigate(currentIndex - 1)}>
+          <button type="button" aria-label="이전 검색 결과" title="이전 검색 결과" disabled={!matches.length} onClick={() => navigate(activeIndex - 1)}>
             <ChevronUp size={16} aria-hidden="true" />
           </button>
-          <button type="button" aria-label="다음 검색 결과" title="다음 검색 결과" disabled={!matches.length} onClick={() => navigate(currentIndex + 1)}>
+          <button type="button" aria-label="다음 검색 결과" title="다음 검색 결과" disabled={!matches.length} onClick={() => navigate(activeIndex + 1)}>
             <ChevronDown size={16} aria-hidden="true" />
           </button>
         </>
