@@ -479,6 +479,9 @@ assert(layout.includes("window.matchMedia('(min-width: 900px) and (max-width: 12
   && layout.includes('panel?.contains(event.target) || trigger?.contains(event.target)')
   && layout.includes('panel?.contains(document.activeElement)'),
   'laptop block drawer must dismiss on outside pointers without swallowing real canvas actions or trapping hidden focus');
+assert(layout.includes("event.target?.closest?.('[data-composition-action-menu=\"true\"]')")
+  && compactRowActions.includes("data-composition-action-menu={instance ? undefined : 'true'}"),
+  'body-portaled block-list action menus must count as inside the laptop navigator, unlike inspector menus');
 assert(layout.includes("?.scrollTo({ top: 0, behavior: 'instant' })")
   && layout.includes('}, [selectedBlockId]);'),
   'changing selected blocks must reset the independently scrolling property inspector');
