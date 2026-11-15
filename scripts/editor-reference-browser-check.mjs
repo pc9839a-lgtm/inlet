@@ -163,7 +163,16 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await clickPointer(client, '.phone-frame #block-editor-form h2');
   await waitForBrowser(client,
     `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-basic-grid .field-title input')`,
-    'form headline selects matching existing inspector title field');
+    'form headline selects matching existing inspector title field').catch(async (error) => {
+    const actual = await evaluate(client, `(() => ({
+      selectedForm: document.querySelector('#editor-block-editor-form')?.dataset.selected,
+      inspectorForm: !!document.querySelector('#editor-block-settings-editor-form'),
+      formTitleInput: !!document.querySelector('#editor-block-settings-editor-form .form-basic-grid .field-title input'),
+      focused: document.activeElement?.outerHTML?.slice(0, 280),
+      pageOptions: !!document.querySelector('.editor-page-options-stack'),
+    }))()`);
+    throw new Error(error.message + ': ' + JSON.stringify(actual));
+  });
   await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-form .editor-preview-submit-edit')`,
     'selected form exposes its button-copy editing shortcut');
   await clickPointer(client, '.phone-frame #block-editor-form .editor-preview-submit-edit');
