@@ -7,6 +7,7 @@ import { findBlockNavigationMatches } from './blockNavigatorSearchModel.js';
 export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selectedId = '', onSelect, onRevealSelected }) {
   const [query, setQuery] = React.useState('');
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const composingRef = React.useRef(false);
   const matches = React.useMemo(() => findBlockNavigationMatches({
     blocks,
     fixedDescriptors,
@@ -67,7 +68,12 @@ export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selec
         aria-label="블록 이름 검색"
         value={query}
         onChange={changeQuery}
+        onCompositionStart={() => { composingRef.current = true; }}
+        onCompositionEnd={() => { composingRef.current = false; }}
         onKeyDown={(event) => {
+          // Enter commits a Korean IME syllable; Escape can cancel its
+          // composition. Neither should navigate or clear search mid-input.
+          if (composingRef.current || event.nativeEvent?.isComposing || event.keyCode === 229) return;
           if (event.key === 'Enter') { event.preventDefault(); navigate(activeIndex); }
           if (event.key === 'Escape' && query.trim()) {
             // First Escape clears the query, without also closing the laptop drawer.
