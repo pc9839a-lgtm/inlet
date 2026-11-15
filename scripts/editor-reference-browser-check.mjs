@@ -102,8 +102,43 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
       && document.activeElement === document.querySelector('.editor-navigator-drawer-trigger')`,
     'second Escape closes the laptop block list and restores trigger focus');
-  const selectedBeforePageOptions = await evaluate(client,
-    `document.querySelector('.editor-composition-content [data-selected="true"]')?.id || ''`);
+  await setViewport(client, 1672, 941, false);
+  // A real page-first workflow: selecting visible content edits the exact
+  // existing field. Cancel must leave the staged and published page intact.
+  await focusSelector(client, '.phone-frame #block-editor-hero h1.editor-inline-text-trigger');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `!!document.querySelector('.phone-frame #block-editor-hero textarea[aria-label="히어로 제목 바로 수정"]')`,
+    'hero headline opens an in-canvas editor without switching page layout');
+  await capture(client, 'hero-headline-inline-edit');
+  await clickPointer(client, '.phone-frame #block-editor-hero .editor-inline-text-actions button:first-child');
+  await waitForBrowser(client,
+    `!document.querySelector('.phone-frame #block-editor-hero textarea[aria-label="히어로 제목 바로 수정"]')`,
+    'hero cancel returns to its rendered headline');
+  await clickPointer(client, '.phone-frame #block-editor-form h2');
+  await waitForBrowser(client,
+    `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-basic-grid .field-title input')`,
+    'form headline selects matching existing inspector title field').catch(async (error) => {
+    const actual = await evaluate(client, `(() => ({
+      selectedForm: document.querySelector('#editor-block-editor-form')?.dataset.selected,
+      inspectorForm: !!document.querySelector('#editor-block-settings-editor-form'),
+      formTitleInput: !!document.querySelector('#editor-block-settings-editor-form .form-basic-grid .field-title input'),
+      focused: document.activeElement?.outerHTML?.slice(0, 280),
+      pageOptions: !!document.querySelector('.editor-page-options-stack'),
+    }))()`);
+    throw new Error(error.message + ': ' + JSON.stringify(actual));
+  });
+  await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-form .editor-preview-submit-edit')`,
+    'selected form exposes its button-copy editing shortcut');
+  await clickPointer(client, '.phone-frame #block-editor-form .editor-preview-submit-edit');
+  await waitForBrowser(client,
+    `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-editor-flow > .field-title input')`,
+    'form submit-copy shortcut focuses exact existing field, never submits');
+  assert(apiState.saveCount === 0, 'preview editing shortcuts do not publish pages or persist test leads');
+  await capture(client, 'form-direct-title-and-submit-edit');
+  // Page-settings keyboard access is tested after the direct form shortcuts,
+  // so clearing selection cannot change the starting state of those checks.
+  await setViewport(client, 900, 941, false);
   // Explicit page-settings selection closes the same laptop drawer. The
   // focused footer button becomes hidden, so focus must move to the real
   // page-options heading in the persistent right inspector.
@@ -138,49 +173,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   });
   assert(apiState.saveCount === 0, 'opening page options must not save or publish the page');
   await setViewport(client, 1672, 941, false);
-  // This accessibility test must not change the fixture's original selected
-  // block before the subsequent preview/edit flows begin.
-  if (selectedBeforePageOptions) {
-    await clickNavigatorRow(`#${selectedBeforePageOptions} .screen-order-v2-head`);
-    await waitForBrowser(client,
-      `document.getElementById(${JSON.stringify(selectedBeforePageOptions)})?.dataset.selected === 'true'`,
-      'page-options keyboard test restores the original selected block');
-  } else {
-    await clickNavigatorRow('.editor-page-settings-button');
-  }
-  // A real page-first workflow: selecting visible content edits the exact
-  // existing field. Cancel must leave the staged and published page intact.
-  await focusSelector(client, '.phone-frame #block-editor-hero h1.editor-inline-text-trigger');
-  await pressKeyboardKey(client, 'Enter');
-  await waitForBrowser(client,
-    `!!document.querySelector('.phone-frame #block-editor-hero textarea[aria-label="히어로 제목 바로 수정"]')`,
-    'hero headline opens an in-canvas editor without switching page layout');
-  await capture(client, 'hero-headline-inline-edit');
-  await clickPointer(client, '.phone-frame #block-editor-hero .editor-inline-text-actions button:first-child');
-  await waitForBrowser(client,
-    `!document.querySelector('.phone-frame #block-editor-hero textarea[aria-label="히어로 제목 바로 수정"]')`,
-    'hero cancel returns to its rendered headline');
-  await clickPointer(client, '.phone-frame #block-editor-form h2');
-  await waitForBrowser(client,
-    `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-basic-grid .field-title input')`,
-    'form headline selects matching existing inspector title field').catch(async (error) => {
-    const actual = await evaluate(client, `(() => ({
-      selectedForm: document.querySelector('#editor-block-editor-form')?.dataset.selected,
-      inspectorForm: !!document.querySelector('#editor-block-settings-editor-form'),
-      formTitleInput: !!document.querySelector('#editor-block-settings-editor-form .form-basic-grid .field-title input'),
-      focused: document.activeElement?.outerHTML?.slice(0, 280),
-      pageOptions: !!document.querySelector('.editor-page-options-stack'),
-    }))()`);
-    throw new Error(error.message + ': ' + JSON.stringify(actual));
-  });
-  await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-form .editor-preview-submit-edit')`,
-    'selected form exposes its button-copy editing shortcut');
-  await clickPointer(client, '.phone-frame #block-editor-form .editor-preview-submit-edit');
-  await waitForBrowser(client,
-    `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-editor-flow > .field-title input')`,
-    'form submit-copy shortcut focuses exact existing field, never submits');
-  assert(apiState.saveCount === 0, 'preview editing shortcuts do not publish pages or persist test leads');
-  await capture(client, 'form-direct-title-and-submit-edit');
+
   // A visual redesign must change the *first visible task*, not just CSS
   // tokens. Verify real editor settings and capture each of four block types.
   for (const [id, heading, primarySelector, advancedSelector] of [
