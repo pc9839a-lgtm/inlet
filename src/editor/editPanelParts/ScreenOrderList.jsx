@@ -31,6 +31,7 @@ export function ScreenOrderList(props) {
             canMoveUp={selectedIndex > 0} canMoveDown={selectedIndex < props.normalBlocks.length - 1}
             onMoveUp={movement.moveUp}
             onMoveDown={movement.moveDown}
+            onToggleVisible={() => props.toggleVisible(selectedBlock.id)}
             onDuplicate={() => props.duplicateBlock(selectedBlock.id)} onRemove={() => props.removeBlock(selectedBlock.id)} />}
         />
       )}
