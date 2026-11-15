@@ -166,10 +166,19 @@ export function EditPanelLayout({
     else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
     setSection('options');
     setNavigatorOpen(false);
-    requestAnimationFrame(() => {
-      document.querySelector('.canvas-editor-shell .editor-properties-content')
-        ?.scrollTo({ top: 0, behavior: 'instant' });
+    // A laptop navigator hides after selection. Move keyboard focus into the
+    // real page inspector instead of leaving it inside the hidden drawer.
+    const focusPageHeading = (attempts = 5) => requestAnimationFrame(() => {
+      const inspector = document.querySelector('.canvas-editor-shell .editor-properties-content');
+      const heading = inspector?.querySelector('[data-editor-section="options"] .editor-page-options-heading h2');
+      if (!heading) {
+        if (attempts > 0) focusPageHeading(attempts - 1);
+        return;
+      }
+      inspector.scrollTo({ top: 0, behavior: 'instant' });
+      heading.focus({ preventScroll: true });
     });
+    focusPageHeading();
   };
 
   const pageTheme = stylePanelProps?.stagedTheme || pageGlobalOptionsProps.page.theme;
@@ -311,7 +320,7 @@ export function EditPanelLayout({
                 <div className="editor-page-options-stack">
                   <header className="editor-page-options-heading">
                     <span className="editor-panel-kicker">페이지 전체</span>
-                    <h2>전체 디자인과 설정</h2>
+                    <h2 tabIndex={-1}>전체 디자인과 설정</h2>
                   </header>
                   {stylePanelProps && (
                     <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
