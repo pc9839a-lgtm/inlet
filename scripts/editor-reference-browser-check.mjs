@@ -112,6 +112,30 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
     'interacting inside the block drawer does not dismiss it');
+  // Block-row actions are portaled to document.body. They still belong to
+  // the open laptop navigator: hiding and restoring a block must not close
+  // the drawer or strand keyboard focus inside a hidden menu.
+  const laptopHeroMore = '#editor-block-editor-hero .screen-order-v2-more';
+  await clickPointer(client, laptopHeroMore);
+  await waitForBrowser(client,
+    `!!document.querySelector('[data-composition-action-menu="true"] [role="switch"][aria-checked="true"]')`,
+    'laptop block-row action menu opens in a portal owned by the block list');
+  await clickPointer(client, '[data-composition-action-menu="true"] [role="switch"]');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-hero')?.classList.contains('is-hidden')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('#editor-block-editor-hero .screen-order-v2-more')`,
+    'hiding a block through the portal keeps laptop block list open and trigger focused');
+  await clickPointer(client, laptopHeroMore);
+  await waitForBrowser(client,
+    `!!document.querySelector('[data-composition-action-menu="true"] [role="switch"][aria-checked="false"]')`,
+    'hidden block can reopen its action menu without reopening the drawer');
+  await clickPointer(client, '[data-composition-action-menu="true"] [role="switch"]');
+  await waitForBrowser(client,
+    `!document.querySelector('#editor-block-editor-hero')?.classList.contains('is-hidden')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('#editor-block-editor-hero .screen-order-v2-more')`,
+    'restoring a block through the portal preserves the open laptop navigator');
   await clickPointer(client, '.editor-properties-heading');
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
