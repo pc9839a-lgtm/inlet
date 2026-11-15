@@ -457,6 +457,11 @@ assert(blockSearch.includes("event.key === 'Escape' && query.trim()")
   && blockSearch.includes('navigate(activeIndex + 1)')
   && blockSearch.includes('Math.min(currentIndex, Math.max(0, matches.length - 1))'),
   'block search must clear before closing the laptop drawer and keep result navigation aligned with the counter');
+assert(blockSearch.includes('const composingRef = React.useRef(false)')
+  && blockSearch.includes('onCompositionStart={() => { composingRef.current = true; }}')
+  && blockSearch.includes('onCompositionEnd={() => { composingRef.current = false; }}')
+  && blockSearch.includes('composingRef.current || event.nativeEvent?.isComposing || event.keyCode === 229'),
+  'Korean IME composition must not trigger Enter result navigation or Escape search clearing');
 assert(layout.includes('const restoreSwitchFocus = (attempts = 5)')
   && layout.includes("chooseBlock(id, { focusHeading: false })")
   && layout.includes("chooseFixed(id, { focusHeading: false })")
