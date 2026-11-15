@@ -136,6 +136,27 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
     'interacting inside the block drawer does not dismiss it');
+  // The add-block dialog is also portaled to body. A gallery interaction must
+  // not hide its originating laptop drawer: closing the dialog restores focus
+  // to the original add button, which must remain visible and operable.
+  await clickPointer(client, '.editor-composition-heading .add-toggle');
+  await waitForBrowser(client,
+    `!!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'laptop add-block gallery opens without closing its originating drawer');
+  await clickPointer(client, '.editor-gallery-dialog-head h2');
+  await waitForBrowser(client,
+    `!!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'pointer interactions inside portaled gallery preserve laptop drawer');
+  await clickPointer(client, '.editor-gallery-close');
+  await waitForBrowser(client,
+    `!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('.editor-composition-heading .add-toggle')
+      && !!document.activeElement.getClientRects().length`,
+    'closing laptop gallery restores focus to visible block-add button');
+  assert(apiState.saveCount === 0, 'laptop gallery open/close must not save or publish');
   // Block-row actions are portaled to document.body. They still belong to
   // the open laptop navigator: hiding and restoring a block must not close
   // the drawer or strand keyboard focus inside a hidden menu.
