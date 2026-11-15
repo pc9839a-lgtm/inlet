@@ -144,6 +144,40 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     `!!document.querySelector('.editor-gallery-dialog')
       && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
     'laptop add-block gallery opens without closing its originating drawer');
+  const gallerySearch = 'input[aria-label="추가할 블록 검색"]';
+  await setInputValue(client, gallerySearch, '문의');
+  await focusSelector(client, gallerySearch);
+  const galleryImeEscape = await evaluate(client, `(() => {
+    const input = document.querySelector('input[aria-label="추가할 블록 검색"]');
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '문' }));
+    const plain = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true });
+    const flagged = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', isComposing: true, bubbles: true, cancelable: true });
+    input.dispatchEvent(plain);
+    input.dispatchEvent(flagged);
+    const remainedOpen = !!document.querySelector('.editor-gallery-dialog');
+    input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '문의' }));
+    return { plainPrevented: plain.defaultPrevented,
+      flaggedPrevented: flagged.defaultPrevented, remainedOpen };
+  })()`);
+  await waitForBrowser(client,
+    `document.querySelector('input[aria-label="추가할 블록 검색"]')?.value === '문의'
+      && !!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('input[aria-label="추가할 블록 검색"]')`,
+    'Korean IME Escape keeps gallery search, dialog, laptop drawer and keyboard focus intact')
+    .catch(async (error) => {
+      const state = await evaluate(client, `(() => ({
+        inputValue: document.querySelector('input[aria-label="추가할 블록 검색"]')?.value ?? null,
+        galleryOpen: !!document.querySelector('.editor-gallery-dialog'),
+        drawerExpanded: document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded'),
+        activeElement: document.activeElement?.outerHTML?.slice(0, 280) ?? null,
+      }))()`);
+      throw new Error(error.message + ' ' + JSON.stringify({ state, galleryImeEscape }));
+    });
+  assert(galleryImeEscape.remainedOpen && !galleryImeEscape.plainPrevented && !galleryImeEscape.flaggedPrevented,
+    'IME Escape must reach composition without dismissing gallery: ' + JSON.stringify(galleryImeEscape));
   await clickPointer(client, '.editor-gallery-dialog-head h2');
   await waitForBrowser(client,
     `!!document.querySelector('.editor-gallery-dialog')
@@ -156,6 +190,16 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && document.activeElement === document.querySelector('.editor-composition-heading .add-toggle')
       && !!document.activeElement.getClientRects().length`,
     'closing laptop gallery restores focus to visible block-add button');
+  await clickPointer(client, '.editor-composition-heading .add-toggle');
+  await waitForBrowser(client, `!!document.querySelector('.editor-gallery-dialog')`,
+    'laptop gallery can reopen for ordinary Escape closing');
+  await focusSelector(client, 'input[aria-label="추가할 블록 검색"]');
+  await pressKeyboardKey(client, 'Escape');
+  await waitForBrowser(client,
+    `!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('.editor-composition-heading .add-toggle')`,
+    'ordinary Escape closes only gallery while preserving laptop drawer and visible add-button focus');
   assert(apiState.saveCount === 0, 'laptop gallery open/close must not save or publish');
   // Block-row actions are portaled to document.body. They still belong to
   // the open laptop navigator: hiding and restoring a block must not close

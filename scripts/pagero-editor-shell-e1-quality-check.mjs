@@ -202,6 +202,7 @@ const leftPanel = await readFile('src/screens/workspace/WorkspaceLeftPanel.jsx',
 const workspaceScreen = await readFile('src/screens/WorkspaceEditorScreen.jsx', 'utf8');
 const operationsWorkspaceCss = await readFile('src/screens/workspace/OperationsWorkspace.css', 'utf8');
 const addDockCss = await readFile('src/styles/editor-widget-add-dock.css', 'utf8');
+const addBlockDock = await readFile('src/editor/editPanelParts/AddBlockDock.jsx', 'utf8');
 const previewPaneCss = await readFile('src/screens/workspace/WorkspacePreviewPane.css', 'utf8');
 const previewSelectionPane = await readFile('src/screens/workspace/WorkspacePreviewPane.jsx', 'utf8');
 const newPreviewHook = await readFile('src/runtime/usePreviewWindow.js', 'utf8');
@@ -411,6 +412,12 @@ assert(addDockCss.includes('.editor-gallery-backdrop')
   && addDockCss.includes('.editor-gallery-dialog-scroll')
   && !css.includes('.fixed-add-dock'),
   'block creation must use the accessible visual gallery outside the narrow navigator');
+assert(addBlockDock.includes('const composingRef = useRef(false)')
+  && addBlockDock.includes('composingRef.current || event.isComposing || event.keyCode === 229')
+  && addBlockDock.includes('onCompositionStartCapture={() => { composingRef.current = true; }}')
+  && addBlockDock.includes('onCompositionEndCapture={() => { composingRef.current = false; }}')
+  && addBlockDock.includes("if (event.key === 'Escape') event.stopPropagation();"),
+  'block-gallery Escape must not dismiss IME composition or bubble through its portal to the laptop drawer');
 assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;')
   && css.includes('overflow: visible !important;')
   && editPanelLayoutCss.includes('@media (max-width: 899px)'),
