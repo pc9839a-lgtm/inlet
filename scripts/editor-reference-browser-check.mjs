@@ -847,6 +847,34 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`,
     'footer is independently searchable');
   await focusSelector(client, searchInput);
+  // Committing/cancelling a Korean IME composition must never be mistaken
+  // for selecting a search result or clearing the active search term.
+  const imeShortcuts = await evaluate(client, `(() => {
+    const input = document.querySelector('input[aria-label="블록 이름 검색"]');
+    const composingEnter = new KeyboardEvent('keydown',
+      { key: 'Enter', code: 'Enter', isComposing: true, bubbles: true, cancelable: true });
+    const composingEscape = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', isComposing: true, bubbles: true, cancelable: true });
+    input.dispatchEvent(composingEnter);
+    input.dispatchEvent(composingEscape);
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '푸' }));
+    const unflaggedEnter = new KeyboardEvent('keydown',
+      { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true });
+    input.dispatchEvent(unflaggedEnter);
+    input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '푸터' }));
+    return {
+      enterPrevented: composingEnter.defaultPrevented,
+      escapePrevented: composingEscape.defaultPrevented,
+      unflaggedPrevented: unflaggedEnter.defaultPrevented,
+    };
+  })()`);
+  await waitForBrowser(client,
+    `document.querySelector('input[aria-label="블록 이름 검색"]')?.value === '푸터'
+      && document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'
+      && document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
+    'composing Korean search leaves query, matches and selected editor unchanged');
+  assert(!imeShortcuts.enterPrevented && !imeShortcuts.escapePrevented && !imeShortcuts.unflaggedPrevented,
+    'Korean IME key events must remain available for the composition system: ' + JSON.stringify(imeShortcuts));
   await pressKeyboardKey(client, 'Enter');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-footer')?.dataset.selected === 'true'
     && !!document.querySelector('#editor-block-settings-editor-footer')`,
