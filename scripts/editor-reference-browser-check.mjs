@@ -263,6 +263,34 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     }
   }
   await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
+  // The inspector's own "more" menu must invoke the same visibility action
+  // as the left block list. An unbound switch used to look interactive but
+  // silently left the block visible in the actual page draft.
+  const inspectorTextMore = '#editor-selection-panel .screen-order-v2-more';
+  const inspectorTextVisibility = '#screen-order-actions-editor-text-inspector [role="switch"]';
+  await clickPointer(client, inspectorTextMore);
+  await waitForBrowser(client,
+    `document.querySelector('${inspectorTextVisibility}')?.getAttribute('aria-checked') === 'true'`,
+    'inspector action menu exposes the selected visible text block');
+  await clickPointer(client, inspectorTextVisibility);
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-text')?.classList.contains('is-hidden')
+      && !!document.querySelector('#editor-selection-panel .screen-order-settings-hidden')
+      && !!document.querySelector('#editor-block-settings-editor-text')
+      && document.querySelector('${inspectorTextMore}')?.getAttribute('aria-expanded') === 'false'`,
+    'inspector visibility action hides the real block while keeping its editor selected');
+  await clickPointer(client, inspectorTextMore);
+  await waitForBrowser(client,
+    `document.querySelector('${inspectorTextVisibility}')?.getAttribute('aria-checked') === 'false'`,
+    'inspector menu reflects the newly hidden block');
+  await clickPointer(client, inspectorTextVisibility);
+  await waitForBrowser(client,
+    `!document.querySelector('#editor-block-editor-text')?.classList.contains('is-hidden')
+      && !document.querySelector('#editor-selection-panel .screen-order-settings-hidden')
+      && !!document.querySelector('#editor-block-settings-editor-text')
+      && document.querySelector('${inspectorTextMore}')?.getAttribute('aria-expanded') === 'false'`,
+    'inspector visibility switch restores the block and real settings state');
+  assert(apiState.saveCount === 0, 'inspector visibility switch must not automatically save or publish');
   await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
   const optionalText = await evaluate(client, `(() => {
     const panel = document.querySelector('#editor-block-settings-editor-text');
