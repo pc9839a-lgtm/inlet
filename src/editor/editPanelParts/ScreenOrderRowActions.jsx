@@ -157,6 +157,9 @@ export function ScreenOrderRowActions({
       ref={menuRef}
       id={menuId}
       className="screen-order-v2-menu"
+      // The list drawer is an overlay on laptops, but this menu is portaled to
+      // body. Mark list-owned menus so their actions count as inside clicks.
+      data-composition-action-menu={instance ? undefined : 'true'}
       role="group"
       aria-label={`${meta.label} 작업`}
       onClick={stop}
