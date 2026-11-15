@@ -91,6 +91,30 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     `document.querySelector('.editor-search-count')?.textContent.includes('/')`,
     'laptop search provides an active result counter');
   await focusSelector(client, laptopSearchInput);
+  // On laptops, an unflagged Escape during a Korean IME composition used to
+  // bubble from the search input and close the *parent* drawer, even though
+  // the input itself correctly left the search query untouched.
+  const laptopImeEscape = await evaluate(client, `(() => {
+    const input = document.querySelector('input[aria-label="블록 이름 검색"]');
+    input.dispatchEvent(new CompositionEvent('compositionstart',
+      { bubbles: true, data: '텍' }));
+    const plain = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true });
+    const flagged = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', isComposing: true, bubbles: true, cancelable: true });
+    input.dispatchEvent(plain);
+    input.dispatchEvent(flagged);
+    input.dispatchEvent(new CompositionEvent('compositionend',
+      { bubbles: true, data: '텍스트' }));
+    return { plainPrevented: plain.defaultPrevented, flaggedPrevented: flagged.defaultPrevented };
+  })()`);
+  await waitForBrowser(client,
+    `document.querySelector('.editor-composition-search input')?.value === '텍스트'
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('.editor-composition-search input')`,
+    'Korean IME Escape cancels composition without closing the laptop block drawer or clearing search');
+  assert(!laptopImeEscape.plainPrevented && !laptopImeEscape.flaggedPrevented,
+    'composing Escape must remain available to the Korean IME: ' + JSON.stringify(laptopImeEscape));
   await pressKeyboardKey(client, 'Escape');
   await waitForBrowser(client,
     `document.querySelector('.editor-composition-search input')?.value === ''
