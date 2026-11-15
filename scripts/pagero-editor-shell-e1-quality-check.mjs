@@ -468,6 +468,9 @@ assert(blockSearch.includes('const composingRef = React.useRef(false)')
   && blockSearch.includes('onCompositionEnd={() => { composingRef.current = false; }}')
   && blockSearch.includes('composingRef.current || event.nativeEvent?.isComposing || event.keyCode === 229'),
   'Korean IME composition must not trigger Enter result navigation or Escape search clearing');
+assert(blockSearch.includes("if (event.key === 'Escape') event.stopPropagation();")
+  && layout.includes('if (event.nativeEvent?.isComposing || event.keyCode === 229) return;'),
+  'Korean IME Escape must not bubble into the laptop drawer close handler');
 assert(layout.includes('const restoreSwitchFocus = (attempts = 5)')
   && layout.includes("chooseBlock(id, { focusHeading: false })")
   && layout.includes("chooseFixed(id, { focusHeading: false })")
