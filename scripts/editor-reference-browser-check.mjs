@@ -102,6 +102,31 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
       && document.activeElement === document.querySelector('.editor-navigator-drawer-trigger')`,
     'second Escape closes the laptop block list and restores trigger focus');
+  // Outside pointer activation dismisses the laptop drawer, but must not
+  // prevent the actual canvas/inspector action or leave focus in hidden rows.
+  await clickPointer(client, '.editor-navigator-drawer-trigger');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'laptop drawer opens for outside-click dismissal checks');
+  await clickPointer(client, 'input[aria-label="블록 이름 검색"]');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'interacting inside the block drawer does not dismiss it');
+  await clickPointer(client, '.editor-properties-heading');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
+      && !document.querySelector('.editor-composition-panel')?.contains(document.activeElement)`,
+    'clicking outside in the inspector dismisses the drawer without hidden focus');
+  await clickPointer(client, '.editor-navigator-drawer-trigger');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'laptop drawer reopens for real preview control interaction');
+  await clickPointer(client, '.preview-device-widths button[aria-pressed="true"]');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
+      && document.querySelector('.preview-device-widths button[aria-pressed="true"]')?.textContent.trim() === '390'`,
+    'preview width control remains usable while an open drawer dismisses');
+  assert(apiState.saveCount === 0, 'outside drawer clicks must not save or publish the page');
   await setViewport(client, 1672, 941, false);
   // A real page-first workflow: selecting visible content edits the exact
   // existing field. Cancel must leave the staged and published page intact.
