@@ -471,6 +471,11 @@ assert(layout.includes('aria-controls="editor-composition-panel"')
 assert(layout.includes("?.scrollTo({ top: 0, behavior: 'instant' })")
   && layout.includes('}, [selectedBlockId]);'),
   'changing selected blocks must reset the independently scrolling property inspector');
+assert(layout.includes('const focusPageHeading = (attempts = 5)')
+  && layout.includes("inspector?.querySelector('[data-editor-section=\"options\"] .editor-page-options-heading h2')")
+  && layout.includes('heading.focus({ preventScroll: true })')
+  && layout.includes('<h2 tabIndex={-1}>전체 디자인과 설정</h2>'),
+  'page-settings selection must focus the real inspector heading after hiding the laptop navigator');
 assert(!css.includes('edit-section-tabs') && !css.includes('editor-page-options-stack'), 'workspace geometry must not own EditPanelLayout subsection UI');
 assert(previewPaneCss.includes('border: 2px solid #cbd5e1')
   && previewPaneCss.includes('border-radius: 14px')
