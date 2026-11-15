@@ -102,6 +102,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
       && document.activeElement === document.querySelector('.editor-navigator-drawer-trigger')`,
     'second Escape closes the laptop block list and restores trigger focus');
+  const selectedBeforePageOptions = await evaluate(client,
+    `document.querySelector('.editor-composition-content [data-selected="true"]')?.id || ''`);
   // Explicit page-settings selection closes the same laptop drawer. The
   // focused footer button becomes hidden, so focus must move to the real
   // page-options heading in the persistent right inspector.
@@ -136,7 +138,16 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   });
   assert(apiState.saveCount === 0, 'opening page options must not save or publish the page');
   await setViewport(client, 1672, 941, false);
-  await clickNavigatorRow('#editor-block-editor-hero .screen-order-v2-head');
+  // This accessibility test must not change the fixture's original selected
+  // block before the subsequent preview/edit flows begin.
+  if (selectedBeforePageOptions) {
+    await clickNavigatorRow(`#${selectedBeforePageOptions} .screen-order-v2-head`);
+    await waitForBrowser(client,
+      `document.getElementById(${JSON.stringify(selectedBeforePageOptions)})?.dataset.selected === 'true'`,
+      'page-options keyboard test restores the original selected block');
+  } else {
+    await clickNavigatorRow('.editor-page-settings-button');
+  }
   // A real page-first workflow: selecting visible content edits the exact
   // existing field. Cancel must leave the staged and published page intact.
   await focusSelector(client, '.phone-frame #block-editor-hero h1.editor-inline-text-trigger');
