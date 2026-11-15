@@ -457,38 +457,46 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .fixed-add-dock.
   max-height: none !important;
 }
 
-/* Compact add entry belongs beside the composition title, not as the
-   dominant full-width call to action. Publish remains the page's primary CTA. */
+/* The navigator has one clear, full-width creation action. Publish remains
+   the only primary action in the global header. */
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact {
   position: static !important;
   display: block !important;
-  flex: 0 0 auto !important;
-  width: auto !important; height: auto !important;
-  min-width: 0 !important; max-width: none !important;
-  margin: 0 !important; padding: 0 !important;
-  border: 0 !important; background: transparent !important;
-  box-shadow: none !important; transform: none !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle {
-  display: inline-flex !important; align-items: center !important;
-  justify-content: center !important; gap: 6px !important;
-  width: auto !important; min-width: 106px !important;
-  height: 36px !important; min-height: 36px !important;
-  padding: 0 11px !important;
-  border: 1px solid #e0e4ea !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 12px !important;
+  border: 1px solid #1759ee !important;
   border-radius: 8px !important;
-  background: #f6f7f9 !important; color: #485261 !important;
+  background: #1759ee !important;
+  color: #fff !important;
   box-shadow: none !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle strong {
   display: inline !important;
-  font-size: 13px !important; line-height: 1.2 !important;
-  font-weight: 640 !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle:is(:hover,:focus-visible),
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle[aria-expanded='true'] {
-  border-color: #cbd2dc !important; background: #edeff3 !important;
-  color: #303947 !important;
+  background: #0c4cd1 !important;
+  border-color: #0c4cd1 !important;
+  color: #fff !important;
 }
 
 /* The add chooser has one active view. No second side-by-side catalog,

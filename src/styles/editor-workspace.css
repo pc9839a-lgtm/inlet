@@ -1,11 +1,9 @@
-/* Editor workbench: Littly-style block stack at left, real 390px page at right.
-   Public landing layout and workspace operations routes are not changed. */
+/* Editor-only grid: block list / live page / inspector. */
 html body #root .builder-shell.canvas-editor-shell {
-  --editor-list-width: clamp(220px, 15.6vw, 264px);
-  --editor-edit-width: clamp(500px, 42vw, 660px);
-  --editor-settings-width: var(--editor-edit-width);
+  --editor-list-width: 246px;
+  --editor-settings-width: 340px;
   display: grid;
-  grid-template-columns: var(--editor-edit-width) minmax(0, 1fr) !important;
+  grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width) !important;
   grid-template-rows: 64px minmax(0, 1fr);
   height: 100dvh !important;
   max-height: 100dvh !important;
@@ -26,15 +24,31 @@ html body #root .canvas-editor-shell #workspace-panel-edit {
 html body #root .canvas-editor-shell .work-panel {
   grid-column: 1; grid-row: 2;
   width: 100%;
-  max-width: none !important;
+  max-width: none;
   min-height: 0;
   height: 100% !important;
-  margin: 0 !important; padding: 0 !important;
+  margin: 0; padding: 0;
   overflow: hidden !important;
-  border-right: 1px solid #dfe4ee;
-  background: #f4f5f9;
+  border-right: 1px solid #e5e9f0;
+  background: #fff;
 }
-/* On narrow browsers the editor and 390px page remain independently usable. */
+/* Laptop: keep canvas + inspector; reveal blocks through the drawer. */
+@media (min-width:900px) and (max-width:1279px) {
+  html body #root .builder-shell.canvas-editor-shell {
+    position:relative;
+    --editor-preview-grid-column:1;
+    grid-template-columns:minmax(0,1fr) var(--editor-settings-width)!important;
+  }
+  html body #root .canvas-editor-shell .work-panel {
+    position:absolute;top:64px;left:0;width:0!important;
+    height:calc(100dvh - 64px)!important;overflow:visible!important;
+    border:0;z-index:28;pointer-events:none;
+  }
+  html body #root .canvas-editor-shell #workspace-panel-edit,
+  html body #root .canvas-editor-shell .edit-layout {
+    width:0!important;overflow:visible;
+  }
+}
 @media (max-width: 899px) {
   body:has(.canvas-editor-shell),
   #root:has(.canvas-editor-shell) {
@@ -42,12 +56,11 @@ html body #root .canvas-editor-shell .work-panel {
     overflow: auto !important;
   }
   html body #root .builder-shell.canvas-editor-shell {
-    --editor-edit-width: 100%;
     grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: auto auto auto !important;
+    grid-template-rows: auto auto auto;
     height: auto !important;
     max-height: none !important;
-    min-height: 100dvh !important;
+    min-height: 100dvh;
     overflow: visible !important;
   }
   html body #root .canvas-editor-shell .work-panel {

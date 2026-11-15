@@ -993,9 +993,9 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true'] {
   position: relative;
-  border-color: #e2e6ed !important; border-radius: 0 !important;
-  background: #f5f7fa !important;
-  box-shadow: inset 2px 0 0 #8b96a7 !important;
+  border-color: #dce7fb !important; border-radius: 0 !important;
+  background: #f0f5ff !important;
+  box-shadow: inset 3px 0 0 #2454ff !important;
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true']::before {
   display: none !important;
@@ -1033,9 +1033,9 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
   overflow: hidden; text-overflow: ellipsis;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item[data-selected='true'] .screen-order-v2-type-icon:not(.has-thumbnail) {
-  background: #e9edf3; color: #58687e !important;
+  background: #e1ebff; color: #2354da !important;
 }
-html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item.is-hidden {
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item.is-hidden:not([data-selected='true']) {
   background: #fafafa !important; border-style: solid !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item.is-hidden .screen-order-v2-type-icon {
@@ -1045,7 +1045,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
   width: 29px !important; height: 32px !important; color: #8993a1;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item[data-selected='true'] :is(.screen-order-v2-identity-copy strong,.screen-order-v2-action) {
-  color: #3f4958 !important;
+  color: #1c4ec7 !important;
 }
 @media (prefers-reduced-motion: reduce) {
   html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item { transition: none; }

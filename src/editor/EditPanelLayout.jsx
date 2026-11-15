@@ -57,6 +57,32 @@ export function EditPanelLayout({
 }) {
   const [section, setSection] = React.useState('order');
   const [fixedSearchReveal, setFixedSearchReveal] = React.useState(null);
+  const [navigatorOpen, setNavigatorOpen] = React.useState(false);
+  // On laptop widths the composition is an overlay, not a modal. Dismiss it
+  // when the user works in the canvas or inspector, without cancelling the
+  // pointer event or altering the selected block or page draft.
+  React.useEffect(() => {
+    if (!navigatorOpen) return undefined;
+    const dismissOnOutsidePointer = (event) => {
+      if (!window.matchMedia('(min-width: 900px) and (max-width: 1279px)').matches) return;
+      const panel = document.getElementById('editor-composition-panel');
+      const trigger = document.querySelector('.editor-navigator-drawer-trigger');
+      // Block actions and the compact add-block gallery render in body
+      // portals. They belong to the navigator, so interactions there must
+      // not hide the add button that the gallery restores focus to.
+      if (panel?.contains(event.target) || trigger?.contains(event.target)
+        || event.target?.closest?.('[data-composition-action-menu="true"]')
+        || event.target?.closest?.('.editor-gallery-backdrop')) return;
+      setNavigatorOpen(false);
+      requestAnimationFrame(() => {
+        // Non-focusable canvas chrome can leave keyboard focus in the now
+        // hidden drawer. A newly focused outside control takes precedence.
+        if (panel?.contains(document.activeElement)) trigger?.focus({ preventScroll: true });
+      });
+    };
+    document.addEventListener('pointerdown', dismissOnOutsidePointer, true);
+    return () => document.removeEventListener('pointerdown', dismissOnOutsidePointer, true);
+  }, [navigatorOpen]);
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
   // A blank selection is page-level context, not a reason to collapse the editor.
   // Show the existing page design and options until a block is selected.
@@ -73,15 +99,17 @@ export function EditPanelLayout({
       else if (attempts > 0) focusInspectorHeading(id, attempts - 1);
     });
   };
-  const chooseBlock = (id) => {
+  const chooseBlock = (id, { focusHeading = true } = {}) => {
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
     setSection('order');
-    focusInspectorHeading(id);
+    setNavigatorOpen(false);
+    if (focusHeading) focusInspectorHeading(id);
   };
-  const chooseFixed = (id) => {
+  const chooseFixed = (id, { focusHeading = true } = {}) => {
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
-    focusInspectorHeading(id);
+    setNavigatorOpen(false);
+    if (focusHeading) focusInspectorHeading(id);
   };
   const revealFixedSearch = (id) => {
     if (fixedDescriptors.some((item) => item.block.id === id)) setFixedSearchReveal({ id });
@@ -124,11 +152,27 @@ export function EditPanelLayout({
   };
   const switchBlock = (id) => {
     if (!id || id === selectedBlockId) return;
+    // Inspector navigation is a repeated keyboard action, not a new list
+    // selection. Keep focus in the previous/next controls so Enter can step
+    // through neighboring blocks without losing the tab position each time.
+    const direction = id === blockNavigation?.nextId ? 'next' : 'previous';
     if (fixedDescriptors.some((item) => item.block.id === id)) {
       revealFixedSearch(id);
-      chooseFixed(id);
-    } else chooseBlock(id);
+      chooseFixed(id, { focusHeading: false });
+    } else chooseBlock(id, { focusHeading: false });
     revealInspectorSelection(id);
+    const restoreSwitchFocus = (attempts = 5) => requestAnimationFrame(() => {
+      const settings = document.querySelector('.canvas-editor-shell .editor-properties-content [data-block-settings-id]');
+      if (settings?.getAttribute('data-block-settings-id') !== id) {
+        if (attempts > 0) restoreSwitchFocus(attempts - 1);
+        return;
+      }
+      const buttons = [...document.querySelectorAll('.canvas-editor-shell .editor-block-switch-actions button')];
+      const primary = buttons.find((button) => button.getAttribute('aria-label') === (direction === 'next' ? '다음 블록' : '이전 블록'));
+      const fallback = buttons.find((button) => !button.disabled);
+      (primary && !primary.disabled ? primary : fallback)?.focus({ preventScroll: true });
+    });
+    restoreSwitchFocus();
   };
   const inspectorNavigation = blockNavigation
     ? { ...blockNavigation, onNavigate: switchBlock }
@@ -136,16 +180,30 @@ export function EditPanelLayout({
 
   React.useEffect(() => {
     if (selectedBlockId) setSection('order');
+    // A different selected block has a different starting context. Reusing
+    // the previous block's deep scroll makes the new content appear empty.
+    document.querySelector('.canvas-editor-shell .editor-properties-content')
+      ?.scrollTo({ top: 0, behavior: 'instant' });
   }, [selectedBlockId]);
 
   const openPageOptions = () => {
     if (screenOrderListProps?.selectedId) screenOrderListProps.clearBlockSelection();
     else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
     setSection('options');
-    requestAnimationFrame(() => {
-      document.querySelector('.canvas-editor-shell .editor-composition-content')
-        ?.scrollTo({ top: 0, behavior: 'instant' });
+    setNavigatorOpen(false);
+    // A laptop navigator hides after selection. Move keyboard focus into the
+    // real page inspector instead of leaving it inside the hidden drawer.
+    const focusPageHeading = (attempts = 5) => requestAnimationFrame(() => {
+      const inspector = document.querySelector('.canvas-editor-shell .editor-properties-content');
+      const heading = inspector?.querySelector('[data-editor-section="options"] .editor-page-options-heading h2');
+      if (!heading) {
+        if (attempts > 0) focusPageHeading(attempts - 1);
+        return;
+      }
+      inspector.scrollTo({ top: 0, behavior: 'instant' });
+      heading.focus({ preventScroll: true });
     });
+    focusPageHeading();
   };
 
   const pageTheme = stylePanelProps?.stagedTheme || pageGlobalOptionsProps.page.theme;
@@ -160,36 +218,64 @@ export function EditPanelLayout({
   // D05: row selection must not auto-scroll the outer editor. An explicit
   // preview-to-editor click is handled by useWorkspaceShellActions.
 
-  const renderFixedSettings = (keys) => {
-    if (showPageOptions || !fixedSelected || !keys.includes(fixedSelected.key)) return null;
+  // Keep real widget editors mounted in the separate settings area. Never
+  // create an alternate page model; the page list and canvas share selection.
+  const renderFixedSettings = () => {
+    if (showPageOptions || !fixedSelected) return null;
     return (
-      <section className="editor-inspector-panel editor-inline-settings"
-        role="region" aria-label="선택 항목 편집" tabIndex={0}>
-        <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
-          <ScreenOrderSettings
-            block={fixedSelected.block}
-            identity={{ customLabel: fixedSelected.title }}
-            renderBlockEditor={fixedSelected.renderEditor}
-            navigation={inspectorNavigation}
-          />
-        </div>
-      </section>
+      <ScreenOrderSettings
+        block={fixedSelected.block}
+        identity={{ customLabel: fixedSelected.title }}
+        renderBlockEditor={fixedSelected.renderEditor}
+        navigation={inspectorNavigation}
+      />
     );
   };
 
   return (
-    <div className="edit-layout" data-editor-layout="littly-block-stack">
-      <aside className="editor-composition-panel" aria-label="페이지 블록 편집">
+    <div className="edit-layout" data-editor-layout="three-pane">
+      <button
+        type="button"
+        className="editor-navigator-drawer-trigger"
+        aria-controls="editor-composition-panel"
+        aria-expanded={navigatorOpen}
+        onClick={() => setNavigatorOpen((open) => !open)}
+        onKeyDown={(event) => {
+          // Focus remains on the trigger after opening the laptop drawer.
+          // Escape must work there as well as inside the block list.
+          if (event.key === 'Escape' && navigatorOpen) {
+            event.preventDefault();
+            setNavigatorOpen(false);
+          }
+        }}
+      >
+        {navigatorOpen ? '블록 닫기' : '블록'}
+      </button>
+      <aside
+        id="editor-composition-panel"
+        className="editor-composition-panel"
+        data-drawer-open={navigatorOpen ? 'true' : 'false'}
+        aria-label="페이지 블록 목록"
+        onKeyDown={(event) => {
+          // Do not dismiss the laptop navigator when an IME owns Escape.
+          // The search input also stops bubbling for unflagged composition.
+          if (event.nativeEvent?.isComposing || event.keyCode === 229) return;
+          if (event.key === 'Escape' && navigatorOpen) {
+            setNavigatorOpen(false);
+            document.querySelector('.editor-navigator-drawer-trigger')?.focus();
+          }
+        }}
+      >
         <header className="editor-composition-heading">
           <div className="editor-composition-title-row">
             <div className="editor-composition-title-copy">
-              <span className="editor-panel-kicker">내 페이지</span>
+              <span className="editor-panel-kicker">페이지 구성</span>
               <h2>블록 편집 <span className="editor-composition-total">
                 {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
               </span></h2>
             </div>
-            <AddBlockDock {...addBlockDockProps} compact />
           </div>
+          <AddBlockDock {...addBlockDockProps} compact />
         </header>
         <BlockNavigatorSearch
           blocks={screenOrderListProps.normalBlocks}
@@ -198,30 +284,7 @@ export function EditPanelLayout({
           onSelect={chooseSearchResult}
           onRevealSelected={revealFixedSearch}
         />
-        <div className="editor-composition-content" role="region" aria-label="블록 목록과 편집" tabIndex={0}>
-          {showPageOptions && (
-            <section className="editor-inspector-panel editor-inline-settings editor-page-inline-settings"
-              role="region" aria-label="페이지 전체 설정" tabIndex={0}>
-              <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="options">
-                <div className="editor-page-options-stack">
-                  <header className="editor-page-options-heading">
-                    <span className="editor-panel-kicker">페이지 전체</span>
-                    <h2>전체 디자인과 설정</h2>
-                  </header>
-                  {stylePanelProps && (
-                    <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
-                      <PageThemeStylePanel {...stylePanelProps} />
-                    </React.Suspense>
-                  )}
-                  <PageGlobalOptions
-                    {...pageGlobalOptionsProps}
-                    page={{ ...pageGlobalOptionsProps.page, theme: pageTheme }}
-                    updateTheme={updatePageTheme}
-                  />
-                </div>
-              </div>
-            </section>
-          )}
+        <div className="editor-composition-content" role="region" aria-label="블록 순서" tabIndex={0}>
           <FixedCompositionGroup
             groupId="top" title="상단 고정" keys={['topnav']}
             descriptors={fixedDescriptors}
@@ -230,8 +293,7 @@ export function EditPanelLayout({
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']}
               compositionRow selectedId={fixedBlocksProps.openId}
-              openId="" toggleBlockOpen={chooseFixed}
-              renderInlineEditor={() => renderFixedSettings(['topnav'])} />
+              openId="" toggleBlockOpen={chooseFixed} />
           </FixedCompositionGroup>
           <div className="editor-composition-group-caption">
             <span>페이지 블록</span>
@@ -251,8 +313,7 @@ export function EditPanelLayout({
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']}
               compositionRow selectedId={fixedBlocksProps.openId}
-              openId="" toggleBlockOpen={chooseFixed}
-              renderInlineEditor={() => renderFixedSettings(['bottom', 'footer'])} />
+              openId="" toggleBlockOpen={chooseFixed} />
           </FixedCompositionGroup>
         </div>
         <footer className="editor-composition-footer">
@@ -262,7 +323,7 @@ export function EditPanelLayout({
             aria-pressed={showPageOptions}
             aria-controls="editor-selection-panel"
             onClick={openPageOptions}
-            title={stylePanelProps?.hasPendingStyle ? '페이지 설정 · 미적용' : '페이지 설정'}
+            title={stylePanelProps?.hasPendingStyle ? '전체 디자인 · 미적용' : '전체 디자인'}
           >
             <Settings2 size={17} aria-hidden="true" />
             <span>전체 디자인 · 페이지 설정</span>
@@ -274,6 +335,50 @@ export function EditPanelLayout({
             )}
           </button>
         </footer>
+      </aside>
+      <aside className="editor-properties-panel" aria-label="선택 블록 설정">
+        <header className="editor-properties-heading">
+          <span>설정</span>
+          <span className="editor-properties-context">{showPageOptions ? '페이지 전체' : '선택한 블록'}</span>
+        </header>
+        <div className="editor-properties-content" role="region" aria-label="선택 항목 편집" tabIndex={0}>
+          {showPageOptions && (
+            <section className="editor-inspector-panel editor-inline-settings editor-page-inline-settings">
+              <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="options">
+                <div className="editor-page-options-stack">
+                  <header className="editor-page-options-heading">
+                    <span className="editor-panel-kicker">페이지 전체</span>
+                    <h2 tabIndex={-1}>전체 디자인과 설정</h2>
+                  </header>
+                  {stylePanelProps && (
+                    <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
+                      <PageThemeStylePanel {...stylePanelProps} />
+                    </React.Suspense>
+                  )}
+                  <PageGlobalOptions
+                    {...pageGlobalOptionsProps}
+                    page={{ ...pageGlobalOptionsProps.page, theme: pageTheme }}
+                    updateTheme={updatePageTheme}
+                  />
+                </div>
+              </div>
+            </section>
+          )}
+          {!showPageOptions && fixedSelected && (
+            <section className="editor-inspector-panel editor-inline-settings">
+              <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
+                {renderFixedSettings()}
+              </div>
+            </section>
+          )}
+          {!showPageOptions && !fixedSelected && (
+            <section className="editor-inspector-panel editor-inline-settings">
+              <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
+                <ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />
+              </div>
+            </section>
+          )}
+        </div>
       </aside>
     </div>
   );

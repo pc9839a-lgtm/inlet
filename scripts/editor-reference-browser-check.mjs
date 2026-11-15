@@ -1,9 +1,31 @@
 // The owner reference defines the chrome. Content below is a disposable QA page.
 export async function checkReferenceEditor({ client, evaluate, assert, waitForBrowser, clickPointer, setInputValue, focusSelector, pressKeyboardKey, capture, setViewport, apiState }) {
+  const setEditorViewport = async (width) => {
+    await setViewport(client, width, 941, false);
+    if (width >= 900 && width < 1280) await evaluate(client, `(() => {
+      const trigger = document.querySelector('.editor-navigator-drawer-trigger');
+      if (trigger?.getAttribute('aria-expanded') !== 'true') trigger?.click();
+    })()`);
+    if (width >= 900 && width < 1280) await waitForBrowser(client,
+      `document.querySelector('.editor-composition-panel')?.getBoundingClientRect().left >= -1`,
+      'laptop navigator drawer fully opened before selecting a row');
+  };
+  // Selecting a block closes the laptop navigator drawer by design.
+  // Reopen it for subsequent list interactions while leaving the preview visible.
+  const clickNavigatorRow = async (selector) => {
+    await evaluate(client, `(() => {
+      const trigger = document.querySelector('.editor-navigator-drawer-trigger');
+      if (innerWidth >= 900 && innerWidth < 1280 && trigger?.getAttribute('aria-expanded') !== 'true') trigger?.click();
+    })()`);
+    await waitForBrowser(client,
+      `innerWidth >= 1280 || document.querySelector('.editor-composition-panel')?.getBoundingClientRect().left >= -1`,
+      'laptop drawer fully visible and hit-testable before selecting its next row');
+    await clickPointer(client, selector);
+  };
   // Visual reference: a named, full-width add action and readable flat
   // composition rows at both the chosen 1672px size and narrow 900px PC.
   for (const referenceWidth of [1672, 900]) {
-    await setViewport(client, referenceWidth, 941, false);
+    await setEditorViewport(referenceWidth);
     const visual = await evaluate(client, `(() => {
       const heading = document.querySelector('.editor-composition-heading');
       const button = heading?.querySelector('.add-dock-compact .add-toggle');
@@ -31,37 +53,149 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         normalRowHeight: rect(row.closest('.screen-order-v2-head')).height,
         fixedRowHeight: rect(fixedRow.closest('.fixed-block-head')).height,
         compositionWidth: rect(document.querySelector('.editor-composition-panel')).width,
-        inspectorWidth: rect(document.querySelector('.editor-inspector-panel')).width,
+        inspectorWidth: rect(document.querySelector('.editor-properties-panel')).width,
         compositionBackground: getComputedStyle(document.querySelector('.editor-composition-panel')).backgroundColor,
-        inspectorBackground: getComputedStyle(document.querySelector('.editor-inspector-panel')).backgroundColor,
+        inspectorBackground: getComputedStyle(document.querySelector('.editor-properties-panel')).backgroundColor,
         stageBackground: getComputedStyle(document.querySelector('.preview-workspace')).backgroundColor,
         stageHeading: document.querySelector('.preview-stage-label strong')?.textContent.trim(),
-        stageWidth: document.querySelector('.preview-stage-width')?.textContent.trim(),
+        stageWidth: document.querySelector('.preview-device-widths button[aria-pressed="true"]')?.textContent.trim(),
         phoneWidth: frame.clientWidth,
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     })()`);
-    const expectedComposerWidth = Math.min(660, Math.max(500, referenceWidth * .42));
-    assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '내 페이지'
+    const expectedComposerWidth = referenceWidth < 1280 ? 252 : 246;
+    assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '페이지 구성'
       && /[0-9]+개 블록/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
-      && visual.buttonWidth >= 96 && visual.buttonWidth <= 135
-      && visual.buttonHeight >= 35 && visual.buttonHeight <= 40 && visual.searchBelowButton
-      && visual.buttonBackground === 'rgb(246, 247, 249)'
+      && visual.buttonWidth >= visual.headingWidth - 48
+      && visual.buttonHeight >= 42 && visual.buttonHeight <= 46
+      && visual.searchBelowButton && visual.buttonBackground === 'rgb(23, 89, 238)'
       && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
-      && visual.normalRowHeight >= 54 && visual.normalRowHeight <= 60
-      && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
+      && visual.normalRowHeight >= 54 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
       && Math.abs(visual.compositionWidth - expectedComposerWidth) <= 3
-      && visual.inspectorWidth >= visual.compositionWidth - 85
+      && Math.abs(visual.inspectorWidth - 340) <= 3
       && visual.compositionBackground === 'rgb(255, 255, 255)'
-      && visual.inspectorBackground === 'rgb(250, 251, 252)'
+      && visual.inspectorBackground === 'rgb(255, 255, 255)'
       && visual.stageBackground === 'rgb(243, 244, 246)'
-      && visual.stageHeading === '페이지 화면' && visual.stageWidth === '모바일 · 390px'
+      && visual.stageHeading === '페이지 화면' && visual.stageWidth === '390'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
-      'quiet block stack must prioritize page content, compact add, and readable 390px result: '
+      'approved three-pane editor keeps list, canvas and inspector independent: '
       + JSON.stringify({ referenceWidth, visual }));
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
+  // On the 900px laptop drawer, Escape clears a search before it dismisses
+  // the drawer. Clearing a query must preserve the user's navigator context.
+  const laptopSearchInput = 'input[aria-label="블록 이름 검색"]';
+  await setInputValue(client, laptopSearchInput, '텍스트');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-search-count')?.textContent.includes('/')`,
+    'laptop search provides an active result counter');
+  await focusSelector(client, laptopSearchInput);
+  // On laptops, an unflagged Escape during a Korean IME composition used to
+  // bubble from the search input and close the *parent* drawer, even though
+  // the input itself correctly left the search query untouched.
+  const laptopImeEscape = await evaluate(client, `(() => {
+    const input = document.querySelector('input[aria-label="블록 이름 검색"]');
+    input.dispatchEvent(new CompositionEvent('compositionstart',
+      { bubbles: true, data: '텍' }));
+    const plain = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true });
+    const flagged = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', isComposing: true, bubbles: true, cancelable: true });
+    input.dispatchEvent(plain);
+    input.dispatchEvent(flagged);
+    input.dispatchEvent(new CompositionEvent('compositionend',
+      { bubbles: true, data: '텍스트' }));
+    return { plainPrevented: plain.defaultPrevented, flaggedPrevented: flagged.defaultPrevented };
+  })()`);
+  await waitForBrowser(client,
+    `document.querySelector('.editor-composition-search input')?.value === '텍스트'
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('.editor-composition-search input')`,
+    'Korean IME Escape cancels composition without closing the laptop block drawer or clearing search');
+  assert(!laptopImeEscape.plainPrevented && !laptopImeEscape.flaggedPrevented,
+    'composing Escape must remain available to the Korean IME: ' + JSON.stringify(laptopImeEscape));
+  await pressKeyboardKey(client, 'Escape');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-composition-search input')?.value === ''
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('.editor-composition-search input')`,
+    'first Escape clears block search while keeping the laptop list open and input focused');
+  await pressKeyboardKey(client, 'Escape');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
+      && document.activeElement === document.querySelector('.editor-navigator-drawer-trigger')`,
+    'second Escape closes the laptop block list and restores trigger focus');
+  // Outside pointer activation dismisses the laptop drawer, but must not
+  // prevent the actual canvas/inspector action or leave focus in hidden rows.
+  await clickPointer(client, '.editor-navigator-drawer-trigger');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'laptop drawer opens for outside-click dismissal checks');
+  await clickPointer(client, 'input[aria-label="블록 이름 검색"]');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'interacting inside the block drawer does not dismiss it');
+  // The add-block dialog is also portaled to body. A gallery interaction must
+  // not hide its originating laptop drawer: closing the dialog restores focus
+  // to the original add button, which must remain visible and operable.
+  await clickPointer(client, '.editor-composition-heading .add-toggle');
+  await waitForBrowser(client,
+    `!!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'laptop add-block gallery opens without closing its originating drawer');
+  await clickPointer(client, '.editor-gallery-dialog-head h2');
+  await waitForBrowser(client,
+    `!!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'pointer interactions inside portaled gallery preserve laptop drawer');
+  await clickPointer(client, '.editor-gallery-close');
+  await waitForBrowser(client,
+    `!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('.editor-composition-heading .add-toggle')
+      && !!document.activeElement.getClientRects().length`,
+    'closing laptop gallery restores focus to visible block-add button');
+  assert(apiState.saveCount === 0, 'laptop gallery open/close must not save or publish');
+  // Block-row actions are portaled to document.body. They still belong to
+  // the open laptop navigator: hiding and restoring a block must not close
+  // the drawer or strand keyboard focus inside a hidden menu.
+  const laptopHeroMore = '#editor-block-editor-hero .screen-order-v2-more';
+  await clickPointer(client, laptopHeroMore);
+  await waitForBrowser(client,
+    `!!document.querySelector('[data-composition-action-menu="true"] [role="switch"][aria-checked="true"]')`,
+    'laptop block-row action menu opens in a portal owned by the block list');
+  await clickPointer(client, '[data-composition-action-menu="true"] [role="switch"]');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-hero')?.classList.contains('is-hidden')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('#editor-block-editor-hero .screen-order-v2-more')`,
+    'hiding a block through the portal keeps laptop block list open and trigger focused');
+  await clickPointer(client, laptopHeroMore);
+  await waitForBrowser(client,
+    `!!document.querySelector('[data-composition-action-menu="true"] [role="switch"][aria-checked="false"]')`,
+    'hidden block can reopen its action menu without reopening the drawer');
+  await clickPointer(client, '[data-composition-action-menu="true"] [role="switch"]');
+  await waitForBrowser(client,
+    `!document.querySelector('#editor-block-editor-hero')?.classList.contains('is-hidden')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('#editor-block-editor-hero .screen-order-v2-more')`,
+    'restoring a block through the portal preserves the open laptop navigator');
+  await clickPointer(client, '.editor-properties-heading');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
+      && !document.querySelector('.editor-composition-panel')?.contains(document.activeElement)`,
+    'clicking outside in the inspector dismisses the drawer without hidden focus');
+  await clickPointer(client, '.editor-navigator-drawer-trigger');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'laptop drawer reopens for real preview control interaction');
+  await clickPointer(client, '.preview-device-widths button[aria-pressed="true"]');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
+      && document.querySelector('.preview-device-widths button[aria-pressed="true"]')?.textContent.trim() === '390'`,
+    'preview width control remains usable while an open drawer dismisses');
+  assert(apiState.saveCount === 0, 'outside drawer clicks must not save or publish the page');
   await setViewport(client, 1672, 941, false);
   // A real page-first workflow: selecting visible content edits the exact
   // existing field. Cancel must leave the staged and published page intact.
@@ -78,7 +212,16 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await clickPointer(client, '.phone-frame #block-editor-form h2');
   await waitForBrowser(client,
     `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-basic-grid .field-title input')`,
-    'form headline selects matching existing inspector title field');
+    'form headline selects matching existing inspector title field').catch(async (error) => {
+    const actual = await evaluate(client, `(() => ({
+      selectedForm: document.querySelector('#editor-block-editor-form')?.dataset.selected,
+      inspectorForm: !!document.querySelector('#editor-block-settings-editor-form'),
+      formTitleInput: !!document.querySelector('#editor-block-settings-editor-form .form-basic-grid .field-title input'),
+      focused: document.activeElement?.outerHTML?.slice(0, 280),
+      pageOptions: !!document.querySelector('.editor-page-options-stack'),
+    }))()`);
+    throw new Error(error.message + ': ' + JSON.stringify(actual));
+  });
   await waitForBrowser(client, `!!document.querySelector('.phone-frame #block-editor-form .editor-preview-submit-edit')`,
     'selected form exposes its button-copy editing shortcut');
   await clickPointer(client, '.phone-frame #block-editor-form .editor-preview-submit-edit');
@@ -87,6 +230,44 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'form submit-copy shortcut focuses exact existing field, never submits');
   assert(apiState.saveCount === 0, 'preview editing shortcuts do not publish pages or persist test leads');
   await capture(client, 'form-direct-title-and-submit-edit');
+  // Page-settings keyboard access is tested after the direct form shortcuts,
+  // so clearing selection cannot change the starting state of those checks.
+  await setViewport(client, 900, 941, false);
+  // Explicit page-settings selection closes the same laptop drawer. The
+  // focused footer button becomes hidden, so focus must move to the real
+  // page-options heading in the persistent right inspector.
+  await clickPointer(client, '.editor-navigator-drawer-trigger');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'laptop drawer reopens before page-options keyboard selection');
+  await focusSelector(client, '.editor-page-settings-button');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
+      && !!document.querySelector('[data-editor-section="options"] .editor-page-options-stack')
+      && document.activeElement === document.querySelector('[data-editor-section="options"] .editor-page-options-heading h2')
+      && parseFloat(getComputedStyle(document.activeElement).outlineWidth) >= 2
+      && getComputedStyle(document.activeElement).outlineStyle !== 'none'
+      && document.querySelector('.editor-properties-content')?.scrollTop === 0`,
+    'page-options keyboard selection closes the laptop drawer and visibly focuses its inspector heading').catch(async (error) => {
+    const actual = await evaluate(client, `(() => {
+      const heading = document.querySelector('[data-editor-section="options"] .editor-page-options-heading h2');
+      const active = document.activeElement;
+      return {
+        drawer: document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded'),
+        pageOptions: !!document.querySelector('[data-editor-section="options"] .editor-page-options-stack'),
+        headingPresent: !!heading, headingFocused: active === heading,
+        headingTabIndex: heading?.tabIndex, headingOutline: heading ? getComputedStyle(heading).outlineWidth : '',
+        activeElement: active?.outerHTML?.slice(0, 280),
+        activeOutline: active ? getComputedStyle(active).outlineWidth : '',
+        inspectorScroll: document.querySelector('.editor-properties-content')?.scrollTop,
+      };
+    })()`);
+    throw new Error(error.message + ': ' + JSON.stringify(actual));
+  });
+  assert(apiState.saveCount === 0, 'opening page options must not save or publish the page');
+  await setViewport(client, 1672, 941, false);
+
   // A visual redesign must change the *first visible task*, not just CSS
   // tokens. Verify real editor settings and capture each of four block types.
   for (const [id, heading, primarySelector, advancedSelector] of [
@@ -95,7 +276,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     ['editor-form', '문의 폼 편집', '.form-editor-flow .form-question-title', '.form-behavior-detail'],
     ['editor-code', '코드 편집', '.code-editor-box textarea', '.code-editor-options'],
   ]) {
-    await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+    await clickNavigatorRow(`#editor-block-${id} .screen-order-v2-head`);
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-${id} ${primarySelector}')`,
       'content-first primary task loads for ' + id);
@@ -126,8 +307,36 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       await capture(client, 'inspector-content-first-' + id);
     }
   }
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
-  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
+  // The inspector's own "more" menu must invoke the same visibility action
+  // as the left block list. An unbound switch used to look interactive but
+  // silently left the block visible in the actual page draft.
+  const inspectorTextMore = '#editor-selection-panel .screen-order-v2-more';
+  const inspectorTextVisibility = '#screen-order-actions-editor-text-inspector [role="switch"]';
+  await clickPointer(client, inspectorTextMore);
+  await waitForBrowser(client,
+    `document.querySelector('${inspectorTextVisibility}')?.getAttribute('aria-checked') === 'true'`,
+    'inspector action menu exposes the selected visible text block');
+  await clickPointer(client, inspectorTextVisibility);
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-text')?.classList.contains('is-hidden')
+      && !!document.querySelector('#editor-selection-panel .screen-order-settings-hidden')
+      && !!document.querySelector('#editor-block-settings-editor-text')
+      && document.querySelector('${inspectorTextMore}')?.getAttribute('aria-expanded') === 'false'`,
+    'inspector visibility action hides the real block while keeping its editor selected');
+  await clickPointer(client, inspectorTextMore);
+  await waitForBrowser(client,
+    `document.querySelector('${inspectorTextVisibility}')?.getAttribute('aria-checked') === 'false'`,
+    'inspector menu reflects the newly hidden block');
+  await clickPointer(client, inspectorTextVisibility);
+  await waitForBrowser(client,
+    `!document.querySelector('#editor-block-editor-text')?.classList.contains('is-hidden')
+      && !document.querySelector('#editor-selection-panel .screen-order-settings-hidden')
+      && !!document.querySelector('#editor-block-settings-editor-text')
+      && document.querySelector('${inspectorTextMore}')?.getAttribute('aria-expanded') === 'false'`,
+    'inspector visibility switch restores the block and real settings state');
+  assert(apiState.saveCount === 0, 'inspector visibility switch must not automatically save or publish');
+  await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
   const optionalText = await evaluate(client, `(() => {
     const panel = document.querySelector('#editor-block-settings-editor-text');
     return {
@@ -139,10 +348,35 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(optionalText.open && optionalText.spacingVisible && optionalText.colorVisible,
     'one optional text design disclosure must reveal original text style and spacing actions: '
     + JSON.stringify(optionalText));
+  await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
+  // PageRo's design shortcuts navigate the existing editor, rather than
+  // maintaining parallel content/design state or duplicating form fields.
+  const inspectorShortcuts = await evaluate(client, `(() => {
+    const panel = document.querySelector('.editor-properties-panel');
+    const shortcuts = panel?.querySelectorAll('.editor-inspector-jump button') || [];
+    return { labels: [...shortcuts].map(button => button.textContent.trim()),
+      scrollArea: !!panel?.querySelector('.editor-properties-content'),
+      buttonHeight: shortcuts[0]?.getBoundingClientRect().height || 0 };
+  })()`);
+  assert(JSON.stringify(inspectorShortcuts.labels) === JSON.stringify(['내용', '디자인'])
+    && inspectorShortcuts.scrollArea && inspectorShortcuts.buttonHeight >= 34,
+    'selected block must expose accessible content and design shortcuts: ' + JSON.stringify(inspectorShortcuts));
+  await clickPointer(client, '.editor-inspector-jump button:nth-child(2)');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
+    'design shortcut expands the original text design disclosure');
+  await clickPointer(client, '.editor-inspector-jump button:first-child');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-properties-content')?.scrollTop <= 40`,
+    'content shortcut returns to the beginning of the separate settings inspector');
   await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === false`,
+    'closing design after shortcut preserves original disclosure semantics');
+  assert(apiState.saveCount === 0, 'inspector shortcuts must never persist or publish settings');
   // Prior QA scenarios may leave a block selected. Explicitly enter page-level
   // editing to verify that clearing the selected block never hides the inspector.
-  await clickPointer(client, '.editor-page-settings-button');
+  await clickNavigatorRow('.editor-page-settings-button');
   await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack')`,
     'unselected page shows real design controls in the permanent inspector');
   const unselected = await evaluate(client, `(() => {
@@ -152,14 +386,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const work = document.querySelector('.work-panel');
     const preview = document.querySelector('.preview-workspace');
     return { hasPageOptions:!!pageOptions, inspectorDisplay:getComputedStyle(inspector).display,
-      listWidth:composition.getBoundingClientRect().width, inspectorWidth:inspector.getBoundingClientRect().width,
+      listWidth:composition.getBoundingClientRect().width, inspectorWidth:document.querySelector('.editor-properties-panel').getBoundingClientRect().width,
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 658 && unselected.editorWidth <= 662
+    && unselected.editorWidth >= 240 && unselected.editorWidth <= 250
     && Math.abs(unselected.listWidth - unselected.editorWidth) <= 3
-    && unselected.inspectorWidth >= unselected.editorWidth - 85,
-    'page settings must open inline without replacing the block stack: ' + JSON.stringify(unselected));
+    && Math.abs(unselected.inspectorWidth - 340) <= 3,
+    'page settings must open in the independent inspector without replacing the block list: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
   await waitForBrowser(client, `!!document.querySelector('.style-panel-v17 .style-more-groups > .style-advanced-group')`, 'page theme design available');
@@ -183,7 +417,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     };
     return {selected:data(selected), apply:data(apply), reset:data(reset), activeLabel:selected?.getAttribute('aria-label')};
   })()`);
-  assert(pageControlState?.selected?.height >= 36 && pageControlState.selected.height <= 40
+  assert(pageControlState?.selected?.height >= 36 && pageControlState.selected.height <= 52
     && parseInt(pageControlState.selected.radius,10) <= 9
     && pageControlState.selected.color === 'rgb(64, 87, 237)'
     && pageControlState.selected.bg === 'rgb(238, 240, 255)'
@@ -251,7 +485,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // UX-003/010/011/014/035: mixed 30+ block navigation fixture. DOM-only;
   // no persisted blocks, live account data, or published page are modified.
   for (const width of [900, 1024, 1440, 1672]) {
-    await setViewport(client, width, 941, false);
+    await setEditorViewport(width);
     await evaluate(client, `(() => {
       const list = document.querySelector('.screen-order-v2-list');
       const seed = list?.querySelector('.screen-order-v2-slot');
@@ -338,13 +572,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // UX-017/024: all primary widget types share one actual inspector hierarchy
   // (not a second row of shortcuts pointing at nested design controls).
   for (const width of [900, 1024, 1440, 1672]) {
-    await setViewport(client, width, 941, false);
+    await setEditorViewport(width);
     for (const [id, designClass, expectedHeading, expectedDesign, expectedBehavior] of [
       ['editor-hero', 'hero-editor-design', '내용 수정', '디자인', ''],
       ['editor-text', 'text-editor-design', '내용 수정', '디자인 조정', ''],
       ['editor-form', 'form-design-detail', '문의 폼 편집', '디자인 조정', '중복 접수와 외부 연동'],
     ]) {
-      await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+      await clickNavigatorRow(`#editor-block-${id} .screen-order-v2-head`);
       await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-${id}')?.closest('.editor-inline-settings')?.querySelector('.screen-order-v2-settings-title h2')`, 'inline block heading for ' + id);
       await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} .${designClass} > summary > strong')?.textContent?.trim() === ${JSON.stringify(expectedDesign)}`, 'optional inspector design group for ' + id);
       const hierarchy = await evaluate(client, `(() => {
@@ -415,18 +649,18 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       ['editor-image', '.image-editor-more'],
       ['editor-form', '.form-design-detail'],
     ]) {
-      await clickPointer(client, `#editor-block-${id} .screen-order-v2-head`);
+      await clickNavigatorRow(`#editor-block-${id} .screen-order-v2-head`);
       await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-${id} ${selector} > summary')`,
         'shared design disclosure exists for ' + id);
       const before = await evaluate(client, `(() => {
         const detail = document.querySelector('#editor-block-settings-${id} ${selector}');
         return { open: detail?.open, bodyVisible: !!detail?.querySelector(':scope > .inspector-disclosure-body')?.getClientRects().length };
       })()`);
-      await clickPointer(client, `#editor-block-settings-${id} ${selector} > summary`);
+      await clickNavigatorRow(`#editor-block-settings-${id} ${selector} > summary`);
       await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} ${selector}')?.open !== ${before.open}`,
         'design disclosure toggles natively for ' + id);
       if (before.open) {
-        await clickPointer(client, `#editor-block-settings-${id} ${selector} > summary`);
+        await clickNavigatorRow(`#editor-block-settings-${id} ${selector} > summary`);
         await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} ${selector}')?.open === true`,
           'design disclosure restores open state for ' + id);
       }
@@ -451,18 +685,18 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       if ((width === 900 || width === 1672) && id === 'editor-image')
         await capture(client, 'inspector-group-image-' + width);
       if (!before.open) {
-        await clickPointer(client, `#editor-block-settings-${id} ${selector} > summary`);
+        await clickNavigatorRow(`#editor-block-settings-${id} ${selector} > summary`);
         await waitForBrowser(client, `document.querySelector('#editor-block-settings-${id} ${selector}')?.open === false`,
           'design group recloses for ' + id);
       }
     }
-    await clickPointer(client, '#editor-block-editor-hero .screen-order-v2-head');
+    await clickNavigatorRow('#editor-block-editor-hero .screen-order-v2-head');
     const heroImageBefore = await evaluate(client, `(() => {
       const d = document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments');
       return {open:d?.open, native:d?.classList.contains('inspector-disclosure')};
     })()`);
     assert(heroImageBefore.native, 'hero image effects must share native disclosure component');
-    await clickPointer(client, '#editor-block-settings-editor-hero .hero-image-adjustments > summary');
+    await clickNavigatorRow('#editor-block-settings-editor-hero .hero-image-adjustments > summary');
     await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments')?.open !== ${heroImageBefore.open}`,
       'hero image effects native disclosure expands');
     const heroImageState = await evaluate(client, `(() => {
@@ -474,15 +708,15 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     assert(heroImageState.height >= 44 && heroImageState.gap === '12px' && heroImageState.visible,
       'hero image effects must follow disclosure rhythm: ' + JSON.stringify(heroImageState));
-    await clickPointer(client, '#editor-block-settings-editor-hero .hero-image-adjustments > summary');
+    await clickNavigatorRow('#editor-block-settings-editor-hero .hero-image-adjustments > summary');
     await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-hero .hero-image-adjustments')?.open === ${heroImageBefore.open}`,
       'hero image disclosure restores original state');
     assert(apiState.saveCount === 0, 'inspector group expand/collapse must never write or publish');
     if (width === 1024 || width === 1672) await capture(client, 'single-hierarchy-form-' + width);
   }
   for (const width of [900, 1440]) {
-    await setViewport(client, width, 941, false);
-    await clickPointer(client, '.editor-page-settings-button');
+    await setEditorViewport(width);
+    await clickNavigatorRow('.editor-page-settings-button');
     await waitForBrowser(client, `!!document.querySelector('.editor-page-options-stack .style-panel-v17')`, 'unified design inspector is mounted');
     const pageType = await evaluate(client, `(() => {
       const css = selector => {
@@ -507,14 +741,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     await capture(client, 'unified-page-design-type-' + width);
   }
   await setViewport(client, 1672, 941, false);
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('#editor-block-settings-editor-text')?.closest('.editor-inline-settings') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy inline text editor');
 
   // The redesigned first view keeps design closed. Open it deliberately for
   // secondary-control sizing and focus tests, rather than treating hidden
   // fields as a visual regression.
   if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
-    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+    await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
   }
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
     'optional text design is opened for control geometry tests');
@@ -555,7 +789,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // Check computed styles at compact and wide inspector widths. Keep model
   // values unchanged; disabled states below are DOM-only and immediately reset.
   for (const width of [900, 1024, 1440, 1672]) {
-    await setViewport(client, width, 941, false);
+    await setEditorViewport(width);
     const metrics = await evaluate(client, `(() => {
       const scope = document.querySelector('#editor-block-settings-editor-text');
       const details = scope?.querySelector('.text-editor-flow');
@@ -616,10 +850,10 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(focusRing.focused && focusRing.width === '2px' && focusRing.style === 'solid',
     'keyboard focus must be visible on HEX input: ' + JSON.stringify(focusRing));
 
-  await clickPointer(client, '#editor-block-editor-bottom .fixed-block-head');
+  await clickNavigatorRow('#editor-block-editor-bottom .fixed-block-head');
   await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-bottom .bottom-bar-editor-design > summary')`,
     'bottom fixed CTA exposes real design controls');
-  await clickPointer(client, '#editor-block-settings-editor-bottom .bottom-bar-editor-design > summary');
+  await clickNavigatorRow('#editor-block-settings-editor-bottom .bottom-bar-editor-design > summary');
   await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-bottom .editor-toggle-row-v2 button[role="switch"]')`,
     'bottom CTA shows semantic on/off control');
   const switchMetrics = await evaluate(client, `(() => {
@@ -686,7 +920,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`, 'both fixed groups restore the original buttons and selectors');
   assert(apiState.saveCount === 0, 'collapsing fixed navigation must not save, publish or reorder the page');
 
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .text-editor-flow')`,
     'control QA returns to original text editor without draft or public save');
   assert(apiState.saveCount === 0, 'control styling, temporary disabled attributes and navigation must never publish');
@@ -710,6 +944,34 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client, `document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'`,
     'footer is independently searchable');
   await focusSelector(client, searchInput);
+  // Committing/cancelling a Korean IME composition must never be mistaken
+  // for selecting a search result or clearing the active search term.
+  const imeShortcuts = await evaluate(client, `(() => {
+    const input = document.querySelector('input[aria-label="블록 이름 검색"]');
+    const composingEnter = new KeyboardEvent('keydown',
+      { key: 'Enter', code: 'Enter', isComposing: true, bubbles: true, cancelable: true });
+    const composingEscape = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', isComposing: true, bubbles: true, cancelable: true });
+    input.dispatchEvent(composingEnter);
+    input.dispatchEvent(composingEscape);
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '푸' }));
+    const unflaggedEnter = new KeyboardEvent('keydown',
+      { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true });
+    input.dispatchEvent(unflaggedEnter);
+    input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '푸터' }));
+    return {
+      enterPrevented: composingEnter.defaultPrevented,
+      escapePrevented: composingEscape.defaultPrevented,
+      unflaggedPrevented: unflaggedEnter.defaultPrevented,
+    };
+  })()`);
+  await waitForBrowser(client,
+    `document.querySelector('input[aria-label="블록 이름 검색"]')?.value === '푸터'
+      && document.querySelector('.editor-search-count')?.textContent.trim() === '1/1'
+      && document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
+    'composing Korean search leaves query, matches and selected editor unchanged');
+  assert(!imeShortcuts.enterPrevented && !imeShortcuts.escapePrevented && !imeShortcuts.unflaggedPrevented,
+    'Korean IME key events must remain available for the composition system: ' + JSON.stringify(imeShortcuts));
   await pressKeyboardKey(client, 'Enter');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-footer')?.dataset.selected === 'true'
     && !!document.querySelector('#editor-block-settings-editor-footer')`,
@@ -888,9 +1150,41 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await clickPointer(client, '.editor-block-switch-actions button[aria-label="이전 블록"]');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-hero')?.dataset.selected === 'true'`,
     'inspector previous selects the hero without a list scroll');
+  await focusSelector(client, '.editor-block-switch-actions button[aria-label="이전 블록"]');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-topnav')?.dataset.selected === 'true'
+      && document.activeElement === document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]')`,
+    'keyboard navigation crosses into the pinned top block and focuses its enabled next action');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-hero')?.dataset.selected === 'true'
+      && document.activeElement === document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]')`,
+    'keyboard navigation returns from pinned top to first content block without losing focus');
   await clickPointer(client, '.editor-block-switch-actions button[aria-label="다음 블록"]');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
     'inspector next returns to the text block');
+  // A repeated previous/next keyboard action must not place focus on the
+  // heading or document body every time the selected editor remounts.
+  const inspectorNext = '.editor-block-switch-actions button[aria-label="다음 블록"]';
+  await focusSelector(client, inspectorNext);
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'
+      && document.activeElement === document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]')`,
+    'Enter navigates from text to form while retaining next-button keyboard focus');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('#editor-block-editor-code')?.dataset.selected === 'true'
+      && document.activeElement === document.querySelector('.editor-block-switch-actions button[aria-label="다음 블록"]')`,
+    'another Enter navigates from form to code without re-tabbing through the inspector');
+  await clickPointer(client, '.editor-block-switch-actions button[aria-label="이전 블록"]');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-form')?.dataset.selected === 'true'`,
+    'keyboard-navigation regression returns to the form');
+  await clickPointer(client, '.editor-block-switch-actions button[aria-label="이전 블록"]');
+  await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
+    'keyboard-navigation regression restores the text fixture');
+  assert(apiState.saveCount === 0, 'repeated inspector keyboard navigation must not save or publish');
 
   // 16th patch: a deep composition should keep the selected row visible when
   // switching via inspector previous/next, rather than resetting scrollTop=0.
@@ -956,7 +1250,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     document.querySelectorAll('[data-qa-deep-switch-clone]').forEach((node) => node.remove());
     document.querySelector('.editor-composition-content').scrollTop = 0;
   })()`);
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
     'deep inspector regression returns to the original text editor');
   assert(apiState.saveCount === 0, 'inspector navigation must not save or publish the page');
@@ -968,8 +1262,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const seed = list?.querySelector('.screen-order-v2-slot');
     const scroller = document.querySelector('.editor-composition-content');
     const header = document.querySelector('.screen-order-v2-settings-header');
-    const inspector = document.querySelector('.editor-inspector-panel');
-    if (!seed || !header || !scroller) return null;
+    const inspector = document.querySelector('.editor-properties-panel');
+    const properties = document.querySelector('.editor-properties-content');
+    if (!seed || !header || !scroller || !inspector || !properties) return null;
     const clones = [];
     try {
       for (let index = 0; index < 30; index++) {
@@ -984,7 +1279,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       const title = header.getBoundingClientRect();
       return { scrolled: scroller.scrollTop,
         titleTop: title.top, inspectorTop: inspectorBox.top,
-        inspectorOverflow: getComputedStyle(inspector).overflowY,
+        inspectorOverflow: getComputedStyle(properties).overflowY,
         navigatorOverflow: getComputedStyle(scroller).overflowY,
         outerOverflow: getComputedStyle(document.querySelector('.work-panel')).overflowY };
     } finally {
@@ -993,9 +1288,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     }
   })()`);
   assert(longInspector?.scrolled > 250
-    && longInspector.inspectorOverflow === 'visible'
-    && longInspector.navigatorOverflow === 'auto' && longInspector.outerOverflow === 'hidden',
-    'the selected inline editor must move with the single long block-stack scroller: ' + JSON.stringify(longInspector));
+    && longInspector.inspectorOverflow === 'auto'
+    && longInspector.navigatorOverflow === 'auto'
+    && longInspector.outerOverflow === 'hidden'
+    && longInspector.titleTop >= longInspector.inspectorTop,
+    'long block navigation must not displace the separate settings inspector: ' + JSON.stringify(longInspector));
   const before = await evaluate(client, `[...document.querySelectorAll('.text-editor-flow textarea')].map(el => el.value)`);
   const title = '.text-editor-flow textarea';
   await clickPointer(client, title);
@@ -1005,7 +1302,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // Styling is initially hidden, but may already be expanded by a prior
   // control-focus test. Preserve either state without closing it accidentally.
   if (!(await evaluate(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open`))) {
-    await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
+    await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
   }
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
     'text design controls remain reachable explicitly');
@@ -1043,12 +1340,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const rect = el => { const r = el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width,top:r.top,height:r.height}; };
     const stage = document.querySelector('.preview-workspace');
     const list = document.querySelector('.editor-composition-panel');
-    const inspector = document.querySelector('.editor-inspector-panel');
+    const inspector = document.querySelector('.editor-properties-panel');
+    const properties = document.querySelector('.editor-properties-content');
     return { header: rect(document.querySelector('.workspace-persistent-header')), list:rect(list), inspector:rect(inspector), stage:rect(stage), phone:rect(document.querySelector('.phone-frame')), pageWidth:document.querySelector('.phone-frame .landing-page').clientWidth,
-      phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-width-option').length, documentWidth:document.documentElement.scrollWidth,
+      phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-device-widths button').length, documentWidth:document.documentElement.scrollWidth,
       listScroll:getComputedStyle(list).overflowY,
       navigatorScroll:getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
-      inspectorScroll:getComputedStyle(inspector).overflowY,
+      inspectorScroll:getComputedStyle(properties).overflowY,
       labels:[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy strong')].map(el => ({
         label: el.textContent, whiteSpace:getComputedStyle(el).whiteSpace, height:el.getBoundingClientRect().height,
         lineHeight:parseFloat(getComputedStyle(el).lineHeight), clipped:el.scrollWidth>el.clientWidth
@@ -1058,28 +1356,30 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 660) <= 3
-    && geometry.inspector.width >= 575 && geometry.inspector.width <= geometry.list.width,
-    'single block-stack editor must have a full-width inline settings section at 1672px: ' + JSON.stringify(geometry));
-  assert(Math.abs(geometry.list.top - 64) <= 1 && geometry.inspector.top >= geometry.list.top,
-    'selected block must expand below the shared 64px workspace toolbar: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 246) <= 3
+    && Math.abs(geometry.inspector.width - 340) <= 3
+    && geometry.inspector.left > geometry.stage.left
+    && geometry.inspector.left >= geometry.stage.right - 2,
+    'approved three-pane geometry must keep navigation, real canvas, settings separated at 1672px: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
+    'both side panels must remain aligned below the shared 64px workspace toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
     && geometry.ancestors[1].scrollTop === 0,
     'work panel must remain stationary while the two editing regions scroll: ' + JSON.stringify(geometry));
   assert(geometry.labels.length >= 4
     && geometry.labels.every(label => label.whiteSpace === 'normal' && label.height <= label.lineHeight * 2 + 2),
     'long Korean block names must fit within two lines without overlapping actions: ' + JSON.stringify(geometry.labels));
-  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0
+  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 3
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
-    && geometry.inspectorScroll === 'visible'
+    && geometry.inspectorScroll === 'auto'
     && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
-    'reference editor must have one scrolling block stack and a centered real phone: ' + JSON.stringify(geometry));
+    'real page must remain centered with independent list and inspector scrolling: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
   // zoom, fullscreen, or floating block-action toolbars above the phone.
   for (const width of [900, 1024, 1440, 1672]) {
-    await setViewport(client, width, 941, false);
+    await setEditorViewport(width);
     const chrome = await evaluate(client, `(() => {
       const preview = document.querySelector('.preview-workspace');
       const stage = preview.querySelector('.preview-sticky');
@@ -1099,7 +1399,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         selectedBlocks: frame.querySelectorAll('[data-preview-selected="true"]').length,
       };
     })()`);
-    const expectedWidth = width <= 950 ? 392 : 394;
+    const expectedWidth = 394;
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
       && parseInt(chrome.radius, 10) <= 20 && chrome.stageCentered && chrome.frameInside
       && chrome.children === 2 && (chrome.canvasTools || chrome.canvasAdd) && !chrome.hasLegacyToolbar,
@@ -1107,6 +1407,17 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
   }
   await setViewport(client, 1672, 941, false);
+
+    // Changing device width must update the actual landing viewport, not scale it.
+  await clickPointer(client, '.preview-device-widths button:nth-child(1)');
+  await waitForBrowser(client, `document.querySelector('.phone-frame .landing-page')?.clientWidth === 360`,
+    '360px responsive page preview');
+  await clickPointer(client, '.preview-device-widths button:nth-child(3)');
+  await waitForBrowser(client, `document.querySelector('.phone-frame .landing-page')?.clientWidth === 430`,
+    '430px responsive page preview');
+  await clickPointer(client, '.preview-device-widths button:nth-child(2)');
+  await waitForBrowser(client, `document.querySelector('.phone-frame .landing-page')?.clientWidth === 390`,
+    '390px default preview restored before editing');
 
   // Selection continues to use the same block ID in the left list and the
   // phone, but edits/visibility/reordering remain in the existing inspector.
@@ -1130,7 +1441,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       ? !stage.toolbarId : stage.toolbarId === blockId),
       'selecting a normal section must show its exact editor-only canvas actions, while fixed controls remain in the navigator: ' + JSON.stringify(stage));
   }
-  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('#editor-block-editor-text')?.dataset.selected === 'true'`,
     'return to selected text with its contextual canvas actions');
   assert(apiState.saveCount === 0, 'preview selections never publish or mutate the saved page');
@@ -1166,7 +1477,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await pressKeyboardKey(client, 'Escape');
   await waitForBrowser(client, `!document.querySelector('.editor-gallery-dialog')`,
     'canvas-initiated gallery closes by keyboard');
-  await clickPointer(client, '#editor-block-settings-editor-text .block-editor-advanced-settings > summary');
+  await clickNavigatorRow('#editor-block-settings-editor-text .block-editor-advanced-settings > summary');
   await waitForBrowser(client, `document.querySelector('#editor-block-settings-editor-text .block-editor-advanced-settings').open`, 'single advanced group opens the anchor control');
   await evaluate(client, `document.querySelector('.editor-composition-content').scrollTop = 0`);
   await waitForBrowser(client, `document.querySelector('.editor-composition-content').scrollTop === 0`, 'navigator scroll remains independently available');
