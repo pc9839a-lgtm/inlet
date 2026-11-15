@@ -468,6 +468,12 @@ assert(layout.includes('aria-controls="editor-composition-panel"')
   && layout.includes("if (event.key === 'Escape' && navigatorOpen)")
   && layout.includes('setNavigatorOpen(false)'),
   'laptop block drawer must announce expansion and close via Escape even when the trigger retains focus');
+assert(layout.includes("window.matchMedia('(min-width: 900px) and (max-width: 1279px)').matches")
+  && layout.includes("document.addEventListener('pointerdown', dismissOnOutsidePointer, true)")
+  && layout.includes("document.removeEventListener('pointerdown', dismissOnOutsidePointer, true)")
+  && layout.includes('panel?.contains(event.target) || trigger?.contains(event.target)')
+  && layout.includes('panel?.contains(document.activeElement)'),
+  'laptop block drawer must dismiss on outside pointers without swallowing real canvas actions or trapping hidden focus');
 assert(layout.includes("?.scrollTo({ top: 0, behavior: 'instant' })")
   && layout.includes('}, [selectedBlockId]);'),
   'changing selected blocks must reset the independently scrolling property inspector');
