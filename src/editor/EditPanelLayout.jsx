@@ -69,6 +69,11 @@ export function EditPanelLayout({
       const trigger = document.querySelector('.editor-navigator-drawer-trigger');
       if (panel?.contains(event.target) || trigger?.contains(event.target)) return;
       setNavigatorOpen(false);
+      requestAnimationFrame(() => {
+        // Non-focusable canvas chrome can leave keyboard focus in the now
+        // hidden drawer. A newly focused outside control takes precedence.
+        if (panel?.contains(document.activeElement)) trigger?.focus({ preventScroll: true });
+      });
     };
     document.addEventListener('pointerdown', dismissOnOutsidePointer, true);
     return () => document.removeEventListener('pointerdown', dismissOnOutsidePointer, true);
