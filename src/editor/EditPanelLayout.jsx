@@ -255,6 +255,9 @@ export function EditPanelLayout({
         data-drawer-open={navigatorOpen ? 'true' : 'false'}
         aria-label="페이지 블록 목록"
         onKeyDown={(event) => {
+          // Do not dismiss the laptop navigator when an IME owns Escape.
+          // The search input also stops bubbling for unflagged composition.
+          if (event.nativeEvent?.isComposing || event.keyCode === 229) return;
           if (event.key === 'Escape' && navigatorOpen) {
             setNavigatorOpen(false);
             document.querySelector('.editor-navigator-drawer-trigger')?.focus();
