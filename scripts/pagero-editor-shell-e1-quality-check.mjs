@@ -192,6 +192,7 @@ const rowCss = await readFile('src/editor/editPanelParts/ScreenOrder.css', 'utf8
 const fixedCard = await readFile('src/editor/editPanelParts/FixedBlockCard.jsx', 'utf8');
 const compactRowSource = await readFile('src/editor/editPanelParts/ScreenOrderRow.jsx', 'utf8');
 const compactRowActions = await readFile('src/editor/editPanelParts/ScreenOrderRowActions.jsx', 'utf8');
+const inspectorBlockList = await readFile('src/editor/editPanelParts/ScreenOrderList.jsx', 'utf8');
 
 const workspaceCss = await readFile('src/styles/workspace-shell.css', 'utf8');
 const chromeCss = await readFile('src/screens/workspace/WorkspaceChrome.css', 'utf8');
@@ -359,6 +360,11 @@ assert(!compactRowSource.includes('<ScreenOrderRowVisibility')
   && rowIdentity.includes("failed ? <ImageOff size={16} />")
   && rowCss.includes('screen-order-v2-type-icon.thumbnail-error'),
   'new stack rows must preserve visibility/menu keyboard control and image failure fallback');
+assert(inspectorBlockList.includes('onToggleVisible={() => props.toggleVisible(selectedBlock.id)}')
+  && inspectorBlockList.includes('instance="inspector"')
+  && compactRowActions.includes('aria-checked={block.visible !== false}')
+  && compactRowActions.includes('onClick={() => run(onToggleVisible)}'),
+  'the right inspector visibility switch must operate on the real selected block, not silently no-op');
 // 22nd patch: visible public/draft status card is gone, but separate
 // status computation, accessible announcement and actionable publish state stay.
 assert(!headerSource.includes('panel-save-status operations-save-status')
