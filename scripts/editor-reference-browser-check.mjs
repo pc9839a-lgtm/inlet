@@ -115,8 +115,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
       && !!document.querySelector('[data-editor-section="options"] .editor-page-options-stack')
       && document.activeElement === document.querySelector('[data-editor-section="options"] .editor-page-options-heading h2')
+      && getComputedStyle(document.activeElement).outlineWidth === '2px'
       && document.querySelector('.editor-properties-content')?.scrollTop === 0`,
-    'page-options keyboard selection closes the laptop drawer and focuses its visible inspector heading');
+    'page-options keyboard selection closes the laptop drawer and visibly focuses its inspector heading');
   assert(apiState.saveCount === 0, 'opening page options must not save or publish the page');
   await setViewport(client, 1672, 941, false);
   await clickNavigatorRow('#editor-block-editor-hero .screen-order-v2-head');
