@@ -102,7 +102,24 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
       && document.activeElement === document.querySelector('.editor-navigator-drawer-trigger')`,
     'second Escape closes the laptop block list and restores trigger focus');
+  // Explicit page-settings selection closes the same laptop drawer. The
+  // focused footer button becomes hidden, so focus must move to the real
+  // page-options heading in the persistent right inspector.
+  await clickPointer(client, '.editor-navigator-drawer-trigger');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
+    'laptop drawer reopens before page-options keyboard selection');
+  await focusSelector(client, '.editor-page-settings-button');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client,
+    `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
+      && !!document.querySelector('[data-editor-section="options"] .editor-page-options-stack')
+      && document.activeElement === document.querySelector('[data-editor-section="options"] .editor-page-options-heading h2')
+      && document.querySelector('.editor-properties-content')?.scrollTop === 0`,
+    'page-options keyboard selection closes the laptop drawer and focuses its visible inspector heading');
+  assert(apiState.saveCount === 0, 'opening page options must not save or publish the page');
   await setViewport(client, 1672, 941, false);
+  await clickNavigatorRow('#editor-block-editor-hero .screen-order-v2-head');
   // A real page-first workflow: selecting visible content edits the exact
   // existing field. Cancel must leave the staged and published page intact.
   await focusSelector(client, '.phone-frame #block-editor-hero h1.editor-inline-text-trigger');
