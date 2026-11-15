@@ -73,7 +73,12 @@ export function BlockNavigatorSearch({ blocks = [], fixedDescriptors = [], selec
         onKeyDown={(event) => {
           // Enter commits a Korean IME syllable; Escape can cancel its
           // composition. Neither should navigate or clear search mid-input.
-          if (composingRef.current || event.nativeEvent?.isComposing || event.keyCode === 229) return;
+          if (composingRef.current || event.nativeEvent?.isComposing || event.keyCode === 229) {
+            // Escape belongs to the IME while composing, not the enclosing
+            // laptop drawer. Do not preventDefault: the IME needs the key.
+            if (event.key === 'Escape') event.stopPropagation();
+            return;
+          }
           if (event.key === 'Enter') { event.preventDefault(); navigate(activeIndex); }
           if (event.key === 'Escape' && query.trim()) {
             // First Escape clears the query, without also closing the laptop drawer.
