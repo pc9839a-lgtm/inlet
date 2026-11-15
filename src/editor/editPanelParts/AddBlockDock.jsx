@@ -63,7 +63,13 @@ export function AddBlockDock({ addOpen, setAddOpen, addBlock, addSectionPattern,
         <section ref={dialogRef} id="editor-block-gallery-dialog" className="editor-gallery-dialog"
           role="dialog" aria-modal="true" aria-labelledby="editor-block-gallery-title"
           onCompositionStartCapture={() => { composingRef.current = true; }}
-          onCompositionEndCapture={() => { composingRef.current = false; }}>
+          onCompositionEndCapture={() => { composingRef.current = false; }}
+          onKeyDown={(event) => {
+            // React portal events bubble through the owning navigator even
+            // though this dialog lives under document.body. Escape belongs to
+            // the gallery/IME, never the enclosing laptop drawer.
+            if (event.key === 'Escape') event.stopPropagation();
+          }}>
           <header className="editor-gallery-dialog-head">
             <div>
               <span className="editor-gallery-eyebrow">페이지 구성</span>
