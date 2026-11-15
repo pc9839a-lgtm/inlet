@@ -10,12 +10,18 @@ export function AddBlockDock({ addOpen, setAddOpen, addBlock, addSectionPattern,
   const ref = useRef(null);
   const dialogRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const composingRef = useRef(false);
 
   useEffect(() => {
     if (!compact || !addOpen || typeof document === 'undefined') return undefined;
     previousFocusRef.current = document.activeElement;
+    composingRef.current = false;
     const focusFrame = requestAnimationFrame(() => dialogRef.current?.querySelector('input[type="search"]')?.focus());
     const onKeyDown = (event) => {
+      // The listener runs in document capture, before input-level handlers.
+      // A Korean IME can send Escape without isComposing set while cancelling
+      // a syllable. Never close the dialog or trap Tab during composition.
+      if (composingRef.current || event.isComposing || event.keyCode === 229) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
@@ -38,6 +44,7 @@ export function AddBlockDock({ addOpen, setAddOpen, addBlock, addSectionPattern,
     return () => {
       cancelAnimationFrame(focusFrame);
       document.removeEventListener('keydown', onKeyDown, true);
+      composingRef.current = false;
       const previous = previousFocusRef.current;
       if (previous?.isConnected) requestAnimationFrame(() => previous.focus({ preventScroll: true }));
     };
@@ -54,7 +61,9 @@ export function AddBlockDock({ addOpen, setAddOpen, addBlock, addSectionPattern,
         if (event.currentTarget === event.target) setAddOpen(false);
       }}>
         <section ref={dialogRef} id="editor-block-gallery-dialog" className="editor-gallery-dialog"
-          role="dialog" aria-modal="true" aria-labelledby="editor-block-gallery-title">
+          role="dialog" aria-modal="true" aria-labelledby="editor-block-gallery-title"
+          onCompositionStartCapture={() => { composingRef.current = true; }}
+          onCompositionEndCapture={() => { composingRef.current = false; }}>
           <header className="editor-gallery-dialog-head">
             <div>
               <span className="editor-gallery-eyebrow">페이지 구성</span>
