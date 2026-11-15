@@ -491,6 +491,8 @@ assert(layout.includes("window.matchMedia('(min-width: 900px) and (max-width: 12
 assert(layout.includes("event.target?.closest?.('[data-composition-action-menu=\"true\"]')")
   && compactRowActions.includes("data-composition-action-menu={instance ? undefined : 'true'}"),
   'body-portaled block-list action menus must count as inside the laptop navigator, unlike inspector menus');
+assert(layout.includes("event.target?.closest?.('.editor-gallery-backdrop')"),
+  'laptop add-block gallery must count as navigator-owned so its close restores focus to a visible add button');
 assert(layout.includes("?.scrollTo({ top: 0, behavior: 'instant' })")
   && layout.includes('}, [selectedBlockId]);'),
   'changing selected blocks must reset the independently scrolling property inspector');
