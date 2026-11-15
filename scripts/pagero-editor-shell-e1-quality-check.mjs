@@ -474,7 +474,7 @@ assert(layout.includes("?.scrollTo({ top: 0, behavior: 'instant' })")
 assert(layout.includes('const focusPageHeading = (attempts = 5)')
   && layout.includes("inspector?.querySelector('[data-editor-section=\"options\"] .editor-page-options-heading h2')")
   && layout.includes('heading.focus({ preventScroll: true })')
-  && layout.includes('<h2 tabIndex={-1}>전체 디자인과 설정</h2>'),
+  && layout.includes('<h2 tabIndex={-1}>전체 디자인과 설정</h2>')
   && editPanelLayoutCss.includes('.editor-page-options-heading h2:focus-visible')
   && editPanelLayoutCss.includes('outline: 2px solid #435bef'),
   'page-settings selection must focus the visible inspector heading after hiding the laptop navigator');
