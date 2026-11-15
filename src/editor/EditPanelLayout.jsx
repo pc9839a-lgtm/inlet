@@ -58,6 +58,21 @@ export function EditPanelLayout({
   const [section, setSection] = React.useState('order');
   const [fixedSearchReveal, setFixedSearchReveal] = React.useState(null);
   const [navigatorOpen, setNavigatorOpen] = React.useState(false);
+  // On laptop widths the composition is an overlay, not a modal. Dismiss it
+  // when the user works in the canvas or inspector, without cancelling the
+  // pointer event or altering the selected block or page draft.
+  React.useEffect(() => {
+    if (!navigatorOpen) return undefined;
+    const dismissOnOutsidePointer = (event) => {
+      if (!window.matchMedia('(min-width: 900px) and (max-width: 1279px)').matches) return;
+      const panel = document.getElementById('editor-composition-panel');
+      const trigger = document.querySelector('.editor-navigator-drawer-trigger');
+      if (panel?.contains(event.target) || trigger?.contains(event.target)) return;
+      setNavigatorOpen(false);
+    };
+    document.addEventListener('pointerdown', dismissOnOutsidePointer, true);
+    return () => document.removeEventListener('pointerdown', dismissOnOutsidePointer, true);
+  }, [navigatorOpen]);
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
   // A blank selection is page-level context, not a reason to collapse the editor.
   // Show the existing page design and options until a block is selected.
