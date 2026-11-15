@@ -117,7 +117,22 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && document.activeElement === document.querySelector('[data-editor-section="options"] .editor-page-options-heading h2')
       && getComputedStyle(document.activeElement).outlineWidth === '2px'
       && document.querySelector('.editor-properties-content')?.scrollTop === 0`,
-    'page-options keyboard selection closes the laptop drawer and visibly focuses its inspector heading');
+    'page-options keyboard selection closes the laptop drawer and visibly focuses its inspector heading').catch(async (error) => {
+    const actual = await evaluate(client, `(() => {
+      const heading = document.querySelector('[data-editor-section="options"] .editor-page-options-heading h2');
+      const active = document.activeElement;
+      return {
+        drawer: document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded'),
+        pageOptions: !!document.querySelector('[data-editor-section="options"] .editor-page-options-stack'),
+        headingPresent: !!heading, headingFocused: active === heading,
+        headingTabIndex: heading?.tabIndex, headingOutline: heading ? getComputedStyle(heading).outlineWidth : '',
+        activeElement: active?.outerHTML?.slice(0, 280),
+        activeOutline: active ? getComputedStyle(active).outlineWidth : '',
+        inspectorScroll: document.querySelector('.editor-properties-content')?.scrollTop,
+      };
+    })()`);
+    throw new Error(error.message + ': ' + JSON.stringify(actual));
+  });
   assert(apiState.saveCount === 0, 'opening page options must not save or publish the page');
   await setViewport(client, 1672, 941, false);
   await clickNavigatorRow('#editor-block-editor-hero .screen-order-v2-head');
