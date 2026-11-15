@@ -144,6 +144,31 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     `!!document.querySelector('.editor-gallery-dialog')
       && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
     'laptop add-block gallery opens without closing its originating drawer');
+  const gallerySearch = 'input[aria-label="추가할 블록 검색"]';
+  await setInputValue(client, gallerySearch, '문의');
+  await focusSelector(client, gallerySearch);
+  const galleryImeEscape = await evaluate(client, `(() => {
+    const input = document.querySelector('input[aria-label="추가할 블록 검색"]');
+    input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '문' }));
+    const plain = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true });
+    const flagged = new KeyboardEvent('keydown',
+      { key: 'Escape', code: 'Escape', isComposing: true, bubbles: true, cancelable: true });
+    input.dispatchEvent(plain);
+    input.dispatchEvent(flagged);
+    const remainedOpen = !!document.querySelector('.editor-gallery-dialog');
+    input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '문의' }));
+    return { plainPrevented: plain.defaultPrevented,
+      flaggedPrevented: flagged.defaultPrevented, remainedOpen };
+  })()`);
+  await waitForBrowser(client,
+    `document.querySelector('input[aria-label="추가할 블록 검색"]')?.value === '문의'
+      && !!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('input[aria-label="추가할 블록 검색"]')`,
+    'Korean IME Escape keeps gallery search, dialog, laptop drawer and keyboard focus intact');
+  assert(galleryImeEscape.remainedOpen && !galleryImeEscape.plainPrevented && !galleryImeEscape.flaggedPrevented,
+    'IME Escape must reach composition without dismissing gallery: ' + JSON.stringify(galleryImeEscape));
   await clickPointer(client, '.editor-gallery-dialog-head h2');
   await waitForBrowser(client,
     `!!document.querySelector('.editor-gallery-dialog')
