@@ -67,10 +67,12 @@ export function EditPanelLayout({
       if (!window.matchMedia('(min-width: 900px) and (max-width: 1279px)').matches) return;
       const panel = document.getElementById('editor-composition-panel');
       const trigger = document.querySelector('.editor-navigator-drawer-trigger');
-      // Block row menus render in a body portal. Their actions still belong
-      // to the navigator, unlike inspector or preview controls outside it.
+      // Block actions and the compact add-block gallery render in body
+      // portals. They belong to the navigator, so interactions there must
+      // not hide the add button that the gallery restores focus to.
       if (panel?.contains(event.target) || trigger?.contains(event.target)
-        || event.target?.closest?.('[data-composition-action-menu="true"]')) return;
+        || event.target?.closest?.('[data-composition-action-menu="true"]')
+        || event.target?.closest?.('.editor-gallery-backdrop')) return;
       setNavigatorOpen(false);
       requestAnimationFrame(() => {
         // Non-focusable canvas chrome can leave keyboard focus in the now
