@@ -67,7 +67,10 @@ export function EditPanelLayout({
       if (!window.matchMedia('(min-width: 900px) and (max-width: 1279px)').matches) return;
       const panel = document.getElementById('editor-composition-panel');
       const trigger = document.querySelector('.editor-navigator-drawer-trigger');
-      if (panel?.contains(event.target) || trigger?.contains(event.target)) return;
+      // Block row menus render in a body portal. Their actions still belong
+      // to the navigator, unlike inspector or preview controls outside it.
+      if (panel?.contains(event.target) || trigger?.contains(event.target)
+        || event.target?.closest?.('[data-composition-action-menu="true"]')) return;
       setNavigatorOpen(false);
       requestAnimationFrame(() => {
         // Non-focusable canvas chrome can leave keyboard focus in the now
