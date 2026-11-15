@@ -190,6 +190,16 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && document.activeElement === document.querySelector('.editor-composition-heading .add-toggle')
       && !!document.activeElement.getClientRects().length`,
     'closing laptop gallery restores focus to visible block-add button');
+  await clickPointer(client, '.editor-composition-heading .add-toggle');
+  await waitForBrowser(client, `!!document.querySelector('.editor-gallery-dialog')`,
+    'laptop gallery can reopen for ordinary Escape closing');
+  await focusSelector(client, 'input[aria-label="추가할 블록 검색"]');
+  await pressKeyboardKey(client, 'Escape');
+  await waitForBrowser(client,
+    `!document.querySelector('.editor-gallery-dialog')
+      && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
+      && document.activeElement === document.querySelector('.editor-composition-heading .add-toggle')`,
+    'ordinary Escape closes only gallery while preserving laptop drawer and visible add-button focus');
   assert(apiState.saveCount === 0, 'laptop gallery open/close must not save or publish');
   // Block-row actions are portaled to document.body. They still belong to
   // the open laptop navigator: hiding and restoring a block must not close
