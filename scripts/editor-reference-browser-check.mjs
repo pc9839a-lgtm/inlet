@@ -166,7 +166,16 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && !!document.querySelector('.editor-gallery-dialog')
       && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
       && document.activeElement === document.querySelector('input[aria-label="추가할 블록 검색"]')`,
-    'Korean IME Escape keeps gallery search, dialog, laptop drawer and keyboard focus intact');
+    'Korean IME Escape keeps gallery search, dialog, laptop drawer and keyboard focus intact')
+    .catch(async (error) => {
+      const state = await evaluate(client, `(() => ({
+        inputValue: document.querySelector('input[aria-label="추가할 블록 검색"]')?.value ?? null,
+        galleryOpen: !!document.querySelector('.editor-gallery-dialog'),
+        drawerExpanded: document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded'),
+        activeElement: document.activeElement?.outerHTML?.slice(0, 280) ?? null,
+      }))()`);
+      throw new Error(error.message + ' ' + JSON.stringify({ state, galleryImeEscape }));
+    });
   assert(galleryImeEscape.remainedOpen && !galleryImeEscape.plainPrevented && !galleryImeEscape.flaggedPrevented,
     'IME Escape must reach composition without dismissing gallery: ' + JSON.stringify(galleryImeEscape));
   await clickPointer(client, '.editor-gallery-dialog-head h2');
