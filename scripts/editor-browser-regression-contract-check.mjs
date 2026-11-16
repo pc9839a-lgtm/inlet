@@ -143,7 +143,7 @@ assert(browserSource.includes('stageTwoSettings')
   && browserSource.includes('preview reselects the previous block after page options'),
   'stage 2 browser QA must preserve settings navigation, keyboard focus, staged code and preview selection');
 assert(browserSource.includes('stageThreePageSettings')
-  && browserSource.includes('one reset discards pending design and animation changes')
+  && browserSource.includes('design reset discards only pending design changes; page behavior remains independent')
   && browserSource.includes('applying the staged design must retain page animation edits')
   && browserSource.includes('share position must persist through design apply and publish'),
   'stage 3 browser QA must preserve page settings disclosure, unified theme apply/reset and share persistence');
