@@ -53,9 +53,9 @@ html body #root .canvas-editor-shell .work-panel {
 /* Page-first workbench: the selected block never permanently consumes the
    canvas width. A persistent list and a full real page are the default.
    The existing three-area grid returns only while an editor is requested. */
-html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']) {
+html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide']) {
   grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;
 }
-html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='false']) {
+html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop']) {
   grid-template-columns: minmax(0, 1fr) !important;
 }
