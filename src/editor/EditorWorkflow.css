@@ -255,3 +255,238 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-workf
 @media (prefers-reduced-motion: reduce) {
   html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .screen-order-v2-item { transition: none !important; }
 }
+
+
+/* Phase 2 — real available-width focus mode.
+   A screenshot may capture only 673px of an otherwise wide CSS viewport.
+   The measured shell/visual viewport, not a fixed 900px media query,
+   determines whether the 390px real page can be shown alongside settings.
+   At constrained widths page, blocks and content are independent TASKS,
+   never three simultaneously cramped columns. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) {
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: 64px auto minmax(0, 1fr) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: clip !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) .work-panel {
+  position: relative !important;
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+  border-right: 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) #workspace-panel-edit {
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  background: #fff;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-workflow-compact-switch {
+  display: grid !important;
+  position: relative;
+  z-index: 3;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+  margin: 0 !important;
+  padding: 9px 12px !important;
+  width: 100%;
+  min-height: 66px;
+  background: #fff !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e3e9f4 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 2px 7px #182a4508;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-workflow-compact-switch button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  min-height: 45px !important;
+  padding: 8px 4px !important;
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  background: #f4f7fc !important;
+  color: #546581 !important;
+  font: inherit;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-workflow-compact-switch button[aria-pressed='true'] {
+  background: #ebf2ff !important;
+  border-color: #bfd2fb !important;
+  color: #174eca !important;
+  box-shadow: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-workflow-compact-switch button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-navigator-drawer-trigger {
+  display: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-composition-panel,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-properties-panel {
+  display: none !important;
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  visibility: visible !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: calc(100dvh - 130px) !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: auto !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'][data-compact-view='blocks'] .editor-composition-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #f8faff !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'][data-compact-view='edit'] .editor-properties-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #fff !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-composition-heading {
+  padding: 18px 18px 13px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-composition-search {
+  margin-inline: 18px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-composition-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 12px 18px 26px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-composition-footer {
+  flex: 0 0 auto !important;
+  padding-inline: 18px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-properties-heading {
+  flex: 0 0 auto !important;
+  min-height: 65px !important;
+  padding: 12px 20px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-properties-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 16px 20px 40px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) > .preview-workspace {
+  grid-column: 1 !important;
+  grid-row: 3 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: calc(100dvh - 130px) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 14px 12px 28px !important;
+  overflow: auto !important;
+  background: #eaf0f8 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact'][data-compact-view='page']) > .preview-workspace {
+  display: flex !important;
+  justify-content: center !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact'][data-compact-view='edit']) > .preview-workspace,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact'][data-compact-view='blocks']) > .preview-workspace {
+  display: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) .preview-workspace .preview-sticky {
+  width: min(394px, 100%) !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) .preview-workspace .phone-frame {
+  flex: 0 0 394px !important;
+  width: 394px !important;
+  max-width: none !important;
+  margin: 0 auto !important;
+  min-height: 440px !important;
+  height: min(690px, calc(100dvh - 230px)) !important;
+}
+@media (max-width: 420px) {
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-workflow-compact-switch {
+    padding-inline: 6px !important; gap: 3px !important;
+  }
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-workflow-compact-switch button {
+    font-size: 12px !important;
+  }
+}
+
+
+/* The persistent editor header wraps into TWO ROWS at 673px.
+   A fixed 64px first grid row made the task switcher exist but sit behind
+   the header (and the canvas covered its hit area). Allocate header height
+   from content, then reserve an actual 66px task navigation row. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact'][data-compact-view='page']) {
+  grid-template-rows: max-content 66px minmax(0, 1fr) !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact'][data-compact-view='blocks']),
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact'][data-compact-view='edit']) {
+  grid-template-rows: max-content minmax(0, 1fr) 0px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) .workspace-persistent-header {
+  grid-row: 1 !important;
+  min-height: 64px;
+  height: auto !important;
+  max-height: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) .work-panel,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) #workspace-panel-edit,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-workflow-compact-switch {
+  flex: 0 0 66px !important;
+  height: 66px !important;
+  box-sizing: border-box;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-composition-panel,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-properties-panel {
+  flex: 1 1 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) > .preview-workspace {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+}

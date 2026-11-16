@@ -87,14 +87,80 @@ export function EditPanelLayout({
   const [section, setSection] = React.useState('order');
   const [fixedSearchReveal, setFixedSearchReveal] = React.useState(null);
   const [navigatorOpen, setNavigatorOpen] = React.useState(false);
+  // The editor's usable width can be smaller than the CSS viewport (zoom,
+  // embedded windows, resized desktop panes). Never decide its layout only
+  // from window.innerWidth; measure the actual available stage as well.
+  const [editorDensity, setEditorDensity] = React.useState(() => (
+    typeof window !== 'undefined' && Math.min(
+      window.innerWidth, window.visualViewport?.width || Infinity,
+    ) < 900 ? 'compact' : 'wide'
+  ));
   const [compactView, setCompactView] = React.useState('page');
+  // A selected inspector from desktop must not become the *only* visible
+  // pane after a user narrows the app. Enter every new compact session on
+  // the actual page; preserve explicit page/blocks/edit choices afterward.
+  const previousDensity = React.useRef(editorDensity);
+  React.useEffect(() => {
+    if (editorDensity === 'compact' && previousDensity.current !== 'compact') {
+      setCompactView('page');
+      setNavigatorOpen(false);
+    }
+    previousDensity.current = editorDensity;
+  }, [editorDensity]);
+  React.useEffect(() => {
+    const shell = document.querySelector('.builder-shell.canvas-editor-shell');
+    if (!shell) return undefined;
+    const measure = () => {
+      const available = Math.min(
+        shell.getBoundingClientRect().width || Infinity,
+        document.documentElement.clientWidth || Infinity,
+        window.visualViewport?.width || Infinity,
+      );
+      setEditorDensity(available < 900 ? 'compact' : available < 1280 ? 'laptop' : 'wide');
+    };
+    const observer = typeof ResizeObserver === 'function'
+      ? new ResizeObserver(measure) : null;
+    observer?.observe(shell);
+    window.addEventListener('resize', measure);
+    window.visualViewport?.addEventListener('resize', measure);
+    measure();
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+      window.visualViewport?.removeEventListener('resize', measure);
+    };
+  }, []);
+  React.useEffect(() => {
+    let focusFrame = 0;
+    const openSelectedContent = () => {
+      if (editorDensity !== 'compact') return;
+      setCompactView('edit');
+      // Canvas controls become display:none in compact mode. A click (or
+      // keyboard activation) must hand focus to the newly visible Inspector,
+      // not leave it in the hidden 390px page. Specialized image/form/link
+      // handlers may focus an exact field first; never override that focus.
+      window.cancelAnimationFrame(focusFrame);
+      focusFrame = window.requestAnimationFrame(() => {
+        const inspector = document.querySelector('.canvas-editor-shell .editor-properties-content');
+        if (!inspector?.getClientRects().length || inspector.contains(document.activeElement)) return;
+        const heading = inspector.querySelector('.screen-order-v2-settings-title h2');
+        (heading?.getClientRects().length ? heading : inspector).focus({ preventScroll: true });
+      });
+    };
+    window.addEventListener('pagero:editor-preview-select', openSelectedContent);
+    return () => {
+      window.removeEventListener('pagero:editor-preview-select', openSelectedContent);
+      window.cancelAnimationFrame(focusFrame);
+    };
+  }, [editorDensity]);
+
   // On laptop widths the composition is an overlay, not a modal. Dismiss it
   // when the user works in the canvas or inspector, without cancelling the
   // pointer event or altering the selected block or page draft.
   React.useEffect(() => {
     if (!navigatorOpen) return undefined;
     const dismissOnOutsidePointer = (event) => {
-      if (!window.matchMedia('(min-width: 900px) and (max-width: 1279px)').matches) return;
+      if (editorDensity !== 'laptop') return;
       const panel = document.getElementById('editor-composition-panel');
       const trigger = document.querySelector('.editor-navigator-drawer-trigger');
       // Block actions and the compact add-block gallery render in body
@@ -112,7 +178,7 @@ export function EditPanelLayout({
     };
     document.addEventListener('pointerdown', dismissOnOutsidePointer, true);
     return () => document.removeEventListener('pointerdown', dismissOnOutsidePointer, true);
-  }, [navigatorOpen]);
+  }, [navigatorOpen, editorDensity]);
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
   // Content editing is the default; page-level options require an explicit choice.
   const showPageOptions = section === 'design' || section === 'page';
@@ -138,7 +204,7 @@ export function EditPanelLayout({
     requestAnimationFrame(() => {
       const settings = document.getElementById(`editor-block-settings-${id}`);
       const heading = settings?.closest('.screen-order-v2-settings-view')?.querySelector('.screen-order-v2-settings-title h2');
-      if (heading) heading.focus({ preventScroll: true });
+      if (heading?.getClientRects().length) heading.focus({ preventScroll: true });
       else if (attempts > 0) focusInspectorHeading(id, attempts - 1);
     });
   };
@@ -146,12 +212,14 @@ export function EditPanelLayout({
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
     setSection('order');
     setNavigatorOpen(false);
+    if (editorDensity === 'compact') setCompactView('edit');
     if (focusHeading) focusInspectorHeading(id);
   };
   const chooseFixed = (id, { focusHeading = true } = {}) => {
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
     setNavigatorOpen(false);
+    if (editorDensity === 'compact') setCompactView('edit');
     if (focusHeading) focusInspectorHeading(id);
   };
   const revealFixedSearch = (id) => {
@@ -234,12 +302,13 @@ export function EditPanelLayout({
     else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
     setSection(destination);
     setNavigatorOpen(false);
+    if (editorDensity === 'compact') setCompactView('edit');
     // A laptop navigator hides after selection. Move keyboard focus into the
     // real page inspector instead of leaving it inside the hidden drawer.
     const focusPageHeading = (attempts = 5) => requestAnimationFrame(() => {
       const inspector = document.querySelector('.canvas-editor-shell .editor-properties-content');
       const heading = inspector?.querySelector('[data-editor-section="options"] .editor-page-options-heading h2');
-      if (!heading) {
+      if (!heading?.getClientRects().length) {
         if (attempts > 0) focusPageHeading(attempts - 1);
         return;
       }
@@ -282,10 +351,11 @@ export function EditPanelLayout({
   };
 
   return (
-    <div className="edit-layout" data-editor-layout="three-pane" data-compact-view={compactView}>
-      <div className="editor-workflow-compact-switch" role="group" aria-label="편집 화면 전환">
-        <button type="button" aria-pressed={compactView === 'edit'} onClick={() => setCompactView('edit')}>편집</button>
+    <div className="edit-layout" data-editor-layout="three-pane" data-editor-density={editorDensity} data-compact-view={compactView}>
+      <div className="editor-workflow-compact-switch" role="group" aria-label="편집 작업 영역 선택">
         <button type="button" aria-pressed={compactView === 'page'} onClick={() => setCompactView('page')}>실제 페이지</button>
+        <button type="button" aria-pressed={compactView === 'blocks'} onClick={() => setCompactView('blocks')}>블록 목록</button>
+        <button type="button" aria-pressed={compactView === 'edit'} onClick={() => setCompactView('edit')}>내용 수정</button>
       </div>
       <button
         type="button"

@@ -69,7 +69,9 @@ export default function WorkspaceEditorScreen({
   // the exact existing content field, including when the Inspector is lazy.
   // No alternate form state or preview mutation is introduced.
   const pendingFormFocusRef = React.useRef(null);
+  const pendingCanvasFocusRef = React.useRef(null);
   React.useEffect(() => () => pendingFormFocusRef.current?.(), []);
+  React.useEffect(() => () => pendingCanvasFocusRef.current?.(), []);
   const focusPreviewFormField = (id, field) => {
     if (!canUseBuilder || !editWorkspace || startMode === 'template' || stylePanelProps?.hasPendingStyle
       || !['title', 'description', 'submit'].includes(field)) return;
@@ -113,8 +115,18 @@ export default function WorkspaceEditorScreen({
   // An image click keeps the existing preview selection and directs attention
   // to the current ImageInput uploader. Never opens a native picker implicitly,
   // bypasses the existing media library, or writes image content itself.
+  const activatePreviewInspector = () => {
+    // Only a real canvas interaction opens the compact content editor.
+    // Automatic hydration/initial block selection must leave the full page
+    // visible. The listener exists only in the editor layout.
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('pagero:editor-preview-select'));
+    }
+  };
   const selectPreviewBlockWithImage = (id, interaction) => {
+    pendingCanvasFocusRef.current?.();
     onSelectPreviewBlock?.(id);
+    if (editWorkspace) activatePreviewInspector();
     if (interaction?.focusField) focusPreviewFormField(id, interaction.focusField);
     if (!interaction?.imageClick || !canUseBuilder || !editWorkspace || startMode === 'template'
       || stylePanelProps?.hasPendingStyle || typeof requestAnimationFrame !== 'function') return;
@@ -205,7 +217,9 @@ export default function WorkspaceEditorScreen({
     const block = editPanelProps?.page?.blocks?.find((entry) => entry.id === id && entry.type === 'links');
     if (!block || block.visible === false || !Array.isArray(block.s?.items) || !block.s.items[index]) return;
     pendingLinkFocusRef.current?.();
+    pendingCanvasFocusRef.current?.();
     onSelectPreviewBlock?.(id);
+    activatePreviewInspector();
     const inspector = document.querySelector('.editor-properties-content');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
@@ -258,7 +272,9 @@ export default function WorkspaceEditorScreen({
     const bottom = editPanelProps?.page?.blocks?.find((entry) => entry.id === id && entry.type === 'bottombar');
     if (!bottom || bottom.visible === false || bottom.s?.buttons?.[index]?.enabled === false) return;
     pendingBottomFocusRef.current?.();
+    pendingCanvasFocusRef.current?.();
     onSelectPreviewBlock?.(id);
+    activatePreviewInspector();
     const inspector = document.querySelector('.editor-properties-content');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
@@ -289,6 +305,7 @@ export default function WorkspaceEditorScreen({
     observer.observe(inspector, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-expanded'] });
     timeoutId = window.setTimeout(cleanup, 5000);
     requestAnimationFrame(focusTarget);
+    pendingBottomFocusRef.current = cleanup;
   };
 
   // Canvas quick actions reuse the same ID-based editor handlers and guards.
@@ -309,11 +326,47 @@ export default function WorkspaceEditorScreen({
     onAdd: () => editPanelProps.setAddOpen(true),
     onEdit: () => {
       if (!canvasSelectedBlock || typeof document === 'undefined') return;
-      const settings = document.getElementById(`editor-block-settings-${canvasSelectedBlock.id}`);
-      const first = settings?.querySelector('textarea:not([disabled]), input:not([disabled]):not([type="checkbox"]), button:not([disabled])');
-      const target = first || settings;
-      target?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
-      target?.focus?.({ preventScroll: true });
+      activatePreviewInspector();
+      // In the 673px task layout the Inspector was display:none during this
+      // click. Focusing its input synchronously is a no-op. Wait until the
+      // real settings become visible, including lazy-loaded block editors.
+      pendingCanvasFocusRef.current?.();
+      const id = canvasSelectedBlock.id;
+      const inspector = document.querySelector('.canvas-editor-shell .editor-properties-content');
+      if (!inspector || typeof MutationObserver !== 'function') return;
+      let finished = false;
+      let remainingFrames = 16;
+      let timeoutId = 0;
+      const cleanup = () => {
+        if (finished) return;
+        finished = true;
+        observer.disconnect();
+        window.clearTimeout(timeoutId);
+        if (pendingCanvasFocusRef.current === cleanup) pendingCanvasFocusRef.current = null;
+      };
+      const focusField = () => {
+        if (finished) return;
+        if (!inspector.getClientRects().length) return;
+        const settings = document.getElementById(`editor-block-settings-${id}`);
+        if (!settings?.getClientRects().length) return;
+        const field = [...settings.querySelectorAll(
+          'textarea:not([disabled]), input:not([disabled]):not([type="checkbox"]), button:not([disabled])'
+        )].find((node) => node.getClientRects().length && !node.closest('[hidden]'));
+        if (!field) return;
+        field.scrollIntoView({ block: 'nearest' });
+        field.focus({ preventScroll: true });
+        if (document.activeElement === field) cleanup();
+      };
+      const observer = new MutationObserver(focusField);
+      const checkNextFrame = () => {
+        if (finished) return;
+        focusField();
+        if (!finished && remainingFrames-- > 0) requestAnimationFrame(checkNextFrame);
+      };
+      observer.observe(inspector, { childList: true, subtree: true });
+      timeoutId = window.setTimeout(cleanup, 5000);
+      pendingCanvasFocusRef.current = cleanup;
+      requestAnimationFrame(checkNextFrame);
     },
     onMoveUp: () => {
       if (canvasSelectedIndex > 0) editPanelProps.reorderToIndex?.(selectedBlockId, canvasSelectedIndex - 1);
