@@ -59,3 +59,11 @@ html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-
 html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop']) {
   grid-template-columns: minmax(0, 1fr) !important;
 }
+
+@media (max-width: 899px) {
+  body:has(.canvas-editor-shell),
+  #root:has(.canvas-editor-shell) {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+}
