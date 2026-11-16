@@ -333,7 +333,9 @@ export function EditPanelLayout({
     requestAnimationFrame(() => {
       const selector = editorDensity === 'compact'
         ? '.editor-workflow-compact-switch button:first-child'
-        : '.editor-workbench-section-switch button:first-child';
+        : editorDensity === 'laptop'
+          ? '.editor-navigator-drawer-trigger'
+          : '.editor-workbench-section-switch button:first-child';
       document.querySelector(selector)?.focus({ preventScroll: true });
     });
   };
