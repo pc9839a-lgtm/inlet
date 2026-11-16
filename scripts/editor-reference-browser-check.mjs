@@ -1448,7 +1448,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
     && geometry.inspectorScroll === 'auto'
-    && Math.abs((geometry.inspector.right + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 6,
+    && geometry.phone.left >= geometry.inspector.right + 12
+    && geometry.phone.left <= geometry.inspector.right + 48,
     'real page must remain centered with independent list and inspector scrolling: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
@@ -1465,7 +1466,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       return {
         contentWidth: page.clientWidth, frameWidth: box(frame).width,
         frameBorder: css.borderTopWidth, radius: css.borderTopLeftRadius,
-        stageCentered: Math.abs((box(stage).left + box(stage).right) / 2 - (box(frame).left + box(frame).right) / 2) <= 4,
+        stageAdjacent: box(frame).left - box(document.querySelector('.editor-properties-panel')).right >= 8
+          && box(frame).left - box(document.querySelector('.editor-properties-panel')).right <= 54,
         frameInside: box(frame).left >= box(preview).left - 2 && box(frame).right <= box(preview).right + 2,
         children: stage.children.length,
         hasLegacyToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
@@ -1476,7 +1478,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     const expectedWidth = 394;
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
-      && parseInt(chrome.radius, 10) <= 20 && chrome.stageCentered && chrome.frameInside
+      && parseInt(chrome.radius, 10) <= 20 && chrome.stageAdjacent && chrome.frameInside
       && chrome.children === 2 && (chrome.canvasTools || chrome.canvasAdd) && !chrome.hasLegacyToolbar,
       'canvas must show a single real 390px page with a compact inline action row at ' + width + ': ' + JSON.stringify(chrome));
     if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
