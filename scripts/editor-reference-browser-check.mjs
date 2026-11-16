@@ -64,12 +64,12 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         inspectorBackground: getComputedStyle(document.querySelector('.editor-properties-panel')).backgroundColor,
         stageBackground: getComputedStyle(document.querySelector('.preview-workspace')).backgroundColor,
         stageHeading: document.querySelector('.preview-stage-label strong')?.textContent.trim(),
-        stageWidth: document.querySelector('.preview-device-widths button[aria-pressed="true"]')?.textContent.trim(),
+        stageWidth: document.querySelector('.preview-stage-width')?.textContent.trim(),
         phoneWidth: frame.clientWidth,
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     })()`);
-    const expectedComposerWidth = referenceWidth < 1280 ? 252 : 246;
+    const expectedComposerWidth = referenceWidth < 1280 ? 264 : 260;
     assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '페이지 구성'
       && /[0-9]+개 블록/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
@@ -79,11 +79,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
       && visual.normalRowHeight >= 54 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
       && Math.abs(visual.compositionWidth - expectedComposerWidth) <= 3
-      && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 390 : 420)) <= 3
-      && visual.compositionBackground === 'rgb(255, 255, 255)'
+      && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 334 : 350)) <= 3
+      && visual.compositionBackground === 'rgb(248, 250, 255)'
       && visual.inspectorBackground === 'rgb(255, 255, 255)'
-      && visual.stageBackground === 'rgb(243, 244, 246)'
-      && visual.stageHeading === '페이지 화면' && visual.stageWidth === '390'
+      && visual.stageBackground === 'rgb(238, 242, 247)'
+      && visual.stageHeading === '실제 페이지' && visual.stageWidth === '모바일 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
       'approved three-pane editor keeps list, canvas and inspector independent: '
       + JSON.stringify({ referenceWidth, visual }));
@@ -242,11 +242,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
     'laptop drawer reopens for real preview control interaction');
-  await clickPointer(client, '.preview-device-widths button[aria-pressed="true"]');
+  await clickPointer(client, '.preview-stage-width');
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
-      && document.querySelector('.preview-device-widths button[aria-pressed="true"]')?.textContent.trim() === '390'`,
-    'preview width control remains usable while an open drawer dismisses');
+      && document.querySelector('.preview-stage-width')?.textContent.trim() === '모바일 390px'`,
+    'single preview width label remains visible while an open drawer dismisses');
   assert(apiState.saveCount === 0, 'outside drawer clicks must not save or publish the page');
   await setViewport(client, 1672, 941, false);
   // A real page-first workflow: selecting visible content edits the exact
@@ -442,9 +442,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 240 && unselected.editorWidth <= 250
+    && unselected.editorWidth >= 255 && unselected.editorWidth <= 265
     && Math.abs(unselected.listWidth - unselected.editorWidth) <= 3
-    && Math.abs(unselected.inspectorWidth - 420) <= 3,
+    && Math.abs(unselected.inspectorWidth - 350) <= 3,
     'page settings must open in the independent inspector without replacing the block list: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
@@ -1408,8 +1408,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 246) <= 3
-    && Math.abs(geometry.inspector.width - 420) <= 3
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 260) <= 3
+    && Math.abs(geometry.inspector.width - 350) <= 3
     && geometry.list.right <= geometry.inspector.left + 2
     && geometry.inspector.right <= geometry.stage.left + 2,
     'approved three-pane geometry must keep navigation, real canvas, settings separated at 1672px: ' + JSON.stringify(geometry));
@@ -1421,7 +1421,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(geometry.labels.length >= 4
     && geometry.labels.every(label => label.whiteSpace === 'normal' && label.height <= label.lineHeight * 2 + 2),
     'long Korean block names must fit within two lines without overlapping actions: ' + JSON.stringify(geometry.labels));
-  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 3
+  assert(geometry.pageWidth === 390 && geometry.phones === 1 && geometry.stageChildren === 1 && geometry.widthOptions === 0
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
     && geometry.inspectorScroll === 'auto'
@@ -1460,16 +1460,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   }
   await setViewport(client, 1672, 941, false);
 
-    // Changing device width must update the actual landing viewport, not scale it.
-  await clickPointer(client, '.preview-device-widths button:nth-child(1)');
-  await waitForBrowser(client, `document.querySelector('.phone-frame .landing-page')?.clientWidth === 360`,
-    '360px responsive page preview');
-  await clickPointer(client, '.preview-device-widths button:nth-child(3)');
-  await waitForBrowser(client, `document.querySelector('.phone-frame .landing-page')?.clientWidth === 430`,
-    '430px responsive page preview');
-  await clickPointer(client, '.preview-device-widths button:nth-child(2)');
-  await waitForBrowser(client, `document.querySelector('.phone-frame .landing-page')?.clientWidth === 390`,
-    '390px default preview restored before editing');
+  // A single 390px real page is intentional; never reintroduce width buttons.
+  assert(await evaluate(client, `document.querySelector('.preview-device-widths') === null
+    && document.querySelector('.preview-stage-width')?.textContent.trim() === '모바일 390px'
+    && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390`),
+    'the real page stays 390px with no competing resolution controls');
 
   // Selection continues to use the same block ID in the left list and the
   // phone, but edits/visibility/reordering remain in the existing inspector.

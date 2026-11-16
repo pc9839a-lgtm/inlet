@@ -368,3 +368,35 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .preview-work
   --landing-runtime-width: var(--editor-preview-content-width, 390px);
   width: var(--editor-preview-frame-width, 394px) !important;
 }
+
+/* Phase 1: the page is above the controls, not hidden beneath a toolbar. */
+html body #root .canvas-editor-shell .editor-preview-frame-wrap .phone-frame { order: 1; }
+html body #root .canvas-editor-shell .editor-preview-frame-wrap .editor-canvas-tools {
+  order: 2;
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px !important;
+  padding: 12px 0 5px !important;
+}
+html body #root .canvas-editor-shell .editor-preview-frame-wrap .editor-canvas-tools-heading { flex: 1 1 100%; }
+html body #root .canvas-editor-shell .editor-preview-frame-wrap .editor-canvas-tools-heading strong {
+  max-width: 100% !important;
+  font-size: 12px !important;
+}
+html body #root .canvas-editor-shell .editor-preview-frame-wrap .editor-canvas-tools-primary { flex: 1 1 auto; }
+html body #root .canvas-editor-shell .editor-preview-frame-wrap .editor-canvas-tools-primary button { min-height: 37px; }
+html body #root .canvas-editor-shell .editor-preview-frame-wrap .editor-canvas-tools-secondary { flex: 0 0 auto; }
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell > .preview-workspace {
+  background: #eef2f7 !important;
+  padding-top: 20px !important;
+}
+html body #root .canvas-editor-shell .preview-stage-label strong { font-size: 14px !important; color: #304564 !important; }
+html body #root .canvas-editor-shell .preview-stage-width { font-size: 12px !important; color: #62738d !important; }
+@media (max-width: 899px) {
+  html body #root .canvas-editor-shell:has(.edit-layout[data-compact-view='page']) .work-panel,
+  html body #root .canvas-editor-shell .edit-layout[data-compact-view='page'] {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+}

@@ -466,11 +466,11 @@ html body #root .canvas-editor-shell .editor-properties-panel {
   position: fixed;
   z-index: 11;
   top: 64px;
-  left: var(--editor-list-width, 246px);
+  left: var(--editor-list-width, 260px);
   right: auto;
   display: flex;
   flex-direction: column;
-  width: var(--editor-settings-width, 340px);
+  width: var(--editor-settings-width, 350px);
   height: calc(100dvh - 64px);
   min-width: 0;
   border-right: 1px solid #e5e9f0;

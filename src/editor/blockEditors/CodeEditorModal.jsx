@@ -1,9 +1,14 @@
+import { createPortal } from 'react-dom';
 import { useAccessibleDialog } from '../../lib/useAccessibleDialog.js';
 
 export default function CodeEditorModal({ draft, onDraftChange, onClose, onApply, codePending, codeDraftHint }) {
   const dialogRef = useAccessibleDialog(onClose, { lockScroll: true });
 
-  return (
+  // Modals must survive the responsive editor's edit/page panel switch.
+  // Mount the dialog in document.body, outside the inspector that can be
+  // display:none at compact widths or during a viewport/keyboard change.
+  if (typeof document === 'undefined') return null;
+  return createPortal(
     <div className="code-editor-modal" role="presentation">
       <div
         ref={dialogRef}
@@ -29,6 +34,7 @@ export default function CodeEditorModal({ draft, onDraftChange, onClose, onApply
           <button type="button" onClick={onApply}>적용</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

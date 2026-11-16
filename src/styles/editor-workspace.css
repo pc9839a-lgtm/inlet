@@ -1,7 +1,7 @@
 /* Editor-only grid: left block list + settings / right live page. */
 html body #root .builder-shell.canvas-editor-shell {
-  --editor-list-width: 246px;
-  --editor-settings-width: 420px;
+  --editor-list-width: 260px;
+  --editor-settings-width: 350px;
   display: grid;
   grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr) !important;
   grid-template-rows: 64px minmax(0, 1fr);
@@ -37,7 +37,7 @@ html body #root .canvas-editor-shell .work-panel {
   html body #root .builder-shell.canvas-editor-shell {
     position:relative;
     --editor-preview-grid-column:2;
-    --editor-settings-width:390px;
+    --editor-settings-width:334px;
     grid-template-columns:var(--editor-settings-width) minmax(0,1fr)!important;
   }
   html body #root .canvas-editor-shell .work-panel {

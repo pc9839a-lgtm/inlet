@@ -568,7 +568,30 @@ async function waitForBrowser(client, expression, label, timeoutMs = 18000) {
     if (last) return last;
     await wait(200);
   }
-  throw new Error(`${label} did not become ready: ${JSON.stringify(last)}`);
+  let diagnostic = '';
+  if (/shared HEX|invalid HEX|stage4 legacy switch/.test(label)) {
+    try {
+      const snapshot = await evaluate(client, `(() => {
+        const input = document.querySelector('.style-panel input[aria-label="버튼색 HEX"]');
+        const color = document.querySelector('.style-panel input[aria-label="버튼색"]');
+        const switchEl = document.querySelector('#editor-block-settings-editor-form .privacy-compact-panel .toggle [role="switch"]');
+        const active = document.activeElement;
+        return {
+          inputValue: input?.value, inputInvalid: input?.getAttribute('aria-invalid'),
+          colorValue: color?.value, inlineError: input?.closest('.color-clean')?.querySelector('[role="alert"]')?.textContent,
+          switchChecked: switchEl?.getAttribute('aria-checked'), switchDisabled: switchEl?.disabled,
+          switchVisible: !!switchEl?.getClientRects().length,
+          activeTag: active?.tagName, activeRole: active?.getAttribute('role'),
+          activeLabel: active?.getAttribute('aria-label'), activeValue: active?.value,
+          pageSection: document.querySelector('.editor-properties-heading-copy strong')?.textContent,
+        };
+      })()`);
+      diagnostic = ' | state=' + JSON.stringify(snapshot);
+    } catch (diagnosticError) {
+      diagnostic = ' | state unavailable: ' + String(diagnosticError);
+    }
+  }
+  throw new Error(`${label} did not become ready: ${JSON.stringify(last)}` + diagnostic);
 }
 
 async function waitForState(check, label, timeoutMs = 15000) {
@@ -594,6 +617,24 @@ async function setViewport(client, width, height, mobile = false) {
   await wait(350);
 }
 
+// Controlled HEX fields must be exercised with a trusted Chrome text-input
+// event, not only a synthetic DOM event on a native value setter. Input.insertText
+// triggers React's real input pipeline, including validation on subsequent blur.
+async function typeInputValue(client, selector, value) {
+  await focusSelector(client, selector);
+  const selected = await evaluate(client, `(() => {
+    const element = document.querySelector(${JSON.stringify(selector)});
+    if (!element || document.activeElement !== element) return false;
+    element.select();
+    return true;
+  })()`);
+  assert(selected, `Unable to select input text for ${selector}`);
+  await client.send('Input.insertText', { text: String(value) });
+  await waitForBrowser(client,
+    `document.querySelector(${JSON.stringify(selector)})?.value === ${JSON.stringify(String(value))}`,
+    'native input typing updated ' + selector, 6000);
+}
+
 async function setInputValue(client, selector, value) {
   const result = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
@@ -612,6 +653,16 @@ async function showBlockList(client) {
   // On 900–1279px desktops the list is an off-canvas drawer; only the
   // navigator trigger stays visible after selecting a block.
   await evaluate(client, `(() => {
+    // Compact desktop/zoomed editor intentionally starts on the live page.
+    // Navigate to its explicit Edit view before interacting with block rows.
+    if (innerWidth < 900) {
+      const compact = document.querySelector('.edit-layout[data-compact-view]');
+      if (compact?.dataset.compactView === 'page') {
+        const edit = [...compact.querySelectorAll('.editor-workflow-compact-switch button')]
+          .find((button) => button.textContent.trim() === '편집');
+        edit?.click();
+      }
+    }
     const trigger = document.querySelector('.editor-navigator-drawer-trigger');
     if (innerWidth >= 900 && innerWidth < 1280 && trigger?.getAttribute('aria-expanded') !== 'true') trigger.click();
   })()`);
@@ -925,6 +976,7 @@ async function collectNarrowDesktopMetrics(client) {
       drawerOpen: document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true',
       inspector: rect(document.querySelector('.editor-properties-panel')),
       frameContentWidth: document.querySelector('.preview-workspace .phone-frame .landing-page')?.clientWidth || 0,
+      compactView: document.querySelector('.edit-layout')?.dataset.compactView,
       minIdentityWidth: Math.min(...[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy')].map(el => el.getBoundingClientRect().width)),
       inspectorGroupLabelHeights: [...document.querySelectorAll('.inspector-primary-heading, .inspector-disclosure > summary > strong')].map(el => el.getBoundingClientRect().height),
       duplicateInspectorNavigation: !!document.querySelector('.inspector-navigation'),
@@ -1018,12 +1070,12 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || 0;
-  const expectedList = width < 1280 ? 252 : 246;
+  const expectedList = width < 1280 ? 264 : 260;
   assert(Math.abs(composition - expectedList) <= 3,
     `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
-  assert(Math.abs(inspector - (width < 1280 ? 390 : 420)) <= 3,
+  assert(Math.abs(inspector - (width < 1280 ? 334 : 350)) <= 3,
     `left block properties must retain usable width at ${width}px: ${JSON.stringify({inspector})}`);
-  assert(Math.abs(edit - (width < 1280 ? 0 : 246)) <= 3,
+  assert(Math.abs(edit - (width < 1280 ? 0 : 260)) <= 3,
     `collapsed laptop navigator must not consume the canvas: ${JSON.stringify({width,edit})}`);
 }
 
@@ -1042,17 +1094,16 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.inspector, width, 'narrow desktop properties inspector');
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
   if (!stacked) assertInsideViewport(metrics.drawerTrigger, width, 'laptop block navigator trigger');
-  assert(metrics.minIdentityWidth >= 60, `long Korean block names need space at ${width}px: ${metrics.minIdentityWidth}`);
+  if (!stacked) assert(metrics.minIdentityWidth >= 60, `long Korean block names need space at ${width}px: ${metrics.minIdentityWidth}`);
   assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 40),
     `selected inspector headings must stay accessible: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
   assert(!metrics.cockpit, 'narrow desktop preview must not expose removed conversion cockpit');
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (stacked ? 1 : 2),
     `editor shell must use ${stacked ? 'stacked' : 'canvas + settings'} layout at ${width}px: ${metrics.shellGridColumns}`);
   if (stacked) {
-    assert(metrics.composition?.width >= width - 6 && metrics.inspector?.width >= width - 6,
-      `zoomed desktop must keep full-width block and property editing areas: ${JSON.stringify({composition:metrics.composition,inspector:metrics.inspector})}`);
-    assert(metrics.inspector.top >= metrics.composition.top + 260,
-      `zoomed desktop properties must follow the block list, not overlay it: ${JSON.stringify({composition:metrics.composition,inspector:metrics.inspector})}`);
+    assert(metrics.compactView === 'page' && metrics.frameContentWidth === 390
+      && metrics.preview?.width >= Math.min(width, 390) - 3,
+      `zoomed desktop must offer its real-page-first view without squashing the preview: ${JSON.stringify({compactView:metrics.compactView,preview:metrics.preview})}`);
   } else {
     assertReferenceTracks(metrics, width);
     assert(metrics.preview.left >= metrics.inspector.right - 2,
@@ -1197,6 +1248,31 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+    await waitForBrowser(client, `(() => {
+      const shell = document.querySelector('.editor-properties-panel');
+      return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '내용 편집'
+        && !shell.querySelector('.style-panel')
+        && (!!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')
+            || !!editor?.querySelector('.editor-workflow-start-choices button'))
+        && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
+    })()`, 'new editor starts in selected content or explicit block selection, with 390px page instead of global styling').catch(async (error) => {
+      const actual = await evaluate(client, `(() => {
+        const editor = document.querySelector('.editor-properties-panel');
+        return {
+          panelTitle: editor?.querySelector('.editor-properties-heading-copy strong')?.textContent,
+          hasStyle: !!editor?.querySelector('.style-panel'),
+          hasStart: !!editor?.querySelector('.editor-workflow-start'),
+          selected: [...document.querySelectorAll('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')].map(e => e.id),
+          blockCount: document.querySelectorAll('.editor-composition-panel .screen-order-v2-item').length,
+          selectedFixed: [...document.querySelectorAll('.fixed-composition-row[aria-pressed="true"]')].map(e=>e.id),
+          phoneWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
+          inspectorText: editor?.innerText?.slice(0, 150),
+          layoutSection: document.querySelector('.edit-layout')?.dataset.editorLayout,
+        };
+      })()`);
+      throw new Error(error.message + ': ' + JSON.stringify(actual));
+    });
+    assert(apiState.saveCount === 0, 'first visible content auto-selection must not publish or persist content');
 
     // Real mobile preview quick edit must use the same draft as Inspector,
     // without silently submitting, navigating or publishing.
@@ -1503,10 +1579,16 @@ async function run() {
         height: entry?.getBoundingClientRect().height,
         inspectorHasEntry: !!inspector?.querySelector('.editor-page-settings-button') };
     })()`);
-    assert(editorNavigation.count === 1 && editorNavigation.inComposition && editorNavigation.redundantTabs === 0
-      && editorNavigation.target === 'editor-selection-panel' && editorNavigation.label === '전체 디자인 · 페이지 설정'
+    assert(editorNavigation.count === 2 && editorNavigation.inComposition && editorNavigation.redundantTabs === 0
+      && editorNavigation.target === 'editor-selection-panel' && editorNavigation.label === '전체 디자인'
       && editorNavigation.height >= 40 && !editorNavigation.inspectorHasEntry,
-      'page settings must have one reachable entry outside selected-item settings: ' + JSON.stringify(editorNavigation));
+      'page design and page settings must be separate explicit entries, outside selected-item controls: ' + JSON.stringify(editorNavigation));
+    assert(await evaluate(client, `(() => {
+      const entries = [...document.querySelectorAll('.editor-composition-footer .editor-page-settings-button')];
+      return entries.length === 2 && entries[0].textContent.includes('전체 디자인')
+        && entries[1].textContent.includes('페이지 설정')
+        && entries.every(button => button.getAttribute('aria-controls') === 'editor-selection-panel');
+    })()`), 'the content-first navigator exposes two accessible destinations for design and page behavior');
 
     // Inbox remains accessible through the top workspace menu,
     // and keyboard focus must recover after the workspace transition.
@@ -2530,24 +2612,23 @@ async function run() {
         pageEntrySelected: document.querySelector('.editor-page-settings-button')?.getAttribute('aria-pressed') === 'true',
         redundantTabs: document.querySelectorAll('.edit-section-tabs').length,
         designFirst: stack.querySelector('.editor-page-options-heading') === stack.firstElementChild
-          && stack.querySelector('.style-panel')?.compareDocumentPosition(stack.querySelector('.page-global-options-card')) & Node.DOCUMENT_POSITION_FOLLOWING,
+          && !!stack.querySelector('.style-panel') && !stack.querySelector('.page-global-options-card'),
         designTitle: stack.querySelector('.style-apply-bar strong')?.textContent,
         status: stack.querySelector('.style-apply-bar span')?.textContent,
         globalHeadingRemoved: !stack.querySelector('.page-global-options-title'),
         rows: cards.map((node) => ({ border: getComputedStyle(node).borderTopWidth, radius: getComputedStyle(node).borderRadius })),
         collapsed: cards.every((node) => node.querySelector('.page-option-expand')?.getAttribute('aria-expanded') === 'false'),
         shareControlsHidden: !document.querySelector('.share-position-control')?.getClientRects().length,
-        rowWidth: document.querySelector('.page-global-options-card').getBoundingClientRect().width,
+        rowWidth: document.querySelector('.style-panel').getBoundingClientRect().width,
         paneWidth: document.querySelector('.editor-properties-panel').getBoundingClientRect().width,
       };
     })()`);
     assert(stageThreePageSettings.pageEntrySelected && stageThreePageSettings.redundantTabs === 0
       && stageThreePageSettings.designFirst && stageThreePageSettings.designTitle === '전체 디자인'
       && stageThreePageSettings.status === '스타일 적용됨' && stageThreePageSettings.globalHeadingRemoved
-      && stageThreePageSettings.rows.length === 2 && stageThreePageSettings.rows.every((row) => row.border === '0px' && row.radius === '0px')
-      && stageThreePageSettings.collapsed && stageThreePageSettings.shareControlsHidden
-      && stageThreePageSettings.rowWidth <= stageThreePageSettings.paneWidth,
-      'stage 3 page settings must show design first with flat collapsed behavior rows: ' + JSON.stringify(stageThreePageSettings));
+      && stageThreePageSettings.rows.length === 0 && stageThreePageSettings.collapsed
+      && stageThreePageSettings.shareControlsHidden,
+      'the entire-design inspector must not mix page settings into the same surface: ' + JSON.stringify(stageThreePageSettings));
     // D07: design basics remain visible; advanced typography and effects are disclosures.
     const designDirectFlow = await evaluate(client, `(() => {
       const panel = document.querySelector('.editor-page-options-stack .style-panel');
@@ -2587,15 +2668,21 @@ async function run() {
 
     // Page behavior updates must merge into an existing style draft without
     // applying or discarding its pending color.
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
+    await waitForBrowser(client, `!!document.querySelector('.page-global-options-card') && !document.querySelector('.style-panel')`,
+      'page behavior is a dedicated inspector rather than sharing all design controls');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
     await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-on') && document.querySelector('.edit-animation-settings')?.getClientRects().length > 0`, 'animation enabled and expanded without losing pending design');
+    assert(await evaluate(client, `document.querySelector('.panel-actions .primary-btn')?.dataset.draftState === 'unapplied'`),
+      'changing page behavior must not apply an uncommitted global design');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
+    await waitForBrowser(client, `!!document.querySelector('.style-panel') && !document.querySelector('.page-global-options-card')`,
+      'reopen design without discarding staged theme color');
     const accentHex = '.style-panel input[aria-label="버튼색 HEX"]';
-    await focusSelector(client, accentHex);
-    await setInputValue(client, accentHex, '#abc');
+    await typeInputValue(client, accentHex, '#abc');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await waitForBrowser(client, `document.querySelector('.style-panel input[type="color"]')?.value === '#aabbcc'`, 'shared HEX input accepts short colors');
-    await focusSelector(client, accentHex);
-    await setInputValue(client, accentHex, '#oops');
+    await typeInputValue(client, accentHex, '#oops');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await waitForBrowser(client, `(() => {
       const field = document.querySelector(${JSON.stringify(accentHex)});
@@ -2616,7 +2703,7 @@ async function run() {
         && field.getAttribute('aria-invalid') === 'false'
         && !field.closest('.color-clean').querySelector('[role="alert"]');
     })()`, 'Escape restores last valid HEX and clears its error');
-    await setInputValue(client, accentHex, 'a1b2c3');
+    await typeInputValue(client, accentHex, 'a1b2c3');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await waitForBrowser(client, `(() => {
       const field = document.querySelector(${JSON.stringify(accentHex)});
@@ -2625,14 +2712,33 @@ async function run() {
         && field.getAttribute('aria-invalid') === 'false';
     })()`, 'six-digit pasted HEX without # normalizes to a valid swatch');
     await focusSelector(client, accentHex);
-    await setInputValue(client, accentHex, updatedAccent);
+    await typeInputValue(client, accentHex, updatedAccent);
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await capture(client, 'desktop-common-settings-color');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
+    await waitForBrowser(client, `(() => {
+      const expand = document.querySelector('.edit-animation-card:not(.share-options-card) .page-option-expand');
+      const controls = document.querySelector('.edit-animation-settings');
+      return expand?.getAttribute('aria-expanded') === 'false'
+        && !!controls && controls.getClientRects().length === 0;
+    })()`, 'returning to page settings starts with collapsed, inaccessible secondary controls');
+    await clickSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
+    await waitForBrowser(client,
+      `document.querySelector('.edit-animation-card:not(.share-options-card) .page-option-expand')?.getAttribute('aria-expanded') === 'true'
+        && document.querySelector('.edit-animation-settings')?.getClientRects().length > 0`,
+      'page animation controls become visible after an explicit expand');
     await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
-    await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`, 'animation changes retain the unapplied design color');
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.panel-actions .primary-btn')?.dataset.draftState === 'unapplied'`, 'page behavior changes retain pending global design');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
-    assert(await evaluate(client, `document.querySelector('.edit-animation-settings')?.getClientRects().length === 0`), 'collapsed animation controls must leave the keyboard order');
+    await waitForBrowser(client,
+      `(() => {
+        const expand = document.querySelector('.edit-animation-card:not(.share-options-card) .page-option-expand');
+        const controls = document.querySelector('.edit-animation-settings');
+        return expand?.getAttribute('aria-expanded') === 'false'
+          && (!controls || controls.getClientRects().length === 0);
+      })()`,
+      'collapsed animation controls must leave the keyboard order');
     await focusSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
     await pressKeyboardKey(client, 'Space');
     await waitForBrowser(client, `document.querySelector('.edit-animation-settings')?.getClientRects().length > 0 && document.querySelector('.edit-animation-options button[aria-pressed="true"]')?.textContent?.trim() === '확대'`, 'keyboard expansion retains the animation choice');
@@ -2646,14 +2752,22 @@ async function run() {
     await capture(client, 'desktop-page-settings-expanded-stage3');
     await clickSelector(client, '.share-options-card .page-option-expand');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
-    await waitForBrowser(client, `!document.querySelector('.phone-frame .landing-page.anim-on') && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)} && !document.querySelector('.style-apply-btn')?.disabled`, 'page behavior edits preserve the unapplied design state');
+    await waitForBrowser(client, `!document.querySelector('.phone-frame .landing-page.anim-on') && document.querySelector('.panel-actions .primary-btn')?.dataset.draftState === 'unapplied'`, 'page behavior edits preserve pending design state');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
+    await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`,
+      'pending style survives page-setting changes and returning to design');
     await clickSelector(client, '.style-reset-btn');
-    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true && document.querySelector('.style-panel input[type="color"]')?.value !== ${JSON.stringify(updatedAccent)}`, 'one reset discards pending design and animation changes');
+    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true && document.querySelector('.style-panel input[type="color"]')?.value !== ${JSON.stringify(updatedAccent)}`, 'design reset discards only pending design changes; page behavior remains independent');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
+    await waitForBrowser(client, `!!document.querySelector('.edit-animation-card')`, 'return to page settings after reset');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
-    await waitForBrowser(client, `document.querySelector('.edit-animation-options button[aria-pressed="true"]')?.textContent?.trim() === '페이드'`, 'reset restores the original animation choice');
+    await waitForBrowser(client, `document.querySelector('.edit-animation-options button[aria-pressed="true"]')?.textContent?.trim() === '확대'`, 'design reset does not destroy independently staged page animation settings');
     await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
+    await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`,
+      'unapplied style controls are accessible after page behavior changes');
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
     assert(apiState.saveCount === 0, 'page settings toggles and disclosures must never auto-publish');
 
@@ -2681,7 +2795,7 @@ async function run() {
       `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`,
       'F02 back to edit tab');
     await waitForBrowser(client,
-      `document.querySelector('.editor-page-settings-button')?.textContent?.includes('미적용')`,
+      `document.querySelector('.editor-page-settings-button')?.getAttribute('title')?.includes('미적용')`,
       'F02 unapplied style badge survives workspace switch');
     if (!(await evaluate(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`))) {
       await clickSelector(client, '.editor-page-settings-button');
@@ -3012,7 +3126,7 @@ async function run() {
       await setViewport(client, desktopViewport.width, desktopViewport.height, false);
       await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, `${desktopViewport.name} editor`);
 
-      await clickSelector(client, '.editor-page-settings-button');
+      await clickSelector(client, '.editor-page-settings-button:nth-child(2)');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
     // The left panel must not consume the 390px phone, and its selected
     // controls must stay inside the inspector instead of clipping horizontally.
@@ -3042,13 +3156,13 @@ async function run() {
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
       && leftGeometry.inspectorInner >= 260
-      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 390 : 420)) <= 3
+      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 334 : 350)) <= 3
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 500
       && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
       && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
       && leftGeometry.propertiesRight <= leftGeometry.previewLeft + 2
-      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 252 : 246)) <= 4,
+      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 260)) <= 4,
       'selected properties must remain readable in their own panel without covering the real mobile canvas: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 

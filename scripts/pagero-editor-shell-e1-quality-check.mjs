@@ -327,7 +327,7 @@ assert(heroImageSection.includes('InspectorDisclosure label="이미지 배치·�
   && !previewPaneCss.includes('--editor-ui-space-4'),
   'disclosures must keep native semantics, owner-level token spacing and no canvas-style leakage');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
-assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 420px;'),
+assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 350px;'),
   'editor workspace must size the separate settings column without restoring old abandoned components');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
@@ -390,10 +390,10 @@ assert(css.includes('grid-template-columns: var(--editor-list-width) var(--edito
   && editPanelLayoutCss.includes('.editor-properties-content')
   && css.includes('overflow: hidden !important;'),
   'the editor must keep block list and properties on the left and the mobile page on the right');
-assert(layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;")
+assert(layout.includes("const showPageOptions = section === 'design' || section === 'page';")
   && layout.includes('{showPageOptions && (')
   && layout.includes('<PageThemeStylePanel {...stylePanelProps} />'),
-  'no selected block must expose accessible page design controls inside the stack');
+  'the content editor is the default while page design requires explicit navigation');
 assert(layout.includes('editor-composition-heading')
   && stackItems.includes('!listOnly && selectedId === block.id')
   && layout.includes('listOnly')
@@ -406,7 +406,7 @@ assert(css.includes('overflow: hidden !important;')
   && !editPanelLayoutCss.includes('overflow-y: auto !important;\n  overflow-x: hidden !important;\n  overscroll-behavior-y: contain;'),
   'navigator and property editor must have independent, nonnested scroll regions');
 assert(previewPaneCss.includes('--editor-preview-frame-width') && previewPaneCss.includes('--landing-runtime-width: 390px;')
-  && previewPaneCss.includes('justify-content: center !important;'), 'real preview must preserve 390px as default while offering width selections');
+  && previewPaneCss.includes('justify-content: center !important;'), 'real preview must preserve a single 390px viewport');
 assert(addDockCss.includes('.editor-gallery-backdrop')
   && addDockCss.includes('.editor-gallery-quick-grid')
   && addDockCss.includes('.editor-gallery-dialog-scroll')
@@ -506,7 +506,7 @@ assert(layout.includes("?.scrollTo({ top: 0, behavior: 'instant' })")
 assert(layout.includes('const focusPageHeading = (attempts = 5)')
   && layout.includes("inspector?.querySelector('[data-editor-section=\"options\"] .editor-page-options-heading h2')")
   && layout.includes('heading.focus({ preventScroll: true })')
-  && layout.includes('<h2 tabIndex={-1}>전체 디자인과 설정</h2>')
+  && layout.includes("<h2 tabIndex={-1}>{section === 'design' ? '전체 디자인' : '페이지 설정'}</h2>")
   && editPanelLayoutCss.includes('.editor-page-options-heading h2:focus-visible')
   && editPanelLayoutCss.includes('outline: 2px solid #435bef'),
   'page-settings selection must focus the visible inspector heading after hiding the laptop navigator');

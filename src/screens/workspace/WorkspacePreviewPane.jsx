@@ -1,11 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ArrowDown, ArrowUp, Copy, Pencil, Plus } from 'lucide-react';
 import { META } from '../../config/blockMeta.jsx';
 import { createScreenOrderIdentities } from '../../editor/editPanelParts/screenOrderIdentityModel.js';
 import './WorkspacePreviewPane.css';
 import PreviewRenderer from '../../preview/LandingRenderer.jsx';
-
-const PREVIEW_WIDTHS = [360, 390, 430];
 
 // An editor-only workbench surrounding the real 390px page. Actions are
 // delegated to the existing guarded draft handlers, never a second page model.
@@ -23,7 +21,6 @@ export function WorkspacePreviewPane({
 }) {
   const previewRef = useRef(null);
   const frameRef = useRef(null);
-  const [previewWidth, setPreviewWidth] = useState(390);
 
   useEffect(() => {
     if (!selectedBlockId || typeof window === 'undefined') return undefined;
@@ -55,20 +52,15 @@ export function WorkspacePreviewPane({
     <main
       className="preview-workspace"
       ref={previewRef}
-      style={{ '--editor-preview-content-width': `${previewWidth}px`, '--editor-preview-frame-width': `${previewWidth + 4}px` }}
+      style={{ '--editor-preview-content-width': '390px', '--editor-preview-frame-width': '394px' }}
     >
       <div className="preview-sticky">
         <div className="preview-stage-heading">
           <div className="preview-stage-label">
             <span className="preview-stage-signal" aria-hidden="true" />
-            <strong>페이지 화면</strong>
+            <strong>실제 페이지</strong>
           </div>
-          <div className="preview-device-widths" role="group" aria-label="모바일 미리보기 너비">
-            {PREVIEW_WIDTHS.map((width) => (
-              <button key={width} type="button" aria-pressed={previewWidth === width}
-                onClick={() => setPreviewWidth(width)}>{width}</button>
-            ))}
-          </div>
+          <span className="preview-stage-width">모바일 390px</span>
         </div>
         <div className="editor-preview-frame-wrap">
           {showCanvasTools && (
