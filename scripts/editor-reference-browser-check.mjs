@@ -42,7 +42,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && getComputedStyle(inspector).display === 'none'
       && getComputedStyle(document.querySelector('.builder-shell')).gridTemplateColumns.split(' ').length === 2
       && stage.getBoundingClientRect().left >= list.getBoundingClientRect().right - 2
-      && phone?.clientWidth === 390;
+      && phone?.clientWidth === 390
+      && stage.querySelector('.phone-frame')?.getBoundingClientRect().left >= list.getBoundingClientRect().right
+      && stage.querySelector('.phone-frame')?.getBoundingClientRect().right <= 680;
   })()`, 'desktop first screen prioritizes actual 390px page without a permanent inspector');
   await capture(client, 'workbench-page-first-1672');
   await clickPointer(client, '.editor-workbench-section-switch button:nth-child(2)');
