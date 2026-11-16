@@ -568,7 +568,30 @@ async function waitForBrowser(client, expression, label, timeoutMs = 18000) {
     if (last) return last;
     await wait(200);
   }
-  throw new Error(`${label} did not become ready: ${JSON.stringify(last)}`);
+  let diagnostic = '';
+  if (/shared HEX|invalid HEX|stage4 legacy switch/.test(label)) {
+    try {
+      const snapshot = await evaluate(client, `(() => {
+        const input = document.querySelector('.style-panel input[aria-label="버튼색 HEX"]');
+        const color = document.querySelector('.style-panel input[aria-label="버튼색"]');
+        const switchEl = document.querySelector('#editor-block-settings-editor-form .privacy-compact-panel .toggle [role="switch"]');
+        const active = document.activeElement;
+        return {
+          inputValue: input?.value, inputInvalid: input?.getAttribute('aria-invalid'),
+          colorValue: color?.value, inlineError: input?.closest('.color-clean')?.querySelector('[role="alert"]')?.textContent,
+          switchChecked: switchEl?.getAttribute('aria-checked'), switchDisabled: switchEl?.disabled,
+          switchVisible: !!switchEl?.getClientRects().length,
+          activeTag: active?.tagName, activeRole: active?.getAttribute('role'),
+          activeLabel: active?.getAttribute('aria-label'), activeValue: active?.value,
+          pageSection: document.querySelector('.editor-properties-heading-copy strong')?.textContent,
+        };
+      })()`);
+      diagnostic = ' | state=' + JSON.stringify(snapshot);
+    } catch (diagnosticError) {
+      diagnostic = ' | state unavailable: ' + String(diagnosticError);
+    }
+  }
+  throw new Error(`${label} did not become ready: ${JSON.stringify(last)}` + diagnostic);
 }
 
 async function waitForState(check, label, timeoutMs = 15000) {
