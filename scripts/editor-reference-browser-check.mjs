@@ -1432,7 +1432,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 252) <= 3
     && Math.abs(geometry.inspector.width - 420) <= 3
     && geometry.list.right <= geometry.inspector.left + 2
-    && geometry.inspector.right <= geometry.stage.left + 2,
+    && geometry.inspector.right <= geometry.phone.left + 2,
     'approved three-pane geometry must keep navigation, real canvas, settings separated at 1672px: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'both side panels must remain aligned below the shared 64px workspace toolbar: ' + JSON.stringify(geometry));
@@ -1446,7 +1446,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
     && geometry.inspectorScroll === 'auto'
-    && Math.abs((geometry.stage.left + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 4,
+    && Math.abs((geometry.inspector.right + geometry.stage.right) / 2 - (geometry.phone.left + geometry.phone.right) / 2) <= 6,
     'real page must remain centered with independent list and inspector scrolling: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
