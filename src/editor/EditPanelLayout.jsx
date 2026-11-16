@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Settings2 } from 'lucide-react';
+import { ChevronDown, Settings2, Layers3, FilePenLine, ArrowRight } from 'lucide-react';
 import { BlockNavigatorSearch } from './editPanelParts/BlockNavigatorSearch.jsx';
 import './EditPanelLayout.css';
 import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
@@ -9,6 +9,7 @@ import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
 import { createFixedBlockDescriptors } from './editPanelParts/fixedBlockDescriptors.js';
 import { ScreenOrderSettings } from './editPanelParts/ScreenOrderSettings.jsx';
 import { createInspectorBlockNavigation } from './editPanelParts/inspectorBlockNavigationModel.js';
+import { createScreenOrderIdentities, isExplicitlyHidden } from './editPanelParts/screenOrderIdentityModel.js';
 
 const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
 
@@ -44,6 +45,33 @@ function FixedCompositionGroup({ groupId, title, keys, descriptors, selectedId, 
       <div id={regionId} className="editor-fixed-group-content" hidden={!expanded}>
         {children}
       </div>
+    </section>
+  );
+}
+
+
+function StartEditing({ blocks, onChooseBlock }) {
+  const visible = blocks.filter((block) => !isExplicitlyHidden(block));
+  const candidates = visible.length ? visible.slice(0, 5) : blocks.slice(0, 5);
+  const identities = createScreenOrderIdentities(blocks);
+  return (
+    <section className="editor-workflow-start" role="region" aria-label="콘텐츠 편집 시작">
+      <div className="editor-workflow-start-graphic" aria-hidden="true"><FilePenLine size={23} /></div>
+      <h2>수정할 블록을 선택하세요</h2>
+      <p>오른쪽 실제 페이지에서 수정할 부분을 누르거나 아래에서 선택하세요.</p>
+      {candidates.length > 0 && (
+        <div className="editor-workflow-start-choices">
+          {candidates.map((block) => {
+            const identity = identities[blocks.findIndex((entry) => entry.id === block.id)];
+            const label = identity?.customLabel || identity?.contentTitle || identity?.detail || block.type;
+            return (
+              <button type="button" key={block.id} onClick={() => onChooseBlock(block.id)}>
+                <span>{label}</span><ArrowRight size={16} aria-hidden="true" />
+              </button>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
@@ -84,9 +112,17 @@ export function EditPanelLayout({
     return () => document.removeEventListener('pointerdown', dismissOnOutsidePointer, true);
   }, [navigatorOpen]);
   const selectedBlockId = fixedBlocksProps?.openId || screenOrderListProps?.selectedId;
-  // A blank selection is page-level context, not a reason to collapse the editor.
-  // Show the existing page design and options until a block is selected.
-  const showPageOptions = section === 'options' || !selectedBlockId;
+  // Content editing is the default; page-level options require an explicit choice.
+  const showPageOptions = section === 'design' || section === 'page';
+  const showStartEditing = !showPageOptions && !selectedBlockId;
+  const firstSelectionRequested = React.useRef(false);
+  React.useEffect(() => {
+    if (firstSelectionRequested.current || section !== 'order' || selectedBlockId) return;
+    const first = screenOrderListProps.normalBlocks.find((block) => !isExplicitlyHidden(block));
+    if (!first) return;
+    firstSelectionRequested.current = true;
+    screenOrderListProps.selectBlock(first.id);
+  }, [section, selectedBlockId, screenOrderListProps.normalBlocks, screenOrderListProps.selectBlock]);
   const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
   const fixedSelected = fixedDescriptors.find((item) => item.open);
   // Focus belongs to an explicit user selection, never the automatic
@@ -186,10 +222,10 @@ export function EditPanelLayout({
       ?.scrollTo({ top: 0, behavior: 'instant' });
   }, [selectedBlockId]);
 
-  const openPageOptions = () => {
+  const openPageOptions = (destination = 'design') => {
     if (screenOrderListProps?.selectedId) screenOrderListProps.clearBlockSelection();
     else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
-    setSection('options');
+    setSection(destination);
     setNavigatorOpen(false);
     // A laptop navigator hides after selection. Move keyboard focus into the
     // real page inspector instead of leaving it inside the hidden drawer.
@@ -364,14 +400,17 @@ export function EditPanelLayout({
               </div>
             </section>
           )}
-          {!showPageOptions && fixedSelected && (
+          {showStartEditing && (
+             <StartEditing blocks={screenOrderListProps.normalBlocks} onChooseBlock={chooseBlock} />
+           )}
+           {!showPageOptions && fixedSelected && (
             <section className="editor-inspector-panel editor-inline-settings">
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
                 {renderFixedSettings()}
               </div>
             </section>
           )}
-          {!showPageOptions && !fixedSelected && (
+          {!showPageOptions && !showStartEditing && !fixedSelected && (
             <section className="editor-inspector-panel editor-inline-settings">
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
                 <ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />
