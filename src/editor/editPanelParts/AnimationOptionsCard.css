@@ -10,6 +10,12 @@ body .builder-shell .edit-layout .page-global-options-card .edit-animation-setti
   background: transparent;
 }
 
+/* Native hidden state must win over the display:grid presentation rule.
+   Closed settings cannot receive keyboard focus or leak into a compact inspector. */
+body .builder-shell .edit-layout .page-global-options-card .edit-animation-settings[hidden] {
+  display: none !important;
+}
+
 body .builder-shell .edit-layout .page-global-options-card .edit-animation-setting-group > strong {
   display: block;
   margin-bottom: 6px;
