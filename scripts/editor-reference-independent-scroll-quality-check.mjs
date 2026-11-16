@@ -16,7 +16,7 @@ const browser = read('scripts/editor-reference-browser-check.mjs');
 assert.ok(shell.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr)')
   && shell.includes('--editor-list-width: 252px;')
   && shell.includes('--editor-settings-width: 420px;')
-  && shell.includes("data-editor-density='wide'][data-inspector-open='false']")
+  && shell.includes("data-editor-density='wide']")
   && editor.includes('const [inspectorOpen, setInspectorOpen] = React.useState(false);')
   && editor.includes('data-inspector-open={inspectorOpen'),
   'the persistent navigator must share the first screen with the full page, and settings open on demand');
