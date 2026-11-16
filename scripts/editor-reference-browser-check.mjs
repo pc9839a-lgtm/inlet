@@ -225,11 +225,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
       && document.activeElement === document.querySelector('#editor-block-editor-hero .screen-order-v2-more')`,
     'restoring a block through the portal preserves the open laptop navigator');
-  await clickPointer(client, '.editor-properties-heading');
+  // On laptops the open navigator covers the left settings. Click the still
+  // visible right page to verify genuine outside-pointer dismissal.
+  await clickPointer(client, '.preview-stage-heading');
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
       && !document.querySelector('.editor-composition-panel')?.contains(document.activeElement)`,
-    'clicking outside in the inspector dismisses the drawer without hidden focus');
+    'clicking outside in the right page dismisses the drawer without hidden focus');
   await clickPointer(client, '.editor-navigator-drawer-trigger');
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
