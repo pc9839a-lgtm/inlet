@@ -1,7 +1,7 @@
 /* Editor-only grid: left block list + settings / right live page. */
 html body #root .builder-shell.canvas-editor-shell {
-  --editor-list-width: 260px;
-  --editor-settings-width: 350px;
+  --editor-list-width: 252px;
+  --editor-settings-width: 420px;
   display: grid;
   grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr) !important;
   grid-template-rows: 64px minmax(0, 1fr);
@@ -74,4 +74,14 @@ html body #root .canvas-editor-shell .work-panel {
     height: auto;
     overflow: visible;
   }
+}
+
+/* Page-first workbench: the selected block never permanently consumes the
+   canvas width. A persistent list and a full real page are the default.
+   The existing three-area grid returns only while an editor is requested. */
+html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']) {
+  grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;
+}
+html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='false']) {
+  grid-template-columns: minmax(0, 1fr) !important;
 }
