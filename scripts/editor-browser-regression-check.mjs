@@ -2543,7 +2543,7 @@ async function run() {
         rows: cards.map((node) => ({ border: getComputedStyle(node).borderTopWidth, radius: getComputedStyle(node).borderRadius })),
         collapsed: cards.every((node) => node.querySelector('.page-option-expand')?.getAttribute('aria-expanded') === 'false'),
         shareControlsHidden: !document.querySelector('.share-position-control')?.getClientRects().length,
-        rowWidth: document.querySelector('.page-global-options-card').getBoundingClientRect().width,
+        rowWidth: document.querySelector('.style-panel').getBoundingClientRect().width,
         paneWidth: document.querySelector('.editor-properties-panel').getBoundingClientRect().width,
       };
     })()`);
@@ -2704,7 +2704,7 @@ async function run() {
       `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`,
       'F02 back to edit tab');
     await waitForBrowser(client,
-      `document.querySelector('.editor-page-settings-button')?.textContent?.includes('미적용')`,
+      `document.querySelector('.editor-page-settings-button')?.getAttribute('title')?.includes('미적용')`,
       'F02 unapplied style badge survives workspace switch');
     if (!(await evaluate(client, `!!document.querySelector('.editor-page-options-stack .style-panel')`))) {
       await clickSelector(client, '.editor-page-settings-button');
