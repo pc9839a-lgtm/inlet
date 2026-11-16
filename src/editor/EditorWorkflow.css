@@ -448,3 +448,45 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-lay
     font-size: 12px !important;
   }
 }
+
+
+/* The persistent editor header wraps into TWO ROWS at 673px.
+   A fixed 64px first grid row made the task switcher exist but sit behind
+   the header (and the canvas covered its hit area). Allocate header height
+   from content, then reserve an actual 66px task navigation row. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact'][data-compact-view='page']) {
+  grid-template-rows: max-content 66px minmax(0, 1fr) !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact'][data-compact-view='blocks']),
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact'][data-compact-view='edit']) {
+  grid-template-rows: max-content minmax(0, 1fr) 0px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) .workspace-persistent-header {
+  grid-row: 1 !important;
+  min-height: 64px;
+  height: auto !important;
+  max-height: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) .work-panel,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) #workspace-panel-edit,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-workflow-compact-switch {
+  flex: 0 0 66px !important;
+  height: 66px !important;
+  box-sizing: border-box;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-composition-panel,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout[data-editor-density='compact'] .editor-properties-panel {
+  flex: 1 1 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-layout[data-editor-density='compact']) > .preview-workspace {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+}
