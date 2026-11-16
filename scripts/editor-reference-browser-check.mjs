@@ -463,9 +463,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 255 && unselected.editorWidth <= 265
+    && unselected.editorWidth >= 248 && unselected.editorWidth <= 256
     && Math.abs(unselected.listWidth - unselected.editorWidth) <= 3
-    && Math.abs(unselected.inspectorWidth - 350) <= 3,
+    && Math.abs(unselected.inspectorWidth - 420) <= 3,
     'page settings must open in the independent inspector without replacing the block list: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
