@@ -3045,7 +3045,7 @@ async function run() {
       await setViewport(client, desktopViewport.width, desktopViewport.height, false);
       await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, `${desktopViewport.name} editor`);
 
-      await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
+      await clickSelector(client, '.editor-page-settings-button:nth-child(2)');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
     // The left panel must not consume the 390px phone, and its selected
     // controls must stay inside the inspector instead of clipping horizontally.
