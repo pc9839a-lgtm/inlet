@@ -326,6 +326,18 @@ export function EditPanelLayout({
     focusPageHeading();
   };
 
+  const returnToPage = () => {
+    setInspectorOpen(false);
+    setNavigatorOpen(false);
+    if (editorDensity === 'compact') setCompactView('page');
+    requestAnimationFrame(() => {
+      const selector = editorDensity === 'compact'
+        ? '.editor-workflow-compact-switch button:first-child'
+        : '.editor-workbench-section-switch button:first-child';
+      document.querySelector(selector)?.focus({ preventScroll: true });
+    });
+  };
+
   const pageTheme = stylePanelProps?.stagedTheme || pageGlobalOptionsProps.page.theme;
   const updatePageTheme = (patch) => {
     // Page behavior belongs to the undoable page draft, not the optional
@@ -409,7 +421,7 @@ export function EditPanelLayout({
           </div>
           <div className="editor-workbench-section-switch" role="group" aria-label="페이지 작업 선택">
             <button type="button" aria-pressed={!inspectorOpen}
-              onClick={() => { setInspectorOpen(false); setNavigatorOpen(false); if (editorDensity === 'compact') setCompactView('page'); }}>
+              onClick={returnToPage}>
               페이지 보기
             </button>
             <button type="button" aria-pressed={inspectorOpen}
@@ -483,7 +495,7 @@ export function EditPanelLayout({
           </div>
           <button type="button" className="editor-workbench-close-inspector"
             aria-label="설정 패널 닫고 페이지 크게 보기"
-            onClick={() => { setInspectorOpen(false); if (editorDensity === 'compact') setCompactView('page'); }}>
+            onClick={returnToPage}>
             페이지 크게 보기
           </button>
         </header>
