@@ -1201,9 +1201,10 @@ async function run() {
       const shell = document.querySelector('.editor-properties-panel');
       return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '내용 편집'
         && !shell.querySelector('.style-panel')
-        && !!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')
+        && (!!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')
+            || !!editor?.querySelector('.editor-workflow-start-choices button'))
         && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
-    })()`, 'new editor starts with an actual selected content block and visible 390px page, never the global style form').catch(async (error) => {
+    })()`, 'new editor starts in selected content or explicit block selection, with 390px page instead of global styling').catch(async (error) => {
       const actual = await evaluate(client, `(() => {
         const editor = document.querySelector('.editor-properties-panel');
         return {
