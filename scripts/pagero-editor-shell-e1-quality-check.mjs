@@ -327,7 +327,7 @@ assert(heroImageSection.includes('InspectorDisclosure label="이미지 배치·�
   && !previewPaneCss.includes('--editor-ui-space-4'),
   'disclosures must keep native semantics, owner-level token spacing and no canvas-style leakage');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
-assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 340px;'),
+assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 420px;'),
   'editor workspace must size the separate settings column without restoring old abandoned components');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
@@ -365,7 +365,7 @@ assert(inspectorBlockList.includes('onToggleVisible={() => props.toggleVisible(s
   && inspectorBlockList.includes('instance="inspector"')
   && compactRowActions.includes('aria-checked={block.visible !== false}')
   && compactRowActions.includes('onClick={() => run(onToggleVisible)}'),
-  'the right inspector visibility switch must operate on the real selected block, not silently no-op');
+  'the left settings visibility switch must operate on the real selected block, not silently no-op');
 // 22nd patch: visible public/draft status card is gone, but separate
 // status computation, accessible announcement and actionable publish state stay.
 assert(!headerSource.includes('panel-save-status operations-save-status')
@@ -385,11 +385,11 @@ assert(!headerSource.includes('panel-save-status operations-save-status')
 
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width) !important;')
+assert(css.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr) !important;')
   && editPanelLayoutCss.includes('.editor-properties-panel')
   && editPanelLayoutCss.includes('.editor-properties-content')
   && css.includes('overflow: hidden !important;'),
-  'the editor must provide separate block list, mobile page and property inspector');
+  'the editor must keep block list and properties on the left and the mobile page on the right');
 assert(layout.includes("const showPageOptions = section === 'options' || !selectedBlockId;")
   && layout.includes('{showPageOptions && (')
   && layout.includes('<PageThemeStylePanel {...stylePanelProps} />'),

@@ -13,10 +13,10 @@ const browser = read('scripts/editor-reference-browser-check.mjs');
 
 // The list, canvas and property editor scroll independently; selecting a new
 // block must not unmount the navigator or reparent the real widget editor.
-assert.ok(shell.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width)')
+assert.ok(shell.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr)')
   && shell.includes('--editor-list-width: 246px;')
-  && shell.includes('--editor-settings-width: 340px;'),
-  'desktop editor must preserve separate navigation, real page and settings widths');
+  && shell.includes('--editor-settings-width: 420px;'),
+  'desktop editor must preserve left navigation and settings beside the right page');
 assert.ok(layout.includes('.editor-composition-content')
   && layout.includes('overflow-y: auto !important;')
   && layout.includes('overscroll-behavior: contain;')

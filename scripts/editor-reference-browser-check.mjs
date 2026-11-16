@@ -10,16 +10,22 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       `document.querySelector('.editor-composition-panel')?.getBoundingClientRect().left >= -1`,
       'laptop navigator drawer fully opened before selecting a row');
   };
-  // Selecting a block closes the laptop navigator drawer by design.
-  // Reopen it for subsequent list interactions while leaving the preview visible.
+  // The laptop navigator overlays the LEFT inspector. Open the drawer for
+  // block-list actions, but close it before clicking real inspector controls.
   const clickNavigatorRow = async (selector) => {
+    const inspectorTarget = selector.startsWith('#editor-block-settings-');
     await evaluate(client, `(() => {
       const trigger = document.querySelector('.editor-navigator-drawer-trigger');
-      if (innerWidth >= 900 && innerWidth < 1280 && trigger?.getAttribute('aria-expanded') !== 'true') trigger?.click();
+      if (innerWidth < 900 || innerWidth >= 1280 || !trigger) return;
+      const isOpen = trigger.getAttribute('aria-expanded') === 'true';
+      if (${inspectorTarget} ? isOpen : !isOpen) trigger.click();
     })()`);
     await waitForBrowser(client,
-      `innerWidth >= 1280 || document.querySelector('.editor-composition-panel')?.getBoundingClientRect().left >= -1`,
-      'laptop drawer fully visible and hit-testable before selecting its next row');
+      inspectorTarget
+        ? `innerWidth >= 1280 || document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'`
+        : `innerWidth >= 1280 || document.querySelector('.editor-composition-panel')?.getBoundingClientRect().left >= -1`,
+      inspectorTarget ? 'left inspector unobstructed by laptop drawer'
+        : 'laptop drawer fully visible and hit-testable before selecting its next row');
     await clickPointer(client, selector);
   };
   // Visual reference: a named, full-width add action and readable flat
@@ -73,7 +79,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
       && visual.normalRowHeight >= 54 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
       && Math.abs(visual.compositionWidth - expectedComposerWidth) <= 3
-      && Math.abs(visual.inspectorWidth - 340) <= 3
+      && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 390 : 420)) <= 3
       && visual.compositionBackground === 'rgb(255, 255, 255)'
       && visual.inspectorBackground === 'rgb(255, 255, 255)'
       && visual.stageBackground === 'rgb(243, 244, 246)'
@@ -225,11 +231,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'
       && document.activeElement === document.querySelector('#editor-block-editor-hero .screen-order-v2-more')`,
     'restoring a block through the portal preserves the open laptop navigator');
-  await clickPointer(client, '.editor-properties-heading');
+  // On laptops the open navigator covers the left settings. Click the still
+  // visible right page to verify genuine outside-pointer dismissal.
+  await clickPointer(client, '.preview-stage-heading');
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'
       && !document.querySelector('.editor-composition-panel')?.contains(document.activeElement)`,
-    'clicking outside in the inspector dismisses the drawer without hidden focus');
+    'clicking outside in the right page dismisses the drawer without hidden focus');
   await clickPointer(client, '.editor-navigator-drawer-trigger');
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
@@ -279,7 +287,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await setViewport(client, 900, 941, false);
   // Explicit page-settings selection closes the same laptop drawer. The
   // focused footer button becomes hidden, so focus must move to the real
-  // page-options heading in the persistent right inspector.
+  // page-options heading in the persistent left settings panel.
   await clickPointer(client, '.editor-navigator-drawer-trigger');
   await waitForBrowser(client,
     `document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true'`,
@@ -436,7 +444,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
     && unselected.editorWidth >= 240 && unselected.editorWidth <= 250
     && Math.abs(unselected.listWidth - unselected.editorWidth) <= 3
-    && Math.abs(unselected.inspectorWidth - 340) <= 3,
+    && Math.abs(unselected.inspectorWidth - 420) <= 3,
     'page settings must open in the independent inspector without replacing the block list: ' + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
@@ -1401,9 +1409,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
   assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 246) <= 3
-    && Math.abs(geometry.inspector.width - 340) <= 3
-    && geometry.inspector.left > geometry.stage.left
-    && geometry.inspector.left >= geometry.stage.right - 2,
+    && Math.abs(geometry.inspector.width - 420) <= 3
+    && geometry.list.right <= geometry.inspector.left + 2
+    && geometry.inspector.right <= geometry.stage.left + 2,
     'approved three-pane geometry must keep navigation, real canvas, settings separated at 1672px: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
     'both side panels must remain aligned below the shared 64px workspace toolbar: ' + JSON.stringify(geometry));

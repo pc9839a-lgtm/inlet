@@ -459,20 +459,21 @@ html body #root .canvas-editor-shell :is(.editor-page-settings-button, .screen-o
   html body #root .canvas-editor-shell .editor-fixed-group-toggle > svg { transition: none; }
 }
 
-/* Approved three-pane layout: the list remains compact while real block
-   editors scroll in a separate, persistent settings panel. */
+/* Left editing workspace: compact list followed by the persistent settings panel.
+   The real page preview remains to the right without changing block state. */
 html body #root .canvas-editor-shell .editor-navigator-drawer-trigger { display: none; }
 html body #root .canvas-editor-shell .editor-properties-panel {
   position: fixed;
   z-index: 11;
   top: 64px;
-  right: 0;
+  left: var(--editor-list-width, 246px);
+  right: auto;
   display: flex;
   flex-direction: column;
   width: var(--editor-settings-width, 340px);
   height: calc(100dvh - 64px);
   min-width: 0;
-  border-left: 1px solid #e5e9f0;
+  border-right: 1px solid #e5e9f0;
   background: #fff;
   box-sizing: border-box;
 }
@@ -566,7 +567,7 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
   html body #root .canvas-editor-shell .editor-navigator-drawer-trigger[aria-expanded='true'] {
     left: 260px;
   }
-  html body #root .canvas-editor-shell .editor-properties-panel { pointer-events: auto; }
+  html body #root .canvas-editor-shell .editor-properties-panel { left: 0; pointer-events: auto; }
 }
 @media (max-width: 899px) {
   html body #root .builder-shell.canvas-editor-shell .edit-layout {
@@ -587,11 +588,12 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
   html body #root .canvas-editor-shell .editor-properties-panel {
     position: relative;
     top: auto;
+    left: auto;
     right: auto;
     width: 100%;
     height: auto;
     min-height: 420px;
-    border-left: 0;
+    border-right: 0;
     border-top: 1px solid #e5e9f0;
   }
   html body #root .canvas-editor-shell .editor-properties-content { overflow: visible; }
