@@ -617,6 +617,24 @@ async function setViewport(client, width, height, mobile = false) {
   await wait(350);
 }
 
+// Controlled HEX fields must be exercised with a trusted Chrome text-input
+// event, not only a synthetic DOM event on a native value setter. Input.insertText
+// triggers React's real input pipeline, including validation on subsequent blur.
+async function typeInputValue(client, selector, value) {
+  await focusSelector(client, selector);
+  const selected = await evaluate(client, `(() => {
+    const element = document.querySelector(${JSON.stringify(selector)});
+    if (!element || document.activeElement !== element) return false;
+    element.select();
+    return true;
+  })()`);
+  assert(selected, `Unable to select input text for ${selector}`);
+  await client.send('Input.insertText', { text: String(value) });
+  await waitForBrowser(client,
+    `document.querySelector(${JSON.stringify(selector)})?.value === ${JSON.stringify(String(value))}`,
+    'native input typing updated ' + selector, 6000);
+}
+
 async function setInputValue(client, selector, value) {
   const result = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
@@ -2661,12 +2679,10 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.style-panel') && !document.querySelector('.page-global-options-card')`,
       'reopen design without discarding staged theme color');
     const accentHex = '.style-panel input[aria-label="버튼색 HEX"]';
-    await focusSelector(client, accentHex);
-    await setInputValue(client, accentHex, '#abc');
+    await typeInputValue(client, accentHex, '#abc');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await waitForBrowser(client, `document.querySelector('.style-panel input[type="color"]')?.value === '#aabbcc'`, 'shared HEX input accepts short colors');
-    await focusSelector(client, accentHex);
-    await setInputValue(client, accentHex, '#oops');
+    await typeInputValue(client, accentHex, '#oops');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await waitForBrowser(client, `(() => {
       const field = document.querySelector(${JSON.stringify(accentHex)});
@@ -2687,7 +2703,7 @@ async function run() {
         && field.getAttribute('aria-invalid') === 'false'
         && !field.closest('.color-clean').querySelector('[role="alert"]');
     })()`, 'Escape restores last valid HEX and clears its error');
-    await setInputValue(client, accentHex, 'a1b2c3');
+    await typeInputValue(client, accentHex, 'a1b2c3');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await waitForBrowser(client, `(() => {
       const field = document.querySelector(${JSON.stringify(accentHex)});
@@ -2696,7 +2712,7 @@ async function run() {
         && field.getAttribute('aria-invalid') === 'false';
     })()`, 'six-digit pasted HEX without # normalizes to a valid swatch');
     await focusSelector(client, accentHex);
-    await setInputValue(client, accentHex, updatedAccent);
+    await typeInputValue(client, accentHex, updatedAccent);
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await capture(client, 'desktop-common-settings-color');
     await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
