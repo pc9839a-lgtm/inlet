@@ -447,3 +447,20 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   padding-left: 350px !important;
   padding-right: 12px !important;
 }
+
+/* The actual 390px page must be immediately adjacent to the block rail,
+   not centered in a huge empty canvas. At the owner's left-680px crop,
+   the full page must remain visible instead of appearing as a blank strip. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) > .preview-workspace {
+  justify-content: flex-start !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) .preview-workspace .preview-sticky {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
