@@ -117,13 +117,18 @@ export function EditPanelLayout({
   // Content editing is the default; page-level options require an explicit choice.
   const showPageOptions = section === 'design' || section === 'page';
   const showStartEditing = !showPageOptions && !selectedBlockId;
-  const firstSelectionRequested = React.useRef(false);
+  // The account page can hydrate after the shell first renders. Do not consume
+  // the one-time selection attempt until the selected block actually appears.
+  // Explicit page-level destinations suspend this automatic content selection.
+  const firstSelectionConfirmed = React.useRef(false);
   React.useEffect(() => {
-    if (firstSelectionRequested.current || section !== 'order' || selectedBlockId) return;
+    if (firstSelectionConfirmed.current || section !== 'order') return;
+    if (selectedBlockId) {
+      firstSelectionConfirmed.current = true;
+      return;
+    }
     const first = screenOrderListProps.normalBlocks.find((block) => !isExplicitlyHidden(block));
-    if (!first) return;
-    firstSelectionRequested.current = true;
-    screenOrderListProps.selectBlock(first.id);
+    if (first) screenOrderListProps.selectBlock(first.id);
   }, [section, selectedBlockId, screenOrderListProps.normalBlocks, screenOrderListProps.selectBlock]);
   const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
   const fixedSelected = fixedDescriptors.find((item) => item.open);
