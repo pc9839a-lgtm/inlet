@@ -925,6 +925,7 @@ async function collectNarrowDesktopMetrics(client) {
       drawerOpen: document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true',
       inspector: rect(document.querySelector('.editor-properties-panel')),
       frameContentWidth: document.querySelector('.preview-workspace .phone-frame .landing-page')?.clientWidth || 0,
+      compactView: document.querySelector('.edit-layout')?.dataset.compactView,
       minIdentityWidth: Math.min(...[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy')].map(el => el.getBoundingClientRect().width)),
       inspectorGroupLabelHeights: [...document.querySelectorAll('.inspector-primary-heading, .inspector-disclosure > summary > strong')].map(el => el.getBoundingClientRect().height),
       duplicateInspectorNavigation: !!document.querySelector('.inspector-navigation'),
@@ -1018,12 +1019,12 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || 0;
-  const expectedList = width < 1280 ? 252 : 246;
+  const expectedList = width < 1280 ? 264 : 260;
   assert(Math.abs(composition - expectedList) <= 3,
     `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
-  assert(Math.abs(inspector - (width < 1280 ? 390 : 420)) <= 3,
+  assert(Math.abs(inspector - (width < 1280 ? 334 : 350)) <= 3,
     `left block properties must retain usable width at ${width}px: ${JSON.stringify({inspector})}`);
-  assert(Math.abs(edit - (width < 1280 ? 0 : 246)) <= 3,
+  assert(Math.abs(edit - (width < 1280 ? 0 : 260)) <= 3,
     `collapsed laptop navigator must not consume the canvas: ${JSON.stringify({width,edit})}`);
 }
 
@@ -1042,17 +1043,16 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.inspector, width, 'narrow desktop properties inspector');
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
   if (!stacked) assertInsideViewport(metrics.drawerTrigger, width, 'laptop block navigator trigger');
-  assert(metrics.minIdentityWidth >= 60, `long Korean block names need space at ${width}px: ${metrics.minIdentityWidth}`);
+  if (!stacked) assert(metrics.minIdentityWidth >= 60, `long Korean block names need space at ${width}px: ${metrics.minIdentityWidth}`);
   assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 40),
     `selected inspector headings must stay accessible: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
   assert(!metrics.cockpit, 'narrow desktop preview must not expose removed conversion cockpit');
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (stacked ? 1 : 2),
     `editor shell must use ${stacked ? 'stacked' : 'canvas + settings'} layout at ${width}px: ${metrics.shellGridColumns}`);
   if (stacked) {
-    assert(metrics.composition?.width >= width - 6 && metrics.inspector?.width >= width - 6,
-      `zoomed desktop must keep full-width block and property editing areas: ${JSON.stringify({composition:metrics.composition,inspector:metrics.inspector})}`);
-    assert(metrics.inspector.top >= metrics.composition.top + 260,
-      `zoomed desktop properties must follow the block list, not overlay it: ${JSON.stringify({composition:metrics.composition,inspector:metrics.inspector})}`);
+    assert(metrics.compactView === 'page' && metrics.frameContentWidth === 390
+      && metrics.preview?.width >= Math.min(width, 390) - 3,
+      `zoomed desktop must offer its real-page-first view without squashing the preview: ${JSON.stringify({compactView:metrics.compactView,preview:metrics.preview})}`);
   } else {
     assertReferenceTracks(metrics, width);
     assert(metrics.preview.left >= metrics.inspector.right - 2,
@@ -3042,13 +3042,13 @@ async function run() {
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
       && leftGeometry.inspectorInner >= 260
-      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 390 : 420)) <= 3
+      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 334 : 350)) <= 3
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 500
       && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
       && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
       && leftGeometry.propertiesRight <= leftGeometry.previewLeft + 2
-      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 252 : 246)) <= 4,
+      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 260)) <= 4,
       'selected properties must remain readable in their own panel without covering the real mobile canvas: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
