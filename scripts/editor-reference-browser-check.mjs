@@ -1539,5 +1539,62 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await setInputValue(client, 'input[aria-label="본문 크기 (px)"]', '15');
   await focusSelector(client, title);
   assert(apiState.saveCount === 0, 'reference editor actions must stay local until explicit publish');
+
+  // Owner's 673px screenshot is a failure case that the prior 900/1672 QA
+  // never covered: list + inspector consumed all usable width and the real
+  // page was reduced to a blank strip. Compact task mode MUST show a full
+  // 390px page first, then offer complete block and content views separately.
+  await setViewport(client, 673, 960, false);
+  await waitForBrowser(client,
+    `document.querySelector('.edit-layout')?.dataset.editorDensity === 'compact'
+      && document.querySelector('.edit-layout')?.dataset.compactView === 'page'`,
+    '673px content editor uses page-first task layout, not three columns');
+  const compactPage = await evaluate(client, `(() => {
+    const rect = (element) => element?.getBoundingClientRect();
+    const pane = document.querySelector('.preview-workspace');
+    const phone = pane?.querySelector('.phone-frame');
+    const content = phone?.querySelector('.landing-page');
+    const switcher = document.querySelector('.editor-workflow-compact-switch');
+    return {
+      viewport: innerWidth,
+      density: document.querySelector('.edit-layout')?.dataset.editorDensity,
+      view: document.querySelector('.edit-layout')?.dataset.compactView,
+      tabs: [...switcher.querySelectorAll('button')].map((el) => ({name: el.textContent, on: el.getAttribute('aria-pressed') === 'true'})),
+      pageWidth: content?.clientWidth,
+      phoneLeft: rect(phone)?.left, phoneRight: rect(phone)?.right,
+      previewLeft: rect(pane)?.left, previewRight: rect(pane)?.right,
+      previewVisible: !!rect(pane)?.width && getComputedStyle(pane).display !== 'none',
+      blockVisible: !!rect(document.querySelector('.editor-composition-panel'))?.width,
+      inspectorVisible: !!rect(document.querySelector('.editor-properties-panel'))?.width,
+      scrollWidth: document.documentElement.scrollWidth,
+    };
+  })()`);
+  assert(compactPage.density === 'compact' && compactPage.view === 'page'
+    && compactPage.tabs.length === 3 && compactPage.tabs.filter((tab) => tab.on).length === 1
+    && compactPage.pageWidth === 390 && compactPage.previewVisible
+    && compactPage.phoneLeft >= 0 && compactPage.phoneRight <= 673
+    && !compactPage.blockVisible && !compactPage.inspectorVisible
+    && compactPage.scrollWidth <= 676,
+    '673px must display a full page rather than a narrow empty preview strip: ' + JSON.stringify(compactPage));
+  await capture(client, 'owner-width-673-page-first');
+
+  await clickPointer(client, '.editor-workflow-compact-switch button:nth-child(2)');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.compactView === 'blocks'
+    && document.querySelector('.editor-composition-content')?.getBoundingClientRect().width >= 400
+    && getComputedStyle(document.querySelector('.preview-workspace')).display === 'none'`,
+    '673px block list has its own readable full-width workspace');
+  await capture(client, 'owner-width-673-block-list');
+  await clickPointer(client, '#editor-block-editor-text .screen-order-v2-head');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.compactView === 'edit'
+    && document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 400
+    && !!document.querySelector('#editor-block-settings-editor-text')
+    && getComputedStyle(document.querySelector('.preview-workspace')).display === 'none'`,
+    'choosing a block opens its full-width editable settings, without a nested miniature inspector');
+  await capture(client, 'owner-width-673-content-edit');
+  await clickPointer(client, '.editor-workflow-compact-switch button:first-child');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.compactView === 'page'
+    && document.querySelector('.preview-workspace .landing-page')?.clientWidth === 390`,
+    'returning to the page never changes its true width or its selected block');
+  assert(apiState.saveCount === 0, 'task mode switching and selecting blocks must not publish');
   await setViewport(client, 1280, 900, false);
 }
