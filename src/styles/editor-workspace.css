@@ -50,32 +50,6 @@ html body #root .canvas-editor-shell .work-panel {
     width:0!important;overflow:visible;
   }
 }
-@media (max-width: 899px) {
-  body:has(.canvas-editor-shell),
-  #root:has(.canvas-editor-shell) {
-    height: auto !important;
-    overflow: auto !important;
-  }
-  html body #root .builder-shell.canvas-editor-shell {
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: auto auto auto;
-    height: auto !important;
-    max-height: none !important;
-    min-height: 100dvh;
-    overflow: visible !important;
-  }
-  html body #root .canvas-editor-shell .work-panel {
-    grid-column: 1; grid-row: 2;
-    min-height: 650px;
-    height: auto !important;
-    overflow: visible !important;
-  }
-  html body #root .canvas-editor-shell #workspace-panel-edit {
-    height: auto;
-    overflow: visible;
-  }
-}
-
 /* Page-first workbench: the selected block never permanently consumes the
    canvas width. A persistent list and a full real page are the default.
    The existing three-area grid returns only while an editor is requested. */
