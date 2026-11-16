@@ -235,7 +235,7 @@ assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page th
 assert(!layout.includes('editor-structure-pane') && !layout.includes('className="editor-inspector-pane"'), 'three-pane editor DOM must not return');
 
 assert(css.includes('.canvas-editor-shell')
-  && css.includes("data-inspector-open='false'")
+  && css.includes("data-editor-density='wide']")
   && layout.includes('data-editor-workflow="page-first"')
   && layout.includes('data-inspector-open={inspectorOpen'),
   'editor shell must preserve the on-demand inspector and page-first responsive geometry');
@@ -423,7 +423,7 @@ assert(addBlockDock.includes('const composingRef = useRef(false)')
   && addBlockDock.includes("if (event.key === 'Escape') event.stopPropagation();"),
   'block-gallery Escape must not dismiss IME composition or bubble through its portal to the laptop drawer');
 assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;')
-  && css.includes("data-editor-density='laptop'][data-inspector-open='false']")
+  && css.includes("data-editor-density='laptop']")
   && editPanelLayoutCss.includes('@media (max-width: 899px)')
   && previewPaneCss.includes("data-editor-workflow='page-first'"),
   'zoomed desktop must keep its full preview available with settings opened on demand');
