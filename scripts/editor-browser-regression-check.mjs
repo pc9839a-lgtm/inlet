@@ -2673,7 +2673,12 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.panel-actions .primary-btn')?.dataset.draftState === 'unapplied'`, 'page behavior changes retain pending global design');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
     await waitForBrowser(client,
-      `document.querySelector('.edit-animation-settings')?.getClientRects().length === 0`,
+      `(() => {
+        const expand = document.querySelector('.edit-animation-card:not(.share-options-card) .page-option-expand');
+        const controls = document.querySelector('.edit-animation-settings');
+        return expand?.getAttribute('aria-expanded') === 'false'
+          && (!controls || controls.getClientRects().length === 0);
+      })()`,
       'collapsed animation controls must leave the keyboard order');
     await focusSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
     await pressKeyboardKey(client, 'Space');
