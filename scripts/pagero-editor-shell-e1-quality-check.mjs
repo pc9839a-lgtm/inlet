@@ -327,7 +327,7 @@ assert(heroImageSection.includes('InspectorDisclosure label="이미지 배치·�
   && !previewPaneCss.includes('--editor-ui-space-4'),
   'disclosures must keep native semantics, owner-level token spacing and no canvas-style leakage');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
-assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 350px;'),
+assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 420px;'),
   'editor workspace must size the separate settings column without restoring old abandoned components');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
