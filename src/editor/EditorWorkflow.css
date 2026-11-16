@@ -1,0 +1,257 @@
+/* Editor workflow rebuild · phase 1.
+   A content-first editing surface. The existing widget, save and publish
+   handlers remain the single source of truth. No public-page selectors. */
+html body #root .canvas-editor-shell.edit-mode-shell {
+  --editor-ux-ink: #182b47;
+  --editor-ux-muted: #63738e;
+  --editor-ux-accent: #2563eb;
+  --editor-ux-rail: #f8faff;
+  --editor-ux-border: #e2e8f2;
+}
+html body #root .canvas-editor-shell .editor-workflow-compact-switch { display: none; }
+html body #root .canvas-editor-shell .editor-composition-panel {
+  background: var(--editor-ux-rail) !important;
+  border-right: 1px solid var(--editor-ux-border);
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 15px !important;
+  padding: 22px 15px 15px !important;
+  border-bottom: 0 !important;
+  background: var(--editor-ux-rail) !important;
+}
+html body #root .canvas-editor-shell .editor-composition-title-row {
+  align-items: flex-start !important;
+}
+html body #root .canvas-editor-shell .editor-composition-title-copy .editor-panel-kicker {
+  margin-bottom: 5px; color: #8190ac; font-size: 11px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 {
+  font-size: 20px !important;
+  letter-spacing: -.04em;
+  color: var(--editor-ux-ink) !important;
+}
+html body #root .canvas-editor-shell .editor-composition-total {
+  vertical-align: 2px; font-size: 11px; color: #7b8ba5;
+}
+html body #root .canvas-editor-shell .editor-composition-hint {
+  margin: 7px 0 0;
+  color: var(--editor-ux-muted);
+  font-size: 11px; line-height: 1.5;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading .add-dock-compact {
+  width: 100% !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading .add-dock-compact .add-toggle {
+  width: 100% !important;
+  min-height: 43px !important;
+  background: var(--editor-ux-accent) !important;
+  border-color: var(--editor-ux-accent) !important;
+  color: white !important;
+  border-radius: 9px !important;
+  box-shadow: 0 4px 8px #2563eb18 !important;
+  font-size: 13px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-heading .add-dock-compact .add-toggle:hover {
+  background: #1d4ed8 !important; border-color: #1d4ed8 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-search {
+  margin: 0 15px 5px !important;
+  min-height: 40px;
+  padding: 4px 9px !important;
+  background: #fff !important;
+  border: 1px solid #dfe7f3 !important;
+  border-radius: 9px !important;
+  color: #8190aa;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-content {
+  padding: 12px 10px 20px !important;
+  background: var(--editor-ux-rail) !important;
+  scrollbar-gutter: auto;
+}
+html body #root .canvas-editor-shell .editor-composition-group-caption {
+  padding: 10px 7px 7px; margin: 3px 0 2px;
+  color: #657694; font-size: 11px;
+  font-weight: 700;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item {
+  margin: 3px 0 !important;
+  min-height: 64px;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  transition: background .12s ease, border-color .12s ease;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item:is(:hover,:focus-within) {
+  border-color: #e1e8f6 !important;
+  background: #fff !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true'] {
+  border-color: #a9c3fd !important;
+  background: #fff !important;
+  box-shadow: 0 4px 12px #263b6c0b !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head {
+  min-height: 62px !important;
+  grid-template-columns: 18px minmax(0,1fr) 31px !important;
+  padding: 5px 6px 5px 3px !important;
+  gap: 5px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-title-wrap {
+  grid-template-columns: 35px minmax(0, 1fr) !important;
+  gap: 8px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon {
+  width: 35px !important; height: 35px !important;
+  border-radius: 9px !important;
+  background: #eaf0fc !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-type-icon.has-thumbnail {
+  background: #fff !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong {
+  color: #1c304d !important; font-size: 13px !important;
+  font-weight: 700 !important; line-height: 1.3 !important;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-detail {
+  color: #7f8ca5 !important;
+  font-size: 11px !important;
+}
+html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-slot:has(.screen-order-v2-item[data-selected='true']) {
+  z-index: 3;
+}
+html body #root .canvas-editor-shell .editor-composition-footer {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px; padding: 11px 10px !important;
+  background: var(--editor-ux-rail) !important;
+  border-top: 1px solid var(--editor-ux-border);
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-footer > .editor-page-settings-button {
+  display: flex !important; flex-direction: column; align-items: center;
+  justify-content: center; gap: 4px;
+  width: 100%; min-height: 54px;
+  padding: 7px 4px !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: #667998 !important;
+  font-size: 11px !important;
+  text-align: center;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-composition-footer > .editor-page-settings-button:is(:hover,[aria-pressed='true']) {
+  background: #fff !important;
+  border-color: #dbe6f6 !important;
+  color: #1d4ed8 !important;
+}
+html body #root .canvas-editor-shell .editor-properties-panel {
+  background: #fff; border-right: 1px solid var(--editor-ux-border);
+}
+html body #root .canvas-editor-shell .editor-properties-heading {
+  min-height: 77px !important; padding: 12px 23px !important;
+  border-bottom: 1px solid var(--editor-ux-border) !important;
+}
+html body #root .canvas-editor-shell .editor-properties-heading-copy {
+  min-width: 0; display: grid; gap: 3px;
+}
+html body #root .canvas-editor-shell .editor-properties-heading-copy .editor-panel-kicker {
+  margin: 0; font-size: 10px; font-weight: 500; color: #8490a3;
+}
+html body #root .canvas-editor-shell .editor-properties-heading-copy strong {
+  color: var(--editor-ux-ink); font-size: 18px; font-weight: 740;
+}
+html body #root .canvas-editor-shell .editor-properties-context {
+  font-size: 11px; color: #8391a6;
+}
+html body #root .canvas-editor-shell .editor-properties-content {
+  padding: 19px 23px 36px !important;
+  scrollbar-gutter: stable;
+}
+html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2-settings-header {
+  padding-top: 0 !important; gap: 8px;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings-title h2 {
+  font-size: 20px; color: var(--editor-ux-ink);
+}
+html body #root .canvas-editor-shell .editor-inspector-section-label {
+  color: #7182a0; font-size: 10px;
+}
+html body #root .canvas-editor-shell .editor-workflow-start {
+  display: flex; flex-direction: column;
+  align-items: stretch; gap: 12px;
+  padding: 15px 0 20px;
+}
+html body #root .canvas-editor-shell .editor-workflow-start-graphic {
+  display: grid; place-items: center; width: 49px; height: 49px;
+  border-radius: 13px; background: #edf4ff; color: #2563eb;
+}
+html body #root .canvas-editor-shell .editor-workflow-start h2 {
+  margin: 5px 0 0; font-size: 19px; line-height: 1.35;
+  color: var(--editor-ux-ink);
+}
+html body #root .canvas-editor-shell .editor-workflow-start p {
+  margin: 0; font-size: 13px; line-height: 1.6;
+  color: var(--editor-ux-muted);
+}
+html body #root .canvas-editor-shell .editor-workflow-start-choices {
+  display: grid; gap: 7px; padding-top: 5px;
+}
+html body #root .canvas-editor-shell .editor-workflow-start-choices button {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; min-height: 44px; width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e7f2; border-radius: 9px;
+  background: #fff; color: #233756;
+  text-align: left; font: inherit; font-size: 13px;
+  cursor: pointer;
+}
+html body #root .canvas-editor-shell .editor-workflow-start-choices button:hover,
+html body #root .canvas-editor-shell .editor-workflow-start-choices button:focus-visible {
+  border-color: #83aafa; background: #f6f9ff;
+}
+@media (min-width: 900px) and (max-width: 1279px) {
+  html body #root .canvas-editor-shell .editor-navigator-drawer-trigger {
+    top: 82px; min-width: 70px; min-height: 37px;
+    border-color: #d1def0; color: #1b4eab; font-weight: 680;
+  }
+  html body #root .canvas-editor-shell .editor-composition-panel {
+    width: 264px !important;
+  }
+  html body #root .canvas-editor-shell .editor-navigator-drawer-trigger[aria-expanded='true'] {
+    left: 272px;
+  }
+  html body #root .canvas-editor-shell .editor-properties-heading { padding-left: 86px !important; }
+}
+@media (max-width: 899px) {
+  html body #root .canvas-editor-shell .editor-workflow-compact-switch {
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 4px; margin: 9px 12px 12px; padding: 4px;
+    border: 1px solid #dce5f2; border-radius: 11px;
+    background: #f4f7fc;
+  }
+  html body #root .canvas-editor-shell .editor-workflow-compact-switch button {
+    min-height: 42px; border: 0; border-radius: 8px;
+    background: transparent; color: #596a87;
+    font: inherit; font-size: 13px; font-weight: 680; cursor: pointer;
+  }
+  html body #root .canvas-editor-shell .editor-workflow-compact-switch button[aria-pressed='true'] {
+    background: #fff; color: #1957c9; box-shadow: 0 1px 4px #1a376b14;
+  }
+  html body #root .canvas-editor-shell .edit-layout[data-compact-view='page'] .editor-composition-panel,
+  html body #root .canvas-editor-shell .edit-layout[data-compact-view='page'] .editor-properties-panel {
+    display: none !important;
+  }
+  html body #root .canvas-editor-shell:has(.edit-layout[data-compact-view='edit']) > .preview-workspace {
+    display: none !important;
+  }
+  html body #root .canvas-editor-shell .edit-layout[data-compact-view='edit'] .editor-composition-panel {
+    height: min(36dvh, 340px) !important;
+    min-height: 220px !important;
+  }
+  html body #root .canvas-editor-shell .editor-properties-heading { padding-left: 20px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body #root .canvas-editor-shell .screen-order-v2-item { transition: none !important; }
+}
