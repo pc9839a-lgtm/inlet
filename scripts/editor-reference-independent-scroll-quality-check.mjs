@@ -14,9 +14,12 @@ const browser = read('scripts/editor-reference-browser-check.mjs');
 // The list, canvas and property editor scroll independently; selecting a new
 // block must not unmount the navigator or reparent the real widget editor.
 assert.ok(shell.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr)')
-  && shell.includes('--editor-list-width: 260px;')
-  && shell.includes('--editor-settings-width: 350px;'),
-  'desktop editor must preserve left navigation and settings beside the right page');
+  && shell.includes('--editor-list-width: 252px;')
+  && shell.includes('--editor-settings-width: 420px;')
+  && shell.includes("data-editor-density='wide'][data-inspector-open='false']")
+  && editor.includes('const [inspectorOpen, setInspectorOpen] = React.useState(false);')
+  && editor.includes('data-inspector-open={inspectorOpen'),
+  'the persistent navigator must share the first screen with the full page, and settings open on demand');
 assert.ok(layout.includes('.editor-composition-content')
   && layout.includes('overflow-y: auto !important;')
   && layout.includes('overscroll-behavior: contain;')
@@ -43,4 +46,4 @@ assert.ok(previewFocus.includes("document.querySelector('.editor-properties-cont
 assert.ok(browser.includes('longInspector') && browser.includes('inspectorOverflow')
   && browser.includes('navigatorOverflow') && browser.includes('widthOptions === 0'),
   'Chrome regression must verify long-page independence and one fixed 390px preview');
-console.log('Three-pane editor navigator and inspector independent scroll contract passed');
+console.log('Page-first workbench and independent editor scrollers contract passed');
