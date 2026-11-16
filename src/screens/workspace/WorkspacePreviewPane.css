@@ -464,3 +464,20 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   margin-left: 0 !important;
   margin-right: auto !important;
 }
+
+/* While editing, anchor the phone immediately after the real Inspector
+   instead of leaving 250–300px of unusable blank gutter. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true']
+) > .preview-workspace,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='true']
+) > .preview-workspace {
+  justify-content: flex-start !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-inspector-open='true']
+) .preview-workspace .preview-sticky {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
