@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronDown, Settings2, Layers3, FilePenLine, ArrowRight } from 'lucide-react';
 import { BlockNavigatorSearch } from './editPanelParts/BlockNavigatorSearch.jsx';
 import './EditPanelLayout.css';
+import './EditorWorkflow.css';
 import { AddBlockDock } from './editPanelParts/AddBlockDock.jsx';
 import { GlobalFixedBlocks } from './editPanelParts/GlobalFixedBlocks.jsx';
 import { PageGlobalOptions } from './editPanelParts/PageGlobalOptions.jsx';
@@ -86,6 +87,7 @@ export function EditPanelLayout({
   const [section, setSection] = React.useState('order');
   const [fixedSearchReveal, setFixedSearchReveal] = React.useState(null);
   const [navigatorOpen, setNavigatorOpen] = React.useState(false);
+  const [compactView, setCompactView] = React.useState('page');
   // On laptop widths the composition is an overlay, not a modal. Dismiss it
   // when the user works in the canvas or inspector, without cancelling the
   // pointer event or altering the selected block or page draft.
@@ -269,7 +271,11 @@ export function EditPanelLayout({
   };
 
   return (
-    <div className="edit-layout" data-editor-layout="three-pane">
+    <div className="edit-layout" data-editor-layout="three-pane" data-compact-view={compactView}>
+      <div className="editor-workflow-compact-switch" role="group" aria-label="편집 화면 전환">
+        <button type="button" aria-pressed={compactView === 'edit'} onClick={() => setCompactView('edit')}>편집</button>
+        <button type="button" aria-pressed={compactView === 'page'} onClick={() => setCompactView('page')}>실제 페이지</button>
+      </div>
       <button
         type="button"
         className="editor-navigator-drawer-trigger"
