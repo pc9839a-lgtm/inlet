@@ -1203,7 +1203,23 @@ async function run() {
         && !shell.querySelector('.style-panel')
         && !!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')
         && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
-    })()`, 'new editor starts with an actual selected content block and visible 390px page, never the global style form');
+    })()`, 'new editor starts with an actual selected content block and visible 390px page, never the global style form').catch(async (error) => {
+      const actual = await evaluate(client, `(() => {
+        const editor = document.querySelector('.editor-properties-panel');
+        return {
+          panelTitle: editor?.querySelector('.editor-properties-heading-copy strong')?.textContent,
+          hasStyle: !!editor?.querySelector('.style-panel'),
+          hasStart: !!editor?.querySelector('.editor-workflow-start'),
+          selected: [...document.querySelectorAll('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')].map(e => e.id),
+          blockCount: document.querySelectorAll('.editor-composition-panel .screen-order-v2-item').length,
+          selectedFixed: [...document.querySelectorAll('.fixed-composition-row[aria-pressed="true"]')].map(e=>e.id),
+          phoneWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
+          inspectorText: editor?.innerText?.slice(0, 150),
+          layoutSection: document.querySelector('.edit-layout')?.dataset.editorLayout,
+        };
+      })()`);
+      throw new Error(error.message + ': ' + JSON.stringify(actual));
+    });
     assert(apiState.saveCount === 0, 'first visible content auto-selection must not publish or persist content');
 
     // Real mobile preview quick edit must use the same draft as Inspector,
