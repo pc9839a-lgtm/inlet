@@ -26,7 +26,7 @@ export function Toggle({ label, checked, onChange, disabled = false }) {
               .find((node) => node.getAttribute('aria-label') === label);
             replacement?.focus({ preventScroll: true });
           });
-        }
+        }}
       >
         <i aria-hidden="true"></i>
       </button>
