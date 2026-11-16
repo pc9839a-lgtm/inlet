@@ -87,6 +87,10 @@ export function EditPanelLayout({
   const [section, setSection] = React.useState('order');
   const [fixedSearchReveal, setFixedSearchReveal] = React.useState(null);
   const [navigatorOpen, setNavigatorOpen] = React.useState(false);
+  // Major workflow change: the real page occupies the workspace on entry.
+  // The block list remains persistent; detailed settings are opened only
+  // by an explicit editing action and never by automatic first selection.
+  const [inspectorOpen, setInspectorOpen] = React.useState(false);
   // The editor's usable width can be smaller than the CSS viewport (zoom,
   // embedded windows, resized desktop panes). Never decide its layout only
   // from window.innerWidth; measure the actual available stage as well.
@@ -133,6 +137,7 @@ export function EditPanelLayout({
   React.useEffect(() => {
     let focusFrame = 0;
     const openSelectedContent = () => {
+      setInspectorOpen(true);
       if (editorDensity !== 'compact') return;
       setCompactView('edit');
       // Canvas controls become display:none in compact mode. A click (or
@@ -209,6 +214,7 @@ export function EditPanelLayout({
     });
   };
   const chooseBlock = (id, { focusHeading = true } = {}) => {
+    setInspectorOpen(true);
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
     setSection('order');
     setNavigatorOpen(false);
@@ -216,6 +222,7 @@ export function EditPanelLayout({
     if (focusHeading) focusInspectorHeading(id);
   };
   const chooseFixed = (id, { focusHeading = true } = {}) => {
+    setInspectorOpen(true);
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
     setNavigatorOpen(false);
@@ -298,6 +305,7 @@ export function EditPanelLayout({
   }, [selectedBlockId]);
 
   const openPageOptions = (destination = 'design') => {
+    setInspectorOpen(true);
     if (screenOrderListProps?.selectedId) screenOrderListProps.clearBlockSelection();
     else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
     setSection(destination);
@@ -351,11 +359,11 @@ export function EditPanelLayout({
   };
 
   return (
-    <div className="edit-layout" data-editor-layout="three-pane" data-editor-density={editorDensity} data-compact-view={compactView}>
+    <div className="edit-layout" data-editor-layout="three-pane" data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-editor-density={editorDensity} data-compact-view={compactView}>
       <div className="editor-workflow-compact-switch" role="group" aria-label="편집 작업 영역 선택">
         <button type="button" aria-pressed={compactView === 'page'} onClick={() => setCompactView('page')}>실제 페이지</button>
         <button type="button" aria-pressed={compactView === 'blocks'} onClick={() => setCompactView('blocks')}>블록 목록</button>
-        <button type="button" aria-pressed={compactView === 'edit'} onClick={() => setCompactView('edit')}>내용 수정</button>
+        <button type="button" aria-pressed={compactView === 'edit'} onClick={() => { setInspectorOpen(true); setCompactView('edit'); }}>내용 수정</button>
       </div>
       <button
         type="button"
@@ -398,6 +406,16 @@ export function EditPanelLayout({
               </span></h2>
               <p className="editor-composition-hint">목록에서 고르고 페이지에서 수정하세요</p>
             </div>
+          </div>
+          <div className="editor-workbench-section-switch" role="group" aria-label="페이지 작업 선택">
+            <button type="button" aria-pressed={!inspectorOpen}
+              onClick={() => { setInspectorOpen(false); setNavigatorOpen(false); if (editorDensity === 'compact') setCompactView('page'); }}>
+              페이지 보기
+            </button>
+            <button type="button" aria-pressed={inspectorOpen}
+              onClick={() => { setInspectorOpen(true); setNavigatorOpen(false); if (editorDensity === 'compact') setCompactView('edit'); }}>
+              선택 수정
+            </button>
           </div>
           <AddBlockDock {...addBlockDockProps} compact />
         </header>
@@ -463,7 +481,11 @@ export function EditPanelLayout({
             <span className="editor-panel-kicker">실제 페이지를 보면서</span>
             <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '내용 편집'}</strong>
           </div>
-          <span className="editor-properties-context">{showPageOptions ? '페이지 전체' : selectedBlockId ? '선택한 블록' : '편집 시작'}</span>
+          <button type="button" className="editor-workbench-close-inspector"
+            aria-label="설정 패널 닫고 페이지 크게 보기"
+            onClick={() => { setInspectorOpen(false); if (editorDensity === 'compact') setCompactView('page'); }}>
+            페이지 크게 보기
+          </button>
         </header>
         <div className="editor-properties-content" role="region" aria-label="선택 항목 편집" tabIndex={0}>
           {showPageOptions && (
