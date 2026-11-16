@@ -635,6 +635,16 @@ async function showBlockList(client) {
   // On 900–1279px desktops the list is an off-canvas drawer; only the
   // navigator trigger stays visible after selecting a block.
   await evaluate(client, `(() => {
+    // Compact desktop/zoomed editor intentionally starts on the live page.
+    // Navigate to its explicit Edit view before interacting with block rows.
+    if (innerWidth < 900) {
+      const compact = document.querySelector('.edit-layout[data-compact-view]');
+      if (compact?.dataset.compactView === 'page') {
+        const edit = [...compact.querySelectorAll('.editor-workflow-compact-switch button')]
+          .find((button) => button.textContent.trim() === '편집');
+        edit?.click();
+      }
+    }
     const trigger = document.querySelector('.editor-navigator-drawer-trigger');
     if (innerWidth >= 900 && innerWidth < 1280 && trigger?.getAttribute('aria-expanded') !== 'true') trigger.click();
   })()`);
