@@ -2536,7 +2536,7 @@ async function run() {
         pageEntrySelected: document.querySelector('.editor-page-settings-button')?.getAttribute('aria-pressed') === 'true',
         redundantTabs: document.querySelectorAll('.edit-section-tabs').length,
         designFirst: stack.querySelector('.editor-page-options-heading') === stack.firstElementChild
-          && stack.querySelector('.style-panel')?.compareDocumentPosition(stack.querySelector('.page-global-options-card')) & Node.DOCUMENT_POSITION_FOLLOWING,
+          && !!stack.querySelector('.style-panel') && !stack.querySelector('.page-global-options-card'),
         designTitle: stack.querySelector('.style-apply-bar strong')?.textContent,
         status: stack.querySelector('.style-apply-bar span')?.textContent,
         globalHeadingRemoved: !stack.querySelector('.page-global-options-title'),
@@ -2550,10 +2550,9 @@ async function run() {
     assert(stageThreePageSettings.pageEntrySelected && stageThreePageSettings.redundantTabs === 0
       && stageThreePageSettings.designFirst && stageThreePageSettings.designTitle === '전체 디자인'
       && stageThreePageSettings.status === '스타일 적용됨' && stageThreePageSettings.globalHeadingRemoved
-      && stageThreePageSettings.rows.length === 2 && stageThreePageSettings.rows.every((row) => row.border === '0px' && row.radius === '0px')
-      && stageThreePageSettings.collapsed && stageThreePageSettings.shareControlsHidden
-      && stageThreePageSettings.rowWidth <= stageThreePageSettings.paneWidth,
-      'stage 3 page settings must show design first with flat collapsed behavior rows: ' + JSON.stringify(stageThreePageSettings));
+      && stageThreePageSettings.rows.length === 0 && stageThreePageSettings.collapsed
+      && stageThreePageSettings.shareControlsHidden,
+      'the entire-design inspector must not mix page settings into the same surface: ' + JSON.stringify(stageThreePageSettings));
     // D07: design basics remain visible; advanced typography and effects are disclosures.
     const designDirectFlow = await evaluate(client, `(() => {
       const panel = document.querySelector('.editor-page-options-stack .style-panel');
@@ -2593,8 +2592,16 @@ async function run() {
 
     // Page behavior updates must merge into an existing style draft without
     // applying or discarding its pending color.
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
+    await waitForBrowser(client, `!!document.querySelector('.page-global-options-card') && !document.querySelector('.style-panel')`,
+      'page behavior is a dedicated inspector rather than sharing all design controls');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
     await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-on') && document.querySelector('.edit-animation-settings')?.getClientRects().length > 0`, 'animation enabled and expanded without losing pending design');
+    assert(await evaluate(client, `document.querySelector('.panel-actions .primary-btn')?.dataset.draftState === 'unapplied'`),
+      'changing page behavior must not apply an uncommitted global design');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
+    await waitForBrowser(client, `!!document.querySelector('.style-panel') && !document.querySelector('.page-global-options-card')`,
+      'reopen design without discarding staged theme color');
     const accentHex = '.style-panel input[aria-label="버튼색 HEX"]';
     await focusSelector(client, accentHex);
     await setInputValue(client, accentHex, '#abc');
@@ -2634,9 +2641,11 @@ async function run() {
     await setInputValue(client, accentHex, updatedAccent);
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await capture(client, 'desktop-common-settings-color');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
+    await waitForBrowser(client, `!!document.querySelector('.edit-animation-options')`, 'switch back to page behavior');
     await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
-    await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`, 'animation changes retain the unapplied design color');
+    await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.panel-actions .primary-btn')?.dataset.draftState === 'unapplied'`, 'page behavior changes retain pending global design');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
     assert(await evaluate(client, `document.querySelector('.edit-animation-settings')?.getClientRects().length === 0`), 'collapsed animation controls must leave the keyboard order');
     await focusSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
@@ -2652,14 +2661,22 @@ async function run() {
     await capture(client, 'desktop-page-settings-expanded-stage3');
     await clickSelector(client, '.share-options-card .page-option-expand');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
-    await waitForBrowser(client, `!document.querySelector('.phone-frame .landing-page.anim-on') && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)} && !document.querySelector('.style-apply-btn')?.disabled`, 'page behavior edits preserve the unapplied design state');
+    await waitForBrowser(client, `!document.querySelector('.phone-frame .landing-page.anim-on') && document.querySelector('.panel-actions .primary-btn')?.dataset.draftState === 'unapplied'`, 'page behavior edits preserve pending design state');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
+    await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`,
+      'pending style survives page-setting changes and returning to design');
     await clickSelector(client, '.style-reset-btn');
     await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true && document.querySelector('.style-panel input[type="color"]')?.value !== ${JSON.stringify(updatedAccent)}`, 'one reset discards pending design and animation changes');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
+    await waitForBrowser(client, `!!document.querySelector('.edit-animation-card')`, 'return to page settings after reset');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
     await waitForBrowser(client, `document.querySelector('.edit-animation-options button[aria-pressed="true"]')?.textContent?.trim() === '페이드'`, 'reset restores the original animation choice');
     await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
+    await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
+    await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`,
+      'unapplied style controls are accessible after page behavior changes');
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
     assert(apiState.saveCount === 0, 'page settings toggles and disclosures must never auto-publish');
 
@@ -3018,7 +3035,7 @@ async function run() {
       await setViewport(client, desktopViewport.width, desktopViewport.height, false);
       await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('.preview-workspace')`, `${desktopViewport.name} editor`);
 
-      await clickSelector(client, '.editor-page-settings-button');
+      await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
     // The left panel must not consume the 390px phone, and its selected
     // controls must stay inside the inspector instead of clipping horizontally.
