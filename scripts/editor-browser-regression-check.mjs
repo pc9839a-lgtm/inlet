@@ -1503,10 +1503,16 @@ async function run() {
         height: entry?.getBoundingClientRect().height,
         inspectorHasEntry: !!inspector?.querySelector('.editor-page-settings-button') };
     })()`);
-    assert(editorNavigation.count === 1 && editorNavigation.inComposition && editorNavigation.redundantTabs === 0
-      && editorNavigation.target === 'editor-selection-panel' && editorNavigation.label === '전체 디자인 · 페이지 설정'
+    assert(editorNavigation.count === 2 && editorNavigation.inComposition && editorNavigation.redundantTabs === 0
+      && editorNavigation.target === 'editor-selection-panel' && editorNavigation.label === '전체 디자인'
       && editorNavigation.height >= 40 && !editorNavigation.inspectorHasEntry,
-      'page settings must have one reachable entry outside selected-item settings: ' + JSON.stringify(editorNavigation));
+      'page design and page settings must be separate explicit entries, outside selected-item controls: ' + JSON.stringify(editorNavigation));
+    assert(await evaluate(client, `(() => {
+      const entries = [...document.querySelectorAll('.editor-composition-footer .editor-page-settings-button')];
+      return entries.length === 2 && entries[0].textContent.includes('전체 디자인')
+        && entries[1].textContent.includes('페이지 설정')
+        && entries.every(button => button.getAttribute('aria-controls') === 'editor-selection-panel');
+    })()`), 'the content-first navigator exposes two accessible destinations for design and page behavior');
 
     // Inbox remains accessible through the top workspace menu,
     // and keyboard focus must recover after the workspace transition.
