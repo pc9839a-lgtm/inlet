@@ -47,14 +47,14 @@ assert(dock.includes('role="dialog" aria-modal="true"')
 assert(preview.includes('selectedBlockId={selectedBlockId}')
   && preview.includes('onSelectBlock={onSelectPreviewBlock}')
   && preview.includes('role="toolbar"')
-  && preview.includes('PREVIEW_WIDTHS = [360, 390, 430]')
-  && preview.includes('setPreviewWidth(width)')
+  && !preview.includes('PREVIEW_WIDTHS')
+  && preview.includes("'--editor-preview-content-width': '390px'")
   && previewCss.includes('--editor-preview-frame-width')
   && shell.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr)'),
-  'real page preview must support 360/390/430 width while retaining exact block selection');
+  'real page preview must be a single 390px result while retaining exact block selection');
 assert(reference.includes("referenceWidth")
   && reference.includes("'editor-visual-hierarchy-' + referenceWidth")
   && reference.includes('longInspector')
-  && reference.includes('widthOptions === 3'),
+  && reference.includes('widthOptions === 0'),
   'Chrome reference must cover desktop, narrow laptop and independent inspector');
 console.log('Approved three-pane editor visual contracts passed');
