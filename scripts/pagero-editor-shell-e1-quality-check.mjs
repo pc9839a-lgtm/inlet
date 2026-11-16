@@ -423,9 +423,10 @@ assert(addBlockDock.includes('const composingRef = useRef(false)')
   && addBlockDock.includes("if (event.key === 'Escape') event.stopPropagation();"),
   'block-gallery Escape must not dismiss IME composition or bubble through its portal to the laptop drawer');
 assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;')
-  && css.includes('overflow: visible !important;')
-  && editPanelLayoutCss.includes('@media (max-width: 899px)'),
-  'zoomed desktop must keep actual page and settings accessible');
+  && css.includes("data-editor-density='laptop'][data-inspector-open='false']")
+  && editPanelLayoutCss.includes('@media (max-width: 899px)')
+  && previewPaneCss.includes("data-editor-workflow='page-first'"),
+  'zoomed desktop must keep its full preview available with settings opened on demand');
 assert(layout.includes('className="editor-page-settings-button"')
   && layout.includes('aria-controls="editor-selection-panel"')
   && !layout.includes('edit-section-tabs') && !editPanelLayoutCss.includes('edit-section-tabs'),
