@@ -1582,6 +1582,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       phoneLeft: rect(phone)?.left, phoneRight: rect(phone)?.right,
       previewLeft: rect(pane)?.left, previewRight: rect(pane)?.right,
       previewVisible: !!rect(pane)?.width && getComputedStyle(pane).display !== 'none',
+      headerBottom: rect(document.querySelector('.workspace-persistent-header'))?.bottom,
+      taskTop: rect(switcher)?.top, taskBottom: rect(switcher)?.bottom,
+      previewTop: rect(pane)?.top,
       blockVisible: !!rect(document.querySelector('.editor-composition-panel'))?.width,
       inspectorVisible: !!rect(document.querySelector('.editor-properties-panel'))?.width,
       scrollWidth: document.documentElement.scrollWidth,
@@ -1591,6 +1594,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && compactPage.tabs.length === 3 && compactPage.tabs.filter((tab) => tab.on).length === 1
     && compactPage.pageWidth === 390 && compactPage.previewVisible
     && compactPage.phoneLeft >= 0 && compactPage.phoneRight <= 673
+    && compactPage.taskTop >= compactPage.headerBottom - 2
+    && compactPage.previewTop >= compactPage.taskBottom - 2
     && !compactPage.blockVisible && !compactPage.inspectorVisible
     && compactPage.scrollWidth <= 676,
     '673px must display a full page rather than a narrow empty preview strip: ' + JSON.stringify(compactPage));
