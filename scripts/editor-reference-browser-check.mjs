@@ -28,6 +28,27 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         : 'laptop drawer fully visible and hit-testable before selecting its next row');
     await clickPointer(client, selector);
   };
+  // A fresh editor opens on the real page, not a permanently open settings
+  // column. The selected block and full 390px live page survive mode switches.
+  await setViewport(client, 1672, 941, false);
+  await evaluate(client, `document.querySelector('.editor-workbench-section-switch button:first-child')?.click()`);
+  await waitForBrowser(client, `(() => {
+    const layout = document.querySelector('.edit-layout');
+    const stage = document.querySelector('.preview-workspace');
+    const list = document.querySelector('.editor-composition-panel');
+    const inspector = document.querySelector('.editor-properties-panel');
+    const phone = stage?.querySelector('.landing-page');
+    return layout?.dataset.inspectorOpen === 'false'
+      && getComputedStyle(inspector).display === 'none'
+      && getComputedStyle(document.querySelector('.builder-shell')).gridTemplateColumns.split(' ').length === 2
+      && stage.getBoundingClientRect().left >= list.getBoundingClientRect().right - 2
+      && phone?.clientWidth === 390;
+  })()`, 'desktop first screen prioritizes actual 390px page without a permanent inspector');
+  await capture(client, 'workbench-page-first-1672');
+  await clickPointer(client, '.editor-workbench-section-switch button:nth-child(2)');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'
+    && document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 400`,
+    'explicit selection opens the real inspector without changing the page');
   // Visual reference: a named, full-width add action and readable flat
   // composition rows at both the chosen 1672px size and narrow 900px PC.
   for (const referenceWidth of [1672, 900]) {
@@ -69,7 +90,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     })()`);
-    const expectedComposerWidth = referenceWidth < 1280 ? 264 : 260;
+    const expectedComposerWidth = referenceWidth < 1280 ? 264 : 252;
     assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '페이지 구성'
       && /[0-9]+개 블록/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
@@ -79,7 +100,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
       && visual.normalRowHeight >= 54 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
       && Math.abs(visual.compositionWidth - expectedComposerWidth) <= 3
-      && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 334 : 350)) <= 3
+      && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 334 : 420)) <= 3
       && visual.compositionBackground === 'rgb(248, 250, 255)'
       && visual.inspectorBackground === 'rgb(255, 255, 255)'
       && visual.stageBackground === 'rgb(238, 242, 247)'
@@ -1408,8 +1429,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 260) <= 3
-    && Math.abs(geometry.inspector.width - 350) <= 3
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 252) <= 3
+    && Math.abs(geometry.inspector.width - 420) <= 3
     && geometry.list.right <= geometry.inspector.left + 2
     && geometry.inspector.right <= geometry.stage.left + 2,
     'approved three-pane geometry must keep navigation, real canvas, settings separated at 1672px: ' + JSON.stringify(geometry));
