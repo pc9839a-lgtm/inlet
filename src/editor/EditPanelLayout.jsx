@@ -251,10 +251,16 @@ export function EditPanelLayout({
 
   const pageTheme = stylePanelProps?.stagedTheme || pageGlobalOptionsProps.page.theme;
   const updatePageTheme = (patch) => {
-    if (stylePanelProps?.onPreviewThemeChange) {
-      stylePanelProps.onPreviewThemeChange({ ...pageTheme, ...patch });
-    } else {
-      pageGlobalOptionsProps.updateTheme(patch);
+    // Page behavior belongs to the undoable page draft, not the optional
+    // staged visual-design changes. Resetting visual design must never undo
+    // a separate animation change made from Page Settings.
+    pageGlobalOptionsProps.updateTheme(patch);
+    // When visual colors are still staged, rebase their preview on the page
+    // behavior change so toggles are immediately reflected in the real page.
+    if (stylePanelProps?.stagedTheme && stylePanelProps?.onPreviewThemeChange) {
+      stylePanelProps.onPreviewThemeChange((current) => (
+        current ? { ...current, ...patch } : current
+      ));
     }
   };
 
