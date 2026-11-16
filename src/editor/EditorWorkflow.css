@@ -490,3 +490,125 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-lay
   min-height: 0 !important;
   max-height: 100% !important;
 }
+
+
+/* Page-first workbench, not an always-on miniature settings column.
+   This editor-only layer does not change public pages or widget data.
+   EditorWorkflow owns the navigator, Inspector and their controls. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-section-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  min-height: 40px;
+  padding: 4px;
+  background: #e7ecf5;
+  border-radius: 9px;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-section-switch button {
+  min-width: 0;
+  min-height: 35px;
+  padding: 6px 3px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #52627b;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-section-switch button[aria-pressed='true'] {
+  background: #fff;
+  color: #174cc7;
+  box-shadow: 0 1px 3px rgba(20, 39, 75, .12);
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-section-switch button:focus-visible,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-close-inspector:focus-visible {
+  outline: 2px solid #1959ee;
+  outline-offset: 2px;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-close-inspector {
+  flex: 0 0 auto;
+  max-width: 120px;
+  min-height: 35px;
+  padding: 6px 9px;
+  border: 1px solid #d6deea;
+  border-radius: 8px;
+  background: #fff;
+  color: #34517e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-close-inspector:hover {
+  background: #f0f5ff;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false'] > .editor-properties-panel,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='false'] > .editor-properties-panel {
+  display: none !important;
+}
+/* Desktop composition is always visible; the inspector opens explicitly.
+   A 25+ block page scrolls within the list, never shifting the canvas. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-heading {
+  gap: 9px !important;
+  padding: 17px 13px 13px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-hint {
+  display: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-heading h2 {
+  font-size: 18px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-search {
+  margin-inline: 13px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-content {
+  padding: 10px 9px 24px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-footer {
+  padding: 9px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-properties-panel {
+  z-index: 16;
+  border-right: 1px solid #d7e0ed;
+  box-shadow: 5px 0 16px rgba(35, 57, 100, .04);
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-properties-heading {
+  padding-inline: 20px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-properties-content {
+  padding-inline: 23px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'] .editor-workbench-section-switch {
+  display: none;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='compact'] .editor-workbench-section-switch,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='compact'] .editor-workbench-close-inspector {
+  display: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='compact'] .editor-properties-context {
+  display: none;
+}
