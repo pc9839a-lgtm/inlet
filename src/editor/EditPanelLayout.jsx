@@ -96,6 +96,17 @@ export function EditPanelLayout({
     ) < 900 ? 'compact' : 'wide'
   ));
   const [compactView, setCompactView] = React.useState('page');
+  // A selected inspector from desktop must not become the *only* visible
+  // pane after a user narrows the app. Enter every new compact session on
+  // the actual page; preserve explicit page/blocks/edit choices afterward.
+  const previousDensity = React.useRef(editorDensity);
+  React.useEffect(() => {
+    if (editorDensity === 'compact' && previousDensity.current !== 'compact') {
+      setCompactView('page');
+      setNavigatorOpen(false);
+    }
+    previousDensity.current = editorDensity;
+  }, [editorDensity]);
   React.useEffect(() => {
     const shell = document.querySelector('.builder-shell.canvas-editor-shell');
     if (!shell) return undefined;
