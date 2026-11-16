@@ -997,13 +997,14 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.pageSettings, metrics.innerWidth, 'desktop page settings entry');
-  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop right settings panel');
+  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop left settings panel');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 3, `desktop shell must keep three grid columns: ${metrics.shellGridColumns}`);
   assertReferenceTracks(metrics, metrics.innerWidth);
-  assert(metrics.inspector.left >= metrics.preview.right - 3,
-    `right inspector must start where the centered canvas ends: ${JSON.stringify({canvas:metrics.preview, inspector:metrics.inspector})}`);
+  assert(metrics.workPanel.right <= metrics.inspector.left + 3
+    && metrics.preview.left >= metrics.inspector.right - 3,
+    `left editing panels must precede the right-hand page: ${JSON.stringify({navigator:metrics.workPanel, inspector:metrics.inspector, page:metrics.preview})}`);
   assert(metrics.previewDirectChildren === 1 && metrics.previewFrameCount === 1,
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
@@ -1020,14 +1021,14 @@ function assertReferenceTracks(metrics, width) {
   const expectedList = width < 1280 ? 252 : 246;
   assert(Math.abs(composition - expectedList) <= 3,
     `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
-  assert(Math.abs(inspector - 340) <= 3,
-    `block properties must have a separate 340px column at ${width}px: ${JSON.stringify({inspector})}`);
+  assert(Math.abs(inspector - (width < 1280 ? 390 : 420)) <= 3,
+    `left block properties must retain usable width at ${width}px: ${JSON.stringify({inspector})}`);
   assert(Math.abs(edit - (width < 1280 ? 0 : 246)) <= 3,
     `collapsed laptop navigator must not consume the canvas: ${JSON.stringify({width,edit})}`);
 }
 
 function assertNarrowDesktop(metrics, width) {
-  // A laptop has a visible centered canvas and a right inspector; at 200%
+  // A laptop has left editing and a right live page; at 200%
   // zoom, the same fine-pointer editor stacks into full-width sections.
   const stacked = width < 900;
   assert(metrics.path === '/app', `narrow desktop editor route changed: ${metrics.path}`);
@@ -1054,8 +1055,8 @@ function assertNarrowDesktop(metrics, width) {
       `zoomed desktop properties must follow the block list, not overlay it: ${JSON.stringify({composition:metrics.composition,inspector:metrics.inspector})}`);
   } else {
     assertReferenceTracks(metrics, width);
-    assert(metrics.inspector.left >= metrics.preview.right - 2,
-      `narrow desktop settings must not overlap canvas at ${width}px`);
+    assert(metrics.preview.left >= metrics.inspector.right - 2,
+      `narrow desktop settings must remain left of the page at ${width}px`);
   }
   assert(Math.abs(metrics.frameContentWidth - 390) <= 1,
     `narrow desktop real page must retain 390px default: ${metrics.frameContentWidth}`);
@@ -1923,7 +1924,7 @@ async function run() {
     assert(fixedSelection.selectPressed === 'true' && !fixedSelection.duplicateEditButton
       && fixedSelection.rowEditors === 0
       && fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
-      'fixed selection must keep its real settings in the independent right inspector: ' + JSON.stringify(fixedSelection));
+      'fixed selection must keep its real settings in the independent left panel: ' + JSON.stringify(fixedSelection));
     const fixedAdvancedState = await evaluate(client, `(() => {
       const details = document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings');
       const root = details?.closest('.block-editor-v2-content');
@@ -2117,7 +2118,7 @@ async function run() {
       && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.headingVisible
       && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.paneWidth
       && stageTwoSettings.fixedVisible && stageTwoSettings.addVisible && stageTwoSettings.helperCopyRemoved,
-      'stage 2 must preserve the list and independently edit the selected title in its right inspector: ' + JSON.stringify(stageTwoSettings));
+      'stage 2 must preserve the list and independently edit the selected title in its left panel: ' + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
     await openBlockSettings(client, 'editor-hero');
     await focusSelector(client, '#editor-block-editor-hero .screen-order-v2-title-wrap');
@@ -3036,17 +3037,17 @@ async function run() {
         editorScroll: getComputedStyle(document.querySelector('.work-panel')).overflowY,
         inspectorScroll: style?.overflowY,
         navigatorScroll: getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
-        propertiesLeft: rect(properties)?.left, previewRight: rect(preview)?.right,
+        propertiesRight: rect(properties)?.right, previewLeft: rect(preview)?.left,
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
       && leftGeometry.inspectorInner >= 260
-      && Math.abs(leftGeometry.properties - 340) <= 3
+      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 390 : 420)) <= 3
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 500
       && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
       && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
-      && leftGeometry.propertiesLeft >= leftGeometry.previewRight - 2
+      && leftGeometry.propertiesRight <= leftGeometry.previewLeft + 2
       && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 252 : 246)) <= 4,
       'selected properties must remain readable in their own panel without covering the real mobile canvas: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));

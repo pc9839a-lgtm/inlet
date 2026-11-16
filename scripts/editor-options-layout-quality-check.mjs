@@ -161,7 +161,7 @@ assert(screenOrderIdentityModel.includes("block?.type === 'code'") && screenOrde
 assert(editLayout.includes("const showPageOptions = section === 'options' || !selectedBlockId;")
   && editLayout.includes('data-editor-section="options"')
   && editLayout.includes('{showPageOptions && ('),
-  'an empty selection must present page design in the right-hand settings panel');
+  'an empty selection must present page design in the left-hand settings panel');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('.editor-page-settings-button') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
 assert(screenOrderCss.includes('One quiet composition list')
   && fixedBlocksCss.includes('Pinned rows use the same flat'),
@@ -201,7 +201,7 @@ await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 assert(editLayout.includes('data-editor-layout="three-pane"')
   && editLayout.includes('aria-controls="editor-composition-panel"')
   && editLayout.includes('editor-properties-panel')
-  && editorWorkspaceCss.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width)')
+  && editorWorkspaceCss.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr)')
   && editPanelLayoutCss.includes('.editor-properties-content'),
   'the approved block list, live page and independent settings must remain distinct');
 

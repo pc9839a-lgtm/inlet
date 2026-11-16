@@ -20,7 +20,7 @@ assert(layout.includes('data-editor-layout="three-pane"')
   && layout.includes('className="editor-properties-panel"')
   && layout.includes('<h2>블록 편집 <span className="editor-composition-total">')
   && layout.includes('editor-page-options-heading'),
-  'approved editor must show left block navigator, center canvas and right inspector');
+  'approved editor must show left block navigator and settings, with the live page on the right');
 assert(rows.includes('!listOnly && selectedId === block.id')
   && rows.includes('<ScreenOrderSettings')
   && rows.includes('renderBlockEditor={renderBlockEditor}')
@@ -50,7 +50,7 @@ assert(preview.includes('selectedBlockId={selectedBlockId}')
   && preview.includes('PREVIEW_WIDTHS = [360, 390, 430]')
   && preview.includes('setPreviewWidth(width)')
   && previewCss.includes('--editor-preview-frame-width')
-  && shell.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width)'),
+  && shell.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr)'),
   'real page preview must support 360/390/430 width while retaining exact block selection');
 assert(reference.includes("referenceWidth")
   && reference.includes("'editor-visual-hierarchy-' + referenceWidth")

@@ -1,9 +1,9 @@
-/* Editor-only grid: block list / live page / inspector. */
+/* Editor-only grid: left block list + settings / right live page. */
 html body #root .builder-shell.canvas-editor-shell {
   --editor-list-width: 246px;
-  --editor-settings-width: 340px;
+  --editor-settings-width: 420px;
   display: grid;
-  grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width) !important;
+  grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr) !important;
   grid-template-rows: 64px minmax(0, 1fr);
   height: 100dvh !important;
   max-height: 100dvh !important;
@@ -32,12 +32,13 @@ html body #root .canvas-editor-shell .work-panel {
   border-right: 1px solid #e5e9f0;
   background: #fff;
 }
-/* Laptop: keep canvas + inspector; reveal blocks through the drawer. */
+/* Laptop: keep left settings and right live page; reveal blocks through a drawer. */
 @media (min-width:900px) and (max-width:1279px) {
   html body #root .builder-shell.canvas-editor-shell {
     position:relative;
-    --editor-preview-grid-column:1;
-    grid-template-columns:minmax(0,1fr) var(--editor-settings-width)!important;
+    --editor-preview-grid-column:2;
+    --editor-settings-width:390px;
+    grid-template-columns:var(--editor-settings-width) minmax(0,1fr)!important;
   }
   html body #root .canvas-editor-shell .work-panel {
     position:absolute;top:64px;left:0;width:0!important;
