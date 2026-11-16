@@ -158,10 +158,10 @@ assert(!codeEditorCss.includes('.code-editor-name {') && !codeEditorCss.includes
   && !codeEditor.includes('block-editor-anchor-control code-editor-name-control'),
   'code block must not retain retired widget-row overrides or duplicate name layouts');
 assert(screenOrderIdentityModel.includes("block?.type === 'code'") && screenOrderIdentityModel.includes('previewText(s.editorLabel)') && screenOrderRowIdentity.includes('identity?.customLabel') && screenOrderRowIdentity.includes('displayLabel') && screenOrderRowIdentity.includes('<strong title={primaryLabel}>{primaryLabel}</strong>'), 'screen order must promote the stored custom label while preserving the full accessible identity');
-assert(editLayout.includes("const showPageOptions = section === 'options' || !selectedBlockId;")
+assert(editLayout.includes("const showPageOptions = section === 'design' || section === 'page';")
   && editLayout.includes('data-editor-section="options"')
   && editLayout.includes('{showPageOptions && ('),
-  'an empty selection must present page design in the left-hand settings panel');
+  'page design is explicit; empty selection must not open a global style form');
 assert(editLayout.includes("import './EditPanelLayout.css';") && editPanelLayoutCss.includes('.editor-page-settings-button') && editPanelLayoutCss.includes('.editor-page-options-stack') && !editorWorkspaceCss.includes('edit-section-tabs') && !editorWorkspaceCss.includes('editor-page-options-stack'), 'EditPanelLayout must load and own subsection tabs/panel stack instead of editor-workspace.css');
 assert(screenOrderCss.includes('One quiet composition list')
   && fixedBlocksCss.includes('Pinned rows use the same flat'),
