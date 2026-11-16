@@ -430,3 +430,20 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   border: 2px solid #cbd5e5 !important;
   box-shadow: 0 12px 42px rgba(24, 45, 80, .12) !important;
 }
+
+/* On-demand Inspector is a dock over the canvas track, not a third grid
+   column. The page remains visible to its RIGHT at every desktop density. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true']
+) > .preview-workspace {
+  grid-column: 2 !important;
+  padding-left: calc(var(--editor-settings-width, 420px) + 28px) !important;
+  padding-right: 28px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='true']
+) > .preview-workspace {
+  grid-column: 1 !important;
+  padding-left: 350px !important;
+  padding-right: 12px !important;
+}
