@@ -2667,7 +2667,17 @@ async function run() {
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
     await capture(client, 'desktop-common-settings-color');
     await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
-    await waitForBrowser(client, `!!document.querySelector('.edit-animation-options')`, 'switch back to page behavior');
+    await waitForBrowser(client, `(() => {
+      const expand = document.querySelector('.edit-animation-card:not(.share-options-card) .page-option-expand');
+      const controls = document.querySelector('.edit-animation-settings');
+      return expand?.getAttribute('aria-expanded') === 'false'
+        && !!controls && controls.getClientRects().length === 0;
+    })()`, 'returning to page settings starts with collapsed, inaccessible secondary controls');
+    await clickSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
+    await waitForBrowser(client,
+      `document.querySelector('.edit-animation-card:not(.share-options-card) .page-option-expand')?.getAttribute('aria-expanded') === 'true'
+        && document.querySelector('.edit-animation-settings')?.getClientRects().length > 0`,
+      'page animation controls become visible after an explicit expand');
     await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
     await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.panel-actions .primary-btn')?.dataset.draftState === 'unapplied'`, 'page behavior changes retain pending global design');
@@ -2698,11 +2708,11 @@ async function run() {
     await waitForBrowser(client, `!document.querySelector('.style-apply-btn')?.disabled && document.querySelector('.style-panel input[type="color"]')?.value === ${JSON.stringify(updatedAccent)}`,
       'pending style survives page-setting changes and returning to design');
     await clickSelector(client, '.style-reset-btn');
-    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true && document.querySelector('.style-panel input[type="color"]')?.value !== ${JSON.stringify(updatedAccent)}`, 'design reset discards only pending design changes; page behavior remains independent');
+    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true && document.querySelector('.style-panel input[type="color"]')?.value !== ${JSON.stringify(updatedAccent)}`, 'reset discards pending combined theme changes without publishing');
     await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:nth-child(2)');
     await waitForBrowser(client, `!!document.querySelector('.edit-animation-card')`, 'return to page settings after reset');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
-    await waitForBrowser(client, `document.querySelector('.edit-animation-options button[aria-pressed="true"]')?.textContent?.trim() === '확대'`, 'design reset does not destroy independently staged page animation settings');
+    await waitForBrowser(client, `document.querySelector('.edit-animation-options button[aria-pressed="true"]')?.textContent?.trim() === '페이드'`, 'design reset restores original unapplied animation choice');
     await clickButtonByText(client, '.edit-animation-options:not(.edit-animation-playback-options)', '확대');
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
