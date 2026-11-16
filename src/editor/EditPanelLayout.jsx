@@ -309,6 +309,7 @@ export function EditPanelLayout({
               <h2>블록 편집 <span className="editor-composition-total">
                 {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
               </span></h2>
+              <p className="editor-composition-hint">목록에서 고르고 페이지에서 수정하세요</p>
             </div>
           </div>
           <AddBlockDock {...addBlockDockProps} compact />
@@ -353,29 +354,29 @@ export function EditPanelLayout({
           </FixedCompositionGroup>
         </div>
         <footer className="editor-composition-footer">
-          <button
-            className="editor-page-settings-button"
-            type="button"
-            aria-pressed={showPageOptions}
-            aria-controls="editor-selection-panel"
-            onClick={openPageOptions}
-            title={stylePanelProps?.hasPendingStyle ? '전체 디자인 · 미적용' : '전체 디자인'}
-          >
+          <button className="editor-page-settings-button" type="button"
+            aria-pressed={section === 'design'} aria-controls="editor-selection-panel"
+            onClick={() => openPageOptions('design')}
+            title={stylePanelProps?.hasPendingStyle ? '전체 디자인 · 미적용' : '전체 디자인'}>
+            <Layers3 size={17} aria-hidden="true" />
+            <span>전체 디자인</span>
+            {stylePanelProps?.hasPendingStyle && <span className="editor-settings-pending" aria-label="미적용 디자인 변경" />}
+          </button>
+          <button className="editor-page-settings-button" type="button"
+            aria-pressed={section === 'page'} aria-controls="editor-selection-panel"
+            onClick={() => openPageOptions('page')}>
             <Settings2 size={17} aria-hidden="true" />
-            <span>전체 디자인 · 페이지 설정</span>
-            {stylePanelProps?.hasPendingStyle && (
-              <>
-                <span className="editor-settings-pending" aria-hidden="true" />
-                <span className="editor-visually-hidden"> · 미적용</span>
-              </>
-            )}
+            <span>페이지 설정</span>
           </button>
         </footer>
       </aside>
       <aside className="editor-properties-panel" aria-label="선택 블록 설정">
         <header className="editor-properties-heading">
-          <span>설정</span>
-          <span className="editor-properties-context">{showPageOptions ? '페이지 전체' : '선택한 블록'}</span>
+          <div className="editor-properties-heading-copy">
+            <span className="editor-panel-kicker">실제 페이지를 보면서</span>
+            <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '내용 편집'}</strong>
+          </div>
+          <span className="editor-properties-context">{showPageOptions ? '페이지 전체' : selectedBlockId ? '선택한 블록' : '편집 시작'}</span>
         </header>
         <div className="editor-properties-content" role="region" aria-label="선택 항목 편집" tabIndex={0}>
           {showPageOptions && (
@@ -384,18 +385,18 @@ export function EditPanelLayout({
                 <div className="editor-page-options-stack">
                   <header className="editor-page-options-heading">
                     <span className="editor-panel-kicker">페이지 전체</span>
-                    <h2 tabIndex={-1}>전체 디자인과 설정</h2>
+                    <h2 tabIndex={-1}>{section === 'design' ? '전체 디자인' : '페이지 설정'}</h2>
                   </header>
-                  {stylePanelProps && (
+                  {section === 'design' && stylePanelProps && (
                     <React.Suspense fallback={<div className="editor-inspector-loading">불러오는 중</div>}>
                       <PageThemeStylePanel {...stylePanelProps} />
                     </React.Suspense>
                   )}
-                  <PageGlobalOptions
+                  {section === 'page' && <PageGlobalOptions
                     {...pageGlobalOptionsProps}
                     page={{ ...pageGlobalOptionsProps.page, theme: pageTheme }}
                     updateTheme={updatePageTheme}
-                  />
+                  />}
                 </div>
               </div>
             </section>
