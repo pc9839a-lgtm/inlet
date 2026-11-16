@@ -1548,7 +1548,25 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await waitForBrowser(client,
     `document.querySelector('.edit-layout')?.dataset.editorDensity === 'compact'
       && document.querySelector('.edit-layout')?.dataset.compactView === 'page'`,
-    '673px content editor uses page-first task layout, not three columns');
+    '673px content editor uses page-first task layout, not three columns').catch(async (error) => {
+      const actual = await evaluate(client, `(() => {
+        const shell = document.querySelector('.builder-shell');
+        const layout = document.querySelector('.edit-layout');
+        const tab = document.querySelector('.editor-workflow-compact-switch');
+        const rect = (el) => el?.getBoundingClientRect();
+        return {
+          width: innerWidth, documentWidth: document.documentElement.clientWidth,
+          visualWidth: visualViewport?.width, shellWidth: rect(shell)?.width,
+          shellClasses: shell?.className, panelExists: !!layout,
+          density: layout?.dataset.editorDensity, view: layout?.dataset.compactView,
+          switcher: rect(tab)?.height, switcherDisplay: tab && getComputedStyle(tab).display,
+          listDisplay: getComputedStyle(document.querySelector('.editor-composition-panel')).display,
+          inspectorDisplay: getComputedStyle(document.querySelector('.editor-properties-panel')).display,
+          previewDisplay: getComputedStyle(document.querySelector('.preview-workspace')).display,
+        };
+      })()`);
+      throw new Error(error.message + ' | actual=' + JSON.stringify(actual));
+    });
   const compactPage = await evaluate(client, `(() => {
     const rect = (element) => element?.getBoundingClientRect();
     const pane = document.querySelector('.preview-workspace');
