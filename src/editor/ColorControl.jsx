@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { Pipette } from 'lucide-react';
 import { notify } from '../lib/uiFeedback.js';
 import './ColorControl.css';
@@ -17,12 +17,19 @@ export function Color({ label, value, onChange }) {
   const errorId = useId();
   const [draft, setDraft] = useState(color);
   const [error, setError] = useState('');
-  useEffect(() => {
+  const editingRef = useRef(false);
+  // Sync external colors before paint, but never erase a newer typed HEX
+  // value or its validation state while the field is actively being edited.
+  // The previous passive effect could clear an invalid error after blur when
+  // the page-design view had just remounted.
+  useLayoutEffect(() => {
+    if (editingRef.current) return;
     setDraft(color);
     setError('');
   }, [color]);
 
   const finish = (event) => {
+    editingRef.current = false;
     // A field can blur immediately after the last input event (including when
     // the page settings view is switched). Read the input's actual value:
     // the captured React draft from the preceding render may still be stale.
@@ -71,6 +78,7 @@ export function Color({ label, value, onChange }) {
             setDraft(event.target.value);
             if (error) setError('');
           }}
+          onFocus={() => { editingRef.current = true; }}
           onBlur={finish}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
