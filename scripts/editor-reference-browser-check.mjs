@@ -1613,11 +1613,24 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && !!document.querySelector('#editor-block-settings-editor-text')
     && getComputedStyle(document.querySelector('.preview-workspace')).display === 'none'`,
     'choosing a block opens its full-width editable settings, without a nested miniature inspector');
+  assert(await evaluate(client, `document.activeElement === document.querySelector(
+    '#editor-block-settings-editor-text')?.closest('.screen-order-v2-settings-view')
+      ?.querySelector('.screen-order-v2-settings-title h2')`),
+    '673px list selection transfers keyboard focus to the visible text Inspector heading');
   await capture(client, 'owner-width-673-content-edit');
   await clickPointer(client, '.editor-workflow-compact-switch button:first-child');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.compactView === 'page'
     && document.querySelector('.preview-workspace .landing-page')?.clientWidth === 390`,
     'returning to the page never changes its true width or its selected block');
-  assert(apiState.saveCount === 0, 'task mode switching and selecting blocks must not publish');
+  // The canvas quick action used to focus a display:none Inspector field
+  // synchronously, leaving keyboard focus stranded as the page disappeared.
+  await clickPointer(client, '.editor-canvas-tools button[aria-label="선택한 블록 내용 편집"]');
+  await waitForBrowser(client, `(() => {
+    const settings = document.querySelector('#editor-block-settings-editor-text');
+    return document.querySelector('.edit-layout')?.dataset.compactView === 'edit'
+      && settings?.contains(document.activeElement)
+      && document.activeElement.matches('input, textarea, button');
+  })()`, '673px canvas quick edit focuses the actual visible field after task transition');
+  assert(apiState.saveCount === 0, 'task mode switching, selections and canvas quick edit must not publish');
   await setViewport(client, 1280, 900, false);
 }
