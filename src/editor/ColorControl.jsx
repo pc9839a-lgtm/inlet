@@ -22,10 +22,15 @@ export function Color({ label, value, onChange }) {
     setError('');
   }, [color]);
 
-  const finish = () => {
-    const normalized = normalizeEditorHex(draft);
+  const finish = (event) => {
+    // A field can blur immediately after the last input event (including when
+    // the page settings view is switched). Read the input's actual value:
+    // the captured React draft from the preceding render may still be stale.
+    const submitted = event.currentTarget.value;
+    const normalized = normalizeEditorHex(submitted);
     if (!normalized) {
-      // Do not silently discard the entered value or update the page draft.
+      // Preserve invalid user input and describe it without committing it.
+      setDraft(submitted);
       setError('HEX 색상은 3자리 또는 6자리의 16진수로 입력하세요.');
       return;
     }
