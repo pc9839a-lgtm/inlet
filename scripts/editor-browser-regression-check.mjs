@@ -664,14 +664,14 @@ async function showBlockList(client) {
   // On 900–1279px desktops the list is an off-canvas drawer; only the
   // navigator trigger stays visible after selecting a block.
   await evaluate(client, `(() => {
-    // Compact desktop/zoomed editor intentionally starts on the live page.
-    // Navigate to its explicit Edit view before interacting with block rows.
+    // The narrow editor has three distinct tasks, not a stacked list and
+    // inspector. Always open the explicit block list before clicking a row.
     if (innerWidth < 900) {
-      const compact = document.querySelector('.edit-layout[data-compact-view]');
-      if (compact?.dataset.compactView === 'page') {
-        const edit = [...compact.querySelectorAll('.editor-workflow-compact-switch button')]
-          .find((button) => button.textContent.trim() === '편집');
-        edit?.click();
+      const compact = document.querySelector('.edit-layout[data-editor-density="compact"]');
+      if (compact && compact.dataset.compactView !== 'blocks') {
+        const blocks = [...compact.querySelectorAll('.editor-workflow-compact-switch button')]
+          .find((button) => button.textContent.trim() === '블록 목록');
+        blocks?.click();
       }
     }
     const trigger = document.querySelector('.editor-navigator-drawer-trigger');
