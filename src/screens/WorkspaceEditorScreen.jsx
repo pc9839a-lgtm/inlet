@@ -113,8 +113,17 @@ export default function WorkspaceEditorScreen({
   // An image click keeps the existing preview selection and directs attention
   // to the current ImageInput uploader. Never opens a native picker implicitly,
   // bypasses the existing media library, or writes image content itself.
+  const activatePreviewInspector = () => {
+    // Only a real canvas interaction opens the compact content editor.
+    // Automatic hydration/initial block selection must leave the full page
+    // visible. The listener exists only in the editor layout.
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('pagero:editor-preview-select'));
+    }
+  };
   const selectPreviewBlockWithImage = (id, interaction) => {
     onSelectPreviewBlock?.(id);
+    if (editWorkspace) activatePreviewInspector();
     if (interaction?.focusField) focusPreviewFormField(id, interaction.focusField);
     if (!interaction?.imageClick || !canUseBuilder || !editWorkspace || startMode === 'template'
       || stylePanelProps?.hasPendingStyle || typeof requestAnimationFrame !== 'function') return;
@@ -206,6 +215,7 @@ export default function WorkspaceEditorScreen({
     if (!block || block.visible === false || !Array.isArray(block.s?.items) || !block.s.items[index]) return;
     pendingLinkFocusRef.current?.();
     onSelectPreviewBlock?.(id);
+    activatePreviewInspector();
     const inspector = document.querySelector('.editor-properties-content');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
@@ -259,6 +269,7 @@ export default function WorkspaceEditorScreen({
     if (!bottom || bottom.visible === false || bottom.s?.buttons?.[index]?.enabled === false) return;
     pendingBottomFocusRef.current?.();
     onSelectPreviewBlock?.(id);
+    activatePreviewInspector();
     const inspector = document.querySelector('.editor-properties-content');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
@@ -309,6 +320,7 @@ export default function WorkspaceEditorScreen({
     onAdd: () => editPanelProps.setAddOpen(true),
     onEdit: () => {
       if (!canvasSelectedBlock || typeof document === 'undefined') return;
+      activatePreviewInspector();
       const settings = document.getElementById(`editor-block-settings-${canvasSelectedBlock.id}`);
       const first = settings?.querySelector('textarea:not([disabled]), input:not([disabled]):not([type="checkbox"]), button:not([disabled])');
       const target = first || settings;
