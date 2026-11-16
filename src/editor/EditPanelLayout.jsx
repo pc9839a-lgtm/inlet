@@ -131,10 +131,28 @@ export function EditPanelLayout({
     };
   }, []);
   React.useEffect(() => {
-    const openSelectedContent = () => setCompactView('edit');
+    let focusFrame = 0;
+    const openSelectedContent = () => {
+      if (editorDensity !== 'compact') return;
+      setCompactView('edit');
+      // Canvas controls become display:none in compact mode. A click (or
+      // keyboard activation) must hand focus to the newly visible Inspector,
+      // not leave it in the hidden 390px page. Specialized image/form/link
+      // handlers may focus an exact field first; never override that focus.
+      window.cancelAnimationFrame(focusFrame);
+      focusFrame = window.requestAnimationFrame(() => {
+        const inspector = document.querySelector('.canvas-editor-shell .editor-properties-content');
+        if (!inspector?.getClientRects().length || inspector.contains(document.activeElement)) return;
+        const heading = inspector.querySelector('.screen-order-v2-settings-title h2');
+        (heading?.getClientRects().length ? heading : inspector).focus({ preventScroll: true });
+      });
+    };
     window.addEventListener('pagero:editor-preview-select', openSelectedContent);
-    return () => window.removeEventListener('pagero:editor-preview-select', openSelectedContent);
-  }, []);
+    return () => {
+      window.removeEventListener('pagero:editor-preview-select', openSelectedContent);
+      window.cancelAnimationFrame(focusFrame);
+    };
+  }, [editorDensity]);
 
   // On laptop widths the composition is an overlay, not a modal. Dismiss it
   // when the user works in the canvas or inspector, without cancelling the
@@ -186,7 +204,7 @@ export function EditPanelLayout({
     requestAnimationFrame(() => {
       const settings = document.getElementById(`editor-block-settings-${id}`);
       const heading = settings?.closest('.screen-order-v2-settings-view')?.querySelector('.screen-order-v2-settings-title h2');
-      if (heading) heading.focus({ preventScroll: true });
+      if (heading?.getClientRects().length) heading.focus({ preventScroll: true });
       else if (attempts > 0) focusInspectorHeading(id, attempts - 1);
     });
   };
@@ -290,7 +308,7 @@ export function EditPanelLayout({
     const focusPageHeading = (attempts = 5) => requestAnimationFrame(() => {
       const inspector = document.querySelector('.canvas-editor-shell .editor-properties-content');
       const heading = inspector?.querySelector('[data-editor-section="options"] .editor-page-options-heading h2');
-      if (!heading) {
+      if (!heading?.getClientRects().length) {
         if (attempts > 0) focusPageHeading(attempts - 1);
         return;
       }
