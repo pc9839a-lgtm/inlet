@@ -621,18 +621,29 @@ async function setViewport(client, width, height, mobile = false) {
 // event, not only a synthetic DOM event on a native value setter. Input.insertText
 // triggers React's real input pipeline, including validation on subsequent blur.
 async function typeInputValue(client, selector, value) {
-  await focusSelector(client, selector);
-  const selected = await evaluate(client, `(() => {
-    const element = document.querySelector(${JSON.stringify(selector)});
-    if (!element || document.activeElement !== element) return false;
-    element.select();
-    return true;
-  })()`);
-  assert(selected, `Unable to select input text for ${selector}`);
-  await client.send('Input.insertText', { text: String(value) });
-  await waitForBrowser(client,
-    `document.querySelector(${JSON.stringify(selector)})?.value === ${JSON.stringify(String(value))}`,
-    'native input typing updated ' + selector, 6000);
+  // Focus and select in the SAME browser task. A lazy block inspector can
+  // remount between two CDP calls, so a separate focusSelector() followed
+  // by a second activeElement check is not an atomic typing operation.
+  const target = String(value);
+  let applied = false;
+  for (let attempt = 0; attempt < 5 && !applied; attempt += 1) {
+    const focused = await evaluate(client, `(() => {
+      const element = document.querySelector(${JSON.stringify(selector)});
+      if (!element) return false;
+      element.focus({ preventScroll: true });
+      element.select();
+      return document.activeElement === element;
+    })()`);
+    if (!focused) {
+      await wait(90);
+      continue;
+    }
+    await client.send('Input.insertText', { text: target });
+    applied = await evaluate(client,
+      `document.querySelector(${JSON.stringify(selector)})?.value === ${JSON.stringify(target)}`);
+    if (!applied) await wait(90);
+  }
+  assert(applied, `Unable to type into a live controlled input: ${selector}`);
 }
 
 async function setInputValue(client, selector, value) {
