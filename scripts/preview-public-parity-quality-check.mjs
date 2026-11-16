@@ -35,12 +35,13 @@ assert(workspacePreviewCss.includes('height: calc(100dvh - 56px) !important') &&
 assert(app.includes('className="public-landing-viewport"'), 'Public landing route must keep the public runtime host');
 assert(baseCss.includes('*{box-sizing:border-box}'), 'Runtime width parity depends on border-box sizing');
 assert(workspacePreview.includes("import './WorkspacePreviewPane.css';"), 'WorkspacePreviewPane must load its component-owned preview CSS');
-assert(workspacePreview.includes('PREVIEW_WIDTHS = [360, 390, 430]')
-  && workspacePreview.includes('setPreviewWidth(width)')
+assert(!workspacePreview.includes('PREVIEW_WIDTHS')
+  && workspacePreview.includes("'--editor-preview-content-width': '390px'")
+  && workspacePreview.includes('모바일 390px')
   && workspacePreviewCss.includes('--editor-preview-frame-width')
   && workspacePreviewCss.includes('border: 2px solid #cbd5e1 !important')
   && workspacePreviewCss.includes('max-width: var(--editor-preview-content-width, 390px) !important'),
-  'Editor phone must retain 390px default while allowing real 360px and 430px page width previews without changing the public renderer');
+  'Editor phone must retain one exact 390px editing viewport without changing the public renderer');
 assert(publicCss.includes('width: min(414px, 100vw)') || publicCss.includes('max-width: 414px'), 'Public runtime must keep the 414px viewport contract');
 
 for (const token of [
