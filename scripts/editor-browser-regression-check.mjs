@@ -1197,6 +1197,14 @@ async function run() {
     await waitForBrowser(client, `!!document.querySelector('.builder-shell:not(.mobile-operations-shell)') && !!document.querySelector('#editor-block-editor-hero') && !!document.querySelector('.phone-frame')`, 'desktop editor');
     await waitForBrowser(client, `(document.querySelector('.phone-frame')?.innerText || '').includes('저장 전 히어로 제목')`, 'initial editor preview');
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
+    await waitForBrowser(client, `(() => {
+      const shell = document.querySelector('.editor-properties-panel');
+      return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '내용 편집'
+        && !shell.querySelector('.style-panel')
+        && !!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')
+        && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
+    })()`, 'new editor starts with an actual selected content block and visible 390px page, never the global style form');
+    assert(apiState.saveCount === 0, 'first visible content auto-selection must not publish or persist content');
 
     // Real mobile preview quick edit must use the same draft as Inspector,
     // without silently submitting, navigating or publishing.
@@ -2647,7 +2655,9 @@ async function run() {
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
     await waitForBrowser(client, `!!document.querySelector('.phone-frame .landing-page.anim-scale.anim-loop') && document.querySelector('.panel-actions .primary-btn')?.dataset.draftState === 'unapplied'`, 'page behavior changes retain pending global design');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
-    assert(await evaluate(client, `document.querySelector('.edit-animation-settings')?.getClientRects().length === 0`), 'collapsed animation controls must leave the keyboard order');
+    await waitForBrowser(client,
+      `document.querySelector('.edit-animation-settings')?.getClientRects().length === 0`,
+      'collapsed animation controls must leave the keyboard order');
     await focusSelector(client, '.edit-animation-card:not(.share-options-card) .page-option-expand');
     await pressKeyboardKey(client, 'Space');
     await waitForBrowser(client, `document.querySelector('.edit-animation-settings')?.getClientRects().length > 0 && document.querySelector('.edit-animation-options button[aria-pressed="true"]')?.textContent?.trim() === '확대'`, 'keyboard expansion retains the animation choice');
