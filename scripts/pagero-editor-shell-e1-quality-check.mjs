@@ -234,7 +234,11 @@ assert(layout.includes('<AddBlockDock {...addBlockDockProps} compact />'), 'sect
 assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page theme controls must remain available from page options');
 assert(!layout.includes('editor-structure-pane') && !layout.includes('className="editor-inspector-pane"'), 'three-pane editor DOM must not return');
 
-assert(css.includes('.canvas-editor-shell') && css.includes('@media (max-width: 899px)'), 'canvas shell must keep desktop and zoom geometry');
+assert(css.includes('.canvas-editor-shell')
+  && css.includes("data-inspector-open='false'")
+  && layout.includes('data-editor-workflow="page-first"')
+  && layout.includes('data-inspector-open={inspectorOpen'),
+  'editor shell must preserve the on-demand inspector and page-first responsive geometry');
 // UX-008/018/019/032: the existing owner styles consume one editor-only
 // typography/rhythm scale, not a late stylesheet of !important overrides.
 const typographyTokens = [
