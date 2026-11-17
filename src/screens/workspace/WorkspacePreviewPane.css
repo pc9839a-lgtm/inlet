@@ -476,7 +476,10 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   justify-content: flex-start !important;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
-  .edit-layout[data-editor-workflow='page-first'][data-inspector-open='true']
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true']
+) .preview-workspace .preview-sticky,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='true']
 ) .preview-workspace .preview-sticky {
   margin-left: 0 !important;
   margin-right: auto !important;
