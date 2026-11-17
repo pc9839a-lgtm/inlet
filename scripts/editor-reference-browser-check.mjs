@@ -128,7 +128,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 334 : 420)) <= 3
       && visual.compositionBackground === 'rgb(248, 250, 255)'
       && visual.inspectorBackground === 'rgb(255, 255, 255)'
-      && visual.stageBackground === 'rgb(238, 242, 247)'
+      && visual.stageBackground === (referenceWidth < 1280 ? 'rgb(238, 242, 247)' : 'rgb(233, 238, 246)')
       && visual.stageHeading === '실제 페이지' && visual.stageWidth === '모바일 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
       'approved three-pane editor keeps list, canvas and inspector independent: '
