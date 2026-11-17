@@ -234,7 +234,11 @@ assert(layout.includes('<AddBlockDock {...addBlockDockProps} compact />'), 'sect
 assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page theme controls must remain available from page options');
 assert(!layout.includes('editor-structure-pane') && !layout.includes('className="editor-inspector-pane"'), 'three-pane editor DOM must not return');
 
-assert(css.includes('.canvas-editor-shell') && css.includes('@media (max-width: 899px)'), 'canvas shell must keep desktop and zoom geometry');
+assert(css.includes('.canvas-editor-shell')
+  && css.includes("data-editor-density='wide']")
+  && layout.includes('data-editor-workflow="page-first"')
+  && layout.includes('data-inspector-open={inspectorOpen'),
+  'editor shell must preserve the on-demand inspector and page-first responsive geometry');
 // UX-008/018/019/032: the existing owner styles consume one editor-only
 // typography/rhythm scale, not a late stylesheet of !important overrides.
 const typographyTokens = [
@@ -327,7 +331,7 @@ assert(heroImageSection.includes('InspectorDisclosure label="이미지 배치·�
   && !previewPaneCss.includes('--editor-ui-space-4'),
   'disclosures must keep native semantics, owner-level token spacing and no canvas-style leakage');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
-assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 350px;'),
+assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 420px;'),
   'editor workspace must size the separate settings column without restoring old abandoned components');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
@@ -419,9 +423,10 @@ assert(addBlockDock.includes('const composingRef = useRef(false)')
   && addBlockDock.includes("if (event.key === 'Escape') event.stopPropagation();"),
   'block-gallery Escape must not dismiss IME composition or bubble through its portal to the laptop drawer');
 assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;')
-  && css.includes('overflow: visible !important;')
-  && editPanelLayoutCss.includes('@media (max-width: 899px)'),
-  'zoomed desktop must keep actual page and settings accessible');
+  && css.includes("data-editor-density='laptop']")
+  && editPanelLayoutCss.includes('@media (max-width: 899px)')
+  && previewPaneCss.includes("data-editor-workflow='page-first'"),
+  'zoomed desktop must keep its full preview available with settings opened on demand');
 assert(layout.includes('className="editor-page-settings-button"')
   && layout.includes('aria-controls="editor-selection-panel"')
   && !layout.includes('edit-section-tabs') && !editPanelLayoutCss.includes('edit-section-tabs'),

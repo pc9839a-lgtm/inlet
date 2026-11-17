@@ -77,24 +77,23 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-compo
   font-weight: 700;
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item {
-  margin: 3px 0 !important;
-  min-height: 64px;
-  border: 1px solid transparent !important;
-  border-radius: 10px !important;
+  margin: 0 !important;
+  min-height: 55px;
+  border: 0 !important;
+  border-radius: 0 !important;
   background: transparent !important;
-  transition: background .12s ease, border-color .12s ease;
+  box-shadow: none !important;
+  transition: background .12s ease;
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item:is(:hover,:focus-within) {
-  border-color: #e1e8f6 !important;
-  background: #fff !important;
+  background: #edf3fc !important;
 }
 html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item[data-selected='true'] {
-  border-color: #a9c3fd !important;
-  background: #fff !important;
-  box-shadow: 0 4px 12px #263b6c0b !important;
+  background: #e8f0ff !important;
+  box-shadow: inset 3px 0 #2864ed !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-head {
-  min-height: 62px !important;
+  min-height: 55px !important;
   grid-template-columns: 18px minmax(0,1fr) 31px !important;
   padding: 5px 6px 5px 3px !important;
   gap: 5px !important;
@@ -149,14 +148,14 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-prope
   background: #fff; border-right: 1px solid var(--editor-ux-border);
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-properties-heading {
-  min-height: 77px !important; padding: 12px 23px !important;
+  min-height: 64px !important; padding: 10px 20px !important;
   border-bottom: 1px solid var(--editor-ux-border) !important;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-properties-heading-copy {
   min-width: 0; display: grid; gap: 3px;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-properties-heading-copy .editor-panel-kicker {
-  margin: 0; font-size: 10px; font-weight: 500; color: #8490a3;
+  display: none;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-properties-heading-copy strong {
   color: var(--editor-ux-ink); font-size: 18px; font-weight: 740;
@@ -165,7 +164,7 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-prope
   font-size: 11px; color: #8391a6;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-properties-content {
-  padding: 19px 23px 36px !important;
+  padding: 16px 20px 36px !important;
   scrollbar-gutter: stable;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-properties-content .screen-order-v2-settings-header {
@@ -489,4 +488,101 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(.edit-lay
   height: 100% !important;
   min-height: 0 !important;
   max-height: 100% !important;
+}
+
+
+/* Page-first workbench, not an always-on miniature settings column.
+   This editor-only layer does not change public pages or widget data.
+   EditorWorkflow owns the navigator, Inspector and their controls. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-close-inspector:focus-visible {
+  outline: 2px solid #1959ee;
+  outline-offset: 2px;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-close-inspector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  white-space: nowrap;
+  min-width: 108px;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #d8e2ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #34517e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-workbench-close-inspector:hover {
+  background: #f0f5ff;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false'] > .editor-properties-panel,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='false'] > .editor-properties-panel {
+  display: none !important;
+}
+/* Desktop composition is always visible; the inspector opens explicitly.
+   A 25+ block page scrolls within the list, never shifting the canvas. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-heading {
+  gap: 11px !important;
+  padding: 14px 13px 11px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-hint {
+  display: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-heading h2 {
+  font-size: 18px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-search {
+  margin-inline: 13px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-content {
+  padding: 10px 9px 24px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-composition-footer {
+  padding: 9px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-properties-panel {
+  z-index: 16;
+  border-right: 1px solid #d7e0ed;
+  box-shadow: 5px 0 16px rgba(35, 57, 100, .04);
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-properties-heading {
+  padding-inline: 20px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'] .editor-properties-content {
+  padding-inline: 23px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='compact'] .editor-workbench-close-inspector {
+  display: none !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='compact'] .editor-properties-context {
+  display: none;
+}
+
+/* Pointer return enters the already labeled navigator region without
+   drawing a misleading keyboard focus ring. Keyboard return focuses the
+   separately focus-visible list heading. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-workflow='page-first'] .editor-composition-panel:focus {
+  outline: none;
 }

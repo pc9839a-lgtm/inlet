@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Settings2, Layers3, FilePenLine, ArrowRight } from 'lucide-react';
+import { ChevronDown, Settings2, Layers3, FilePenLine, ArrowRight, ArrowLeft } from 'lucide-react';
 import { BlockNavigatorSearch } from './editPanelParts/BlockNavigatorSearch.jsx';
 import './EditPanelLayout.css';
 import './EditorWorkflow.css';
@@ -87,6 +87,10 @@ export function EditPanelLayout({
   const [section, setSection] = React.useState('order');
   const [fixedSearchReveal, setFixedSearchReveal] = React.useState(null);
   const [navigatorOpen, setNavigatorOpen] = React.useState(false);
+  // Major workflow change: the real page occupies the workspace on entry.
+  // The block list remains persistent; detailed settings are opened only
+  // by an explicit editing action and never by automatic first selection.
+  const [inspectorOpen, setInspectorOpen] = React.useState(false);
   // The editor's usable width can be smaller than the CSS viewport (zoom,
   // embedded windows, resized desktop panes). Never decide its layout only
   // from window.innerWidth; measure the actual available stage as well.
@@ -133,6 +137,7 @@ export function EditPanelLayout({
   React.useEffect(() => {
     let focusFrame = 0;
     const openSelectedContent = () => {
+      setInspectorOpen(true);
       if (editorDensity !== 'compact') return;
       setCompactView('edit');
       // Canvas controls become display:none in compact mode. A click (or
@@ -198,6 +203,12 @@ export function EditPanelLayout({
   }, [section, selectedBlockId, screenOrderListProps.normalBlocks, screenOrderListProps.selectBlock]);
   const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
   const fixedSelected = fixedDescriptors.find((item) => item.open);
+  // Only the actual selected code block may request more horizontal room.
+  // Page-level settings and every other widget retain the standard Inspector.
+  const selectedEditorType = !showPageOptions
+    ? screenOrderListProps.normalBlocks.find((block) => block.id === selectedBlockId)?.type
+      || fixedSelected?.block?.type || ''
+    : '';
   // Focus belongs to an explicit user selection, never the automatic
   // first-content selection on workspace entry or a tab switch.
   const focusInspectorHeading = (id, attempts = 4) => {
@@ -209,6 +220,7 @@ export function EditPanelLayout({
     });
   };
   const chooseBlock = (id, { focusHeading = true } = {}) => {
+    setInspectorOpen(true);
     if (screenOrderListProps.selectedId !== id) screenOrderListProps.selectBlock(id);
     setSection('order');
     setNavigatorOpen(false);
@@ -216,6 +228,7 @@ export function EditPanelLayout({
     if (focusHeading) focusInspectorHeading(id);
   };
   const chooseFixed = (id, { focusHeading = true } = {}) => {
+    setInspectorOpen(true);
     if (fixedBlocksProps.openId !== id) fixedBlocksProps.toggleBlockOpen(id);
     setSection('order');
     setNavigatorOpen(false);
@@ -298,6 +311,7 @@ export function EditPanelLayout({
   }, [selectedBlockId]);
 
   const openPageOptions = (destination = 'design') => {
+    setInspectorOpen(true);
     if (screenOrderListProps?.selectedId) screenOrderListProps.clearBlockSelection();
     else if (fixedBlocksProps?.openId) fixedBlocksProps.toggleBlockOpen(fixedBlocksProps.openId);
     setSection(destination);
@@ -316,6 +330,25 @@ export function EditPanelLayout({
       heading.focus({ preventScroll: true });
     });
     focusPageHeading();
+  };
+
+  const returnToPage = (event) => {
+    // Pointer activation should not draw a keyboard focus ring on the
+    // navigator heading. Keyboard activation must retain a visible target.
+    const keyboardActivation = event?.detail === 0;
+    setInspectorOpen(false);
+    setNavigatorOpen(false);
+    if (editorDensity === 'compact') setCompactView('page');
+    requestAnimationFrame(() => {
+      const selector = editorDensity === 'compact'
+        ? '.editor-workflow-compact-switch button:first-child'
+        : editorDensity === 'laptop'
+          ? '.editor-navigator-drawer-trigger'
+          : keyboardActivation
+            ? '.editor-composition-heading h2'
+            : '.editor-composition-panel';
+      document.querySelector(selector)?.focus({ preventScroll: true });
+    });
   };
 
   const pageTheme = stylePanelProps?.stagedTheme || pageGlobalOptionsProps.page.theme;
@@ -351,11 +384,11 @@ export function EditPanelLayout({
   };
 
   return (
-    <div className="edit-layout" data-editor-layout="three-pane" data-editor-density={editorDensity} data-compact-view={compactView}>
+    <div className="edit-layout" data-editor-layout="three-pane" data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
       <div className="editor-workflow-compact-switch" role="group" aria-label="편집 작업 영역 선택">
         <button type="button" aria-pressed={compactView === 'page'} onClick={() => setCompactView('page')}>실제 페이지</button>
         <button type="button" aria-pressed={compactView === 'blocks'} onClick={() => setCompactView('blocks')}>블록 목록</button>
-        <button type="button" aria-pressed={compactView === 'edit'} onClick={() => setCompactView('edit')}>내용 수정</button>
+        <button type="button" aria-pressed={compactView === 'edit'} onClick={() => { setInspectorOpen(true); setCompactView('edit'); }}>내용 수정</button>
       </div>
       <button
         type="button"
@@ -377,6 +410,7 @@ export function EditPanelLayout({
       <aside
         id="editor-composition-panel"
         className="editor-composition-panel"
+        tabIndex={-1}
         data-drawer-open={navigatorOpen ? 'true' : 'false'}
         aria-label="페이지 블록 목록"
         onKeyDown={(event) => {
@@ -393,7 +427,7 @@ export function EditPanelLayout({
           <div className="editor-composition-title-row">
             <div className="editor-composition-title-copy">
               <span className="editor-panel-kicker">페이지 구성</span>
-              <h2>블록 편집 <span className="editor-composition-total">
+              <h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">
                 {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
               </span></h2>
               <p className="editor-composition-hint">목록에서 고르고 페이지에서 수정하세요</p>
@@ -463,7 +497,11 @@ export function EditPanelLayout({
             <span className="editor-panel-kicker">실제 페이지를 보면서</span>
             <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '내용 편집'}</strong>
           </div>
-          <span className="editor-properties-context">{showPageOptions ? '페이지 전체' : selectedBlockId ? '선택한 블록' : '편집 시작'}</span>
+          <button type="button" className="editor-workbench-close-inspector"
+            aria-label="설정 패널 닫고 페이지 보기"
+            onClick={returnToPage}>
+            <ArrowLeft size={15} aria-hidden="true" /> 페이지 보기
+          </button>
         </header>
         <div className="editor-properties-content" role="region" aria-label="선택 항목 편집" tabIndex={0}>
           {showPageOptions && (

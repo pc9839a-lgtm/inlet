@@ -400,3 +400,87 @@ html body #root .canvas-editor-shell .preview-stage-width { font-size: 12px !imp
     height: auto !important;
   }
 }
+
+/* Page-first stage: one 390px page is usable from the first frame.
+   The left composition rail stays visible on desktop and the Inspector
+   consumes a separate track only after a deliberate edit action. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) > .preview-workspace {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='false']
+) > .preview-workspace {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+/* The stage makes the result visually primary rather than looking like an
+   unused third sidebar. No second preview width or sample content exists. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) > .preview-workspace {
+  padding-top: 29px !important;
+  background: #e9eef6 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) .preview-workspace .phone-frame {
+  border: 2px solid #cbd5e5 !important;
+  box-shadow: 0 12px 42px rgba(24, 45, 80, .12) !important;
+}
+
+/* On-demand Inspector is a dock over the canvas track, not a third grid
+   column. The page remains visible to its RIGHT at every desktop density. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true']
+) > .preview-workspace {
+  grid-column: 2 !important;
+  padding-left: calc(var(--editor-settings-width, 420px) + 28px) !important;
+  padding-right: 28px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='true']
+) > .preview-workspace {
+  grid-column: 1 !important;
+  padding-left: 350px !important;
+  padding-right: 12px !important;
+}
+
+/* The actual 390px page must be immediately adjacent to the block rail,
+   not centered in a huge empty canvas. At the owner's left-680px crop,
+   the full page must remain visible instead of appearing as a blank strip. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) > .preview-workspace {
+  justify-content: flex-start !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) .preview-workspace .preview-sticky {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+/* While editing, anchor the phone immediately after the real Inspector
+   instead of leaving 250–300px of unusable blank gutter. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true']
+) > .preview-workspace,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='true']
+) > .preview-workspace {
+  justify-content: flex-start !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true']
+) .preview-workspace .preview-sticky,
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='true']
+) .preview-workspace .preview-sticky {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
