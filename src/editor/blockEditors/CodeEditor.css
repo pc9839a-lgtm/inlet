@@ -202,8 +202,7 @@
 
 .code-editor-box textarea:focus { background: #fff; border-color: #6385f6; }
 
-.code-editor-head { justify-content: space-between; }
-.code-editor-head strong { font-size: 13px; font-weight: 650; color: #334155; }
+.code-editor-head { justify-content: flex-end; }
 .code-editor-head button { flex-shrink: 0; border-color: #c7d5eb; color: #174b9b; font-size: 12px; font-weight: 650; }
 .builder-shell .code-editor-options { margin-top: 16px; }
 .builder-shell .code-editor-options > summary {
