@@ -56,12 +56,20 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'clicking a selected block opens the real inspector without changing the page');
   await clickPointer(client, '.editor-workbench-close-inspector');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
-    && document.activeElement === document.querySelector('.editor-composition-heading h2')
+    && document.activeElement === document.querySelector('.editor-composition-panel')
     && document.querySelector('.preview-workspace .landing-page')?.clientWidth === 390`,
-    'returning to page view retains canvas, selected block and visible keyboard focus');
+    'pointer return to page view keeps the focus in the visible navigator region');
   await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'`,
     'selected block reopens its inspector without a separate mode switch');
+  await focusSelector(client, '.editor-workbench-close-inspector');
+  await pressKeyboardKey(client, 'Enter');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
+    && document.activeElement === document.querySelector('.editor-composition-heading h2')`,
+    'keyboard return keeps a visible focus target');
+  await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'`,
+    'keyboard return does not break subsequent list selection');
   // Visual reference: a named, full-width add action and readable flat
   // composition rows at both the chosen 1672px size and narrow 900px PC.
   for (const referenceWidth of [1672, 900]) {
