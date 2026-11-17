@@ -47,18 +47,22 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && stage.getBoundingClientRect().left >= list.getBoundingClientRect().right - 2
       && phone?.clientWidth === 390
       && stage.querySelector('.phone-frame')?.getBoundingClientRect().left >= list.getBoundingClientRect().right
-      && stage.querySelector('.phone-frame')?.getBoundingClientRect().right <= 680;
+      && Math.abs(window.innerWidth - stage.querySelector('.phone-frame').getBoundingClientRect().right - 28) <= 3;
   })()`, 'desktop first screen prioritizes actual 390px page without a permanent inspector');
+  const pinnedPhoneLeft = await evaluate(client,
+    `document.querySelector('.phone-frame')?.getBoundingClientRect().left`);
   await capture(client, 'workbench-page-first-1672');
   await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'
-    && document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 400`,
-    'clicking a selected block opens the real inspector without changing the page');
+    && document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 400
+    && Math.abs(document.querySelector('.phone-frame')?.getBoundingClientRect().left - ${pinnedPhoneLeft}) <= 2`,
+    'opening an Inspector must not shift the right-anchored live preview');
   await clickPointer(client, '.editor-workbench-close-inspector');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
     && document.activeElement === document.querySelector('.editor-composition-panel')
-    && document.querySelector('.preview-workspace .landing-page')?.clientWidth === 390`,
-    'pointer return to page view keeps the focus in the visible navigator region');
+    && document.querySelector('.preview-workspace .landing-page')?.clientWidth === 390
+    && Math.abs(document.querySelector('.phone-frame')?.getBoundingClientRect().left - ${pinnedPhoneLeft}) <= 2`,
+    'closing an Inspector must preserve the live preview X-coordinate and visible focus');
   await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'`,
     'selected block reopens its inspector without a separate mode switch');
@@ -397,6 +401,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && firstView.primaryHeight >= 30 && firstView.secondaryClosed && firstView.directCode
       && (id !== 'editor-text' || firstView.bodyVisible),
       'redesigned inspector exposes actual content before optional settings: ' + JSON.stringify({ id, firstView }));
+    const selectionPhoneLeft = await evaluate(client,
+      `document.querySelector('.phone-frame')?.getBoundingClientRect().left`);
+    assert(Math.abs(selectionPhoneLeft - pinnedPhoneLeft) <= 2,
+      'switching between text, image, form and code must not move the 390px live preview: '
+        + JSON.stringify({ id, selectionPhoneLeft, pinnedPhoneLeft }));
     if (id === 'editor-code') {
       const wideCode = await evaluate(client, `(() => {
         const rect = node => node?.getBoundingClientRect();
@@ -409,13 +418,15 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           inspectorWidth: inspector?.width,
           inputWidth: code?.width,
           phoneOffset: phone?.left - inspector?.right,
+          phoneRightInset: window.innerWidth - phone?.right,
           actualPageWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
           documentWidth: document.documentElement.scrollWidth,
         };
       })()`);
       assert(wideCode.selected === 'code' && wideCode.inspectorWidth >= 575
         && wideCode.inputWidth >= 490 && wideCode.phoneOffset >= 12
-        && wideCode.phoneOffset <= 48 && wideCode.actualPageWidth === 390
+        && Math.abs(wideCode.phoneRightInset - 28) <= 3
+        && wideCode.actualPageWidth === 390
         && wideCode.documentWidth <= 1672,
         'wide code edit must use free canvas space without squashing or hiding the actual page: '
           + JSON.stringify(wideCode));
@@ -1503,7 +1514,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
     && geometry.inspectorScroll === 'auto'
     && geometry.phone.left >= geometry.inspector.right + 12
-    && geometry.phone.left <= geometry.inspector.right + 48,
+    && Math.abs(1672 - geometry.phone.right - 28) <= 3,
     'real page must remain centered with independent list and inspector scrolling: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
@@ -1520,8 +1531,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       return {
         contentWidth: page.clientWidth, frameWidth: box(frame).width,
         frameBorder: css.borderTopWidth, radius: css.borderTopLeftRadius,
-        stageAdjacent: box(frame).left - box(document.querySelector('.editor-properties-panel')).right >= 8
-          && box(frame).left - box(document.querySelector('.editor-properties-panel')).right <= 54,
+        stageRightPinned: box(frame).left - box(document.querySelector('.editor-properties-panel')).right >= 8
+          && Math.abs(box(preview).right - box(frame).right - (innerWidth < 1280 ? 12 : 28)) <= 3,
         frameInside: box(frame).left >= box(preview).left - 2 && box(frame).right <= box(preview).right + 2,
         children: stage.children.length,
         hasLegacyToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
@@ -1532,7 +1543,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     const expectedWidth = 394;
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
-      && parseInt(chrome.radius, 10) <= 20 && chrome.stageAdjacent && chrome.frameInside
+      && parseInt(chrome.radius, 10) <= 20 && chrome.stageRightPinned && chrome.frameInside
       && chrome.children === 2 && (chrome.canvasTools || chrome.canvasAdd) && !chrome.hasLegacyToolbar,
       'canvas must show a single real 390px page with a compact inline action row at ' + width + ': ' + JSON.stringify(chrome));
     if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
