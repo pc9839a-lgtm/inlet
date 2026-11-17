@@ -418,5 +418,19 @@ export async function onRequest(context) {
   if (customDomainResponse) return customDomainResponse;
 
   const response = await context.next();
-  return injectPortfolioGa4(context, url, await injectPublicPageMeta(context, url, response));
+  const decoratedResponse = await injectPortfolioGa4(context, url, await injectPublicPageMeta(context, url, response));
+
+  // Owner-requested search deindexing is limited to pagero.kr.
+  // Do not inadvertently noindex customer-owned domains or sibling subdomains.
+  if (url.hostname === 'pagero.kr' || url.hostname === 'www.pagero.kr') {
+    const headers = new Headers(decoratedResponse.headers);
+    headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    return new Response(decoratedResponse.body, {
+      status: decoratedResponse.status,
+      statusText: decoratedResponse.statusText,
+      headers,
+    });
+  }
+
+  return decoratedResponse;
 }
