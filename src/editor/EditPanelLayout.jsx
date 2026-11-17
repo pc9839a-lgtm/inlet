@@ -326,7 +326,10 @@ export function EditPanelLayout({
     focusPageHeading();
   };
 
-  const returnToPage = () => {
+  const returnToPage = (event) => {
+    // Pointer activation should not draw a keyboard focus ring on the
+    // navigator heading. Keyboard activation must retain a visible target.
+    const keyboardActivation = event?.detail === 0;
     setInspectorOpen(false);
     setNavigatorOpen(false);
     if (editorDensity === 'compact') setCompactView('page');
@@ -335,7 +338,9 @@ export function EditPanelLayout({
         ? '.editor-workflow-compact-switch button:first-child'
         : editorDensity === 'laptop'
           ? '.editor-navigator-drawer-trigger'
-          : '.editor-composition-heading h2';
+          : keyboardActivation
+            ? '.editor-composition-heading h2'
+            : '.editor-composition-panel';
       document.querySelector(selector)?.focus({ preventScroll: true });
     });
   };
@@ -399,6 +404,7 @@ export function EditPanelLayout({
       <aside
         id="editor-composition-panel"
         className="editor-composition-panel"
+        tabIndex={-1}
         data-drawer-open={navigatorOpen ? 'true' : 'false'}
         aria-label="페이지 블록 목록"
         onKeyDown={(event) => {
