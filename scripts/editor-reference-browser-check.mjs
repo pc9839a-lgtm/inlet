@@ -397,6 +397,41 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && firstView.primaryHeight >= 30 && firstView.secondaryClosed && firstView.directCode
       && (id !== 'editor-text' || firstView.bodyVisible),
       'redesigned inspector exposes actual content before optional settings: ' + JSON.stringify({ id, firstView }));
+    if (id === 'editor-code') {
+      const wideCode = await evaluate(client, `(() => {
+        const rect = node => node?.getBoundingClientRect();
+        const layout = document.querySelector('.edit-layout');
+        const inspector = rect(document.querySelector('.editor-properties-panel'));
+        const code = rect(document.querySelector('#editor-block-settings-editor-code .code-editor-box textarea'));
+        const phone = rect(document.querySelector('.phone-frame'));
+        return {
+          selected: layout?.dataset.selectedBlockType,
+          inspectorWidth: inspector?.width,
+          inputWidth: code?.width,
+          phoneOffset: phone?.left - inspector?.right,
+          actualPageWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
+          documentWidth: document.documentElement.scrollWidth,
+        };
+      })()`);
+      assert(wideCode.selected === 'code' && wideCode.inspectorWidth >= 575
+        && wideCode.inputWidth >= 490 && wideCode.phoneOffset >= 12
+        && wideCode.phoneOffset <= 48 && wideCode.actualPageWidth === 390
+        && wideCode.documentWidth <= 1672,
+        'wide code edit must use free canvas space without squashing or hiding the actual page: '
+          + JSON.stringify(wideCode));
+
+      await setViewport(client, 1440, 941, false);
+      await waitForBrowser(client, `(() => {
+        const layout = document.querySelector('.edit-layout');
+        const inspector = document.querySelector('.editor-properties-panel');
+        return layout?.dataset.selectedBlockType === 'code'
+          && Math.abs(inspector?.getBoundingClientRect().width - 420) <= 3
+          && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
+      })()`, 'code Inspector returns to standard width when free space shrinks');
+      await setViewport(client, 1672, 941, false);
+      await waitForBrowser(client, `document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 575`,
+        'code Inspector expands again at the wide desktop breakpoint');
+    }
     if (id === 'editor-text' || id === 'editor-image' || id === 'editor-form' || id === 'editor-code') {
       await capture(client, 'inspector-content-first-' + id);
     }
