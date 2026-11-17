@@ -608,3 +608,14 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
 html body #root .builder-shell.canvas-editor-shell .work-panel {
   padding: 0 !important;
 }
+
+/* Use otherwise idle desktop width for the original code textarea. The
+   existing 390px canvas stays beside the Inspector, unscaled and connected
+   to the same block draft. No extra editor state or code interpretation. */
+@media (min-width: 1500px) {
+  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+    .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true'][data-selected-block-type='code']
+  ) {
+    --editor-settings-width: 580px;
+  }
+}
