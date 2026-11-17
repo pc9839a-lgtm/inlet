@@ -1638,6 +1638,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && compactPage.tabs.length === 3 && compactPage.tabs.filter((tab) => tab.on).length === 1
     && compactPage.pageWidth === 390 && compactPage.previewVisible
     && compactPage.phoneLeft >= 0 && compactPage.phoneRight <= 673
+    && Math.abs((compactPage.phoneLeft + compactPage.phoneRight) / 2
+      - (compactPage.previewLeft + compactPage.previewRight) / 2) <= 6
     && compactPage.taskTop >= compactPage.headerBottom - 2
     && compactPage.previewTop >= compactPage.taskBottom - 2
     && !compactPage.blockVisible && !compactPage.inspectorVisible
