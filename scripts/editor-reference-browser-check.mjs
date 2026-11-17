@@ -31,6 +31,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // A fresh editor opens on the real page, not a permanently open settings
   // column. The selected block and full 390px live page survive mode switches.
   await setViewport(client, 1672, 941, false);
+  await evaluate(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'
+    && document.querySelector('.editor-workbench-close-inspector')?.click()`);
   assert(await evaluate(client, `!document.querySelector('.editor-workbench-section-switch')`),
     'persistent block list must not waste space on a redundant page/edit mode switch');
   await waitForBrowser(client, `(() => {
