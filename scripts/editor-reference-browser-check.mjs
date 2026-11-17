@@ -31,7 +31,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // A fresh editor opens on the real page, not a permanently open settings
   // column. The selected block and full 390px live page survive mode switches.
   await setViewport(client, 1672, 941, false);
-  await evaluate(client, `document.querySelector('.editor-workbench-section-switch button:first-child')?.click()`);
+  assert(await evaluate(client, `!document.querySelector('.editor-workbench-section-switch')`),
+    'persistent block list must not waste space on a redundant page/edit mode switch');
   await waitForBrowser(client, `(() => {
     const layout = document.querySelector('.edit-layout');
     const stage = document.querySelector('.preview-workspace');
@@ -47,10 +48,18 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && stage.querySelector('.phone-frame')?.getBoundingClientRect().right <= 680;
   })()`, 'desktop first screen prioritizes actual 390px page without a permanent inspector');
   await capture(client, 'workbench-page-first-1672');
-  await clickPointer(client, '.editor-workbench-section-switch button:nth-child(2)');
+  await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'
     && document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 400`,
-    'explicit selection opens the real inspector without changing the page');
+    'clicking a selected block opens the real inspector without changing the page');
+  await clickPointer(client, '.editor-workbench-close-inspector');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
+    && document.activeElement === document.querySelector('.editor-composition-heading h2')
+    && document.querySelector('.preview-workspace .landing-page')?.clientWidth === 390`,
+    'returning to page view retains canvas, selected block and visible keyboard focus');
+  await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'`,
+    'selected block reopens its inspector without a separate mode switch');
   // Visual reference: a named, full-width add action and readable flat
   // composition rows at both the chosen 1672px size and narrow 900px PC.
   for (const referenceWidth of [1672, 900]) {
