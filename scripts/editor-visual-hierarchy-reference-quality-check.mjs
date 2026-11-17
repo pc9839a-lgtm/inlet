@@ -18,7 +18,7 @@ const reference = read('scripts/editor-reference-browser-check.mjs');
 assert(layout.includes('data-editor-layout="three-pane"')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
-  && layout.includes('<h2>블록 편집 <span className="editor-composition-total">')
+  && layout.includes('<h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">')
   && layout.includes('editor-page-options-heading'),
   'approved editor must show left block navigator and settings, with the live page on the right');
 assert(rows.includes('!listOnly && selectedId === block.id')
