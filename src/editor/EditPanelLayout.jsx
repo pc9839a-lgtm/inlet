@@ -203,6 +203,12 @@ export function EditPanelLayout({
   }, [section, selectedBlockId, screenOrderListProps.normalBlocks, screenOrderListProps.selectBlock]);
   const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
   const fixedSelected = fixedDescriptors.find((item) => item.open);
+  // Only the actual selected code block may request more horizontal room.
+  // Page-level settings and every other widget retain the standard Inspector.
+  const selectedEditorType = !showPageOptions
+    ? screenOrderListProps.normalBlocks.find((block) => block.id === selectedBlockId)?.type
+      || fixedSelected?.block?.type || ''
+    : '';
   // Focus belongs to an explicit user selection, never the automatic
   // first-content selection on workspace entry or a tab switch.
   const focusInspectorHeading = (id, attempts = 4) => {
@@ -378,7 +384,7 @@ export function EditPanelLayout({
   };
 
   return (
-    <div className="edit-layout" data-editor-layout="three-pane" data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-editor-density={editorDensity} data-compact-view={compactView}>
+    <div className="edit-layout" data-editor-layout="three-pane" data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
       <div className="editor-workflow-compact-switch" role="group" aria-label="편집 작업 영역 선택">
         <button type="button" aria-pressed={compactView === 'page'} onClick={() => setCompactView('page')}>실제 페이지</button>
         <button type="button" aria-pressed={compactView === 'blocks'} onClick={() => setCompactView('blocks')}>블록 목록</button>
