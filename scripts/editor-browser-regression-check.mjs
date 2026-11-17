@@ -1073,8 +1073,9 @@ function assertDesktop(metrics) {
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
-  assert(metrics.frame.left >= metrics.inspector.right + 12 && metrics.frame.left <= metrics.inspector.right + 48,
-    `phone must sit inside the right-hand stage without an enormous blank gap: ${JSON.stringify(metrics.frame)}`);
+  assert(metrics.frame.left >= metrics.inspector.right + 12
+    && Math.abs(metrics.preview.right - metrics.frame.right - 28) <= 3,
+    `phone must keep a constant 28px right inset in the desktop preview: ${JSON.stringify(metrics.frame)}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
@@ -1130,8 +1131,9 @@ function assertNarrowDesktop(metrics, width) {
       - (metrics.frame.left + metrics.frame.right) / 2) <= 6,
       `narrow desktop phone must be centered at ${width}px: ${JSON.stringify(metrics.frame)}`);
   } else {
-    assert(metrics.frame.left >= metrics.inspector.right + 8 && metrics.frame.left <= metrics.inspector.right + 50,
-      `laptop phone must stay beside Inspector at ${width}px: ${JSON.stringify(metrics.frame)}`);
+    assert(metrics.frame.left >= metrics.inspector.right + 8
+      && Math.abs(metrics.preview.right - metrics.frame.right - 12) <= 3,
+      `laptop phone must keep a constant 12px right inset at ${width}px: ${JSON.stringify(metrics.frame)}`);
   }
 }
 
