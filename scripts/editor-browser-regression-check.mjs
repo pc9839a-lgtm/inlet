@@ -1125,8 +1125,14 @@ function assertNarrowDesktop(metrics, width) {
     `narrow desktop real page must retain 390px default: ${metrics.frameContentWidth}`);
   assert(metrics.frame.left >= metrics.preview.left - 2 && metrics.frame.right <= metrics.preview.right + 2,
     `narrow desktop phone must remain in canvas at ${width}px: ${JSON.stringify(metrics.frame)}`);
-  assert(metrics.frame.left >= metrics.inspector.right + 8 && metrics.frame.left <= metrics.inspector.right + 50,
-    `narrow desktop phone must be centered at ${width}px: ${JSON.stringify(metrics.frame)}`);
+  if (stacked) {
+    assert(Math.abs((metrics.preview.left + metrics.preview.right) / 2
+      - (metrics.frame.left + metrics.frame.right) / 2) <= 6,
+      `narrow desktop phone must be centered at ${width}px: ${JSON.stringify(metrics.frame)}`);
+  } else {
+    assert(metrics.frame.left >= metrics.inspector.right + 8 && metrics.frame.left <= metrics.inspector.right + 50,
+      `laptop phone must stay beside Inspector at ${width}px: ${JSON.stringify(metrics.frame)}`);
+  }
 }
 
 function assertMobile(metrics, viewport) {
