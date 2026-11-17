@@ -583,6 +583,6 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
    drawing a misleading keyboard focus ring. Keyboard return focuses the
    separately focus-visible list heading. */
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-workflow='page-first'] .editor-composition-panel:focus:not(:focus-visible) {
+.edit-layout[data-editor-workflow='page-first'] .editor-composition-panel:focus {
   outline: none;
 }
