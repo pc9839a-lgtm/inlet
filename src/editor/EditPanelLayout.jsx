@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Settings2, Layers3, FilePenLine, ArrowRight } from 'lucide-react';
+import { ChevronDown, Settings2, Layers3, FilePenLine, ArrowRight, ArrowLeft } from 'lucide-react';
 import { BlockNavigatorSearch } from './editPanelParts/BlockNavigatorSearch.jsx';
 import './EditPanelLayout.css';
 import './EditorWorkflow.css';
@@ -335,7 +335,7 @@ export function EditPanelLayout({
         ? '.editor-workflow-compact-switch button:first-child'
         : editorDensity === 'laptop'
           ? '.editor-navigator-drawer-trigger'
-          : '.editor-workbench-section-switch button:first-child';
+          : '.editor-composition-heading h2';
       document.querySelector(selector)?.focus({ preventScroll: true });
     });
   };
@@ -415,21 +415,11 @@ export function EditPanelLayout({
           <div className="editor-composition-title-row">
             <div className="editor-composition-title-copy">
               <span className="editor-panel-kicker">페이지 구성</span>
-              <h2>블록 편집 <span className="editor-composition-total">
+              <h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">
                 {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
               </span></h2>
               <p className="editor-composition-hint">목록에서 고르고 페이지에서 수정하세요</p>
             </div>
-          </div>
-          <div className="editor-workbench-section-switch" role="group" aria-label="페이지 작업 선택">
-            <button type="button" aria-pressed={!inspectorOpen}
-              onClick={returnToPage}>
-              페이지 보기
-            </button>
-            <button type="button" aria-pressed={inspectorOpen}
-              onClick={() => { setInspectorOpen(true); setNavigatorOpen(false); if (editorDensity === 'compact') setCompactView('edit'); }}>
-              선택 수정
-            </button>
           </div>
           <AddBlockDock {...addBlockDockProps} compact />
         </header>
@@ -496,9 +486,9 @@ export function EditPanelLayout({
             <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '내용 편집'}</strong>
           </div>
           <button type="button" className="editor-workbench-close-inspector"
-            aria-label="설정 패널 닫고 페이지 크게 보기"
+            aria-label="설정 패널 닫고 페이지 보기"
             onClick={returnToPage}>
-            페이지 크게 보기
+            <ArrowLeft size={15} aria-hidden="true" /> 페이지 보기
           </button>
         </header>
         <div className="editor-properties-content" role="region" aria-label="선택 항목 편집" tabIndex={0}>
