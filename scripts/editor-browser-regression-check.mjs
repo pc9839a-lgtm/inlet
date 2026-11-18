@@ -1899,70 +1899,71 @@ async function run() {
     assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
     await capture(client, 'desktop-hero-background-stage6');
     assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'content must stay available alongside background-image settings');
-    // Independent navigator and Inspector scrolling, pinned page options.
-    const inspectorScroll = await evaluate(client, `(() => {
+    // At wide desktop widths the real editor now lives directly under the
+    // selected row. It shares the block list scroll; it must not introduce a
+    // second nested Inspector or move the pinned page-options footer.
+    const inlineScroll = await evaluate(client, `(() => {
       const settings = document.querySelector('#editor-block-settings-editor-hero');
-      const panel = settings?.closest('.editor-properties-content');
+      const selected = settings?.closest('.editor-inline-expanded');
       const composition = document.querySelector('.editor-composition-panel');
       const list = document.querySelector('.editor-composition-content');
       const workPanel = document.querySelector('.work-panel');
       const content = settings?.querySelector('.block-editor-v2');
       const order = list?.querySelector('.screen-order-v2-list-view');
-      if (!panel || !composition || !list || !workPanel || !content || !order) return null;
-      const previousMinHeight = content.style.minHeight;
-      const previousOrderHeight = order.style.minHeight;
-      const previousListTop = list.scrollTop;
-      const previousInspectorTop = panel.scrollTop;
+      const inspector = document.querySelector('.editor-properties-panel');
+      if (!settings || !selected || !composition || !list || !workPanel || !content || !order) return null;
+      const oldMinHeight = content.style.minHeight;
+      const oldOrderHeight = order.style.minHeight;
+      const oldScroll = list.scrollTop;
       let result;
       try {
         content.style.minHeight = '1600px';
         order.style.minHeight = '1500px';
-        list.scrollTop = 270;
-        const listBeforeInspectorScroll = list.scrollTop;
-        panel.scrollTop = 320;
+        list.scrollTop = 320;
         workPanel.scrollTop = 320;
-        const footer = composition.querySelector('.editor-composition-footer');
-        const footerBox = footer?.getBoundingClientRect();
-        const panelBox = composition.getBoundingClientRect();
+        const footerBox = composition.querySelector('.editor-composition-footer')?.getBoundingClientRect();
+        const shellBox = composition.getBoundingClientRect();
         result = {
-          role: panel.getAttribute('role'), label: panel.getAttribute('aria-label'),
-          tabIndex: panel.tabIndex, listRole: list.getAttribute('role'),
-          listLabel: list.getAttribute('aria-label'), listTabIndex: list.tabIndex,
-          inspectorOverflowY: getComputedStyle(panel).overflowY,
-          compositionOverflowY: getComputedStyle(composition).overflowY,
-          navigatorOverflowY: getComputedStyle(list).overflowY,
-          workOverflowY: getComputedStyle(workPanel).overflowY,
-          inspectorScrollHeight: panel.scrollHeight, inspectorHeight: panel.clientHeight,
-          navigatorScrollHeight: list.scrollHeight, navigatorHeight: list.clientHeight,
-          workScrollTop: workPanel.scrollTop, inspectorScrollTop: panel.scrollTop,
-          navigatorScrollTop: list.scrollTop,
-          independentScroll: list.scrollTop === listBeforeInspectorScroll,
-          footerPinned: !!footer && Math.abs(footerBox.bottom - panelBox.bottom) <= 2,
-          innerOverflowY: getComputedStyle(settings).overflowY,
+          regionRole: selected.getAttribute('role'),
+          regionLabel: selected.getAttribute('aria-label'),
+          tabIndex: selected.tabIndex,
+          navigatorRole: list.getAttribute('role'),
+          navigatorLabel: list.getAttribute('aria-label'),
+          navigatorTabIndex: list.tabIndex,
+          listOverflow: getComputedStyle(list).overflowY,
+          compositionOverflow: getComputedStyle(composition).overflowY,
+          outerOverflow: getComputedStyle(workPanel).overflowY,
+          nestedSettingsOverflow: getComputedStyle(settings).overflowY,
+          inspectorHidden: getComputedStyle(inspector).display === 'none',
+          scrollHeight: list.scrollHeight,
+          clientHeight: list.clientHeight,
+          listScroll: list.scrollTop,
+          outerScroll: workPanel.scrollTop,
+          footerPinned: !!footerBox && Math.abs(footerBox.bottom - shellBox.bottom) <= 2,
         };
       } finally {
-        content.style.minHeight = previousMinHeight;
-        order.style.minHeight = previousOrderHeight;
-        list.scrollTop = previousListTop;
-        panel.scrollTop = previousInspectorTop;
+        content.style.minHeight = oldMinHeight;
+        order.style.minHeight = oldOrderHeight;
+        list.scrollTop = oldScroll;
       }
       return result;
     })()`);
-    assert(inspectorScroll?.role === 'region' && inspectorScroll.tabIndex === 0
-      && inspectorScroll.label?.includes('선택 항목 편집')
-      && inspectorScroll.listRole === 'region' && inspectorScroll.listTabIndex === 0
-      && inspectorScroll.listLabel?.includes('블록 순서'),
-      'D01 list and Inspector must remain keyboard-accessible regions: ' + JSON.stringify(inspectorScroll));
-    assert(inspectorScroll.inspectorOverflowY === 'auto'
-      && inspectorScroll.compositionOverflowY === 'hidden'
-      && inspectorScroll.navigatorOverflowY === 'auto'
-      && inspectorScroll.workOverflowY === 'hidden'
-      && inspectorScroll.inspectorScrollHeight > inspectorScroll.inspectorHeight
-      && inspectorScroll.navigatorScrollHeight > inspectorScroll.navigatorHeight
-      && inspectorScroll.workScrollTop === 0 && inspectorScroll.inspectorScrollTop > 0
-      && inspectorScroll.navigatorScrollTop > 0 && inspectorScroll.independentScroll
-      && inspectorScroll.footerPinned && inspectorScroll.innerOverflowY === 'visible',
-      'D01 independent block list and selected settings scrollers must preserve a pinned page-settings entry: ' + JSON.stringify(inspectorScroll));
+    assert(inlineScroll?.regionRole === 'region'
+      && inlineScroll.regionLabel?.includes('선택 항목 편집')
+      && inlineScroll.tabIndex === 0
+      && inlineScroll.navigatorRole === 'region'
+      && inlineScroll.navigatorLabel?.includes('블록 순서')
+      && inlineScroll.navigatorTabIndex === 0
+      && inlineScroll.listOverflow === 'auto'
+      && inlineScroll.compositionOverflow === 'hidden'
+      && inlineScroll.outerOverflow === 'hidden'
+      && inlineScroll.nestedSettingsOverflow === 'visible'
+      && inlineScroll.inspectorHidden
+      && inlineScroll.scrollHeight > inlineScroll.clientHeight
+      && inlineScroll.listScroll > 0
+      && inlineScroll.outerScroll === 0 && inlineScroll.footerPinned,
+      'desktop inline editor must scroll with its own row without shifting page actions: '
+        + JSON.stringify(inlineScroll));
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
