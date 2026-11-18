@@ -10,6 +10,7 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
   const stagedDraft = codeDraftForBlock?.(blockId, s.html || '');
   const { draft, setDraft, modalOpen, setModalOpen } = useCodeDraft(
     s.html, stagedDraft, onCodeDraftChange ? (value) => onCodeDraftChange(blockId, value) : undefined,
+    blockId,
   );
 
   // 과거 저장된 BGM 프리셋은 편집 기능을 노출하지 않는다.
