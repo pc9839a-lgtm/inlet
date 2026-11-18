@@ -8,9 +8,12 @@ import { META } from '../../config/blockMeta.jsx';
 import { createScreenOrderMovement } from './screenOrderMovement.js';
 
 export function ScreenOrderList(props) {
-  if (props.listOnly) return (
-    <section className="screen-order-v2-card screen-order-v2-list-view">
-      <ScreenOrderListItems {...props} />
+  // Preserve one real editor instance. Desktop inline editing renders the
+  // same list rows plus their selected block editor, whereas compact/laptop
+  // still use the independent Inspector below.
+  if (props.listOnly || props.inlineEditing) return (
+    <section className="screen-order-v2-card screen-order-v2-list-view" data-inline-stack={props.inlineEditing ? 'true' : 'false'}>
+      <ScreenOrderListItems {...props} listOnly={!props.inlineEditing} />
     </section>
   );
   const selectedIndex = props.normalBlocks.findIndex((block) => block.id === props.selectedId);
