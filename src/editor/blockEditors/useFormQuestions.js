@@ -1,10 +1,4 @@
 import { useState } from 'react';
-// The form editor intentionally changes its React position when desktop and
-// laptop layouts switch. Remember only the open card, keyed to the exact page
-// and form block; no content, answers, or unsaved draft values are cached.
-const openedQuestionByForm = new Map();
-const MAX_REMEMBERED_FORMS = 100;
-
 import {
   createQuestionByType,
   duplicateQuestionInList,
@@ -13,6 +7,11 @@ import {
   removeQuestionFromList,
   updateQuestionList,
 } from './formQuestionListModel.js';
+
+// The responsive workspace moves its active widget between DOM regions.
+// Remember only the expanded card, not data or unsaved form content.
+const openedQuestionByForm = new Map();
+const MAX_REMEMBERED_FORMS = 100;
 
 export function useFormQuestions({ questions, set, persistKey = '' }) {
   const [openQuestionId, setOpenQuestionId] = useState(() => {
@@ -31,6 +30,9 @@ export function useFormQuestions({ questions, set, persistKey = '' }) {
     }
     setOpenQuestionId(id);
   };
+  // New cards should focus their label exactly once. A restored expanded
+  // card after resize must NOT steal focus or select existing text.
+  const [newlyCreatedQuestionId, setNewlyCreatedQuestionId] = useState('');
   const [dragQuestionId, setDragQuestionId] = useState('');
   const [dragOverQuestionId, setDragOverQuestionId] = useState('');
 
@@ -40,12 +42,14 @@ export function useFormQuestions({ questions, set, persistKey = '' }) {
     const next = removeQuestionFromList(questions, id);
     set({ questions: next });
     if (openQuestionId === id) selectOpenQuestion(next[0]?.id || '');
+    if (newlyCreatedQuestionId === id) setNewlyCreatedQuestionId('');
   };
 
   const duplicateQuestion = (question) => {
     const { copy, questions: next } = duplicateQuestionInList(questions, question);
     set({ questions: next });
     selectOpenQuestion(copy.id);
+    setNewlyCreatedQuestionId(copy.id);
   };
 
   const moveQuestionByDrag = (targetId) => {
@@ -64,10 +68,12 @@ export function useFormQuestions({ questions, set, persistKey = '' }) {
     const question = createQuestionByType(type);
     set({ questions: [...questions, question] });
     selectOpenQuestion(question.id);
+    setNewlyCreatedQuestionId(question.id);
   };
 
   return {
     openQuestionId,
+    newlyCreatedQuestionId,
     dragQuestionId,
     dragOverQuestionId,
     addQuestion,
