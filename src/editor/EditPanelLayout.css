@@ -619,3 +619,112 @@ html body #root .builder-shell.canvas-editor-shell .work-panel {
     --editor-settings-width: 580px;
   }
 }
+
+
+/* ED-UX: Littly-inspired editing relationship, scoped to the authenticated
+   workspace. The block stack and its actual active editor share ONE left
+   working column; the real 390px page stays in the right canvas.
+   No duplicate widget instance, no extra saved block state. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+) {
+  --editor-list-width: 560px;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-composition-panel {
+  border-right: 1px solid #dce3ee !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-composition-heading {
+  padding: 18px 24px 16px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-composition-content {
+  padding: 10px 20px 40px !important;
+  scroll-padding-top: 18px;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-composition-footer {
+  border-top: 1px solid #e7edf6;
+  padding: 10px 20px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-composition-group-caption {
+  font-size: 13px;
+  margin-top: 20px;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-inline-expanded {
+  margin: 0 0 14px !important;
+  padding: 0 18px 22px !important;
+  background: #fff !important;
+  border: 1px solid #dce5f2 !important;
+  border-top: 0 !important;
+  border-radius: 0 0 10px 10px !important;
+  box-shadow: 0 9px 22px rgba(40, 62, 103, .035);
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-inline-expanded-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  border-bottom: 1px solid #edf0f6;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 680;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-inline-expanded-heading button {
+  border: none;
+  background: transparent;
+  min-height: 36px;
+  padding: 0 8px;
+  color: #315dd4;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-inline-expanded-heading button:focus-visible {
+  outline: 2px solid #315dd4;
+  outline-offset: -2px;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-inline-expanded .screen-order-v2-settings-header {
+  padding: 13px 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-inline-expanded .screen-order-v2-settings {
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
+.editor-properties-panel {
+  z-index: 20;
+  left: 0;
+  width: 560px;
+  max-width: calc(100vw - 430px);
+}
+/* In wide inline mode, hide the unused Inspector, but preserve the single
+   normal block editor inside the composition stack. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide'][data-inspector-kind='block']
+> .editor-properties-panel {
+  display: none !important;
+}
