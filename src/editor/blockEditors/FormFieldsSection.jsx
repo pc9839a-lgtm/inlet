@@ -5,6 +5,7 @@ import FormQuestionQuickAdd from './FormQuestionQuickAdd.jsx';
 export default function FormFieldsSection({
   questions,
   openQuestionId,
+  focusOnCreateQuestionId,
   dragQuestionId,
   dragOverQuestionId,
   onAdd,
@@ -24,6 +25,7 @@ export default function FormFieldsSection({
       <FormQuestionList
         questions={questions}
         openQuestionId={openQuestionId}
+        focusOnCreateQuestionId={focusOnCreateQuestionId}
         dragQuestionId={dragQuestionId}
         dragOverQuestionId={dragOverQuestionId}
         onToggleOpen={onToggleOpen}
