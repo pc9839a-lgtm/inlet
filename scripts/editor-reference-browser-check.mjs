@@ -549,10 +549,12 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 248 && unselected.editorWidth <= 256
+    && Math.abs(unselected.editorWidth - 560) <= 3
     && Math.abs(unselected.listWidth - unselected.editorWidth) <= 3
-    && Math.abs(unselected.inspectorWidth - 420) <= 3,
-    'page settings must open in the independent inspector without replacing the block list: ' + JSON.stringify(unselected));
+    && Math.abs(unselected.inspectorWidth - 560) <= 3
+    && unselected.previewWidth >= 600,
+    'page-global design must reuse the left workbench without squeezing the pinned preview: '
+      + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
   await waitForBrowser(client, `!!document.querySelector('.style-panel-v17 .style-more-groups > .style-advanced-group')`, 'page theme design available');
