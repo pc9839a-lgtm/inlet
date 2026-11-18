@@ -53,27 +53,31 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     `document.querySelector('.phone-frame')?.getBoundingClientRect().left`);
   await capture(client, 'workbench-page-first-1672');
   await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
-  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'
-    && document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 400
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inlineEditing === 'true'
+    && document.querySelectorAll('#editor-selection-panel').length === 1
+    && document.querySelector('.editor-composition-content .editor-inline-expanded .screen-order-v2-settings')
+      ?.getBoundingClientRect().width >= 440
+    && getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none'
     && Math.abs(document.querySelector('.phone-frame')?.getBoundingClientRect().left - ${pinnedPhoneLeft}) <= 2`,
-    'opening an Inspector must not shift the right-anchored live preview');
-  await clickPointer(client, '.editor-workbench-close-inspector');
+    'selecting a block must expand exactly one real editor below its row, beside fixed preview');
+  await capture(client, 'littly-inline-block-edit-1672');
+  await clickPointer(client, '.editor-inline-expanded-heading button');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
     && document.activeElement === document.querySelector('.editor-composition-panel')
     && document.querySelector('.preview-workspace .landing-page')?.clientWidth === 390
     && Math.abs(document.querySelector('.phone-frame')?.getBoundingClientRect().left - ${pinnedPhoneLeft}) <= 2`,
     'closing an Inspector must preserve the live preview X-coordinate and visible focus');
   await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
-  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'`,
-    'selected block reopens its inspector without a separate mode switch');
-  await focusSelector(client, '.editor-workbench-close-inspector');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inlineEditing === 'true'`,
+    'selected row reopens its existing inline editor');
+  await focusSelector(client, '.editor-inline-expanded-heading button');
   await pressKeyboardKey(client, 'Enter');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
     && document.activeElement === document.querySelector('.editor-composition-heading h2')`,
     'keyboard return keeps a visible focus target');
   await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
-  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'`,
-    'keyboard return does not break subsequent list selection');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inlineEditing === 'true'`,
+    'keyboard return does not break subsequent row edit');
   // Visual reference: a named, full-width add action and readable flat
   // composition rows at both the chosen 1672px size and narrow 900px PC.
   for (const referenceWidth of [1672, 900]) {
@@ -115,7 +119,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     })()`);
-    const expectedComposerWidth = referenceWidth < 1280 ? 264 : 252;
+    const expectedComposerWidth = referenceWidth < 1280 ? 264 : 560;
     assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '페이지 구성'
       && /[0-9]+개 블록/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
@@ -125,13 +129,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
       && visual.normalRowHeight >= 54 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
       && Math.abs(visual.compositionWidth - expectedComposerWidth) <= 3
-      && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 334 : 420)) <= 3
+      && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 334 : 0)) <= 3
       && visual.compositionBackground === 'rgb(248, 250, 255)'
       && visual.inspectorBackground === 'rgb(255, 255, 255)'
       && visual.stageBackground === (referenceWidth < 1280 ? 'rgb(238, 242, 247)' : 'rgb(233, 238, 246)')
       && visual.stageHeading === '실제 페이지' && visual.stageWidth === '모바일 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
-      'approved three-pane editor keeps list, canvas and inspector independent: '
+      'littly desktop must combine block rows with their original inline editor: '
       + JSON.stringify({ referenceWidth, visual }));
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
