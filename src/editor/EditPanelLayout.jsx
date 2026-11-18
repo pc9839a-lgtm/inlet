@@ -293,7 +293,7 @@ export function EditPanelLayout({
     } else chooseBlock(id, { focusHeading: false });
     revealInspectorSelection(id);
     const restoreSwitchFocus = (attempts = 5) => requestAnimationFrame(() => {
-      const settings = document.querySelector('.canvas-editor-shell [data-editor-stack="blocks"] [data-block-settings-id]')
+      const settings = document.querySelector('.canvas-editor-shell .editor-composition-content [data-block-settings-id]')
         || document.querySelector('.canvas-editor-shell .editor-properties-content [data-block-settings-id]');
       if (settings?.getAttribute('data-block-settings-id') !== id) {
         if (attempts > 0) restoreSwitchFocus(attempts - 1);
