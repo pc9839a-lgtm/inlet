@@ -4,7 +4,7 @@ import { SegmentedControl, ToggleRow } from '../ui/index.js';
 import HeroImageRange from './HeroImageRange.jsx';
 import './HeroImageSection.css';
 
-export default function HeroImageSection({ s, set, Range }) {
+export default function HeroImageSection({ s, set, Range, stateKey = '' }) {
   const mode = ['top', 'background', 'full'].includes(s.imageMode) ? s.imageMode : 'top';
   const showText = s.fullText !== false;
   const filterVisible = mode === 'background' || (mode === 'full' && showText);
@@ -12,7 +12,8 @@ export default function HeroImageSection({ s, set, Range }) {
   return (
     <div className="hero-image-section">
       <ImageInput label="히어로 이미지" value={s.image} onChange={(value) => set({ image: value })} />
-      <InspectorDisclosure label="이미지 배치·효과" className="hero-image-adjustments" bodyClassName="hero-image-controls">
+      <InspectorDisclosure label="이미지 배치·효과" className="hero-image-adjustments" bodyClassName="hero-image-controls"
+        persistKey={stateKey ? `${stateKey}:hero-image` : ''}>
           <SegmentedControl
             label="이미지 배치"
             value={mode}
