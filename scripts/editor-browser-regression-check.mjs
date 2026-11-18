@@ -2005,25 +2005,21 @@ async function run() {
     assert(await evaluate(client,
       `document.querySelector(${JSON.stringify(heroAdvanced)})?.open === false`),
       'D02 advanced anchor must close without dropping its value');
-    // Fixed top-navigation blocks use a separate renderer and must share
-    // the same disclosure placement and genuinely collapsed anchor controls.
-    // A deep settings scroll on one block must not carry over to the next.
-    const inspectorScrollBeforeSwitch = await evaluate(client, `(() => {
-      const scroller = document.querySelector('.editor-properties-content');
+    // Pinned top-navigation uses the same inline editing relationship as
+    // normal widgets. Switching to it must not create a covering Inspector.
+    const inlineScrollBeforeSwitch = await evaluate(client, `(() => {
+      const scroller = document.querySelector('.editor-composition-content');
       scroller.scrollTop = 240;
       return scroller.scrollTop;
     })()`);
-    assert(inspectorScrollBeforeSwitch > 100,
-      'scrollable inspector must allow editing deeper properties without moving the navigator');
+    assert(inlineScrollBeforeSwitch > 100,
+      'inline workbench must scroll to deeper block properties without page movement');
     await clickSelector(client, '.topnav-fixed-card .fixed-composition-select');
-    await waitForBrowser(client,
-      `document.querySelector('.editor-properties-content')?.scrollTop <= 1`,
-      'changing block resets stale settings scroll position');
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')
         && document.querySelector('#editor-block-editor-topnav')?.dataset.selected === 'true'
         && document.querySelector('#editor-block-editor-hero')?.dataset.selected === 'false'`,
-      'fixed top navigation selected in the list with a separate inspector');
+      'fixed top navigation selects its original inline editor');
     const fixedSelection = await evaluate(client, `(() => {
       const selected = document.querySelector('#editor-block-editor-topnav');
       const body = document.querySelector('#editor-block-settings-editor-topnav');
@@ -2031,14 +2027,20 @@ async function run() {
         selectPressed: selected?.querySelector('.fixed-composition-select')?.getAttribute('aria-pressed'),
         duplicateEditButton: !!selected?.querySelector('.fixed-open-button'),
         rowEditors: document.querySelectorAll('.screen-order-fixed-blocks .fixed-block-editor').length,
-        inspectorOutsideList: !!body && !body.closest('.screen-order-fixed-blocks'),
-        inspectorTitle: document.querySelector('.screen-order-v2-settings-title h2')?.textContent,
+        inlineUnderFixed: !!body?.closest('.screen-order-fixed-blocks .editor-inline-expanded'),
+        onlyOne: document.querySelectorAll('#editor-block-settings-editor-topnav').length === 1,
+        inspectorHidden: getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none',
+        editorVisible: !!body?.getClientRects().length,
+        inspectorTitle: body?.closest('.screen-order-v2-settings-view')
+          ?.querySelector('.screen-order-v2-settings-title h2')?.textContent,
       };
     })()`);
     assert(fixedSelection.selectPressed === 'true' && !fixedSelection.duplicateEditButton
-      && fixedSelection.rowEditors === 0
-      && fixedSelection.inspectorOutsideList && fixedSelection.inspectorTitle === '상단 메뉴',
-      'fixed selection must keep its real settings in the independent left panel: ' + JSON.stringify(fixedSelection));
+      && fixedSelection.rowEditors === 0 && fixedSelection.inlineUnderFixed
+      && fixedSelection.onlyOne && fixedSelection.inspectorHidden
+      && fixedSelection.editorVisible && fixedSelection.inspectorTitle === '상단 메뉴',
+      'pinned top navigation must edit beneath its own row with no duplicate Inspector: '
+        + JSON.stringify(fixedSelection));
     const fixedAdvancedState = await evaluate(client, `(() => {
       const details = document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings');
       const root = details?.closest('.block-editor-v2-content');
