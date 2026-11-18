@@ -15,7 +15,9 @@ const previewCss = read('src/screens/workspace/WorkspacePreviewPane.css');
 const shell = read('src/styles/editor-workspace.css');
 const reference = read('scripts/editor-reference-browser-check.mjs');
 
-assert(layout.includes('data-editor-layout="three-pane"')
+assert(layout.includes('data-editor-layout="two-pane-inline"')
+  && layout.includes('data-editor-experience="littly-blocks"')
+  && layout.includes('inlineEditing={inlineBlockEditing}')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
   && layout.includes('<h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">')
@@ -24,8 +26,9 @@ assert(layout.includes('data-editor-layout="three-pane"')
 assert(rows.includes('!listOnly && selectedId === block.id')
   && rows.includes('<ScreenOrderSettings')
   && rows.includes('renderBlockEditor={renderBlockEditor}')
-  && layout.includes('<ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />'),
-  'the actual normal block editor must render in inspector mode without expanding list rows');
+  && rows.includes('editor-inline-expanded')
+  && layout.includes("editorDensity !== 'wide' && ("),
+  'the actual selected block editor must expand within the list on desktop and remain single-instance');
 assert(layoutCss.includes('.editor-composition-content')
   && layoutCss.includes('.editor-properties-content')
   && layoutCss.includes('overflow-y: auto;')
@@ -57,4 +60,4 @@ assert(reference.includes("referenceWidth")
   && reference.includes('longInspector')
   && reference.includes('widthOptions === 0'),
   'Chrome reference must cover desktop, narrow laptop and independent inspector');
-console.log('Approved three-pane editor visual contracts passed');
+console.log('Littly-style inline editor and single real preview contracts passed');
