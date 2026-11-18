@@ -2,6 +2,9 @@ import React from 'react';
 import { ScreenOrderItem } from './ScreenOrderItem.jsx';
 import { ScreenOrderSettings } from './ScreenOrderSettings.jsx';
 import { createScreenOrderIdentities } from './screenOrderIdentityModel.js';
+import { ScreenOrderRowActions } from './ScreenOrderRowActions.jsx';
+import { createScreenOrderMovement } from './screenOrderMovement.js';
+import { META } from '../../config/blockMeta.jsx';
 
 // Desktop editing expands the original widget editor within its block row.
 // Compact and laptop continue using their dedicated Inspector path.
@@ -26,8 +29,11 @@ export function ScreenOrderListItems({
 
   return (
     <div className="screen-order-v2-list" data-editor-stack="blocks">
-      {normalBlocks.map((block, index) => (
-        <React.Fragment key={block.id}>
+      {normalBlocks.map((block, index) => {
+        const movement = createScreenOrderMovement({
+          block, index, total, reorderToIndex,
+        });
+        return <React.Fragment key={block.id}>;
           <ScreenOrderItem
             block={block}
             identity={rowIdentities[index]}
@@ -56,12 +62,25 @@ export function ScreenOrderListItems({
                   identity={rowIdentities[index]}
                   navigation={inspectorNavigation}
                   renderBlockEditor={renderBlockEditor}
+                  actions={<ScreenOrderRowActions
+                    block={block}
+                    meta={META[block.type] || META.text}
+                    selected
+                    instance="inspector"
+                    canMoveUp={index > 0}
+                    canMoveDown={index < total - 1}
+                    onMoveUp={movement.moveUp}
+                    onMoveDown={movement.moveDown}
+                    onToggleVisible={() => toggleVisible(block.id)}
+                    onDuplicate={() => duplicateBlock(block.id)}
+                    onRemove={() => removeBlock(block.id)}
+                  />}
                 />
               </div>
             </section>
           )}
-        </React.Fragment>
-      ))}
+        </React.Fragment>;
+      })}
     </div>
   );
 }
