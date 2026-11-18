@@ -902,8 +902,15 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     await capture(client, 'unified-page-design-type-' + width);
   }
   await setViewport(client, 1672, 941, false);
+  // The preceding reference step opens page-wide theme settings. Close that
+  // overlay before selecting a normal block in the newly unified list, since
+  // the page-wide Inspector intentionally covers the left block workbench.
+  await clickPointer(client, '.editor-workbench-close-inspector');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
+    && document.querySelector('.edit-layout')?.dataset.editorDensity === 'wide'`,
+    'page-wide design overlay returns to desktop block list');
   await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
-  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('#editor-block-settings-editor-text')?.closest('.editor-inline-settings') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy inline text editor');
+  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('#editor-block-settings-editor-text')?.closest('.editor-inline-expanded') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy inline text editor');
 
   // The redesigned first view keeps design closed. Open it deliberately for
   // secondary-control sizing and focus tests, rather than treating hidden
