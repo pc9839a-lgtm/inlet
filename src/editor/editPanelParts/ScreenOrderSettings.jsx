@@ -23,7 +23,7 @@ export function ScreenOrderSettings({ block, identity, renderBlockEditor, action
   const designSelector = DESIGN_SECTION[block.type];
   const jumpToSection = (section) => {
     const settings = document.getElementById(`editor-block-settings-${block.id}`);
-    const scroller = settings?.closest('.editor-properties-content');
+    const scroller = settings?.closest('.editor-properties-content, .editor-composition-content');
     if (!scroller) return;
     if (section === 'content') {
       // Return to the inspector heading and the first editable fields.
