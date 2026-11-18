@@ -1517,13 +1517,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 252) <= 3
-    && Math.abs(geometry.inspector.width - 420) <= 3
-    && geometry.list.right <= geometry.inspector.left + 2
-    && geometry.inspector.right <= geometry.phone.left + 2,
-    'approved three-pane geometry must keep navigation, real canvas, settings separated at 1672px: ' + JSON.stringify(geometry));
-  assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
-    'both side panels must remain aligned below the shared 64px workspace toolbar: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 560) <= 3
+    && geometry.inspector.width === 0
+    && geometry.list.right <= geometry.phone.left - 12
+    && document.querySelectorAll('.editor-composition-content .editor-inline-expanded').length === 1,
+    'wide layout must contain one inline block editor and one right-side mobile result: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.list.top - 64) <= 1
+    && Math.abs(geometry.stage.top - 64) <= 1,
+    'block workbench and pinned result must align below the 64px toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
     && geometry.ancestors[1].scrollTop === 0,
     'work panel must remain stationary while the two editing regions scroll: ' + JSON.stringify(geometry));
@@ -1534,7 +1535,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
     && geometry.inspectorScroll === 'auto'
-    && geometry.phone.left >= geometry.inspector.right + 12
+    && geometry.phone.left >= geometry.list.right + 12
     && Math.abs(1672 - geometry.phone.right - 28) <= 3,
     'real page must remain centered with independent list and inspector scrolling: ' + JSON.stringify(geometry));
 
