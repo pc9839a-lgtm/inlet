@@ -203,6 +203,11 @@ export function EditPanelLayout({
   }, [section, selectedBlockId, screenOrderListProps.normalBlocks, screenOrderListProps.selectBlock]);
   const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
   const fixedSelected = fixedDescriptors.find((item) => item.open);
+  // At desktop widths, selecting a normal block expands the ORIGINAL block
+  // editor directly beneath that block. Fixed regions and page-wide options
+  // keep their existing dedicated editor, rather than cloning state or forms.
+  const inlineBlockEditing = editorDensity === 'wide' && inspectorOpen
+    && !showPageOptions && !fixedSelected;
   // Only the actual selected code block may request more horizontal room.
   // Page-level settings and every other widget retain the standard Inspector.
   const selectedEditorType = !showPageOptions
@@ -286,7 +291,8 @@ export function EditPanelLayout({
     } else chooseBlock(id, { focusHeading: false });
     revealInspectorSelection(id);
     const restoreSwitchFocus = (attempts = 5) => requestAnimationFrame(() => {
-      const settings = document.querySelector('.canvas-editor-shell .editor-properties-content [data-block-settings-id]');
+      const settings = document.querySelector('.canvas-editor-shell [data-editor-stack="blocks"] [data-block-settings-id]')
+        || document.querySelector('.canvas-editor-shell .editor-properties-content [data-block-settings-id]');
       if (settings?.getAttribute('data-block-settings-id') !== id) {
         if (attempts > 0) restoreSwitchFocus(attempts - 1);
         return;
@@ -306,9 +312,9 @@ export function EditPanelLayout({
     if (selectedBlockId) setSection('order');
     // A different selected block has a different starting context. Reusing
     // the previous block's deep scroll makes the new content appear empty.
-    document.querySelector('.canvas-editor-shell .editor-properties-content')
+    if (editorDensity !== 'wide') document.querySelector('.canvas-editor-shell .editor-properties-content')
       ?.scrollTo({ top: 0, behavior: 'instant' });
-  }, [selectedBlockId]);
+  }, [selectedBlockId, editorDensity]);
 
   const openPageOptions = (destination = 'design') => {
     setInspectorOpen(true);
@@ -384,7 +390,7 @@ export function EditPanelLayout({
   };
 
   return (
-    <div className="edit-layout" data-editor-layout="three-pane" data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
+    <div className="edit-layout" data-editor-layout="two-pane-inline" data-editor-experience="littly-blocks" data-inspector-kind={showPageOptions ? 'page' : fixedSelected ? 'fixed' : 'block'} data-inline-editing={inlineBlockEditing ? 'true' : 'false'} data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
       <div className="editor-workflow-compact-switch" role="group" aria-label="편집 작업 영역 선택">
         <button type="button" aria-pressed={compactView === 'page'} onClick={() => setCompactView('page')}>실제 페이지</button>
         <button type="button" aria-pressed={compactView === 'blocks'} onClick={() => setCompactView('blocks')}>블록 목록</button>
@@ -459,9 +465,10 @@ export function EditPanelLayout({
           </div>
           <ScreenOrderList
             {...screenOrderListProps}
-            listOnly
+            listOnly={editorDensity !== 'wide' || !inlineBlockEditing}
             selectBlock={chooseBlock}
             inspectorNavigation={inspectorNavigation}
+            onCollapseEditor={returnToPage}
           />
           <FixedCompositionGroup
             groupId="bottom" title="하단 고정" keys={['bottom', 'footer']}
@@ -536,7 +543,7 @@ export function EditPanelLayout({
               </div>
             </section>
           )}
-          {!showPageOptions && !showStartEditing && !fixedSelected && (
+          {!showPageOptions && !showStartEditing && !fixedSelected && editorDensity !== 'wide' && (
             <section className="editor-inspector-panel editor-inline-settings">
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
                 <ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />
