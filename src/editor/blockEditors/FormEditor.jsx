@@ -27,6 +27,7 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
       <FormFieldsSection
         questions={questions}
         openQuestionId={questionState.openQuestionId}
+        focusOnCreateQuestionId={questionState.newlyCreatedQuestionId}
         dragQuestionId={questionState.dragQuestionId}
         dragOverQuestionId={questionState.dragOverQuestionId}
         onAdd={questionState.addQuestion}
