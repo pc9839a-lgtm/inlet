@@ -510,10 +510,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // PageRo's design shortcuts navigate the existing editor, rather than
   // maintaining parallel content/design state or duplicating form fields.
   const inspectorShortcuts = await evaluate(client, `(() => {
-    const panel = document.querySelector('.editor-properties-panel');
+    const panel = document.querySelector('.editor-composition-content .editor-inline-expanded')
+      || document.querySelector('.editor-properties-panel');
     const shortcuts = panel?.querySelectorAll('.editor-inspector-jump button') || [];
     return { labels: [...shortcuts].map(button => button.textContent.trim()),
-      scrollArea: !!panel?.querySelector('.editor-properties-content'),
+      scrollArea: !!panel?.closest('.editor-composition-content') || !!panel?.querySelector('.editor-properties-content'),
       buttonHeight: shortcuts[0]?.getBoundingClientRect().height || 0 };
   })()`);
   assert(JSON.stringify(inspectorShortcuts.labels) === JSON.stringify(['내용', '디자인'])
