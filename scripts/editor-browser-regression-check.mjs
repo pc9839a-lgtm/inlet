@@ -1811,10 +1811,11 @@ async function run() {
     for (const width of [900, 1280]) {
       await setViewport(client, width, 900, false);
       const heroChoiceRails = await evaluate(client, `(() => {
-        const inspector = document.querySelector('.editor-inspector-panel');
-        const design = inspector.querySelector('.hero-editor-design');
-        const header = inspector.querySelector('.screen-order-v2-settings-header');
-        const scroller = inspector.closest('.editor-properties-content');
+        const inspector = document.querySelector('#editor-block-settings-editor-hero')
+          ?.closest('.editor-inspector-panel');
+        const design = inspector?.querySelector('.hero-editor-design');
+        const header = inspector?.querySelector('.screen-order-v2-settings-header');
+        const scroller = inspector?.closest('.editor-properties-content, .editor-composition-content');
         if (!scroller || !design || !header) return [];
         scroller.scrollTop += design.getBoundingClientRect().top - scroller.getBoundingClientRect().top - header.offsetHeight - 12;
         return [...design.querySelectorAll('.editor-segmented-v2')].map(group => {
