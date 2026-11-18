@@ -203,11 +203,13 @@ export function EditPanelLayout({
   }, [section, selectedBlockId, screenOrderListProps.normalBlocks, screenOrderListProps.selectBlock]);
   const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
   const fixedSelected = fixedDescriptors.find((item) => item.open);
-  // At desktop widths, selecting a normal block expands the ORIGINAL block
-  // editor directly beneath that block. Fixed regions and page-wide options
-  // keep their existing dedicated editor, rather than cloning state or forms.
+  // The selected original widget editor expands directly beneath its row.
+  // This includes pinned top/bottom blocks, never a duplicated settings form.
+  // Page-wide options alone use the separate full-left workbench.
   const inlineBlockEditing = editorDensity === 'wide' && inspectorOpen
-    && !showPageOptions && !fixedSelected;
+    && !showPageOptions && !!selectedBlockId;
+  const inlineNormalEditing = inlineBlockEditing && !fixedSelected;
+  const inlineFixedEditing = inlineBlockEditing && !!fixedSelected;
   // Only the actual selected code block may request more horizontal room.
   // Page-level settings and every other widget retain the standard Inspector.
   const selectedEditorType = !showPageOptions
@@ -388,6 +390,21 @@ export function EditPanelLayout({
       />
     );
   };
+  const renderFixedInlineEditor = (block) => {
+    if (!inlineFixedEditing || fixedSelected?.block.id !== block.id) return null;
+    return (
+      <section className="editor-inspector-panel editor-inline-settings editor-inline-expanded"
+        role="region" aria-label="선택한 고정 블록 편집" tabIndex={0}>
+        <div className="editor-inline-expanded-heading">
+          <span>블록 내용 수정</span>
+          <button type="button" onClick={returnToPage} aria-label="이 고정 블록 편집 접기">접기</button>
+        </div>
+        <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
+          {renderFixedSettings()}
+        </div>
+      </section>
+    );
+  };
 
   return (
     <div className="edit-layout" data-editor-layout="two-pane-inline" data-editor-experience="littly-blocks" data-inspector-kind={showPageOptions ? 'page' : fixedSelected ? 'fixed' : 'block'} data-inline-editing={inlineBlockEditing ? 'true' : 'false'} data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
@@ -457,7 +474,8 @@ export function EditPanelLayout({
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']}
               compositionRow selectedId={fixedBlocksProps.openId}
-              openId="" toggleBlockOpen={chooseFixed} />
+              openId="" toggleBlockOpen={chooseFixed}
+              renderInlineEditor={renderFixedInlineEditor} />
           </FixedCompositionGroup>
           <div className="editor-composition-group-caption">
             <span>페이지 블록</span>
@@ -465,8 +483,8 @@ export function EditPanelLayout({
           </div>
           <ScreenOrderList
             {...screenOrderListProps}
-            listOnly={!inlineBlockEditing}
-            inlineEditing={inlineBlockEditing}
+            listOnly={!inlineNormalEditing}
+            inlineEditing={inlineNormalEditing}
             selectBlock={chooseBlock}
             inspectorNavigation={inspectorNavigation}
             onCollapseEditor={returnToPage}
@@ -479,7 +497,8 @@ export function EditPanelLayout({
           >
             <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']}
               compositionRow selectedId={fixedBlocksProps.openId}
-              openId="" toggleBlockOpen={chooseFixed} />
+              openId="" toggleBlockOpen={chooseFixed}
+              renderInlineEditor={renderFixedInlineEditor} />
           </FixedCompositionGroup>
         </div>
         <footer className="editor-composition-footer">
@@ -537,7 +556,7 @@ export function EditPanelLayout({
           {showStartEditing && (
              <StartEditing blocks={screenOrderListProps.normalBlocks} onChooseBlock={chooseBlock} />
            )}
-           {!showPageOptions && fixedSelected && (
+           {!showPageOptions && fixedSelected && editorDensity !== 'wide' && (
             <section className="editor-inspector-panel editor-inline-settings">
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
                 {renderFixedSettings()}
