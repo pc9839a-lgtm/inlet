@@ -151,6 +151,7 @@ const editPanel = await readFile('src/editor/EditPanel.jsx', 'utf8');
 const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const blockSearch = await readFile('src/editor/editPanelParts/BlockNavigatorSearch.jsx', 'utf8');
 const stackItems = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
+const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderList.jsx', 'utf8');
 const fixedItems = await readFile('src/editor/editPanelParts/GlobalFixedBlocks.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
@@ -222,7 +223,7 @@ assert(layout.includes('data-editor-layout="two-pane-inline"')
   && layout.includes('inlineEditing={inlineBlockEditing}')
   && layout.includes('editorDensity !== \'wide\' && (')
   && stackItems.includes('editor-inline-expanded')
-  && stackItems.includes('listOnly={!props.inlineEditing}'),
+  && screenOrderList.includes('listOnly={!props.inlineEditing}'),
   'wide desktop must use a single inline selected-block editor with separate compact/fixed/page settings');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor')
