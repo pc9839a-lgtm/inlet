@@ -33,7 +33,7 @@ export function ScreenOrderListItems({
         const movement = createScreenOrderMovement({
           block, index, total, reorderToIndex,
         });
-        return <React.Fragment key={block.id}>;
+        return (<React.Fragment key={block.id}>
           <ScreenOrderItem
             block={block}
             identity={rowIdentities[index]}
@@ -79,7 +79,7 @@ export function ScreenOrderListItems({
               </div>
             </section>
           )}
-        </React.Fragment>;
+        </React.Fragment>);
       })}
     </div>
   );
