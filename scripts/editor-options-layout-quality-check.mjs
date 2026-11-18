@@ -198,12 +198,15 @@ await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsBody.jsx
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsHeader.jsx');
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 
-assert(editLayout.includes('data-editor-layout="three-pane"')
+assert(editLayout.includes('data-editor-layout="two-pane-inline"')
+  && editLayout.includes('data-editor-experience="littly-blocks"')
+  && editLayout.includes('inlineEditing={inlineBlockEditing}')
   && editLayout.includes('aria-controls="editor-composition-panel"')
   && editLayout.includes('editor-properties-panel')
-  && editorWorkspaceCss.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr)')
+  && editorWorkspaceCss.includes("grid-template-columns: var(--editor-list-width) minmax(0, 1fr)")
+  && editPanelLayoutCss.includes('.editor-inline-expanded')
   && editPanelLayoutCss.includes('.editor-properties-content'),
-  'the approved block list, live page and independent settings must remain distinct');
+  'desktop must combine block rows and their inline editor; separate settings remain only for page/fixed/compact');
 
 console.log(JSON.stringify({
   ok: true,
