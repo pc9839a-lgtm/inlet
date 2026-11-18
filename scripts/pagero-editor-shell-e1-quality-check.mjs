@@ -220,10 +220,11 @@ assert(layout.includes('data-editor-layout="two-pane-inline"')
   && layout.includes('data-editor-experience="littly-blocks"')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
-  && layout.includes('inlineEditing={inlineBlockEditing}')
+  && layout.includes('inlineEditing={inlineNormalEditing}')
   && layout.includes('editorDensity !== \'wide\' && (')
   && stackItems.includes('editor-inline-expanded')
-  && screenOrderList.includes('listOnly={!props.inlineEditing}'),
+  && screenOrderList.includes('listOnly={!props.inlineEditing}')
+  && layout.includes('renderInlineEditor={renderFixedInlineEditor}'),
   'wide desktop must use a single inline selected-block editor with separate compact/fixed/page settings');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor')
