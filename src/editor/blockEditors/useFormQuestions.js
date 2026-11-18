@@ -1,4 +1,10 @@
 import { useState } from 'react';
+// The form editor intentionally changes its React position when desktop and
+// laptop layouts switch. Remember only the open card, keyed to the exact page
+// and form block; no content, answers, or unsaved draft values are cached.
+const openedQuestionByForm = new Map();
+const MAX_REMEMBERED_FORMS = 100;
+
 import {
   createQuestionByType,
   duplicateQuestionInList,
@@ -8,8 +14,23 @@ import {
   updateQuestionList,
 } from './formQuestionListModel.js';
 
-export function useFormQuestions({ questions, set }) {
-  const [openQuestionId, setOpenQuestionId] = useState('');
+export function useFormQuestions({ questions, set, persistKey = '' }) {
+  const [openQuestionId, setOpenQuestionId] = useState(() => {
+    const remembered = persistKey ? openedQuestionByForm.get(persistKey) : '';
+    return questions.some((question) => question.id === remembered) ? remembered : '';
+  });
+  const selectOpenQuestion = (id) => {
+    if (persistKey) {
+      openedQuestionByForm.delete(persistKey);
+      if (id) {
+        openedQuestionByForm.set(persistKey, id);
+        if (openedQuestionByForm.size > MAX_REMEMBERED_FORMS) {
+          openedQuestionByForm.delete(openedQuestionByForm.keys().next().value);
+        }
+      }
+    }
+    setOpenQuestionId(id);
+  };
   const [dragQuestionId, setDragQuestionId] = useState('');
   const [dragOverQuestionId, setDragOverQuestionId] = useState('');
 
@@ -18,13 +39,13 @@ export function useFormQuestions({ questions, set }) {
   const removeQuestion = (id) => {
     const next = removeQuestionFromList(questions, id);
     set({ questions: next });
-    if (openQuestionId === id) setOpenQuestionId(next[0]?.id || '');
+    if (openQuestionId === id) selectOpenQuestion(next[0]?.id || '');
   };
 
   const duplicateQuestion = (question) => {
     const { copy, questions: next } = duplicateQuestionInList(questions, question);
     set({ questions: next });
-    setOpenQuestionId(copy.id);
+    selectOpenQuestion(copy.id);
   };
 
   const moveQuestionByDrag = (targetId) => {
@@ -42,7 +63,7 @@ export function useFormQuestions({ questions, set }) {
   const addQuestion = (type = 'short') => {
     const question = createQuestionByType(type);
     set({ questions: [...questions, question] });
-    setOpenQuestionId(question.id);
+    selectOpenQuestion(question.id);
   };
 
   return {
@@ -54,7 +75,7 @@ export function useFormQuestions({ questions, set }) {
     removeQuestion,
     duplicateQuestion,
     moveQuestion,
-    toggleQuestionOpen: (id) => setOpenQuestionId(openQuestionId === id ? '' : id),
+    toggleQuestionOpen: (id) => selectOpenQuestion(openQuestionId === id ? '' : id),
     moveQuestionByDrag,
     startQuestionDrag: (id) => {
       setDragQuestionId(id);
