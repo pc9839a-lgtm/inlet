@@ -369,6 +369,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   });
   assert(apiState.saveCount === 0, 'opening page options must not save or publish the page');
   await setViewport(client, 1672, 941, false);
+  // Page-global design uses a dedicated overlay over the left workbench.
+  // Explicitly return to the list before opening a different block; never
+  // fake a click on a row that is visually covered by page settings.
+  await clickPointer(client, '.editor-workbench-close-inspector');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
+    && !!document.querySelector('#editor-composition-panel .screen-order-v2-head')`,
+    'closing page design restores the editable block list');
 
   // A visual redesign must change the *first visible task*, not just CSS
   // tokens. Verify real editor settings and capture each of four block types.
