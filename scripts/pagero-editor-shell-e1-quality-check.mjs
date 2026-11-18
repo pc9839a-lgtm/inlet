@@ -215,11 +215,15 @@ assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 
 assert(active.includes('stylePanelProps={stylePanelProps}'), 'edit workspace must receive theme controls');
 assert(editPanel.includes('stylePanelProps={stylePanelProps}'), 'EditPanel must forward theme controls');
 
-assert(layout.includes('data-editor-layout="three-pane"')
+assert(layout.includes('data-editor-layout="two-pane-inline"')
+  && layout.includes('data-editor-experience="littly-blocks"')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
-  && layout.includes('<ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />'),
-  'editor must separate composition list from the real selected block editor');
+  && layout.includes('inlineEditing={inlineBlockEditing}')
+  && layout.includes('editorDensity !== \'wide\' && (')
+  && stackItems.includes('editor-inline-expanded')
+  && stackItems.includes('listOnly={!props.inlineEditing}'),
+  'wide desktop must use a single inline selected-block editor with separate compact/fixed/page settings');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor')
   && stackItems.includes('<ScreenOrderSettings')
