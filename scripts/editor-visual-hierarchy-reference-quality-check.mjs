@@ -17,7 +17,7 @@ const reference = read('scripts/editor-reference-browser-check.mjs');
 
 assert(layout.includes('data-editor-layout="two-pane-inline"')
   && layout.includes('data-editor-experience="littly-blocks"')
-  && layout.includes('inlineEditing={inlineBlockEditing}')
+  && layout.includes('inlineEditing={inlineNormalEditing}')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
   && layout.includes('<h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">')
