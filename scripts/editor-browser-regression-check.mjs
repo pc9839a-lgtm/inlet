@@ -950,6 +950,9 @@ async function collectDesktopMetrics(client) {
       frame: rect(frame),
       composition: rect(document.querySelector('.editor-composition-panel')),
       inspector: rect(document.querySelector('.editor-properties-panel')),
+      inlineDesktop: document.querySelector('.edit-layout')?.dataset.editorExperience === 'littly-blocks' && innerWidth >= 1280,
+      inlineActive: document.querySelector('.edit-layout')?.dataset.inlineEditing === 'true',
+      inspectorKind: document.querySelector('.edit-layout')?.dataset.inspectorKind,
       previewDirectChildren: preview?.children?.length || 0,
       previewFrameCount: preview?.querySelectorAll('.phone-frame').length || 0,
       frameContentWidth: frame?.querySelector('.landing-page')?.clientWidth || 0,
@@ -1066,14 +1069,20 @@ function assertDesktop(metrics) {
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 2,
     `desktop shell must preserve two workbench tracks (list and actual page): ${metrics.shellGridColumns}`);
   assertReferenceTracks(metrics, metrics.innerWidth);
-  assert(metrics.workPanel.right <= metrics.inspector.left + 3
-    && metrics.frame.left >= metrics.inspector.right - 3,
-    `left editing panels must precede the right-hand page: ${JSON.stringify({navigator:metrics.workPanel, inspector:metrics.inspector, page:metrics.preview})}`);
+  if (metrics.inlineDesktop) {
+    assert(metrics.workPanel.right <= metrics.frame.left - 12
+      && metrics.frame.right <= metrics.preview.right + 3,
+      `left inline block workbench must precede the right-hand page: ${JSON.stringify(metrics)}`);
+  } else {
+    assert(metrics.workPanel.right <= metrics.inspector.left + 3
+      && metrics.frame.left >= metrics.inspector.right - 3,
+      `left editing panels must precede the right-hand page: ${JSON.stringify({navigator:metrics.workPanel, inspector:metrics.inspector, page:metrics.preview})}`);
+  }
   assert(metrics.previewDirectChildren === 1 && metrics.previewFrameCount === 1,
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
-  assert(metrics.frame.left >= metrics.inspector.right + 12
+  assert(metrics.frame.left >= (metrics.inlineDesktop ? metrics.workPanel.right : metrics.inspector.right) + 12
     && Math.abs(metrics.preview.right - metrics.frame.right - 28) <= 3,
     `phone must keep a constant 28px right inset in the desktop preview: ${JSON.stringify(metrics.frame)}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
@@ -1083,12 +1092,13 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || 0;
-  const expectedList = width < 1280 ? 264 : 252;
+  const expectedList = width < 1280 ? 264 : metrics.inlineDesktop ? 560 : 252;
   assert(Math.abs(composition - expectedList) <= 3,
     `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
-  assert(Math.abs(inspector - (width < 1280 ? 334 : 420)) <= 3,
+  assert(Math.abs(inspector - (width < 1280 ? 334 : metrics.inlineDesktop
+    ? metrics.inspectorKind === 'block' ? 0 : 560 : 420)) <= 3,
     `left block properties must retain usable width at ${width}px: ${JSON.stringify({inspector})}`);
-  assert(Math.abs(edit - (width < 1280 ? 0 : 252)) <= 3,
+  assert(Math.abs(edit - (width < 1280 ? 0 : metrics.inlineDesktop ? 560 : 252)) <= 3,
     `collapsed laptop navigator must not consume the canvas: ${JSON.stringify({width,edit})}`);
 }
 
@@ -3176,13 +3186,13 @@ async function run() {
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
       && leftGeometry.inspectorInner >= 260
-      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 334 : 420)) <= 3
+      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 334 : 560)) <= 3
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 500
       && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
       && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
       && leftGeometry.propertiesRight <= (leftGeometry.previewLeft + leftGeometry.preview) - 390 + 2
-      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 252)) <= 4,
+      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 560)) <= 4,
       'selected properties must remain readable in their own panel without covering the real mobile canvas: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
