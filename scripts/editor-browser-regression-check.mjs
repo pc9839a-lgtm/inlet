@@ -3748,29 +3748,29 @@ async function run() {
     assert(longMetrics.count >= 32 && longMetrics.previewCount >= 30 && longMetrics.selected
       && longMetrics.scrollTop > 0 && Math.abs(longMetrics.width - 390) <= 1 && longMetrics.overflow <= 3,
       'deep selection stays visible in one 390px phone without page horizontal overflow: ' + JSON.stringify(longMetrics));
-    // Real 36-block page: changing properties must leave the navigator's
-    // deep selection in place, and the page-settings footer stays visible.
+    // On a 36-block real page, the selected editor expands inside the deep
+    // row's one scrollable list. The sticky page-actions footer and live phone
+    // must not move when the user edits a long block.
     const longScroll = await evaluate(longPageClient, `(() => {
       const list = document.querySelector('.editor-composition-content');
-      const inspector = document.querySelector('.editor-properties-content');
       const composition = document.querySelector('.editor-composition-panel');
       const settings = document.querySelector('#editor-block-settings-editor-long-25 .block-editor-v2');
       const outer = document.querySelector('.work-panel');
-      if (!list || !inspector || !composition || !settings || !outer) return null;
+      if (!list || !composition || !settings || !outer) return null;
       const previousMinHeight = settings.style.minHeight;
-      const previousInspectorTop = inspector.scrollTop;
       const listBefore = list.scrollTop;
       let metrics;
       try {
         settings.style.minHeight = '1200px';
-        inspector.scrollTop = 240;
+        list.scrollTop = Math.max(listBefore, 240);
         metrics = {
           navigatorOverflowY: getComputedStyle(list).overflowY,
-          inspectorOverflowY: getComputedStyle(inspector).overflowY,
+          blockSettingsOverflowY: getComputedStyle(settings).overflowY,
           workOverflowY: getComputedStyle(outer).overflowY,
           navigatorScrollTop: list.scrollTop,
-          inspectorScrollTop: inspector.scrollTop,
-          independent: list.scrollTop === listBefore,
+          inline: !!settings.closest('.editor-inline-expanded'),
+          duplicateCount: document.querySelectorAll('#editor-block-settings-editor-long-25').length,
+          inspectorHidden: getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none',
           outerTop: outer.scrollTop,
           footerVisible: (() => {
             const footer = composition.querySelector('.editor-composition-footer');
@@ -3781,15 +3781,19 @@ async function run() {
         };
       } finally {
         settings.style.minHeight = previousMinHeight;
-        inspector.scrollTop = previousInspectorTop;
+        list.scrollTop = listBefore;
       }
       return metrics;
     })()`);
     assert(longScroll?.navigatorOverflowY === 'auto'
-      && longScroll.inspectorOverflowY === 'auto' && longScroll.workOverflowY === 'hidden'
-      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop > 0
-      && longScroll.independent && longScroll.footerVisible && longScroll.outerTop === 0,
-      '36-block page must preserve independent navigator and settings scroll positions: ' + JSON.stringify(longScroll));
+      && longScroll.blockSettingsOverflowY === 'visible'
+      && longScroll.workOverflowY === 'hidden'
+      && longScroll.navigatorScrollTop > 0
+      && longScroll.inline && longScroll.duplicateCount === 1
+      && longScroll.inspectorHidden && longScroll.footerVisible
+      && longScroll.outerTop === 0,
+      '36-block page must preserve one inline block scroller and pinned page actions: '
+        + JSON.stringify(longScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-1672');
     await setViewport(longPageClient, 900, 780, false);
     await showBlockList(longPageClient);
