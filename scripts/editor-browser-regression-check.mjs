@@ -2216,25 +2216,31 @@ async function run() {
     const stageTwoSettings = await evaluate(client, `(() => {
       const panel = document.querySelector('#editor-block-settings-editor-hero');
       const list = document.querySelector('.screen-order-v2-list-view');
-      const heading = document.querySelector('.screen-order-v2-settings-title h2');
+      const heading = panel?.closest('.screen-order-v2-settings-view')
+        ?.querySelector('.screen-order-v2-settings-title h2');
       return {
-        listVisible: list.getClientRects().length > 0,
-        separateFromRows: !!panel && !panel.closest('.screen-order-v2-list'),
+        listVisible: !!list?.getClientRects().length,
+        inlineBelowRow: !!panel?.closest('.screen-order-v2-list .editor-inline-expanded'),
+        activeEditors: document.querySelectorAll('#editor-block-settings-editor-hero').length,
         rowEditors: document.querySelectorAll('.screen-order-v2-slot .block-editor-v2').length,
-        title: document.querySelector('.screen-order-v2-settings-title h2')?.textContent,
-        headingVisible: heading?.getClientRects().length > 0,
+        title: heading?.textContent,
+        headingVisible: !!heading?.getClientRects().length,
         panelWidth: panel?.getBoundingClientRect().width,
-        paneWidth: document.querySelector('.editor-properties-panel').getBoundingClientRect().width,
-        fixedVisible: document.querySelector('.screen-order-fixed-blocks').getClientRects().length > 0,
-        addVisible: document.querySelector('.fixed-add-dock').getClientRects().length > 0,
+        paneWidth: document.querySelector('.editor-composition-panel').getBoundingClientRect().width,
+        inspectorHidden: getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none',
+        fixedVisible: !!document.querySelector('.screen-order-fixed-blocks')?.getClientRects().length,
+        addVisible: !!document.querySelector('.fixed-add-dock')?.getClientRects().length,
         helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
       };
     })()`);
-    assert(stageTwoSettings.listVisible && stageTwoSettings.separateFromRows && stageTwoSettings.rowEditors === 0
+    assert(stageTwoSettings.listVisible && stageTwoSettings.inlineBelowRow
+      && stageTwoSettings.activeEditors === 1 && stageTwoSettings.rowEditors === 0
       && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.headingVisible
       && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.paneWidth
-      && stageTwoSettings.fixedVisible && stageTwoSettings.addVisible && stageTwoSettings.helperCopyRemoved,
-      'stage 2 must preserve the list and independently edit the selected title in its left panel: ' + JSON.stringify(stageTwoSettings));
+      && stageTwoSettings.inspectorHidden && stageTwoSettings.fixedVisible
+      && stageTwoSettings.addVisible && stageTwoSettings.helperCopyRemoved,
+      'stage 2 must edit its selected hero directly below the row with only one widget editor: '
+        + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
     await openBlockSettings(client, 'editor-hero');
     await focusSelector(client, '#editor-block-editor-hero .screen-order-v2-title-wrap');
