@@ -1816,20 +1816,20 @@ async function run() {
         const design = inspector?.querySelector('.hero-editor-design');
         const header = inspector?.querySelector('.screen-order-v2-settings-header');
         const scroller = inspector?.closest('.editor-properties-content, .editor-composition-content');
-        if (!scroller || !design || !header) return [];
+        if (!scroller || !design || !header || !design.open) return [];
         scroller.scrollTop += design.getBoundingClientRect().top - scroller.getBoundingClientRect().top - header.offsetHeight - 12;
         return [...design.querySelectorAll('.editor-segmented-v2')].map(group => {
           const buttons = [...group.querySelectorAll('button')];
           const boxes = buttons.map(button => button.getBoundingClientRect());
           const label = group.querySelector('.editor-control-v2-copy').getBoundingClientRect();
           const rail = group.querySelector('.editor-segmented-v2-options').getBoundingClientRect();
-          return { label:group.getAttribute('aria-label'), count:buttons.length,
+          return { label:group.getAttribute('aria-label'), visible:rail.height >= 36, count:buttons.length,
             rowSpread:Math.max(...boxes.map(box=>box.top))-Math.min(...boxes.map(box=>box.top)),
             labelHeight:label.height, labelCenterOffset:Math.abs((label.top+label.height/2)-(rail.top+rail.height/2)),
             overflow:buttons.some(button=>button.scrollWidth > button.clientWidth + 2) };
         });
       })()`);
-      assert(heroChoiceRails.length === 3 && heroChoiceRails.every(rail => rail.count === 3 && rail.rowSpread <= 1 && rail.labelHeight <= 24 && rail.labelCenterOffset <= 45 && !rail.overflow),
+      assert(heroChoiceRails.length === 3 && heroChoiceRails.every(rail => rail.visible && rail.count === 3 && rail.rowSpread <= 1 && rail.labelHeight <= 24 && rail.labelCenterOffset <= 45 && !rail.overflow),
         'hero alignment/title/body options must each stay on one readable row at ' + width + 'px: ' + JSON.stringify(heroChoiceRails));
       await capture(client, 'desktop-hero-design-single-row-' + width);
     }
