@@ -1528,6 +1528,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const properties = document.querySelector('.editor-properties-content');
     return { header: rect(document.querySelector('.workspace-persistent-header')), list:rect(list), inspector:rect(inspector), stage:rect(stage), phone:rect(document.querySelector('.phone-frame')), pageWidth:document.querySelector('.phone-frame .landing-page').clientWidth,
       phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-device-widths button').length, documentWidth:document.documentElement.scrollWidth,
+      inlineEditors:document.querySelectorAll('.editor-composition-content .editor-inline-expanded').length,
       listScroll:getComputedStyle(list).overflowY,
       navigatorScroll:getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
       inspectorScroll:getComputedStyle(properties).overflowY,
@@ -1543,7 +1544,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 560) <= 3
     && geometry.inspector.width === 0
     && geometry.list.right <= geometry.phone.left - 12
-    && document.querySelectorAll('.editor-composition-content .editor-inline-expanded').length === 1,
+    && geometry.inlineEditors === 1,
     'wide layout must contain one inline block editor and one right-side mobile result: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1
     && Math.abs(geometry.stage.top - 64) <= 1,
