@@ -1063,6 +1063,22 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && fixedGroupsInitial.topRows === 1 && fixedGroupsInitial.bottomRows === 2
     && fixedGroupsInitial.buttonCount === 2,
     'fixed regions initially expose their real, unreordered rows: ' + JSON.stringify(fixedGroupsInitial));
+  const pinnedInline = await evaluate(client, `(() => {
+    const settings = document.querySelector('#editor-block-settings-editor-bottom');
+    const properties = document.querySelector('.editor-properties-panel');
+    return {
+      inline: !!settings?.closest('[data-fixed-group="bottom"] .editor-inline-expanded'),
+      visible: !!settings?.getClientRects().length,
+      count: document.querySelectorAll('#editor-block-settings-editor-bottom').length,
+      inspectorHidden: getComputedStyle(properties).display === 'none',
+      actualPageWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
+    };
+  })()`);
+  assert(pinnedInline.inline && pinnedInline.visible && pinnedInline.count === 1
+    && pinnedInline.inspectorHidden && pinnedInline.actualPageWidth === 390,
+    'pinned CTA must expand its one real widget editor beneath its row, never a covering Inspector: '
+      + JSON.stringify(pinnedInline));
+  await capture(client, 'littly-inline-bottom-fixed-1672');
 
   await clickPointer(client, '[data-fixed-group="bottom"] .editor-fixed-group-toggle');
   await waitForBrowser(client, `(() => {
