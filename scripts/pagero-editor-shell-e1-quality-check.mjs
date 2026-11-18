@@ -512,9 +512,9 @@ assert(layout.includes("event.target?.closest?.('[data-composition-action-menu=\
   'body-portaled block-list action menus must count as inside the laptop navigator, unlike inspector menus');
 assert(layout.includes("event.target?.closest?.('.editor-gallery-backdrop')"),
   'laptop add-block gallery must count as navigator-owned so its close restores focus to a visible add button');
-assert(layout.includes("?.scrollTo({ top: 0, behavior: 'instant' })")
-  && layout.includes('}, [selectedBlockId]);'),
-  'changing selected blocks must reset the independently scrolling property inspector');
+assert(layout.includes("if (editorDensity !== 'wide') document.querySelector('.canvas-editor-shell .editor-properties-content')")
+  && layout.includes('}, [selectedBlockId, editorDensity]);'),
+  'wide inline edit must preserve block-list scroll while compact/laptop reset the separate Inspector');
 assert(layout.includes('const focusPageHeading = (attempts = 5)')
   && layout.includes("inspector?.querySelector('[data-editor-section=\"options\"] .editor-page-options-heading h2')")
   && layout.includes('heading.focus({ preventScroll: true })')
