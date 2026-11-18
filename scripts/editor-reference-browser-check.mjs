@@ -427,6 +427,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         return {
           selected: layout?.dataset.selectedBlockType,
           inspectorWidth: inspector?.width,
+          inlineWidth: rect(document.querySelector('.editor-inline-expanded'))?.width,
+          inlineEditorCount: document.querySelectorAll('#editor-block-settings-editor-code').length,
           inputWidth: code?.width,
           phoneOffset: phone?.left - inspector?.right,
           phoneRightInset: window.innerWidth - phone?.right,
@@ -434,8 +436,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           documentWidth: document.documentElement.scrollWidth,
         };
       })()`);
-      assert(wideCode.selected === 'code' && wideCode.inspectorWidth >= 575
-        && wideCode.inputWidth >= 490 && wideCode.phoneOffset >= 12
+      assert(wideCode.selected === 'code' && wideCode.inspectorWidth === 0
+        && wideCode.inlineWidth >= 510 && wideCode.inlineEditorCount === 1
+        && wideCode.inputWidth >= 490
         && Math.abs(wideCode.phoneRightInset - 28) <= 3
         && wideCode.actualPageWidth === 390
         && wideCode.documentWidth <= 1672,
@@ -445,14 +448,18 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       await setViewport(client, 1440, 941, false);
       await waitForBrowser(client, `(() => {
         const layout = document.querySelector('.edit-layout');
-        const inspector = document.querySelector('.editor-properties-panel');
+        const code = document.querySelector('#editor-block-settings-editor-code .code-editor-box textarea');
+        const phone = document.querySelector('.phone-frame');
         return layout?.dataset.selectedBlockType === 'code'
-          && Math.abs(inspector?.getBoundingClientRect().width - 420) <= 3
+          && layout.dataset.inlineEditing === 'true'
+          && code?.getBoundingClientRect().width >= 490
+          && Math.abs(1440 - phone?.getBoundingClientRect().right - 28) <= 3
           && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
-      })()`, 'code Inspector returns to standard width when free space shrinks');
+      })()`, 'inline code remains readable and the same page stays pinned at 1440px');
       await setViewport(client, 1672, 941, false);
-      await waitForBrowser(client, `document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 575`,
-        'code Inspector expands again at the wide desktop breakpoint');
+      await waitForBrowser(client,
+        `document.querySelector('#editor-block-settings-editor-code .code-editor-box textarea')?.getBoundingClientRect().width >= 490`,
+        'inline code editor remains wide on desktop without a second editor instance');
     }
     if (id === 'editor-text' || id === 'editor-image' || id === 'editor-form' || id === 'editor-code') {
       await capture(client, 'inspector-content-first-' + id);
