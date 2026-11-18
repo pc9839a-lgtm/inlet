@@ -200,7 +200,7 @@ await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 
 assert(editLayout.includes('data-editor-layout="two-pane-inline"')
   && editLayout.includes('data-editor-experience="littly-blocks"')
-  && editLayout.includes('inlineEditing={inlineBlockEditing}')
+  && editLayout.includes('inlineEditing={inlineNormalEditing}')
   && editLayout.includes('aria-controls="editor-composition-panel"')
   && editLayout.includes('editor-properties-panel')
   && editorWorkspaceCss.includes("grid-template-columns: var(--editor-list-width) minmax(0, 1fr)")
