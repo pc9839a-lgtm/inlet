@@ -465,7 +465,8 @@ export function EditPanelLayout({
           </div>
           <ScreenOrderList
             {...screenOrderListProps}
-            listOnly={editorDensity !== 'wide' || !inlineBlockEditing}
+            listOnly={!inlineBlockEditing}
+            inlineEditing={inlineBlockEditing}
             selectBlock={chooseBlock}
             inspectorNavigation={inspectorNavigation}
             onCollapseEditor={returnToPage}
