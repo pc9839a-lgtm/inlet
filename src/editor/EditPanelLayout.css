@@ -721,10 +721,11 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
   width: 560px;
   max-width: calc(100vw - 430px);
 }
-/* In wide inline mode, hide the unused Inspector, but preserve the single
-   normal block editor inside the composition stack. */
+/* Hide the old Inspector for BOTH ordinary and pinned blocks; the original
+   selected widget editor is visible exactly once, beneath its own row.
+   Page options still own the full-left panel. */
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide'][data-inspector-kind='block']
+.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide'][data-inline-editing='true']
 > .editor-properties-panel {
   display: none !important;
 }
