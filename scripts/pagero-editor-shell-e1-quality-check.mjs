@@ -395,8 +395,9 @@ assert(!headerSource.includes('panel-save-status operations-save-status')
 
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr) !important;')
+assert(css.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width) !important;')
   && editPanelLayoutCss.includes('.editor-properties-panel')
+  && layout.includes('data-inspector-side="right"')
   && editPanelLayoutCss.includes('.editor-properties-content')
   && css.includes('overflow: hidden !important;'),
   'the editor must keep block list and properties on the left and the mobile page on the right');
