@@ -159,9 +159,14 @@ and statistics.
   redesign. Historical E4 documentation is not authorization for AI work.
 * Treat owner-rejected screenshots as unresolved UX/design work even when
   functional tests pass. Do not report QA success as design acceptance.
-* Preserve the owner's left editing / right page-preview arrangement,
-  persistent composition list, direct code editing, and one 390px preview.
-  Do not copy a competitor's right inspector over these explicit constraints.
+* Current owner override (2026-11-19): clicking a block opens its existing
+  editor in a right-side inspector. On wide PCs use left block list, center
+  single 390px live page, and right selected settings; close restores the
+  page without losing selection. On laptops keep the left block drawer and
+  right settings; preserve compact/mobile task switching.
+  Previous left-settings / right-preview directions are historical.
+* Preserve the persistent composition list, direct code editing, and one
+  real 390px preview; never duplicate editor state or published output.
 * Keep the block list separate from detailed widget settings.
 * A block row contains drag handle, order, icon, name, visibility, and actions.
 * Keep global page options separate from block settings.
