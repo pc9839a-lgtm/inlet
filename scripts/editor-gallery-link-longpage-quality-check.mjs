@@ -45,8 +45,9 @@ assert.ok(linkFields.includes('data-link-item-label-index={index}'),
   'Inspector link input must preserve item identity');
 assert.ok(screen.includes('const editPreviewLinkItem = (id, index)'),
   'link preview must only focus a validated source item');
-assert.ok(screen.includes("button.textContent.trim() === '링크 목록'"),
-  'existing link items tab must be used without duplicate editor');
+assert.ok(!screen.includes("button.textContent.trim() === '링크 목록'")
+  && screen.includes("settings.querySelectorAll('.links-editor-v3 .editor-list-v2-items > .editor-list-item-v2')"),
+  'preview link click must directly open its matching item without a redundant intermediate tab');
 assert.ok(renderer.includes('onEditItem={onEditPreviewLinkItem}'),
   'actual link rendering must receive only editor-preview callback');
 assert.ok(pane.includes('onEditPreviewLinkItem={onEditPreviewLinkItem}'),
