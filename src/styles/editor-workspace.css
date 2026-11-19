@@ -19,7 +19,7 @@ html body #root .canvas-editor-shell .work-panel {
   grid-column: 1; grid-row: 2;
   width:100%; max-width:none; min-height:0;
   height:100%!important; margin:0; padding:0;
-  overflow:hidden!important;
+  overflow: hidden !important;
   border-right:1px solid #e5e9f0; background:#fff;
 }
 /* Laptop list drawer. */
