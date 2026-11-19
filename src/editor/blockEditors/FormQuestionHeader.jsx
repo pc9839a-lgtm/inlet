@@ -8,6 +8,7 @@ export default function FormQuestionHeader({ question, index, isOpen, onToggleOp
       <button type="button" className="form-question-title" aria-expanded={isOpen} aria-controls={isOpen ? `form-question-body-${question.id}` : undefined} onClick={onToggleOpen}>
         <span className="form-question-number">{index + 1}</span>
         <span className="form-question-identity"><strong>{question.label || T.item}</strong><small>{questionTypeLabel(question.type)}{question.required ? ` · ${T.required}` : ''}</small></span>
+        <span className="form-question-edit-action" aria-hidden="true">{isOpen ? '접기' : '수정'}</span>
         <ChevronDown className="form-question-chevron" size={17} aria-hidden="true" />
       </button>
     </div>
