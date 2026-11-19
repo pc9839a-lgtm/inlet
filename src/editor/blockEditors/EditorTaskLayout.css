@@ -92,3 +92,48 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-view .editor-insp
     padding-block: 16px;
   }
 }
+
+/* Primary tasks lead with editable values, not button-like section titles. */
+html body #root .canvas-editor-shell .editor-task-inline-title {
+  margin: 0 0 14px;
+  color: #18253a;
+  font-size: 15px;
+  font-weight: 720;
+  line-height: 1.4;
+  letter-spacing: -.018em;
+}
+html body #root .canvas-editor-shell .text-editor-flow.editor-task-flow {
+  gap: 16px;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .editor-task-inline-title {
+  margin-bottom: -5px;
+}
+html body #root .canvas-editor-shell .text-editor-flow > .text-editor-design {
+  margin-top: 12px;
+  border-top: 1px solid #e6eaf0;
+}
+html body #root .canvas-editor-shell .hero-editor-flow.editor-task-flow {
+  gap: 16px;
+}
+html body #root .canvas-editor-shell .hero-editor-flow > .hero-image-section {
+  min-width: 0;
+}
+html body #root .canvas-editor-shell .hero-editor-flow > .editor-task-section {
+  margin-top: 8px;
+}
+html body #root .canvas-editor-shell .hero-editor-flow > .hero-editor-design {
+  margin-top: 6px;
+  border-top: 1px solid #e6eaf0;
+}
+html body #root .canvas-editor-shell .image-editor-flow .image-primary-task {
+  gap: 15px;
+}
+html body #root .canvas-editor-shell .image-editor-flow .image-editor-more {
+  margin-top: 0;
+}
+html body #root .canvas-editor-shell .code-task-title {
+  margin-top: 4px;
+}
+html body #root .canvas-editor-shell .screen-order-v2-settings .editor-task-section > .editor-task-heading {
+  scroll-margin-top: 18px;
+}
