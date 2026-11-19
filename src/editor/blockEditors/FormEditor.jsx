@@ -22,8 +22,12 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
   });
 
   return (
-    <div className="form-editor-flow">
-      <FormBasicSection s={s} set={set} />
+    <div className="form-editor-flow editor-task-flow" data-editor-task="form">
+      <section className="editor-task-section form-title-task" aria-label="폼 제목과 설명">
+        <div className="editor-task-heading"><h3>폼 제목과 설명</h3></div>
+        <FormBasicSection s={s} set={set} />
+      </section>
+      <section className="editor-task-section form-questions-task" aria-label="받을 질문">
       <FormFieldsSection
         questions={questions}
         openQuestionId={questionState.openQuestionId}
@@ -41,7 +45,13 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
         onDrop={questionState.dropQuestion}
         onDragEnd={questionState.endQuestionDrag}
       />
-      <Field label="버튼 문구" value={s.submit} onChange={(value) => set({ submit: value })} />
+      </section>
+      <section className="editor-task-section form-submit-task" aria-label="제출 버튼 문구">
+        <div className="editor-task-heading"><h3>제출 버튼</h3></div>
+        <Field label="버튼 문구" value={s.submit} onChange={(value) => set({ submit: value })} />
+      </section>
+      <section className="editor-task-section editor-task-secondary" aria-label="추가 폼 설정">
+        <div className="editor-task-heading"><h3>추가 설정</h3></div>
       <InspectorDisclosure label="제출 안내와 개인정보" className="form-basic-detail form-outcome-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-outcome` : ''}>
         <div className="form-editor-settings">
           <FormSuccessSettings s={s} set={set} direct />
@@ -64,6 +74,7 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
           generateStandaloneFormHtml={generateStandaloneFormHtml}
         />
       </InspectorDisclosure>
+      </section>
     </div>
   );
 }
