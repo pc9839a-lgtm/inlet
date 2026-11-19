@@ -234,3 +234,26 @@ html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form
     transition: none;
   }
 }
+
+
+/* Strong thumbnail silhouettes: show the actual title/body rhythm even when
+   inherited editor rules suppress tiny decorative descendants. */
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'] {
+  background-image:
+    linear-gradient(#53657e,#53657e),
+    linear-gradient(#aab8cb,#aab8cb),
+    linear-gradient(#cfd8e6,#cfd8e6);
+  background-size: 64% 8px, 85% 4px, 73% 4px;
+  background-position: 12px 21px,12px 40px,12px 49px;
+  background-repeat: no-repeat;
+}
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice'] {
+  background-image:
+    linear-gradient(#876f59,#876f59),
+    linear-gradient(#c6ac8b,#c6ac8b),
+    linear-gradient(#ddc8b0,#ddc8b0);
+  background-position: center 22px,center 41px,center 50px;
+}
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='card'] {
+  background-position: 15px 23px,15px 42px,15px 51px;
+}
