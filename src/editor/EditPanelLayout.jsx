@@ -203,13 +203,8 @@ export function EditPanelLayout({
   }, [section, selectedBlockId, screenOrderListProps.normalBlocks, screenOrderListProps.selectBlock]);
   const fixedDescriptors = createFixedBlockDescriptors(fixedBlocksProps);
   const fixedSelected = fixedDescriptors.find((item) => item.open);
-  // The selected original widget editor expands directly beneath its row.
-  // This includes pinned top/bottom blocks, never a duplicated settings form.
-  // Page-wide options alone use the separate full-left workbench.
-  const inlineBlockEditing = editorDensity === 'wide' && inspectorOpen
-    && !showPageOptions && !!selectedBlockId;
-  const inlineNormalEditing = inlineBlockEditing && !fixedSelected;
-  const inlineFixedEditing = inlineBlockEditing && !!fixedSelected;
+  // Keep navigation and widget settings in independent scrollers.
+  // The active widget editor mounts once, outside the composition.
   // Only the actual selected code block may request more horizontal room.
   // Page-level settings and every other widget retain the standard Inspector.
   const selectedEditorType = !showPageOptions
@@ -314,7 +309,7 @@ export function EditPanelLayout({
     if (selectedBlockId) setSection('order');
     // A different selected block has a different starting context. Reusing
     // the previous block's deep scroll makes the new content appear empty.
-    if (editorDensity !== 'wide') document.querySelector('.canvas-editor-shell .editor-properties-content')
+    document.querySelector('.canvas-editor-shell .editor-properties-content')
       ?.scrollTo({ top: 0, behavior: 'instant' });
   }, [selectedBlockId, editorDensity]);
 
@@ -390,24 +385,8 @@ export function EditPanelLayout({
       />
     );
   };
-  const renderFixedInlineEditor = (block) => {
-    if (!inlineFixedEditing || fixedSelected?.block.id !== block.id) return null;
-    return (
-      <section className="editor-inspector-panel editor-inline-settings editor-inline-expanded"
-        role="region" aria-label="선택한 고정 블록 편집" tabIndex={0}>
-        <div className="editor-inline-expanded-heading">
-          <span>블록 내용 수정</span>
-          <button type="button" onClick={returnToPage} aria-label="이 고정 블록 편집 접기">접기</button>
-        </div>
-        <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
-          {renderFixedSettings()}
-        </div>
-      </section>
-    );
-  };
-
   return (
-    <div className="edit-layout" data-editor-layout="two-pane-inline" data-editor-experience="littly-blocks" data-inspector-kind={showPageOptions ? 'page' : fixedSelected ? 'fixed' : 'block'} data-inline-editing={inlineBlockEditing ? 'true' : 'false'} data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
+    <div className="edit-layout" data-editor-layout="separate-workbench" data-editor-experience="separate-settings" data-inspector-kind={showPageOptions ? 'page' : fixedSelected ? 'fixed' : 'block'} data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
       <div className="editor-workflow-compact-switch" role="group" aria-label="편집 작업 영역 선택">
         <button type="button" aria-pressed={compactView === 'page'} onClick={() => setCompactView('page')}>실제 페이지</button>
         <button type="button" aria-pressed={compactView === 'blocks'} onClick={() => setCompactView('blocks')}>블록 목록</button>
@@ -475,7 +454,7 @@ export function EditPanelLayout({
             <GlobalFixedBlocks {...fixedBlocksProps} only={['topnav']}
               compositionRow selectedId={fixedBlocksProps.openId}
               openId="" toggleBlockOpen={chooseFixed}
-              renderInlineEditor={renderFixedInlineEditor} />
+               />
           </FixedCompositionGroup>
           <div className="editor-composition-group-caption">
             <span>페이지 블록</span>
@@ -483,11 +462,8 @@ export function EditPanelLayout({
           </div>
           <ScreenOrderList
             {...screenOrderListProps}
-            listOnly={!inlineNormalEditing}
-            inlineEditing={inlineNormalEditing}
+            listOnly
             selectBlock={chooseBlock}
-            inspectorNavigation={inspectorNavigation}
-            onCollapseEditor={returnToPage}
           />
           <FixedCompositionGroup
             groupId="bottom" title="하단 고정" keys={['bottom', 'footer']}
@@ -498,7 +474,7 @@ export function EditPanelLayout({
             <GlobalFixedBlocks {...fixedBlocksProps} only={['bottom', 'footer']}
               compositionRow selectedId={fixedBlocksProps.openId}
               openId="" toggleBlockOpen={chooseFixed}
-              renderInlineEditor={renderFixedInlineEditor} />
+               />
           </FixedCompositionGroup>
         </div>
         <footer className="editor-composition-footer">
@@ -556,14 +532,14 @@ export function EditPanelLayout({
           {showStartEditing && (
              <StartEditing blocks={screenOrderListProps.normalBlocks} onChooseBlock={chooseBlock} />
            )}
-           {!showPageOptions && fixedSelected && editorDensity !== 'wide' && (
+           {!showPageOptions && fixedSelected && inspectorOpen && (
             <section className="editor-inspector-panel editor-inline-settings">
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
                 {renderFixedSettings()}
               </div>
             </section>
           )}
-          {!showPageOptions && !showStartEditing && !fixedSelected && editorDensity !== 'wide' && (
+          {!showPageOptions && !showStartEditing && !fixedSelected && inspectorOpen && (
             <section className="editor-inspector-panel editor-inline-settings">
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
                 <ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />
