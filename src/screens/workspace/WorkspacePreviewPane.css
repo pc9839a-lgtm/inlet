@@ -401,16 +401,16 @@ html body #root .canvas-editor-shell .preview-stage-width { font-size: 12px !imp
   }
 }
 
-/* The live 390px page has one right-hand anchor across desktop editing
-   modes. Opening/closing the Inspector or switching to a wide code block
-   changes ONLY the left editor; it must never move the real preview.
-   Compact (<900px) task modes keep their own centered single-page layout. */
+/* Keep one stable 390px result in the right canvas. On wide screens,
+   center it in the available stage instead of leaving an oversized empty
+   corridor between the 560px workbench and the phone. Laptop keeps the
+   right edge clear of its compact Inspector; compact modes own their page. */
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide']
 ) > .preview-workspace {
   grid-column: 2 !important;
   grid-row: 2 !important;
-  justify-content: flex-end !important;
+  justify-content: center !important;
   padding: 29px 28px 32px 24px !important;
   background: #e9eef6 !important;
 }
@@ -424,7 +424,10 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide']
-) .preview-workspace .preview-sticky,
+) .preview-workspace .preview-sticky {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop']
 ) .preview-workspace .preview-sticky {
