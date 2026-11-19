@@ -956,9 +956,10 @@ async function collectDesktopMetrics(client) {
       })() : null,
       composition: rect(document.querySelector('.editor-composition-panel')),
       inspector: rect(document.querySelector('.editor-properties-panel')),
-      inlineDesktop: document.querySelector('.edit-layout')?.dataset.editorExperience === 'littly-blocks' && innerWidth >= 1280,
-      inlineActive: document.querySelector('.edit-layout')?.dataset.inlineEditing === 'true',
+      separateDesktop: document.querySelector('.edit-layout')?.dataset.editorExperience === 'separate-settings' && innerWidth >= 1280,
+      inspectorOpen: document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true',
       inspectorKind: document.querySelector('.edit-layout')?.dataset.inspectorKind,
+      selectedEditorType: document.querySelector('.edit-layout')?.dataset.selectedBlockType,
       previewDirectChildren: preview?.children?.length || 0,
       previewFrameCount: preview?.querySelectorAll('.phone-frame').length || 0,
       frameContentWidth: frame?.querySelector('.landing-page')?.clientWidth || 0,
@@ -1072,25 +1073,20 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop left settings panel');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 2,
-    `desktop shell must preserve two workbench tracks (list and actual page): ${metrics.shellGridColumns}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (metrics.inspectorOpen ? 3 : 2),
+    `desktop shell must expose settings only when requested: ${metrics.shellGridColumns}`);
   assertReferenceTracks(metrics, metrics.innerWidth);
-  if (metrics.inlineDesktop) {
-    assert(metrics.workPanel.right <= metrics.frame.left - 12
-      && metrics.frame.right <= metrics.preview.right + 3,
-      `left inline block workbench must precede the right-hand page: ${JSON.stringify(metrics)}`);
-  } else {
-    assert(metrics.workPanel.right <= metrics.inspector.left + 3
-      && metrics.frame.left >= metrics.inspector.right - 3,
-      `left editing panels must precede the right-hand page: ${JSON.stringify({navigator:metrics.workPanel, inspector:metrics.inspector, page:metrics.preview})}`);
-  }
+  assert(metrics.workPanel.right <= (metrics.inspectorOpen ? metrics.inspector.left : metrics.preview.left) + 3
+    && metrics.frame.left >= (metrics.inspectorOpen ? metrics.inspector.right : metrics.workPanel.right) + 8,
+    `navigation and selected settings must precede the 390px page: ${JSON.stringify(metrics)}`);
   assert(metrics.previewDirectChildren === 1 && metrics.previewFrameCount === 1,
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
-  assert(metrics.frame.left >= (metrics.inlineDesktop ? metrics.workPanel.right : metrics.inspector.right) + 12
-    && Math.abs((metrics.frame.left + metrics.frame.right) / 2 - metrics.previewContentCenterX) <= 3,
-    `phone must be centered in the available desktop preview stage: ${JSON.stringify({ frame: metrics.frame, preview: metrics.preview, stageCenter: metrics.previewContentCenterX })}`);
+  assert(metrics.frame.left >= (metrics.inspectorOpen ? metrics.inspector.right : metrics.workPanel.right) + 8
+    && metrics.frame.right <= metrics.preview.right + 3
+    && (metrics.inspectorOpen || Math.abs((metrics.frame.left + metrics.frame.right) / 2 - metrics.previewContentCenterX) <= 3),
+    `phone must stay visible when independent settings open: ${JSON.stringify({ frame: metrics.frame, preview: metrics.preview, stageCenter: metrics.previewContentCenterX })}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
@@ -1098,13 +1094,14 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || 0;
-  const expectedList = width < 1280 ? 264 : metrics.inlineDesktop ? 560 : 252;
+  const expectedList = width < 1280 ? 264 : 276;
   assert(Math.abs(composition - expectedList) <= 3,
     `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
-  assert(Math.abs(inspector - (width < 1280 ? 334 : metrics.inlineDesktop
-    ? metrics.inspectorKind === 'block' ? 0 : 560 : 420)) <= 3,
-    `left block properties must retain usable width at ${width}px: ${JSON.stringify({inspector})}`);
-  assert(Math.abs(edit - (width < 1280 ? 0 : metrics.inlineDesktop ? 560 : 252)) <= 3,
+  const expectedInspector = metrics.inspectorOpen ? (width < 1280 ? 334
+    : width >= 1500 && metrics.inspectorKind === 'block' && metrics.selectedEditorType === 'code' ? 580 : 394) : 0;
+  assert(Math.abs(inspector - expectedInspector) <= 3,
+    `independent selected settings width must match the open state at ${width}px: ${JSON.stringify({inspector,expectedInspector})}`);
+  assert(Math.abs(edit - (width < 1280 ? 0 : 276)) <= 3,
     `collapsed laptop navigator must not consume the canvas: ${JSON.stringify({width,edit})}`);
 }
 
