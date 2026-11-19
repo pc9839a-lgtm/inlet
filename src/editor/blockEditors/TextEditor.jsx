@@ -6,7 +6,8 @@ import './TextEditor.css';
 
 export default function TextEditor({ s, set, page, blockId }) {
   return (
-    <div className="text-editor-flow">
+    <div className="text-editor-flow editor-task-flow" data-editor-task="text">
+      <h3 className="editor-task-inline-title">글 내용</h3>
       <RichField
         variant="v2"
         label="제목"
