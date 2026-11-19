@@ -3184,7 +3184,7 @@ async function run() {
 
       await clickSelector(client, '.editor-page-settings-button:nth-child(2)');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
-    // The left panel must not consume the 390px phone, and its selected
+    // The right panel must not consume the 390px phone, and its selected
     // controls must stay inside the inspector instead of clipping horizontally.
     const leftGeometry = await evaluate(client, `(() => {
       const rect = (el) => el?.getBoundingClientRect();
@@ -3207,7 +3207,8 @@ async function run() {
         editorScroll: getComputedStyle(document.querySelector('.work-panel')).overflowY,
         inspectorScroll: style?.overflowY,
         navigatorScroll: getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
-        propertiesRight: rect(properties)?.right, previewLeft: rect(preview)?.left,
+        propertiesRight: rect(properties)?.right, propertiesLeft: rect(properties)?.left,
+        phoneRight: rect(phone)?.right, previewLeft: rect(preview)?.left,
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
@@ -3217,7 +3218,8 @@ async function run() {
       && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
       && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
-      && leftGeometry.propertiesRight <= (leftGeometry.previewLeft + leftGeometry.preview) - 390 + 2
+      && leftGeometry.phoneRight <= leftGeometry.propertiesLeft - 8
+      && leftGeometry.propertiesRight <= desktopViewport.width + 3
       && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 276)) <= 4,
       'selected properties must remain readable in their own panel without covering the real mobile canvas: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
