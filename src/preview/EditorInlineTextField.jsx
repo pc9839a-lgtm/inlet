@@ -56,8 +56,9 @@ export function EditorInlineTextField({ as: Element = 'h2', blockId, field, html
         ref={viewRef}
         className={enabled ? 'editor-inline-text-trigger' : undefined}
         tabIndex={enabled ? 0 : undefined}
-        aria-label={enabled ? label + ' · Enter 또는 더블클릭으로 바로 수정' : undefined}
-        title={enabled ? '더블클릭 또는 Enter로 수정' : undefined}
+        aria-label={enabled ? label + ' · 클릭 또는 Enter로 바로 수정' : undefined}
+        title={enabled ? '클릭 또는 Enter로 수정' : undefined}
+        onClick={enabled ? begin : undefined}
         onDoubleClick={enabled ? begin : undefined}
         onKeyDown={enabled ? (event) => {
           if (event.key === 'Enter' || event.key === 'F2') {
