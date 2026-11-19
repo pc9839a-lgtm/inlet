@@ -1,6 +1,7 @@
 import { InspectorDisclosure } from '../ui/InspectorDisclosure.jsx';
 import { ToggleRow } from '../ui/index.js';
 import ImageBasicSection from './ImageBasicSection.jsx';
+import QuickDesignChoices from './QuickDesignChoices.jsx';
 import ImageCaptionSection from './ImageCaptionSection.jsx';
 import ImageDisplayControls from './ImageDisplayControls.jsx';
 import ImageGalleryDisplaySection from './ImageGalleryDisplaySection.jsx';
@@ -26,6 +27,13 @@ export default function ImageEditor({ s, set, block, page, blockId }) {
         updateSingleImage={imageState.updateSingleImage}
       />
       <ImageCaptionSection s={s} set={set} />
+      {!gridGallery && <QuickDesignChoices
+        kind="image"
+        selected={imageState.display}
+        choices={[{ value: 'original', label: '전체 사진' }, { value: 'fill', label: '꽉 채우기' }]}
+        onSelect={imageState.changeDisplay}
+        title="사진 배치"
+      />}
       </section>
       <section className="editor-task-section editor-task-secondary" aria-label="사진 디자인">
       <InspectorDisclosure label="사진 맞춤과 디자인" className="image-editor-more" bodyClassName="image-editor-more-controls" persistKey={(blockId || block?.id) ? `${page?.id || 'draft'}:${blockId || block.id}:image-design` : ''}>
