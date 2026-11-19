@@ -13,8 +13,15 @@ const disclosure = read('src/editor/ui/InspectorDisclosure.jsx');
 const css = read('src/editor/EditPanelLayout.css');
 const browser = read('scripts/editor-reference-browser-check.mjs');
 
+const pagePresets = read('src/panels/PageDesignPresets.jsx');
+const stylePanel = read('src/panels/StylePanel.jsx');
+const quickDesign = read('src/editor/blockEditors/QuickDesignChoices.jsx');
+const inlineEdit = read('src/preview/EditorInlineTextField.jsx');
+const hero = read('src/editor/blockEditors/HeroEditor.jsx');
+const links = read('src/editor/blockEditors/LinksEditor.jsx');
+
 assert(text.indexOf('label="제목"') < text.indexOf('label="본문"')
-  && text.indexOf('label="본문"') < text.indexOf('label="디자인 조정"'),
+  && text.indexOf('label="본문"') < text.indexOf('label="세부 디자인"'),
   'title and body precede design');
 assert(text.includes('<WidgetSpacingControls s={s} set={set} />')
   && text.indexOf('<WidgetSpacingControls') < text.indexOf('</InspectorDisclosure>'),
@@ -26,11 +33,11 @@ assert(image.indexOf('<ImageBasicSection') < image.indexOf('label="사진 맞춤
 assert(image.indexOf('<ImageDisplayControls') > image.indexOf('label="사진 맞춤과 디자인"')
   && image.indexOf('<WidgetSpacingControls') < image.indexOf('</InspectorDisclosure>'),
   'image crop, fit and spacing remain functional but initially collapsed');
-assert(form.indexOf('<FormFieldsSection') < form.indexOf('label="디자인 조정"')
-  && form.indexOf('<Field label="버튼 문구"') < form.indexOf('label="디자인 조정"'),
+assert(form.indexOf('<FormFieldsSection') < form.indexOf('label="세부 디자인"')
+  && form.indexOf('<Field label="버튼 문구"') < form.indexOf('label="세부 디자인"'),
   'form title, questions and submit text are primary');
 const outcomeStart = form.indexOf('label="제출 안내와 개인정보"');
-const designStart = form.indexOf('label="디자인 조정"');
+const designStart = form.indexOf('label="세부 디자인"');
 const advancedStart = form.indexOf('label="중복 접수와 외부 연동"');
 assert(outcomeStart > form.indexOf('<Field label="버튼 문구"')
   && outcomeStart < designStart && designStart < advancedStart
@@ -75,6 +82,27 @@ assert(disclosure.includes('expandedByBlock = new Map()')
 assert(browser.includes('inspector-content-first-') && browser.includes('firstView.secondaryClosed')
   && browser.includes('optionalText.spacingVisible') && browser.includes('optionalText.colorVisible'),
   'real Chrome verifies first-view design and hidden style controls reopening');
+assert(pagePresets.includes('function matchesLook')
+  && pagePresets.includes("onPick({")
+  && pagePresets.includes("bgMode: 'solid'")
+  && pagePresets.includes("fontFamily: look.fontFamily")
+  && stylePanel.includes('<PageDesignPresets theme={draftTheme} onPick={updateDraft} />')
+  && stylePanel.includes('className="style-advanced-group style-custom-settings"')
+  && stylePanel.includes('updateTheme(draftTheme)')
+  && stylePanel.includes('onPreviewThemeChange?.(null)'),
+  'page design cards must only stage real theme settings with explicit apply and undo');
+assert(quickDesign.includes('aria-pressed={selected === choice.value}')
+  && quickDesign.includes('onClick={() => onSelect(choice.value)}')
+  && text.includes('<QuickDesignChoices') && image.includes('<QuickDesignChoices')
+  && form.includes('<QuickDesignChoices') && hero.includes('<QuickDesignChoices')
+  && links.includes('<QuickDesignChoices')
+  && !quickDesign.includes('updatePage('),
+  'all representative widget designs must expose one-click real model choices before expert settings');
+assert(inlineEdit.includes('onClick={enabled ? begin : undefined}')
+  && inlineEdit.includes('onCompositionEnd')
+  && inlineEdit.includes('htmlValue !== originalRef.current')
+  && inlineEdit.includes('onCommit(blockId, field, nextHtml, originalRef.current)'),
+  'single click text edit preserves IME, conflict detection and original draft writes');
 // Parse all browser entrypoints cheaply during offline QA, before running the
 // full authenticated Chrome flow (which also exercises media library paths).
 for (const entry of [
