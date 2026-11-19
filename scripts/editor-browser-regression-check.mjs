@@ -1097,8 +1097,8 @@ function assertReferenceTracks(metrics, width) {
   const expectedList = width < 1280 ? 264 : 276;
   assert(Math.abs(composition - expectedList) <= 3,
     `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
-  const expectedInspector = metrics.inspectorOpen ? (width < 1280 ? 334
-    : width >= 1500 && metrics.inspectorKind === 'block' && metrics.selectedEditorType === 'code' ? 580 : 394) : 0;
+  const expectedInspector = width < 1280 ? 334 : metrics.inspectorOpen
+    ? (width >= 1500 && metrics.inspectorKind === 'block' && metrics.selectedEditorType === 'code' ? 580 : 394) : 0;
   assert(Math.abs(inspector - expectedInspector) <= 3,
     `independent selected settings width must match the open state at ${width}px: ${JSON.stringify({inspector,expectedInspector})}`);
   assert(Math.abs(edit - (width < 1280 ? 0 : 276)) <= 3,
