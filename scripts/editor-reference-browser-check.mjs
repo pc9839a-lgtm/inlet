@@ -467,7 +467,16 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         return layout?.dataset.selectedBlockType === 'code'
           && layout.dataset.inlineEditing === 'true'
           && code?.getBoundingClientRect().width >= 490
-          && Math.abs(1440 - phone?.getBoundingClientRect().right - 28) <= 3
+          && (() => {
+            const frame = phone?.getBoundingClientRect();
+            const stage = document.querySelector('.preview-workspace');
+            const bounds = stage?.getBoundingClientRect();
+            const style = stage && getComputedStyle(stage);
+            return !!frame && !!bounds
+              && Math.abs((frame.left + frame.right) / 2
+                - (bounds.left + parseFloat(style.paddingLeft)
+                  + bounds.right - parseFloat(style.paddingRight)) / 2) <= 3;
+          })()
           && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
       })()`, 'inline code remains readable and the same page stays pinned at 1440px');
       await setViewport(client, 1672, 941, false);
