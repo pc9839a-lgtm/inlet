@@ -257,3 +257,34 @@ html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text
 html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='card'] {
   background-position: 15px 23px,15px 42px,15px 51px;
 }
+
+/* The notice variant must depict emphasized typography, not an opaque
+   brown tile. Render independent text strokes above all inherited block CSS. */
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice'] {
+  position: relative;
+  background: #fbf2e9 !important;
+  border-left: 3px solid #aa735b;
+}
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice']::before {
+  content: '';
+  position: absolute;
+  display: block;
+  top: 18px;
+  left: 24%;
+  width: 52%;
+  height: 7px;
+  border-radius: 2px;
+  background: #7b5345;
+}
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice']::after {
+  content: '';
+  position: absolute;
+  display: block;
+  top: 38px;
+  left: 17%;
+  width: 66%;
+  height: 4px;
+  border-radius: 2px;
+  background: #bb9c85;
+  box-shadow: 0 10px 0 #dfc9b9;
+}
