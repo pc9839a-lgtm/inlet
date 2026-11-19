@@ -996,6 +996,7 @@ async function collectNarrowDesktopMetrics(client) {
       drawerTrigger: rect(document.querySelector('.editor-navigator-drawer-trigger')),
       drawerOpen: document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true',
       inspector: rect(document.querySelector('.editor-properties-panel')),
+      inspectorOpen: document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true',
       frameContentWidth: document.querySelector('.preview-workspace .phone-frame .landing-page')?.clientWidth || 0,
       compactView: document.querySelector('.edit-layout')?.dataset.compactView,
       minIdentityWidth: Math.min(...[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy')].map(el => el.getBoundingClientRect().width)),
@@ -1070,23 +1071,24 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.pageSettings, metrics.innerWidth, 'desktop page settings entry');
-  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop left settings panel');
+  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop right block settings panel');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (metrics.inspectorOpen ? 3 : 2),
     `desktop shell must expose settings only when requested: ${metrics.shellGridColumns}`);
   assertReferenceTracks(metrics, metrics.innerWidth);
-  assert(metrics.workPanel.right <= (metrics.inspectorOpen ? metrics.inspector.left : metrics.preview.left) + 3
-    && metrics.frame.left >= (metrics.inspectorOpen ? metrics.inspector.right : metrics.workPanel.right) + 8,
-    `navigation and selected settings must precede the 390px page: ${JSON.stringify(metrics)}`);
+  assert(metrics.workPanel.right <= metrics.preview.left + 3
+    && metrics.frame.left >= metrics.workPanel.right + 8
+    && (!metrics.inspectorOpen || metrics.frame.right <= metrics.inspector.left - 8),
+    `block list → 390px page → right editor must never overlap: ${JSON.stringify(metrics)}`);
   assert(metrics.previewDirectChildren === 1 && metrics.previewFrameCount === 1,
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
-  assert(metrics.frame.left >= (metrics.inspectorOpen ? metrics.inspector.right : metrics.workPanel.right) + 8
+  assert(metrics.frame.left >= metrics.workPanel.right + 8
     && metrics.frame.right <= metrics.preview.right + 3
-    && (metrics.inspectorOpen || Math.abs((metrics.frame.left + metrics.frame.right) / 2 - metrics.previewContentCenterX) <= 3),
-    `phone must stay visible when independent settings open: ${JSON.stringify({ frame: metrics.frame, preview: metrics.preview, stageCenter: metrics.previewContentCenterX })}`);
+    && (!metrics.inspectorOpen || metrics.frame.right <= metrics.inspector.left - 8),
+    `single real page must remain between the navigator and the right editor: ${JSON.stringify({ frame: metrics.frame, inspector: metrics.inspector, preview: metrics.preview })}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
@@ -1097,8 +1099,8 @@ function assertReferenceTracks(metrics, width) {
   const expectedList = width < 1280 ? 264 : 276;
   assert(Math.abs(composition - expectedList) <= 3,
     `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
-  const expectedInspector = width < 1280 ? 334 : metrics.inspectorOpen
-    ? (width >= 1500 && metrics.inspectorKind === 'block' && metrics.selectedEditorType === 'code' ? 580 : 394) : 0;
+  const expectedInspector = !metrics.inspectorOpen ? 0 : width < 1280 ? 334
+    : (width >= 1500 && metrics.inspectorKind === 'block' && metrics.selectedEditorType === 'code' ? 580 : 394);
   assert(Math.abs(inspector - expectedInspector) <= 3,
     `independent selected settings width must match the open state at ${width}px: ${JSON.stringify({inspector,expectedInspector})}`);
   assert(Math.abs(edit - (width < 1280 ? 0 : 276)) <= 3,
@@ -1106,7 +1108,7 @@ function assertReferenceTracks(metrics, width) {
 }
 
 function assertNarrowDesktop(metrics, width) {
-  // A laptop has left editing and a right live page; at 200%
+  // A laptop has one page with an on-click right editor; at 200%
   // zoom, the same fine-pointer editor stacks into full-width sections.
   const stacked = width < 900;
   assert(metrics.path === '/app', `narrow desktop editor route changed: ${metrics.path}`);
@@ -1132,8 +1134,8 @@ function assertNarrowDesktop(metrics, width) {
       `zoomed desktop must offer its real-page-first view without squashing the preview: ${JSON.stringify({compactView:metrics.compactView,preview:metrics.preview})}`);
   } else {
     assertReferenceTracks(metrics, width);
-    assert(metrics.frame.left >= metrics.inspector.right - 2,
-      `narrow desktop settings must remain left of the page at ${width}px`);
+    assert(!metrics.inspectorOpen || metrics.frame.right <= metrics.inspector.left - 8,
+      `narrow desktop selected editor must appear right of the 390px page at ${width}px`);
   }
   assert(Math.abs(metrics.frameContentWidth - 390) <= 1,
     `narrow desktop real page must retain 390px default: ${metrics.frameContentWidth}`);
@@ -1144,9 +1146,9 @@ function assertNarrowDesktop(metrics, width) {
       - (metrics.frame.left + metrics.frame.right) / 2) <= 6,
       `narrow desktop phone must be centered at ${width}px: ${JSON.stringify(metrics.frame)}`);
   } else {
-    assert(metrics.frame.left >= metrics.inspector.right + 8
-      && Math.abs(metrics.preview.right - metrics.frame.right - 12) <= 3,
-      `laptop phone must keep a constant 12px right inset at ${width}px: ${JSON.stringify(metrics.frame)}`);
+    assert((!metrics.inspectorOpen || metrics.frame.right <= metrics.inspector.left - 8)
+      && Math.abs(metrics.frame.left - Math.max(12, (width - 334 - 394) / 2)) <= 6,
+      `laptop phone must stay centered to the left of the right settings at ${width}px: ${JSON.stringify(metrics.frame)}`);
   }
 }
 
@@ -1283,7 +1285,7 @@ async function run() {
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
     await waitForBrowser(client, `(() => {
       const shell = document.querySelector('.editor-properties-panel');
-      return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '내용 편집'
+      return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '블록 편집'
         && !shell.querySelector('.style-panel')
         && (!!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')
             || !!editor?.querySelector('.editor-workflow-start-choices button'))
