@@ -755,9 +755,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   for (const width of [900, 1024, 1440, 1672]) {
     await setEditorViewport(width);
     for (const [id, designClass, expectedHeading, expectedDesign, expectedBehavior] of [
-      ['editor-hero', 'hero-editor-design', '내용 수정', '디자인', ''],
-      ['editor-text', 'text-editor-design', '내용 수정', '디자인 조정', ''],
-      ['editor-form', 'form-design-detail', '문의 폼 편집', '디자인 조정', '중복 접수와 외부 연동'],
+      ['editor-hero', 'hero-editor-design', '내용 수정', '세부 디자인', ''],
+      ['editor-text', 'text-editor-design', '내용 수정', '세부 디자인', ''],
+      ['editor-form', 'form-design-detail', '문의 폼 편집', '세부 디자인', '중복 접수와 외부 연동'],
     ]) {
       await clickNavigatorRow(`#editor-block-${id} .screen-order-v2-head`);
       await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-${id}')?.closest('.editor-inline-settings')?.querySelector('.screen-order-v2-settings-title h2')`, 'inline block heading for ' + id);
