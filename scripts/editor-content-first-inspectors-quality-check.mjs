@@ -56,14 +56,13 @@ assert(css.includes('.editor-inspector-kind-icon') && css.includes('.editor-insp
   && css.includes('.editor-inspector-panel.editor-inline-settings')
   && css.includes('padding: 12px 0 10px !important;'),
   'inline selected block must have one compact identity header before its existing editable fields');
-assert(inspector.includes('editor-inspector-jump')
-  && inspector.includes("jumpToSection('content')")
-  && inspector.includes("jumpToSection('design')")
-  && inspector.includes("destination.querySelector('summary')?.click()")
-  && inspector.includes("closest('.editor-properties-content, .editor-composition-content')")
-  && css.includes('.editor-inspector-jump > button:focus-visible')
-  && browser.includes('inspectorShortcuts'),
-  'selected text, image, form and hero blocks must use real design disclosure shortcuts in the independent inspector');
+assert(!inspector.includes('editor-inspector-jump')
+  && !inspector.includes('jumpToSection')
+  && inspector.includes('{renderBlockEditor(block)}')
+  && form.includes('className="editor-task-section form-questions-task"')
+  && form.includes('className="editor-task-section form-submit-task"')
+  && browser.includes('design is reachable directly without a duplicate shortcut rail'),
+  'content-first workbench must not include fake content/design tabs that merely scroll to another accordion');
 assert(disclosure.includes('expandedByBlock = new Map()')
   && disclosure.includes('expandedByBlock.has(persistKey)')
   && disclosure.includes('rememberExpanded(persistKey, next)')
