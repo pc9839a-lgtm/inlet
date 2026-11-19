@@ -386,7 +386,7 @@ export function EditPanelLayout({
     );
   };
   return (
-    <div className="edit-layout" data-editor-layout="separate-workbench" data-editor-experience="separate-settings" data-inspector-kind={showPageOptions ? 'page' : fixedSelected ? 'fixed' : 'block'} data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
+    <div className="edit-layout" data-editor-layout="separate-workbench" data-editor-experience="separate-settings" data-inspector-side="right" data-inspector-kind={showPageOptions ? 'page' : fixedSelected ? 'fixed' : 'block'} data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
       <div className="editor-workflow-compact-switch" role="group" aria-label="편집 작업 영역 선택">
         <button type="button" aria-pressed={compactView === 'page'} onClick={() => setCompactView('page')}>실제 페이지</button>
         <button type="button" aria-pressed={compactView === 'blocks'} onClick={() => setCompactView('blocks')}>블록 목록</button>
@@ -432,7 +432,7 @@ export function EditPanelLayout({
               <h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">
                 {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
               </span></h2>
-              <p className="editor-composition-hint">목록에서 고르고 페이지에서 수정하세요</p>
+              <p className="editor-composition-hint">블록을 선택하면 오른쪽에서 수정할 수 있어요</p>
             </div>
           </div>
           <AddBlockDock {...addBlockDockProps} compact />
@@ -494,16 +494,16 @@ export function EditPanelLayout({
           </button>
         </footer>
       </aside>
-      <aside className="editor-properties-panel" aria-label="선택 블록 설정">
+      <aside className="editor-properties-panel" aria-label="선택 블록 오른쪽 편집기">
         <header className="editor-properties-heading">
           <div className="editor-properties-heading-copy">
-            <span className="editor-panel-kicker">실제 페이지를 보면서</span>
-            <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '내용 편집'}</strong>
+            <span className="editor-panel-kicker">선택 항목 설정</span>
+            <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '블록 편집'}</strong>
           </div>
           <button type="button" className="editor-workbench-close-inspector"
-            aria-label="설정 패널 닫고 페이지 보기"
+            aria-label="오른쪽 편집기 닫기"
             onClick={returnToPage}>
-            <ArrowLeft size={15} aria-hidden="true" /> 페이지 보기
+            <ArrowLeft size={15} aria-hidden="true" /> 닫기
           </button>
         </header>
         <div className="editor-properties-content" role="region" aria-label="선택 항목 편집" tabIndex={0}>
