@@ -216,16 +216,16 @@ assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 
 assert(active.includes('stylePanelProps={stylePanelProps}'), 'edit workspace must receive theme controls');
 assert(editPanel.includes('stylePanelProps={stylePanelProps}'), 'EditPanel must forward theme controls');
 
-assert(layout.includes('data-editor-layout="two-pane-inline"')
-  && layout.includes('data-editor-experience="littly-blocks"')
+assert(layout.includes('data-editor-layout="separate-workbench"')
+  && layout.includes('data-editor-experience="separate-settings"')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
-  && layout.includes('inlineEditing={inlineNormalEditing}')
-  && layout.includes('editorDensity !== \'wide\' && (')
-  && stackItems.includes('editor-inline-expanded')
-  && screenOrderList.includes('listOnly={!props.inlineEditing}')
-  && layout.includes('renderInlineEditor={renderFixedInlineEditor}'),
-  'wide desktop must use a single inline selected-block editor with separate compact/fixed/page settings');
+  && !layout.includes('inlineEditing={inlineNormalEditing}')
+  && layout.includes('inspectorOpen && fixedSelected')
+  && layout.includes('inspectorOpen && !showStartEditing && !fixedSelected')
+  && layout.includes('listOnly')
+  && !layout.includes('renderInlineEditor={renderFixedInlineEditor}'),
+  'wide desktop must show one selected editor beside the navigation-only block list');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor')
   && stackItems.includes('<ScreenOrderSettings')
@@ -337,7 +337,7 @@ assert(heroImageSection.includes('InspectorDisclosure label="이미지 배치·�
   && !previewPaneCss.includes('--editor-ui-space-4'),
   'disclosures must keep native semantics, owner-level token spacing and no canvas-style leakage');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
-assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 420px;'),
+assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 394px;'),
   'editor workspace must size the separate settings column without restoring old abandoned components');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
@@ -513,9 +513,9 @@ assert(layout.includes("event.target?.closest?.('[data-composition-action-menu=\
   'body-portaled block-list action menus must count as inside the laptop navigator, unlike inspector menus');
 assert(layout.includes("event.target?.closest?.('.editor-gallery-backdrop')"),
   'laptop add-block gallery must count as navigator-owned so its close restores focus to a visible add button');
-assert(layout.includes("if (editorDensity !== 'wide') document.querySelector('.canvas-editor-shell .editor-properties-content')")
+assert(layout.includes("document.querySelector('.canvas-editor-shell .editor-properties-content')")
   && layout.includes('}, [selectedBlockId, editorDensity]);'),
-  'wide inline edit must preserve block-list scroll while compact/laptop reset the separate Inspector');
+  'selected widgets reset only the separate settings scroll while leaving block navigation undisturbed');
 assert(layout.includes('const focusPageHeading = (attempts = 5)')
   && layout.includes("inspector?.querySelector('[data-editor-section=\"options\"] .editor-page-options-heading h2')")
   && layout.includes('heading.focus({ preventScroll: true })')
