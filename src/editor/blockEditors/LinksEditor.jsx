@@ -1,4 +1,5 @@
 import { EditorField, EditorList } from '../ui/index.js';
+import QuickDesignChoices from './QuickDesignChoices.jsx';
 import { InspectorDisclosure } from '../ui/InspectorDisclosure.jsx';
 import { getLinkBadge, getLinkIcon } from './LinkItemDisplay.jsx';
 import LinkItemFields from './LinkItemFields.jsx';
@@ -33,8 +34,14 @@ export default function LinksEditor({ s, set, page, TargetControl }) {
           detailPlacement="panel"
         />
       </section>
+      <QuickDesignChoices
+        kind="links"
+        selected={s.layout || 'list'}
+        choices={[{ value: 'list', label: '심플 목록' }, { value: 'card', label: '카드 버튼' }, { value: 'carousel', label: '슬라이드' }]}
+        onSelect={(layout) => set({ layout })}
+      />
       <section className="editor-task-section editor-task-secondary" aria-label="링크 디자인">
-        <InspectorDisclosure label="디자인 조정" className="links-editor-design">
+        <InspectorDisclosure label="세부 디자인" className="links-editor-design">
           <LinksStylePanel s={s} set={set} />
         </InspectorDisclosure>
       </section>
