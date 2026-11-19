@@ -297,7 +297,9 @@ async function run() {
       const panel = document.querySelector('.screen-order-v2-settings');
       const source = panel.querySelector('.image-input--compact');
       const flow = panel.querySelector('.image-editor-flow');
-      return { directSource: flow?.firstElementChild === source,
+      return { directSource: !!flow?.firstElementChild?.classList.contains('image-primary-task')
+          && flow.firstElementChild.contains(source)
+          && !!source?.getClientRects().length,
         upload: source?.querySelector('.image-input-upload-action')?.textContent.trim(),
         library: !!source?.querySelector('.image-input-library-action'),
         tabs: panel.querySelectorAll('[role="tablist"]').length,
