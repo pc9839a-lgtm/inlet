@@ -3,6 +3,7 @@ import FormQuestionCard from './FormQuestionCard.jsx';
 export default function FormQuestionList({
   questions,
   openQuestionId,
+  focusOnCreateQuestionId,
   dragQuestionId,
   dragOverQuestionId,
   onUpdate,
@@ -24,6 +25,7 @@ export default function FormQuestionList({
           index={index}
           total={questions.length}
           isOpen={openQuestionId === question.id}
+          focusOnCreate={focusOnCreateQuestionId === question.id}
           isDragging={dragQuestionId === question.id}
           isDragOver={dragOverQuestionId === question.id}
           onToggleOpen={() => onToggleOpen(question.id)}

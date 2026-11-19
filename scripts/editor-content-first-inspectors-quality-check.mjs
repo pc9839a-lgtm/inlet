@@ -60,7 +60,7 @@ assert(inspector.includes('editor-inspector-jump')
   && inspector.includes("jumpToSection('content')")
   && inspector.includes("jumpToSection('design')")
   && inspector.includes("destination.querySelector('summary')?.click()")
-  && inspector.includes("closest('.editor-properties-content')")
+  && inspector.includes("closest('.editor-properties-content, .editor-composition-content')")
   && css.includes('.editor-inspector-jump > button:focus-visible')
   && browser.includes('inspectorShortcuts'),
   'selected text, image, form and hero blocks must use real design disclosure shortcuts in the independent inspector');

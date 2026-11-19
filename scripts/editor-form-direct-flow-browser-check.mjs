@@ -69,6 +69,11 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
     await capture(client, 'desktop-form-choice-' + width);
   }
   await setViewport(client, 1440, 960, false);
+  await waitForBrowser(client,
+    `!!document.querySelector('.form-question-card.open .form-question-actions button:nth-child(3)')
+      && document.querySelector('.form-question-card.open .form-question-identity strong')
+        ?.textContent.includes('상담 전에 확인하고 싶은 내용')`,
+    'expanded editable question survives desktop/laptop layout relocation without losing its draft');
   await clickPointer(client, '.form-question-card.open .form-question-actions button:nth-child(3)');
   await waitForBrowser(client, `document.querySelectorAll('.form-question-card').length === 4 && document.querySelector('.form-question-card.open .form-question-identity strong')?.textContent.endsWith('복사')`, 'question duplicate selected');
   const copied = await evaluate(client, `({type: document.querySelector('.form-question-card.open select')?.value, option: document.querySelector('.form-question-card.open .option-editor-row input')?.value, required: document.querySelector('.form-question-card.open [role="switch"]')?.getAttribute('aria-checked')})`);

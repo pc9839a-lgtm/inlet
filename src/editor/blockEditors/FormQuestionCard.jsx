@@ -7,6 +7,7 @@ export default function FormQuestionCard({
   index,
   total,
   isOpen,
+  focusOnCreate = false,
   isDragging,
   isDragOver,
   onToggleOpen,
@@ -20,12 +21,12 @@ export default function FormQuestionCard({
   onDragEnd,
 }) {
   const ref = useRef(null);
-  const focusOnCreate = useRef(isOpen);
+  const pendingCreateFocus = useRef(isOpen && focusOnCreate);
   useEffect(() => {
-    if (!focusOnCreate.current || !isOpen) return;
+    if (!pendingCreateFocus.current || !isOpen) return;
     const input = ref.current?.querySelector('.form-question-body input');
     if (!input) return;
-    focusOnCreate.current = false;
+    pendingCreateFocus.current = false;
     input.focus();
     input.select();
   }, [isOpen]);

@@ -78,7 +78,7 @@ export default function WorkspaceEditorScreen({
     const form = editPanelProps?.page?.blocks?.find((block) => block.id === id && block.type === 'form');
     if (!form || form.visible === false || typeof document === 'undefined'
       || typeof MutationObserver !== 'function') return;
-    const inspector = document.querySelector('.editor-properties-content');
+    const inspector = document.querySelector('.canvas-editor-shell .edit-layout');
     if (!inspector) return;
     pendingFormFocusRef.current?.();
     let finished = false;
@@ -134,10 +134,11 @@ export default function WorkspaceEditorScreen({
     if (!selectedImage || selectedImage.visible === false) return;
     const galleryIndex = Number.isInteger(interaction.galleryIndex) && selectedImage.s?.mode === 'gallery'
       && selectedImage.s?.gallery?.[interaction.galleryIndex] ? interaction.galleryIndex : undefined;
-    // ImageEditor is lazy-loaded; five animation frames can expire before
-    // its uploader appears. Observe the persistent block stack: inline settings\n    // mount only after selection, so observe the persistent settings panel.\n    // Stop on
+    // ImageEditor is lazy-loaded and can mount below the selected row or in
+    // the independent laptop Inspector. Observe their stable shared layout.
+    // Stop on
     // success or after a bounded timeout, without opening file dialogs.
-    const inspector = document.querySelector('.editor-properties-content');
+    const inspector = document.querySelector('.canvas-editor-shell .edit-layout');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
     let timeoutId = 0;
@@ -220,7 +221,7 @@ export default function WorkspaceEditorScreen({
     pendingCanvasFocusRef.current?.();
     onSelectPreviewBlock?.(id);
     activatePreviewInspector();
-    const inspector = document.querySelector('.editor-properties-content');
+    const inspector = document.querySelector('.canvas-editor-shell .edit-layout');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
     let timeoutId = 0;
@@ -275,7 +276,7 @@ export default function WorkspaceEditorScreen({
     pendingCanvasFocusRef.current?.();
     onSelectPreviewBlock?.(id);
     activatePreviewInspector();
-    const inspector = document.querySelector('.editor-properties-content');
+    const inspector = document.querySelector('.canvas-editor-shell .edit-layout');
     if (!inspector || typeof MutationObserver !== 'function') return;
     let finished = false;
     let timeoutId = 0;
@@ -332,7 +333,7 @@ export default function WorkspaceEditorScreen({
       // real settings become visible, including lazy-loaded block editors.
       pendingCanvasFocusRef.current?.();
       const id = canvasSelectedBlock.id;
-      const inspector = document.querySelector('.canvas-editor-shell .editor-properties-content');
+      const inspector = document.querySelector('.canvas-editor-shell .edit-layout');
       if (!inspector || typeof MutationObserver !== 'function') return;
       let finished = false;
       let remainingFrames = 16;

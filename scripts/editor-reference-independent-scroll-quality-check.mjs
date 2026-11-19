@@ -11,8 +11,8 @@ const previewFocus = read('src/screens/WorkspaceEditorScreen.jsx');
 const preview = read('src/screens/workspace/WorkspacePreviewPane.css');
 const browser = read('scripts/editor-reference-browser-check.mjs');
 
-// The list, canvas and property editor scroll independently; selecting a new
-// block must not unmount the navigator or reparent the real widget editor.
+// On desktop the list owns the original selected editor and shares its scroll;
+// laptop/compact keep their own Inspector scroll without duplicating widgets.
 assert.ok(shell.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr)')
   && shell.includes('--editor-list-width: 252px;')
   && shell.includes('--editor-settings-width: 420px;')
@@ -40,9 +40,10 @@ assert.ok(items.includes('!listOnly && selectedId === block.id')
 assert.ok(editor.includes('<footer className="editor-composition-footer">')
   && layout.includes('.editor-composition-footer'),
   'page-wide design and settings must remain discoverable below the navigation');
-assert.ok(previewFocus.includes("document.querySelector('.editor-properties-content')")
+assert.ok(previewFocus.includes("document.querySelector('.canvas-editor-shell .edit-layout')")
+  && layout.includes('.editor-inline-expanded')
   && preview.includes('width: var(--editor-preview-frame-width, 394px) !important;'),
-  'photo, form, CTA and media focus must target the stable settings area, not the list');
+  'photo, form, CTA and media focus must resolve the active block editor in the stable layout');
 assert.ok(browser.includes('longInspector') && browser.includes('inspectorOverflow')
   && browser.includes('navigatorOverflow') && browser.includes('widthOptions === 0'),
   'Chrome regression must verify long-page independence and one fixed 390px preview');

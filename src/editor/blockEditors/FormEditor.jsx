@@ -14,7 +14,12 @@ import { useFormQuestions } from './useFormQuestions.js';
 export default function FormEditor({ s, set, page, blockId, generateStandaloneFormHtml }) {
   const questions = Array.isArray(s.questions) ? s.questions : [];
   const [htmlOpen, setHtmlOpen] = useState(false);
-  const questionState = useFormQuestions({ questions, set });
+  // Keep only the currently expanded question across desktop/laptop editor
+  // reparenting. This is session-local UI state, never page draft content.
+  const questionState = useFormQuestions({
+    questions, set,
+    persistKey: blockId ? `${page?.id || 'draft'}:${blockId}` : '',
+  });
 
   return (
     <div className="form-editor-flow">
@@ -22,6 +27,7 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
       <FormFieldsSection
         questions={questions}
         openQuestionId={questionState.openQuestionId}
+        focusOnCreateQuestionId={questionState.newlyCreatedQuestionId}
         dragQuestionId={questionState.dragQuestionId}
         dragOverQuestionId={questionState.dragOverQuestionId}
         onAdd={questionState.addQuestion}

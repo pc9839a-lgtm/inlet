@@ -10,6 +10,7 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
   const stagedDraft = codeDraftForBlock?.(blockId, s.html || '');
   const { draft, setDraft, modalOpen, setModalOpen } = useCodeDraft(
     s.html, stagedDraft, onCodeDraftChange ? (value) => onCodeDraftChange(blockId, value) : undefined,
+    blockId,
   );
 
   // 과거 저장된 BGM 프리셋은 편집 기능을 노출하지 않는다.
@@ -20,10 +21,24 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
     ? '코드 미적용'
     : '적용됨';
 
+  // Resizing between inline and compact editing can replace the real
+  // opener node while the portaled dialog remains open. The dialog hook
+  // cannot restore focus to a node that has been unmounted, so resolve the
+  // currently rendered opener after the close commit instead.
+  const closeModal = () => {
+    setModalOpen(false);
+    if (typeof document === 'undefined' || typeof requestAnimationFrame !== 'function') return;
+    requestAnimationFrame(() => {
+      const opener = document.getElementById(`editor-block-settings-${blockId}`)
+        ?.querySelector('.code-editor-head button');
+      if (opener?.getClientRects().length) opener.focus({ preventScroll: true });
+    });
+  };
+
   const apply = () => {
     set({ html: draft, css: '', js: '', runJs: false });
     clearCodeDraft?.(blockId);
-    setModalOpen(false);
+    closeModal();
   };
 
   return (
@@ -45,7 +60,7 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
           <CodeStylePanel s={s} set={set} />
         </div>
       </details>
-      {modalOpen && <CodeEditorModal draft={draft} onDraftChange={setDraft} onClose={() => setModalOpen(false)} onApply={apply} codePending={codePending} codeDraftHint={codeDraftHint} />}
+      {modalOpen && <CodeEditorModal draft={draft} onDraftChange={setDraft} onClose={closeModal} onApply={apply} codePending={codePending} codeDraftHint={codeDraftHint} />}
     </>
   );
 }

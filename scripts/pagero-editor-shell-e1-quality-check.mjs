@@ -151,6 +151,7 @@ const editPanel = await readFile('src/editor/EditPanel.jsx', 'utf8');
 const layout = await readFile('src/editor/EditPanelLayout.jsx', 'utf8');
 const blockSearch = await readFile('src/editor/editPanelParts/BlockNavigatorSearch.jsx', 'utf8');
 const stackItems = await readFile('src/editor/editPanelParts/ScreenOrderListItems.jsx', 'utf8');
+const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderList.jsx', 'utf8');
 const fixedItems = await readFile('src/editor/editPanelParts/GlobalFixedBlocks.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
@@ -215,11 +216,16 @@ assert(screen.includes("const effectiveTab = tab === 'style' ? 'edit' : tab;"), 
 assert(active.includes('stylePanelProps={stylePanelProps}'), 'edit workspace must receive theme controls');
 assert(editPanel.includes('stylePanelProps={stylePanelProps}'), 'EditPanel must forward theme controls');
 
-assert(layout.includes('data-editor-layout="three-pane"')
+assert(layout.includes('data-editor-layout="two-pane-inline"')
+  && layout.includes('data-editor-experience="littly-blocks"')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
-  && layout.includes('<ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />'),
-  'editor must separate composition list from the real selected block editor');
+  && layout.includes('inlineEditing={inlineNormalEditing}')
+  && layout.includes('editorDensity !== \'wide\' && (')
+  && stackItems.includes('editor-inline-expanded')
+  && screenOrderList.includes('listOnly={!props.inlineEditing}')
+  && layout.includes('renderInlineEditor={renderFixedInlineEditor}'),
+  'wide desktop must use a single inline selected-block editor with separate compact/fixed/page settings');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor')
   && stackItems.includes('<ScreenOrderSettings')
@@ -507,9 +513,9 @@ assert(layout.includes("event.target?.closest?.('[data-composition-action-menu=\
   'body-portaled block-list action menus must count as inside the laptop navigator, unlike inspector menus');
 assert(layout.includes("event.target?.closest?.('.editor-gallery-backdrop')"),
   'laptop add-block gallery must count as navigator-owned so its close restores focus to a visible add button');
-assert(layout.includes("?.scrollTo({ top: 0, behavior: 'instant' })")
-  && layout.includes('}, [selectedBlockId]);'),
-  'changing selected blocks must reset the independently scrolling property inspector');
+assert(layout.includes("if (editorDensity !== 'wide') document.querySelector('.canvas-editor-shell .editor-properties-content')")
+  && layout.includes('}, [selectedBlockId, editorDensity]);'),
+  'wide inline edit must preserve block-list scroll while compact/laptop reset the separate Inspector');
 assert(layout.includes('const focusPageHeading = (attempts = 5)')
   && layout.includes("inspector?.querySelector('[data-editor-section=\"options\"] .editor-page-options-heading h2')")
   && layout.includes('heading.focus({ preventScroll: true })')

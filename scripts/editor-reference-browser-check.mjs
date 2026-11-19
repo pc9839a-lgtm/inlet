@@ -47,33 +47,44 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && stage.getBoundingClientRect().left >= list.getBoundingClientRect().right - 2
       && phone?.clientWidth === 390
       && stage.querySelector('.phone-frame')?.getBoundingClientRect().left >= list.getBoundingClientRect().right
-      && Math.abs(window.innerWidth - stage.querySelector('.phone-frame').getBoundingClientRect().right - 28) <= 3;
+      && (() => {
+        const frame = stage.querySelector('.phone-frame').getBoundingClientRect();
+        const bounds = stage.getBoundingClientRect();
+        const style = getComputedStyle(stage);
+        const center = (bounds.left + parseFloat(style.paddingLeft)
+          + bounds.right - parseFloat(style.paddingRight)) / 2;
+        return Math.abs((frame.left + frame.right) / 2 - center) <= 3;
+      })();
   })()`, 'desktop first screen prioritizes actual 390px page without a permanent inspector');
   const pinnedPhoneLeft = await evaluate(client,
     `document.querySelector('.phone-frame')?.getBoundingClientRect().left`);
   await capture(client, 'workbench-page-first-1672');
   await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
-  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'
-    && document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 400
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inlineEditing === 'true'
+    && document.querySelectorAll('#editor-selection-panel').length === 1
+    && document.querySelector('.editor-composition-content .editor-inline-expanded .screen-order-v2-settings')
+      ?.getBoundingClientRect().width >= 440
+    && getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none'
     && Math.abs(document.querySelector('.phone-frame')?.getBoundingClientRect().left - ${pinnedPhoneLeft}) <= 2`,
-    'opening an Inspector must not shift the right-anchored live preview');
-  await clickPointer(client, '.editor-workbench-close-inspector');
+    'selecting a block must expand exactly one real editor below its row, beside fixed preview');
+  await capture(client, 'littly-inline-block-edit-1672');
+  await clickPointer(client, '.editor-inline-expanded-heading button');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
     && document.activeElement === document.querySelector('.editor-composition-panel')
     && document.querySelector('.preview-workspace .landing-page')?.clientWidth === 390
     && Math.abs(document.querySelector('.phone-frame')?.getBoundingClientRect().left - ${pinnedPhoneLeft}) <= 2`,
     'closing an Inspector must preserve the live preview X-coordinate and visible focus');
   await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
-  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'`,
-    'selected block reopens its inspector without a separate mode switch');
-  await focusSelector(client, '.editor-workbench-close-inspector');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inlineEditing === 'true'`,
+    'selected row reopens its existing inline editor');
+  await focusSelector(client, '.editor-inline-expanded-heading button');
   await pressKeyboardKey(client, 'Enter');
   await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
     && document.activeElement === document.querySelector('.editor-composition-heading h2')`,
     'keyboard return keeps a visible focus target');
   await clickPointer(client, '.editor-composition-panel .screen-order-v2-item[data-selected="true"] .screen-order-v2-head');
-  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true'`,
-    'keyboard return does not break subsequent list selection');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inlineEditing === 'true'`,
+    'keyboard return does not break subsequent row edit');
   // Visual reference: a named, full-width add action and readable flat
   // composition rows at both the chosen 1672px size and narrow 900px PC.
   for (const referenceWidth of [1672, 900]) {
@@ -115,7 +126,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     })()`);
-    const expectedComposerWidth = referenceWidth < 1280 ? 264 : 252;
+    const expectedComposerWidth = referenceWidth < 1280 ? 264 : 560;
     assert(visual?.heading?.startsWith('블록 편집') && visual.kicker === '페이지 구성'
       && /[0-9]+개 블록/.test(visual.total) && visual.buttonText === '블록 추가'
       && visual.ariaLabel === '블록 추가' && visual.labelVisible
@@ -125,13 +136,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && visual.listNameSize === '13px' && visual.fixedNameSize === '13px'
       && visual.normalRowHeight >= 54 && Math.abs(visual.normalRowHeight - visual.fixedRowHeight) <= 4
       && Math.abs(visual.compositionWidth - expectedComposerWidth) <= 3
-      && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 334 : 420)) <= 3
+      && Math.abs(visual.inspectorWidth - (referenceWidth < 1280 ? 334 : 0)) <= 3
       && visual.compositionBackground === 'rgb(248, 250, 255)'
       && visual.inspectorBackground === 'rgb(255, 255, 255)'
       && visual.stageBackground === (referenceWidth < 1280 ? 'rgb(238, 242, 247)' : 'rgb(233, 238, 246)')
       && visual.stageHeading === '실제 페이지' && visual.stageWidth === '모바일 390px'
       && visual.phoneWidth === 390 && visual.overflow <= 3,
-      'approved three-pane editor keeps list, canvas and inspector independent: '
+      'littly desktop must combine block rows with their original inline editor: '
       + JSON.stringify({ referenceWidth, visual }));
     await capture(client, 'editor-visual-hierarchy-' + referenceWidth);
   }
@@ -365,6 +376,13 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   });
   assert(apiState.saveCount === 0, 'opening page options must not save or publish the page');
   await setViewport(client, 1672, 941, false);
+  // Page-global design uses a dedicated overlay over the left workbench.
+  // Explicitly return to the list before opening a different block; never
+  // fake a click on a row that is visually covered by page settings.
+  await clickPointer(client, '.editor-workbench-close-inspector');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
+    && !!document.querySelector('#editor-composition-panel .screen-order-v2-head')`,
+    'closing page design restores the editable block list');
 
   // A visual redesign must change the *first visible task*, not just CSS
   // tokens. Verify real editor settings and capture each of four block types.
@@ -416,16 +434,26 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         return {
           selected: layout?.dataset.selectedBlockType,
           inspectorWidth: inspector?.width,
+          inlineWidth: rect(document.querySelector('.editor-inline-expanded'))?.width,
+          inlineEditorCount: document.querySelectorAll('#editor-block-settings-editor-code').length,
           inputWidth: code?.width,
           phoneOffset: phone?.left - inspector?.right,
-          phoneRightInset: window.innerWidth - phone?.right,
+          phoneStageCenterError: (() => {
+            const stage = document.querySelector('.preview-workspace');
+            const bounds = stage.getBoundingClientRect();
+            const style = getComputedStyle(stage);
+            return Math.abs((phone.left + phone.right) / 2
+              - (bounds.left + parseFloat(style.paddingLeft)
+                + bounds.right - parseFloat(style.paddingRight)) / 2);
+          })(),
           actualPageWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
           documentWidth: document.documentElement.scrollWidth,
         };
       })()`);
-      assert(wideCode.selected === 'code' && wideCode.inspectorWidth >= 575
-        && wideCode.inputWidth >= 490 && wideCode.phoneOffset >= 12
-        && Math.abs(wideCode.phoneRightInset - 28) <= 3
+      assert(wideCode.selected === 'code' && wideCode.inspectorWidth === 0
+        && wideCode.inlineWidth >= 510 && wideCode.inlineEditorCount === 1
+        && wideCode.inputWidth >= 490
+        && wideCode.phoneStageCenterError <= 3
         && wideCode.actualPageWidth === 390
         && wideCode.documentWidth <= 1672,
         'wide code edit must use free canvas space without squashing or hiding the actual page: '
@@ -434,14 +462,27 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       await setViewport(client, 1440, 941, false);
       await waitForBrowser(client, `(() => {
         const layout = document.querySelector('.edit-layout');
-        const inspector = document.querySelector('.editor-properties-panel');
+        const code = document.querySelector('#editor-block-settings-editor-code .code-editor-box textarea');
+        const phone = document.querySelector('.phone-frame');
         return layout?.dataset.selectedBlockType === 'code'
-          && Math.abs(inspector?.getBoundingClientRect().width - 420) <= 3
+          && layout.dataset.inlineEditing === 'true'
+          && code?.getBoundingClientRect().width >= 490
+          && (() => {
+            const frame = phone?.getBoundingClientRect();
+            const stage = document.querySelector('.preview-workspace');
+            const bounds = stage?.getBoundingClientRect();
+            const style = stage && getComputedStyle(stage);
+            return !!frame && !!bounds
+              && Math.abs((frame.left + frame.right) / 2
+                - (bounds.left + parseFloat(style.paddingLeft)
+                  + bounds.right - parseFloat(style.paddingRight)) / 2) <= 3;
+          })()
           && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
-      })()`, 'code Inspector returns to standard width when free space shrinks');
+      })()`, 'inline code remains readable and the same page stays pinned at 1440px');
       await setViewport(client, 1672, 941, false);
-      await waitForBrowser(client, `document.querySelector('.editor-properties-panel')?.getBoundingClientRect().width >= 575`,
-        'code Inspector expands again at the wide desktop breakpoint');
+      await waitForBrowser(client,
+        `document.querySelector('#editor-block-settings-editor-code .code-editor-box textarea')?.getBoundingClientRect().width >= 490`,
+        'inline code editor remains wide on desktop without a second editor instance');
     }
     if (id === 'editor-text' || id === 'editor-image' || id === 'editor-form' || id === 'editor-code') {
       await capture(client, 'inspector-content-first-' + id);
@@ -492,10 +533,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // PageRo's design shortcuts navigate the existing editor, rather than
   // maintaining parallel content/design state or duplicating form fields.
   const inspectorShortcuts = await evaluate(client, `(() => {
-    const panel = document.querySelector('.editor-properties-panel');
+    const panel = document.querySelector('.editor-composition-content .editor-inline-expanded')
+      || document.querySelector('.editor-properties-panel');
     const shortcuts = panel?.querySelectorAll('.editor-inspector-jump button') || [];
     return { labels: [...shortcuts].map(button => button.textContent.trim()),
-      scrollArea: !!panel?.querySelector('.editor-properties-content'),
+      scrollArea: !!panel?.closest('.editor-composition-content') || !!panel?.querySelector('.editor-properties-content'),
       buttonHeight: shortcuts[0]?.getBoundingClientRect().height || 0 };
   })()`);
   assert(JSON.stringify(inspectorShortcuts.labels) === JSON.stringify(['내용', '디자인'])
@@ -530,10 +572,12 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && unselected.editorWidth >= 248 && unselected.editorWidth <= 256
+    && Math.abs(unselected.editorWidth - 560) <= 3
     && Math.abs(unselected.listWidth - unselected.editorWidth) <= 3
-    && Math.abs(unselected.inspectorWidth - 420) <= 3,
-    'page settings must open in the independent inspector without replacing the block list: ' + JSON.stringify(unselected));
+    && Math.abs(unselected.inspectorWidth - 560) <= 3
+    && unselected.previewWidth >= 600,
+    'page-global design must reuse the left workbench without squeezing the pinned preview: '
+      + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
   await waitForBrowser(client, `!!document.querySelector('.style-panel-v17 .style-more-groups > .style-advanced-group')`, 'page theme design available');
@@ -881,8 +925,15 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     await capture(client, 'unified-page-design-type-' + width);
   }
   await setViewport(client, 1672, 941, false);
+  // The preceding reference step opens page-wide theme settings. Close that
+  // overlay before selecting a normal block in the newly unified list, since
+  // the page-wide Inspector intentionally covers the left block workbench.
+  await clickPointer(client, '.editor-workbench-close-inspector');
+  await waitForBrowser(client, `document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
+    && document.querySelector('.edit-layout')?.dataset.editorDensity === 'wide'`,
+    'page-wide design overlay returns to desktop block list');
   await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
-  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('#editor-block-settings-editor-text')?.closest('.editor-inline-settings') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy inline text editor');
+  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('#editor-block-settings-editor-text')?.closest('.editor-inline-expanded') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy inline text editor');
 
   // The redesigned first view keeps design closed. Open it deliberately for
   // secondary-control sizing and focus tests, rather than treating hidden
@@ -1035,6 +1086,22 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && fixedGroupsInitial.topRows === 1 && fixedGroupsInitial.bottomRows === 2
     && fixedGroupsInitial.buttonCount === 2,
     'fixed regions initially expose their real, unreordered rows: ' + JSON.stringify(fixedGroupsInitial));
+  const pinnedInline = await evaluate(client, `(() => {
+    const settings = document.querySelector('#editor-block-settings-editor-bottom');
+    const properties = document.querySelector('.editor-properties-panel');
+    return {
+      inline: !!settings?.closest('[data-fixed-group="bottom"] .editor-inline-expanded'),
+      visible: !!settings?.getClientRects().length,
+      count: document.querySelectorAll('#editor-block-settings-editor-bottom').length,
+      inspectorHidden: getComputedStyle(properties).display === 'none',
+      actualPageWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
+    };
+  })()`);
+  assert(pinnedInline.inline && pinnedInline.visible && pinnedInline.count === 1
+    && pinnedInline.inspectorHidden && pinnedInline.actualPageWidth === 390,
+    'pinned CTA must expand its one real widget editor beneath its row, never a covering Inspector: '
+      + JSON.stringify(pinnedInline));
+  await capture(client, 'littly-inline-bottom-fixed-1672');
 
   await clickPointer(client, '[data-fixed-group="bottom"] .editor-fixed-group-toggle');
   await waitForBrowser(client, `(() => {
@@ -1484,6 +1551,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     const properties = document.querySelector('.editor-properties-content');
     return { header: rect(document.querySelector('.workspace-persistent-header')), list:rect(list), inspector:rect(inspector), stage:rect(stage), phone:rect(document.querySelector('.phone-frame')), pageWidth:document.querySelector('.phone-frame .landing-page').clientWidth,
       phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-device-widths button').length, documentWidth:document.documentElement.scrollWidth,
+      inlineEditors:document.querySelectorAll('.editor-composition-content .editor-inline-expanded').length,
       listScroll:getComputedStyle(list).overflowY,
       navigatorScroll:getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
       inspectorScroll:getComputedStyle(properties).overflowY,
@@ -1496,13 +1564,14 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 252) <= 3
-    && Math.abs(geometry.inspector.width - 420) <= 3
-    && geometry.list.right <= geometry.inspector.left + 2
-    && geometry.inspector.right <= geometry.phone.left + 2,
-    'approved three-pane geometry must keep navigation, real canvas, settings separated at 1672px: ' + JSON.stringify(geometry));
-  assert(Math.abs(geometry.list.top - 64) <= 1 && Math.abs(geometry.inspector.top - 64) <= 1,
-    'both side panels must remain aligned below the shared 64px workspace toolbar: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 560) <= 3
+    && geometry.inspector.width === 0
+    && geometry.list.right <= geometry.phone.left - 12
+    && geometry.inlineEditors === 1,
+    'wide layout must contain one inline block editor and one right-side mobile result: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.list.top - 64) <= 1
+    && Math.abs(geometry.stage.top - 64) <= 1,
+    'block workbench and pinned result must align below the 64px toolbar: ' + JSON.stringify(geometry));
   assert(geometry.ancestors[1].height.endsWith('px') && geometry.ancestors[1].overflow === 'hidden'
     && geometry.ancestors[1].scrollTop === 0,
     'work panel must remain stationary while the two editing regions scroll: ' + JSON.stringify(geometry));
@@ -1513,8 +1582,10 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
     && geometry.inspectorScroll === 'auto'
-    && geometry.phone.left >= geometry.inspector.right + 12
-    && Math.abs(1672 - geometry.phone.right - 28) <= 3,
+    && geometry.phone.left >= geometry.list.right + 12
+    && geometry.phone.left - geometry.list.right <= 380
+    && Math.abs((geometry.phone.left + geometry.phone.right) / 2
+      - (geometry.stage.left + 24 + geometry.stage.right - 28) / 2) <= 3,
     'real page must remain centered with independent list and inspector scrolling: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
@@ -1531,8 +1602,12 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       return {
         contentWidth: page.clientWidth, frameWidth: box(frame).width,
         frameBorder: css.borderTopWidth, radius: css.borderTopLeftRadius,
-        stageRightPinned: box(frame).left - box(document.querySelector('.editor-properties-panel')).right >= 8
-          && Math.abs(box(preview).right - box(frame).right - (innerWidth < 1280 ? 12 : 28)) <= 3,
+        stagePlacementValid: box(frame).left - box(document.querySelector('.editor-properties-panel')).right >= 8
+          && (innerWidth < 1280
+            ? Math.abs(box(preview).right - box(frame).right - 12) <= 3
+            : Math.abs((box(frame).left + box(frame).right) / 2
+              - (box(preview).left + parseFloat(getComputedStyle(preview).paddingLeft)
+                + box(preview).right - parseFloat(getComputedStyle(preview).paddingRight)) / 2) <= 3),
         frameInside: box(frame).left >= box(preview).left - 2 && box(frame).right <= box(preview).right + 2,
         children: stage.children.length,
         hasLegacyToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
@@ -1543,7 +1618,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     })()`);
     const expectedWidth = 394;
     assert(chrome.contentWidth === 390 && Math.abs(chrome.frameWidth - expectedWidth) < 2
-      && parseInt(chrome.radius, 10) <= 20 && chrome.stageRightPinned && chrome.frameInside
+      && parseInt(chrome.radius, 10) <= 20 && chrome.stagePlacementValid && chrome.frameInside
       && chrome.children === 2 && (chrome.canvasTools || chrome.canvasAdd) && !chrome.hasLegacyToolbar,
       'canvas must show a single real 390px page with a compact inline action row at ' + width + ': ' + JSON.stringify(chrome));
     if (width === 900 || width === 1440) await capture(client, 'clean-phone-stage-' + width);
