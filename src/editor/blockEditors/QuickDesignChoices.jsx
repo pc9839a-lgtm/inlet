@@ -29,7 +29,7 @@ export default function QuickDesignChoices({
             >
               <span className="editor-quick-design-art" />
               <span className="editor-quick-design-lines">
-                <i /><i /><i />
+                <span /><span /><span />
               </span>
               <span className="editor-quick-design-button" />
             </span>
