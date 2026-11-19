@@ -2206,32 +2206,30 @@ async function run() {
       `D03 hero row should identify its live title: ${JSON.stringify(heroRowIdentity)}`);
 
     const stageTwoSettings = await evaluate(client, `(() => {
-      const panel = document.querySelector('#editor-block-settings-editor-hero');
+      const settings = document.querySelector('#editor-block-settings-editor-hero');
       const list = document.querySelector('.screen-order-v2-list-view');
-      const heading = panel?.closest('.screen-order-v2-settings-view')
-        ?.querySelector('.screen-order-v2-settings-title h2');
+      const properties = document.querySelector('.editor-properties-panel');
+      const heading = settings?.closest('.screen-order-v2-settings-view')?.querySelector('.screen-order-v2-settings-title h2');
       return {
         listVisible: !!list?.getClientRects().length,
-        inlineBelowRow: !!panel?.closest('.screen-order-v2-list .editor-inline-expanded'),
+        inInspector: !!settings?.closest('.editor-properties-content'),
         activeEditors: document.querySelectorAll('#editor-block-settings-editor-hero').length,
         rowEditors: document.querySelectorAll('.screen-order-v2-slot .block-editor-v2').length,
-        title: heading?.textContent,
-        headingVisible: !!heading?.getClientRects().length,
-        panelWidth: panel?.getBoundingClientRect().width,
-        paneWidth: document.querySelector('.editor-composition-panel').getBoundingClientRect().width,
-        inspectorHidden: getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none',
+        title: heading?.textContent, headingVisible: !!heading?.getClientRects().length,
+        panelWidth: settings?.getBoundingClientRect().width,
+        inspectorWidth: properties?.getBoundingClientRect().width,
+        inspectorVisible: getComputedStyle(properties).display !== 'none',
         fixedVisible: !!document.querySelector('.screen-order-fixed-blocks')?.getClientRects().length,
-        addVisible: !!document.querySelector('.fixed-add-dock')?.getClientRects().length,
         helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
       };
     })()`);
-    assert(stageTwoSettings.listVisible && stageTwoSettings.inlineBelowRow
+    assert(stageTwoSettings.listVisible && stageTwoSettings.inInspector
       && stageTwoSettings.activeEditors === 1 && stageTwoSettings.rowEditors === 0
       && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.headingVisible
-      && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.paneWidth
-      && stageTwoSettings.inspectorHidden && stageTwoSettings.fixedVisible
-      && stageTwoSettings.addVisible && stageTwoSettings.helperCopyRemoved,
-      'stage 2 must edit its selected hero directly below the row with only one widget editor: '
+      && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.inspectorWidth
+      && stageTwoSettings.inspectorVisible && stageTwoSettings.fixedVisible
+      && stageTwoSettings.helperCopyRemoved,
+      'selected hero must edit in one separate settings pane without duplicating list controls: '
         + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
     await openBlockSettings(client, 'editor-hero');
@@ -3188,13 +3186,13 @@ async function run() {
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
       && leftGeometry.inspectorInner >= 260
-      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 334 : 560)) <= 3
+      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 334 : 394)) <= 3
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 500
       && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
       && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
       && leftGeometry.propertiesRight <= (leftGeometry.previewLeft + leftGeometry.preview) - 390 + 2
-      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 560)) <= 4,
+      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 276)) <= 4,
       'selected properties must remain readable in their own panel without covering the real mobile canvas: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
@@ -3740,51 +3738,53 @@ async function run() {
     assert(longMetrics.count >= 32 && longMetrics.previewCount >= 30 && longMetrics.selected
       && longMetrics.scrollTop > 0 && Math.abs(longMetrics.width - 390) <= 1 && longMetrics.overflow <= 3,
       'deep selection stays visible in one 390px phone without page horizontal overflow: ' + JSON.stringify(longMetrics));
-    // On a 36-block real page, the selected editor expands inside the deep
-    // row's one scrollable list. The sticky page-actions footer and live phone
-    // must not move when the user edits a long block.
+    // On a 36-block real page, editing a deep block keeps list and settings
+    // as independent scroll regions and never moves the live phone.
     const longScroll = await evaluate(longPageClient, `(() => {
       const list = document.querySelector('.editor-composition-content');
+      const properties = document.querySelector('.editor-properties-content');
       const composition = document.querySelector('.editor-composition-panel');
       const settings = document.querySelector('#editor-block-settings-editor-long-25 .block-editor-v2');
       const outer = document.querySelector('.work-panel');
-      if (!list || !composition || !settings || !outer) return null;
-      const previousMinHeight = settings.style.minHeight;
-      const listBefore = list.scrollTop;
+      if (!list || !properties || !composition || !settings || !outer) return null;
+      const oldHeight = settings.style.minHeight;
+      const oldList = list.scrollTop;
+      const oldProperties = properties.scrollTop;
       let metrics;
       try {
         settings.style.minHeight = '1200px';
-        list.scrollTop = Math.max(listBefore, 240);
+        list.scrollTop = Math.max(oldList, 240);
+        const beforeProperties = list.scrollTop;
+        properties.scrollTop = 250;
+        const footer = composition.querySelector('.editor-composition-footer');
         metrics = {
           navigatorOverflowY: getComputedStyle(list).overflowY,
+          inspectorOverflowY: getComputedStyle(properties).overflowY,
           blockSettingsOverflowY: getComputedStyle(settings).overflowY,
           workOverflowY: getComputedStyle(outer).overflowY,
           navigatorScrollTop: list.scrollTop,
-          inline: !!settings.closest('.editor-inline-expanded'),
+          inspectorScrollTop: properties.scrollTop,
+          independent: list.scrollTop === beforeProperties,
+          insideInspector: properties.contains(settings),
           duplicateCount: document.querySelectorAll('#editor-block-settings-editor-long-25').length,
-          inspectorHidden: getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none',
           outerTop: outer.scrollTop,
-          footerVisible: (() => {
-            const footer = composition.querySelector('.editor-composition-footer');
-            const rect = footer?.getBoundingClientRect();
-            const box = composition.getBoundingClientRect();
-            return !!rect && Math.abs(rect.bottom - box.bottom) <= 2;
-          })(),
+          footerVisible: Math.abs(footer.getBoundingClientRect().bottom - composition.getBoundingClientRect().bottom) <= 2,
         };
       } finally {
-        settings.style.minHeight = previousMinHeight;
-        list.scrollTop = listBefore;
+        settings.style.minHeight = oldHeight;
+        list.scrollTop = oldList;
+        properties.scrollTop = oldProperties;
       }
       return metrics;
     })()`);
     assert(longScroll?.navigatorOverflowY === 'auto'
+      && longScroll.inspectorOverflowY === 'auto'
       && longScroll.blockSettingsOverflowY === 'visible'
       && longScroll.workOverflowY === 'hidden'
-      && longScroll.navigatorScrollTop > 0
-      && longScroll.inline && longScroll.duplicateCount === 1
-      && longScroll.inspectorHidden && longScroll.footerVisible
-      && longScroll.outerTop === 0,
-      '36-block page must preserve one inline block scroller and pinned page actions: '
+      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop > 0
+      && longScroll.independent && longScroll.insideInspector && longScroll.duplicateCount === 1
+      && longScroll.footerVisible && longScroll.outerTop === 0,
+      '36-block page must keep a persistent navigator and independent selected editor: '
         + JSON.stringify(longScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-1672');
     await setViewport(longPageClient, 900, 780, false);
