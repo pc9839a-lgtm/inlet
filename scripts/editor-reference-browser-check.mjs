@@ -10,8 +10,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       `document.querySelector('.editor-composition-panel')?.getBoundingClientRect().left >= -1`,
       'laptop navigator drawer fully opened before selecting a row');
   };
-  // The laptop navigator overlays the LEFT inspector. Open the drawer for
-  // block-list actions, but close it before clicking real inspector controls.
+  // The laptop navigator is a left drawer and selected controls are on
+  // the right. Close the drawer before using the active inspector.
   const clickNavigatorRow = async (selector) => {
     const inspectorTarget = selector.startsWith('#editor-block-settings-');
     await evaluate(client, `(() => {
@@ -24,7 +24,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       inspectorTarget
         ? `innerWidth >= 1280 || document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'false'`
         : `innerWidth >= 1280 || document.querySelector('.editor-composition-panel')?.getBoundingClientRect().left >= -1`,
-      inspectorTarget ? 'left inspector unobstructed by laptop drawer'
+      inspectorTarget ? 'right inspector unobstructed by laptop drawer'
         : 'laptop drawer fully visible and hit-testable before selecting its next row');
     await clickPointer(client, selector);
   };
@@ -49,11 +49,10 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && stage.querySelector('.phone-frame')?.getBoundingClientRect().left >= list.getBoundingClientRect().right
       && (() => {
         const frame = stage.querySelector('.phone-frame').getBoundingClientRect();
-        const bounds = stage.getBoundingClientRect();
-        const style = getComputedStyle(stage);
-        const center = (bounds.left + parseFloat(style.paddingLeft)
-          + bounds.right - parseFloat(style.paddingRight)) / 2;
-        return Math.abs((frame.left + frame.right) / 2 - center) <= 3;
+        const blockList = list.getBoundingClientRect();
+        const expectedLeft = blockList.right + Math.max(12,
+          (innerWidth - blockList.width - 394 - frame.width) / 2);
+        return Math.abs(frame.left - expectedLeft) <= 6;
       })();
   })()`, 'desktop first screen prioritizes actual 390px page without a permanent inspector');
   const pinnedPhoneLeft = await evaluate(client,
@@ -73,7 +72,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       && details?.getBoundingClientRect().width >= 315
       && Math.abs(list.getBoundingClientRect().width - 276) <= 3
       && Math.abs(inspector.getBoundingClientRect().width - 394) <= 3
-      && inspector.getBoundingClientRect().right <= preview.getBoundingClientRect().left - 8
+      && preview.getBoundingClientRect().right <= inspector.getBoundingClientRect().left - 8
       && Math.abs(preview.getBoundingClientRect().left - ${pinnedPhoneLeft}) <= 4;
   })()`, 'block selection must show one independent settings form without moving the 390px result');
   await capture(client, 'separate-settings-block-edit-1672');
@@ -447,7 +446,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           inspectorWidth: inspector?.width,
           duplicateEditors: document.querySelectorAll('#editor-block-settings-editor-code').length,
           inputWidth: code?.width,
-          phoneOffset: phone?.left - inspector?.right,
+          phoneOffset: inspector?.left - phone?.right,
           phoneRight: phone?.right,
           actualPageWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
           documentWidth: document.documentElement.scrollWidth,
@@ -469,7 +468,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           && layout.dataset.inspectorOpen === 'true'
           && code?.getBoundingClientRect().width >= 300
           && panel?.width >= 390
-          && phone?.left >= panel.right + 8 && phone?.right <= 1440
+          && phone?.right <= panel.left - 8 && phone?.left >= 0
           && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
       })()`, 'separate code settings and one actual page remain readable at 1440px');
       await setViewport(client, 1672, 941, false);
@@ -568,7 +567,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && Math.abs(unselected.listWidth - unselected.editorWidth) <= 3
     && Math.abs(unselected.inspectorWidth - 394) <= 3
     && unselected.previewWidth >= 600,
-    'page-global design must use the independent left settings column without squeezing the page: '
+    'page-global design must use the independent right settings column without squeezing the page: '
       + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
@@ -1530,7 +1529,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await capture(client, 'desktop-reference-editor-1672');
   assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 276) <= 3
     && Math.abs(geometry.inspector.width - 394) <= 3
-    && geometry.inspector.right <= geometry.phone.left - 8
+    && geometry.phone.right <= geometry.inspector.left - 8
     && geometry.inlineEditors === 0 && geometry.settingsEditors === 1,
     'wide layout must contain separate list and one settings editor beside the real page: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1
@@ -1546,8 +1545,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
     && geometry.inspectorScroll === 'auto'
-    && geometry.phone.left >= geometry.inspector.right + 8
-    && geometry.phone.left - geometry.inspector.right <= 210
+    && geometry.phone.right <= geometry.inspector.left - 8
+    && geometry.inspector.left - geometry.phone.right >= 8
     && Math.abs(geometry.phone.left - pinnedPhoneLeft) <= 6,
     'real page must remain centered with independent list and inspector scrolling: ' + JSON.stringify(geometry));
 
@@ -1565,11 +1564,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       return {
         contentWidth: page.clientWidth, frameWidth: box(frame).width,
         frameBorder: css.borderTopWidth, radius: css.borderTopLeftRadius,
-        stagePlacementValid: box(frame).left - box(document.querySelector('.editor-properties-panel')).right >= 8
-          && (innerWidth < 1280
-            ? Math.abs(box(preview).right - box(frame).right - 12) <= 3
-            : box(frame).left >= box(preview).left + 8
-              && box(frame).right <= box(preview).right - 8),
+        stagePlacementValid: box(document.querySelector('.editor-properties-panel')).left - box(frame).right >= 8
+          && box(frame).left >= box(preview).left + 8
+          && box(frame).right <= box(preview).right - 8,
         frameInside: box(frame).left >= box(preview).left - 2 && box(frame).right <= box(preview).right + 2,
         children: stage.children.length,
         hasLegacyToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
