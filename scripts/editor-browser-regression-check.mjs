@@ -1315,8 +1315,7 @@ async function run() {
     await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTitle) + ')', 'preview text quick-edit trigger');
     await clickSelector(client, inlineTitle);
     await waitForBrowser(client, "!!document.querySelector('#editor-block-settings-editor-text')", 'preview selected text inspector');
-    const doubleClicked = await evaluate(client, '(() => { const title = document.querySelector(' + JSON.stringify(inlineTitle) + '); if (!title) return false; title.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true, view: window })); return true; })()');
-    assert(doubleClicked, 'preview heading should support double click');
+    // One click now enters direct editing; no undiscoverable double click.
     const inlineTextarea = '.phone-frame #block-editor-text textarea[aria-label="제목 바로 수정"]';
     await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTextarea) + ')', 'preview inline title editor');
     await setInputValue(client, inlineTextarea, '모바일 화면에서 직접 바꾼 제목');
