@@ -423,23 +423,30 @@ html body #root .canvas-editor-shell :is(.editor-page-settings-button, .screen-o
   html body #root .canvas-editor-shell .editor-fixed-group-toggle > svg { transition: none; }
 }
 
-/* Left editing workspace: compact list followed by the persistent settings panel.
-   The real page preview remains to the right without changing block state. */
+/* Left block navigation, center live page, right selected-block editor.
+   The original widget fields mount only after a block is explicitly chosen. */
 html body #root .canvas-editor-shell .editor-navigator-drawer-trigger { display: none; }
 html body #root .canvas-editor-shell .editor-properties-panel {
   position: fixed;
   z-index: 11;
   top: 64px;
-  left: var(--editor-list-width, 260px);
-  right: auto;
+  left: auto;
+  right: 0;
   display: flex;
   flex-direction: column;
   width: var(--editor-settings-width, 350px);
   height: calc(100dvh - 64px);
   min-width: 0;
-  border-right: 1px solid #e5e9f0;
+  border-left: 1px solid #e5e9f0;
   background: #fff;
   box-sizing: border-box;
+}
+/* Closed means absent, not a blank panel obscuring the live page.
+   The user-selected block stays in the page model for later reopening. */
+@media (min-width: 900px) {
+  html body #root .builder-shell.canvas-editor-shell:has(
+    .edit-layout[data-inspector-open='false']
+  ) .editor-properties-panel { display: none !important; }
 }
 html body #root .canvas-editor-shell .editor-properties-heading {
   display: flex;
@@ -531,7 +538,7 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
   html body #root .canvas-editor-shell .editor-navigator-drawer-trigger[aria-expanded='true'] {
     left: 260px;
   }
-  html body #root .canvas-editor-shell .editor-properties-panel { left: 0; pointer-events: auto; }
+  html body #root .canvas-editor-shell .editor-properties-panel { left: auto; right: 0; pointer-events: auto; }
 }
 @media (max-width: 899px) {
   html body #root .builder-shell.canvas-editor-shell .edit-layout {
@@ -557,7 +564,7 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
     width: 100%;
     height: auto;
     min-height: 420px;
-    border-right: 0;
+    border-left: 0;
     border-top: 1px solid #e5e9f0;
   }
   html body #root .canvas-editor-shell .editor-properties-content { overflow: visible; }
