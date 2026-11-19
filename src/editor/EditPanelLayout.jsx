@@ -532,14 +532,14 @@ export function EditPanelLayout({
           {showStartEditing && (
              <StartEditing blocks={screenOrderListProps.normalBlocks} onChooseBlock={chooseBlock} />
            )}
-           {!showPageOptions && fixedSelected && inspectorOpen && (
+           {!showPageOptions && inspectorOpen && fixedSelected && (
             <section className="editor-inspector-panel editor-inline-settings">
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
                 {renderFixedSettings()}
               </div>
             </section>
           )}
-          {!showPageOptions && !showStartEditing && !fixedSelected && inspectorOpen && (
+          {!showPageOptions && inspectorOpen && !showStartEditing && !fixedSelected && (
             <section className="editor-inspector-panel editor-inline-settings">
               <div id="editor-selection-panel" className="edit-section-panel" data-editor-section="order">
                 <ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />
