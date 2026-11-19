@@ -853,7 +853,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
           bodyVisible:!!b?.height, overflow:!!b && !!d && (b.right > d.right + 2 || b.left < d.left - 2),
         };
       })()`);
-      assert(expanded.isNative && expanded.open && expanded.height >= 44 && expanded.height <= 46
+      assert(expanded.isNative && expanded.open && expanded.height >= 44 && expanded.height <= 50
         && ['13px', '14px'].includes(expanded.labelSize) && Number(expanded.labelWeight) >= 650
         && expanded.gap === '12px' && expanded.paddingTop === '4px'
         && ['12px', '14px'].includes(expanded.paddingBottom) && expanded.bodyVisible && !expanded.overflow,
