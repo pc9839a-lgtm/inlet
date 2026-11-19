@@ -2684,7 +2684,27 @@ async function run() {
       && stageThreePageSettings.rows.length === 0 && stageThreePageSettings.collapsed
       && stageThreePageSettings.shareControlsHidden,
       'the entire-design inspector must not mix page settings into the same surface: ' + JSON.stringify(stageThreePageSettings));
-    // D07: design basics remain visible; advanced typography and effects are disclosures.
+    // A finished page look is one click. The existing staged theme prevents
+    // accidental publishing and reset restores the prior appearance exactly.
+    await waitForBrowser(client,
+      `document.querySelectorAll('.page-design-preset').length === 4
+        && !document.querySelector('.style-custom-settings')?.open`,
+      'four complete page looks shown before dense manual controls');
+    await clickSelector(client, '.page-design-preset:nth-child(2)');
+    await waitForBrowser(client,
+      `document.querySelector('.page-design-preset:nth-child(2)')?.getAttribute('aria-pressed') === 'true'
+        && document.querySelector('.style-primary-colors input[type="color"]')?.value === '#a64a33'
+        && document.querySelector('.style-apply-btn')?.disabled === false`,
+      'warm page look previews existing font and color model without applying it');
+    assert(apiState.saveCount === 0, 'a page look is a staged live preview, not an automatic server write');
+    await capture(client, 'page-design-quick-looks');
+    await clickSelector(client, '.style-reset-btn');
+    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`,
+      'one-click page look can be undone before applying');
+    await clickSelector(client, '.style-custom-settings > summary');
+    await waitForBrowser(client, `document.querySelector('.style-custom-settings')?.open === true`,
+      'manual page styling remains available on demand');
+    // D07: expert typography and effects are disclosures behind the simple looks.
     const designDirectFlow = await evaluate(client, `(() => {
       const panel = document.querySelector('.editor-page-options-stack .style-panel');
       const extra = [...panel.querySelectorAll('.style-more-groups > details')];
@@ -2733,6 +2753,9 @@ async function run() {
     await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
     await waitForBrowser(client, `!!document.querySelector('.style-panel') && !document.querySelector('.page-global-options-card')`,
       'reopen design without discarding staged theme color');
+    await clickSelector(client, '.style-custom-settings > summary');
+    await waitForBrowser(client, `document.querySelector('.style-custom-settings')?.open === true`,
+      'manual color controls reopen after page options');
     const accentHex = '.style-panel input[aria-label="버튼색 HEX"]';
     await typeInputValue(client, accentHex, '#abc');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
@@ -2821,8 +2844,10 @@ async function run() {
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
     await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
-    await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`,
-      'unapplied style controls are accessible after page behavior changes');
+    await clickSelector(client, '.style-custom-settings > summary');
+    await waitForBrowser(client, `document.querySelector('.style-custom-settings')?.open === true
+      && !!document.querySelector('.style-panel input[type="color"]')`,
+      'unapplied expert styling remains accessible after page behavior changes');
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
     assert(apiState.saveCount === 0, 'page settings toggles and disclosures must never auto-publish');
 
