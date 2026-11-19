@@ -344,7 +344,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'selected form exposes its button-copy editing shortcut');
   await clickPointer(client, '.phone-frame #block-editor-form .editor-preview-submit-edit');
   await waitForBrowser(client,
-    `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-editor-flow > .field-title input')`,
+    `document.activeElement === document.querySelector('#editor-block-settings-editor-form .form-submit-task .field-title input')`,
     'form submit-copy shortcut focuses exact existing field, never submits');
   assert(apiState.saveCount === 0, 'preview editing shortcuts do not publish pages or persist test leads');
   await capture(client, 'form-direct-title-and-submit-edit');
