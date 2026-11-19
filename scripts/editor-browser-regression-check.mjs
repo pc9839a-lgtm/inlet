@@ -1999,13 +1999,37 @@ async function run() {
       `document.querySelector(${JSON.stringify(heroAdvanced)})?.open === false`),
       'D02 advanced anchor must close without dropping its value');
     // Pinned top navigation uses the same separate editor as normal widgets.
-    const inlineScrollBeforeSwitch = await evaluate(client, `(() => {
+    const listScrollBeforeSwitch = await evaluate(client, `(() => {
       const scroller = document.querySelector('.editor-composition-content');
-      scroller.scrollTop = 240;
-      return scroller.scrollTop;
+      const list = scroller?.querySelector('.screen-order-v2-list');
+      const row = list?.querySelector('.screen-order-v2-slot');
+      const properties = document.querySelector('.editor-properties-content');
+      if (!list || !row || !properties) return null;
+      const clones = [];
+      const previousPropertiesScroll = properties.scrollTop;
+      try {
+        for (let index = 0; index < 18; index++) {
+          const clone = row.cloneNode(true);
+          clone.dataset.qaDeepBlock = String(index);
+          clone.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+          list.appendChild(clone);
+          clones.push(clone);
+        }
+        scroller.scrollTop = 240;
+        return {
+          scroll: scroller.scrollTop,
+          settingsStayed: properties.scrollTop === previousPropertiesScroll,
+          listOverflow: getComputedStyle(scroller).overflowY,
+        };
+      } finally {
+        clones.forEach(clone => clone.remove());
+        scroller.scrollTop = 0;
+      }
     })()`);
-    assert(inlineScrollBeforeSwitch > 100,
-      'block list scroll must preserve the independent properties region');
+    assert(listScrollBeforeSwitch?.scroll > 100 && listScrollBeforeSwitch.settingsStayed
+      && listScrollBeforeSwitch.listOverflow === 'auto',
+      'a 25-block navigator must scroll without moving its independent settings: '
+        + JSON.stringify(listScrollBeforeSwitch));
     await clickSelector(client, '.topnav-fixed-card .fixed-composition-select');
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')
