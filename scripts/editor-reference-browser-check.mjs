@@ -1515,6 +1515,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     return { header: rect(document.querySelector('.workspace-persistent-header')), list:rect(list), inspector:rect(inspector), stage:rect(stage), phone:rect(document.querySelector('.phone-frame')), pageWidth:document.querySelector('.phone-frame .landing-page').clientWidth,
       phones:stage.querySelectorAll('.phone-frame').length, stageChildren:stage.children.length, widthOptions:stage.querySelectorAll('.preview-device-widths button').length, documentWidth:document.documentElement.scrollWidth,
       inlineEditors:document.querySelectorAll('.editor-composition-content .editor-inline-expanded').length,
+       settingsEditors:document.querySelectorAll('.editor-properties-content .screen-order-v2-settings').length,
       listScroll:getComputedStyle(list).overflowY,
       navigatorScroll:getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
       inspectorScroll:getComputedStyle(properties).overflowY,
@@ -1527,11 +1528,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   })()`);
   console.log('reference geometry:', JSON.stringify(geometry));
   await capture(client, 'desktop-reference-editor-1672');
-  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 560) <= 3
-    && geometry.inspector.width === 0
-    && geometry.list.right <= geometry.phone.left - 12
-    && geometry.inlineEditors === 1,
-    'wide layout must contain one inline block editor and one right-side mobile result: ' + JSON.stringify(geometry));
+  assert(Math.abs(geometry.header.height - 64) <= 1 && Math.abs(geometry.list.width - 276) <= 3
+    && Math.abs(geometry.inspector.width - 394) <= 3
+    && geometry.inspector.right <= geometry.phone.left - 8
+    && geometry.inlineEditors === 0 && geometry.settingsEditors === 1,
+    'wide layout must contain separate list and one settings editor beside the real page: ' + JSON.stringify(geometry));
   assert(Math.abs(geometry.list.top - 64) <= 1
     && Math.abs(geometry.stage.top - 64) <= 1,
     'block workbench and pinned result must align below the 64px toolbar: ' + JSON.stringify(geometry));
@@ -1545,10 +1546,9 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && geometry.documentWidth <= 1672 && !geometry.redundantNav
     && geometry.listScroll === 'hidden' && geometry.navigatorScroll === 'auto'
     && geometry.inspectorScroll === 'auto'
-    && geometry.phone.left >= geometry.list.right + 12
-    && geometry.phone.left - geometry.list.right <= 380
-    && Math.abs((geometry.phone.left + geometry.phone.right) / 2
-      - (geometry.stage.left + 24 + geometry.stage.right - 28) / 2) <= 3,
+    && geometry.phone.left >= geometry.inspector.right + 8
+    && geometry.phone.left - geometry.inspector.right <= 210
+    && Math.abs(geometry.phone.left - pinnedPhoneLeft) <= 6,
     'real page must remain centered with independent list and inspector scrolling: ' + JSON.stringify(geometry));
 
   // 21st patch: preview stage is the page itself. No redundant resolution,
@@ -1568,9 +1568,8 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         stagePlacementValid: box(frame).left - box(document.querySelector('.editor-properties-panel')).right >= 8
           && (innerWidth < 1280
             ? Math.abs(box(preview).right - box(frame).right - 12) <= 3
-            : Math.abs((box(frame).left + box(frame).right) / 2
-              - (box(preview).left + parseFloat(getComputedStyle(preview).paddingLeft)
-                + box(preview).right - parseFloat(getComputedStyle(preview).paddingRight)) / 2) <= 3),
+            : box(frame).left >= box(preview).left + 8
+              && box(frame).right <= box(preview).right - 8),
         frameInside: box(frame).left >= box(preview).left - 2 && box(frame).right <= box(preview).right + 2,
         children: stage.children.length,
         hasLegacyToolbar: !!stage.querySelector('.preview-stage-toolbar,.preview-selection-toolbar,.preview-view-tools,.preview-width-toolbar'),
