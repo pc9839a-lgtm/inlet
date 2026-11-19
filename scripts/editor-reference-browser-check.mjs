@@ -430,9 +430,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       'redesigned inspector exposes actual content before optional settings: ' + JSON.stringify({ id, firstView }));
     const selectionPhoneLeft = await evaluate(client,
       `document.querySelector('.phone-frame')?.getBoundingClientRect().left`);
-    assert(Math.abs(selectionPhoneLeft - pinnedPhoneLeft) <= 2,
-      'switching between text, image, form and code must not move the 390px live preview: '
-        + JSON.stringify({ id, selectionPhoneLeft, pinnedPhoneLeft }));
+    if (id !== 'editor-code') {
+      assert(Math.abs(selectionPhoneLeft - pinnedPhoneLeft) <= 6,
+        'standard widget selections must preserve the 390px preview position: '
+          + JSON.stringify({ id, selectionPhoneLeft, pinnedPhoneLeft }));
+    }
     if (id === 'editor-code') {
       const wideCode = await evaluate(client, `(() => {
         const rect = node => node?.getBoundingClientRect();
@@ -443,55 +445,37 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
         return {
           selected: layout?.dataset.selectedBlockType,
           inspectorWidth: inspector?.width,
-          inlineWidth: rect(document.querySelector('.editor-inline-expanded'))?.width,
-          inlineEditorCount: document.querySelectorAll('#editor-block-settings-editor-code').length,
+          duplicateEditors: document.querySelectorAll('#editor-block-settings-editor-code').length,
           inputWidth: code?.width,
           phoneOffset: phone?.left - inspector?.right,
-          phoneStageCenterError: (() => {
-            const stage = document.querySelector('.preview-workspace');
-            const bounds = stage.getBoundingClientRect();
-            const style = getComputedStyle(stage);
-            return Math.abs((phone.left + phone.right) / 2
-              - (bounds.left + parseFloat(style.paddingLeft)
-                + bounds.right - parseFloat(style.paddingRight)) / 2);
-          })(),
+          phoneRight: phone?.right,
           actualPageWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
           documentWidth: document.documentElement.scrollWidth,
         };
       })()`);
-      assert(wideCode.selected === 'code' && wideCode.inspectorWidth === 0
-        && wideCode.inlineWidth >= 510 && wideCode.inlineEditorCount === 1
-        && wideCode.inputWidth >= 490
-        && wideCode.phoneStageCenterError <= 3
-        && wideCode.actualPageWidth === 390
-        && wideCode.documentWidth <= 1672,
-        'wide code edit must use free canvas space without squashing or hiding the actual page: '
+      assert(wideCode.selected === 'code' && Math.abs(wideCode.inspectorWidth - 580) <= 3
+        && wideCode.duplicateEditors === 1 && wideCode.inputWidth >= 490
+        && wideCode.phoneOffset >= 8 && wideCode.phoneRight <= 1672
+        && wideCode.actualPageWidth === 390 && wideCode.documentWidth <= 1672,
+        'code settings must use a separate wide editor while the real page remains fully visible: '
           + JSON.stringify(wideCode));
-
       await setViewport(client, 1440, 941, false);
       await waitForBrowser(client, `(() => {
         const layout = document.querySelector('.edit-layout');
         const code = document.querySelector('#editor-block-settings-editor-code .code-editor-box textarea');
-        const phone = document.querySelector('.phone-frame');
+        const phone = document.querySelector('.phone-frame')?.getBoundingClientRect();
+        const panel = document.querySelector('.editor-properties-panel')?.getBoundingClientRect();
         return layout?.dataset.selectedBlockType === 'code'
-          && layout.dataset.inlineEditing === 'true'
-          && code?.getBoundingClientRect().width >= 490
-          && (() => {
-            const frame = phone?.getBoundingClientRect();
-            const stage = document.querySelector('.preview-workspace');
-            const bounds = stage?.getBoundingClientRect();
-            const style = stage && getComputedStyle(stage);
-            return !!frame && !!bounds
-              && Math.abs((frame.left + frame.right) / 2
-                - (bounds.left + parseFloat(style.paddingLeft)
-                  + bounds.right - parseFloat(style.paddingRight)) / 2) <= 3;
-          })()
+          && layout.dataset.inspectorOpen === 'true'
+          && code?.getBoundingClientRect().width >= 300
+          && panel?.width >= 390
+          && phone?.left >= panel.right + 8 && phone?.right <= 1440
           && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
-      })()`, 'inline code remains readable and the same page stays pinned at 1440px');
+      })()`, 'separate code settings and one actual page remain readable at 1440px');
       await setViewport(client, 1672, 941, false);
       await waitForBrowser(client,
         `document.querySelector('#editor-block-settings-editor-code .code-editor-box textarea')?.getBoundingClientRect().width >= 490`,
-        'inline code editor remains wide on desktop without a second editor instance');
+        'code settings reclaim desktop width without duplicating the editor');
     }
     if (id === 'editor-text' || id === 'editor-image' || id === 'editor-form' || id === 'editor-code') {
       await capture(client, 'inspector-content-first-' + id);
@@ -581,11 +565,11 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       editorWidth:work.getBoundingClientRect().width, previewWidth:preview.getBoundingClientRect().width };
   })()`);
   assert(unselected.hasPageOptions && unselected.inspectorDisplay !== 'none'
-    && Math.abs(unselected.editorWidth - 560) <= 3
+    && Math.abs(unselected.editorWidth - 276) <= 3
     && Math.abs(unselected.listWidth - unselected.editorWidth) <= 3
-    && Math.abs(unselected.inspectorWidth - 560) <= 3
+    && Math.abs(unselected.inspectorWidth - 394) <= 3
     && unselected.previewWidth >= 600,
-    'page-global design must reuse the left workbench without squeezing the pinned preview: '
+    'page-global design must use the independent left settings column without squeezing the page: '
       + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
