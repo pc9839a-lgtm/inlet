@@ -523,31 +523,31 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     'one optional text design disclosure must reveal original text style and spacing actions: '
     + JSON.stringify(optionalText));
   await clickNavigatorRow('#editor-block-settings-editor-text .text-editor-design > summary');
-  // PageRo's design shortcuts navigate the existing editor, rather than
-  // maintaining parallel content/design state or duplicating form fields.
-  const inspectorShortcuts = await evaluate(client, `(() => {
+  // Design remains an explicit disclosure immediately after the primary
+  // content fields. The fake content/design rail was not a real tab system.
+  const directInspector = await evaluate(client, `(() => {
     const panel = document.querySelector('.editor-properties-panel');
-    const shortcuts = panel?.querySelectorAll('.editor-inspector-jump button') || [];
-    return { labels: [...shortcuts].map(button => button.textContent.trim()),
-      scrollArea: !!panel?.closest('.editor-composition-content') || !!panel?.querySelector('.editor-properties-content'),
-      buttonHeight: shortcuts[0]?.getBoundingClientRect().height || 0 };
+    const settings = panel?.querySelector('#editor-block-settings-editor-text');
+    const design = settings?.querySelector('.text-editor-design');
+    return {
+      direct: !!settings && panel.contains(settings),
+      fakeTabs: !!panel?.querySelector('.editor-inspector-jump'),
+      summaryVisible: !!design?.querySelector('summary')?.getClientRects().length,
+      ownScroll: getComputedStyle(panel?.querySelector('.editor-properties-content')).overflowY,
+    };
   })()`);
-  assert(JSON.stringify(inspectorShortcuts.labels) === JSON.stringify(['내용', '디자인'])
-    && inspectorShortcuts.scrollArea && inspectorShortcuts.buttonHeight >= 34,
-    'selected block must expose accessible content and design shortcuts: ' + JSON.stringify(inspectorShortcuts));
-  await clickPointer(client, '.editor-inspector-jump button:nth-child(2)');
+  assert(directInspector.direct && !directInspector.fakeTabs
+    && directInspector.summaryVisible && directInspector.ownScroll === 'auto',
+    'design is reachable directly without a duplicate shortcut rail: ' + JSON.stringify(directInspector));
+  await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
   await waitForBrowser(client,
     `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === true`,
-    'design shortcut expands the original text design disclosure');
-  await clickPointer(client, '.editor-inspector-jump button:first-child');
-  await waitForBrowser(client,
-    `document.querySelector('.editor-properties-content')?.scrollTop <= 40`,
-    'content shortcut returns to the beginning of the separate settings inspector');
+    'design disclosure opens directly without a false tab');
   await clickPointer(client, '#editor-block-settings-editor-text .text-editor-design > summary');
   await waitForBrowser(client,
     `document.querySelector('#editor-block-settings-editor-text .text-editor-design')?.open === false`,
-    'closing design after shortcut preserves original disclosure semantics');
-  assert(apiState.saveCount === 0, 'inspector shortcuts must never persist or publish settings');
+    'closing design preserves its native disclosure controls');
+  assert(apiState.saveCount === 0, 'inspector navigation must never persist or publish settings');
   // Prior QA scenarios may leave a block selected. Explicitly enter page-level
   // editing to verify that clearing the selected block never hides the inspector.
   await clickNavigatorRow('.editor-page-settings-button');
