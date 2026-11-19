@@ -2592,7 +2592,7 @@ async function run() {
     }
     await waitForBrowser(client, `(() => {
       const panel = document.querySelector('#editor-block-settings-editor-form');
-      return !!panel?.querySelector('.form-editor-flow > .form-basic-grid') && !!panel.querySelector('.form-design-detail > summary') && !panel.querySelector('[role="tablist"]');
+      return !!panel?.querySelector('.form-editor-flow .form-title-task .form-basic-grid') && !!panel.querySelector('.form-design-detail > summary') && !panel.querySelector('[role="tablist"]');
     })()`, 'D06 form direct flow exposes content and design');
     assert(apiState.saveCount === 0, 'D06 switching editor tabs must not auto-publish');
 
