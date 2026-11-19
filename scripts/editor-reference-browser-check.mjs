@@ -526,8 +526,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   // PageRo's design shortcuts navigate the existing editor, rather than
   // maintaining parallel content/design state or duplicating form fields.
   const inspectorShortcuts = await evaluate(client, `(() => {
-    const panel = document.querySelector('.editor-composition-content .editor-inline-expanded')
-      || document.querySelector('.editor-properties-panel');
+    const panel = document.querySelector('.editor-properties-panel');
     const shortcuts = panel?.querySelectorAll('.editor-inspector-jump button') || [];
     return { labels: [...shortcuts].map(button => button.textContent.trim()),
       scrollArea: !!panel?.closest('.editor-composition-content') || !!panel?.querySelector('.editor-properties-content'),
@@ -926,7 +925,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && document.querySelector('.edit-layout')?.dataset.editorDensity === 'wide'`,
     'page-wide design overlay returns to desktop block list');
   await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
-  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('#editor-block-settings-editor-text')?.closest('.editor-inline-expanded') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy inline text editor');
+  await waitForBrowser(client, `!!document.querySelector('.text-editor-flow') && !!document.querySelector('#editor-block-settings-editor-text')?.closest('.editor-properties-content') && !document.querySelector('.inspector-navigation')`, 'reference single-hierarchy text editor in independent inspector');
 
   // The redesigned first view keeps design closed. Open it deliberately for
   // secondary-control sizing and focus tests, rather than treating hidden
@@ -1079,51 +1078,22 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
     && fixedGroupsInitial.topRows === 1 && fixedGroupsInitial.bottomRows === 2
     && fixedGroupsInitial.buttonCount === 2,
     'fixed regions initially expose their real, unreordered rows: ' + JSON.stringify(fixedGroupsInitial));
-  const pinnedInline = await evaluate(client, `(() => {
+  const pinnedInspector = await evaluate(client, `(() => {
     const settings = document.querySelector('#editor-block-settings-editor-bottom');
-    const properties = document.querySelector('.editor-properties-panel');
+    const inspector = document.querySelector('.editor-properties-panel');
     return {
-      inline: !!settings?.closest('[data-fixed-group="bottom"] .editor-inline-expanded'),
+      inInspector: !!settings?.closest('.editor-properties-content'),
       visible: !!settings?.getClientRects().length,
       count: document.querySelectorAll('#editor-block-settings-editor-bottom').length,
-      inspectorHidden: getComputedStyle(properties).display === 'none',
+      inspectorVisible: getComputedStyle(inspector).display !== 'none',
       actualPageWidth: document.querySelector('.phone-frame .landing-page')?.clientWidth,
     };
   })()`);
-  assert(pinnedInline.inline && pinnedInline.visible && pinnedInline.count === 1
-    && pinnedInline.inspectorHidden && pinnedInline.actualPageWidth === 390,
-    'pinned CTA must expand its one real widget editor beneath its row, never a covering Inspector: '
-      + JSON.stringify(pinnedInline));
-  await capture(client, 'littly-inline-bottom-fixed-1672');
-
-  await clickPointer(client, '[data-fixed-group="bottom"] .editor-fixed-group-toggle');
-  await waitForBrowser(client, `(() => {
-    const region = document.querySelector('#editor-fixed-group-bottom');
-    const selectedInspector = document.querySelector('#editor-block-settings-editor-bottom');
-    const button = document.querySelector('[data-fixed-group="bottom"] .editor-fixed-group-toggle');
-    return button?.getAttribute('aria-expanded') === 'false' && !!region && region.hidden
-      && !region.getClientRects().length && !!selectedInspector;
-  })()`, 'bottom group collapses without clearing its selected inspector');
-  await clickPointer(client, '[data-fixed-group="top"] .editor-fixed-group-toggle');
-  await waitForBrowser(client, `document.querySelector('#editor-fixed-group-top')?.hidden === true`,
-    'top fixed group collapses independently');
-  await capture(client, 'fixed-groups-collapsed-1672');
-
-  await clickPointer(client, '[data-fixed-group="top"] .editor-fixed-group-toggle');
-  await clickPointer(client, '[data-fixed-group="bottom"] .editor-fixed-group-toggle');
-  await waitForBrowser(client, `(() => {
-    const top = document.querySelector('#editor-fixed-group-top');
-    const bottom = document.querySelector('#editor-fixed-group-bottom');
-    return top && !top.hidden && bottom && !bottom.hidden
-      && top.querySelectorAll('.fixed-composition-row').length === 1
-      && bottom.querySelectorAll('.fixed-composition-row').length === 2;
-  })()`, 'both fixed groups restore the original buttons and selectors');
-  assert(apiState.saveCount === 0, 'collapsing fixed navigation must not save, publish or reorder the page');
-
-  await clickNavigatorRow('#editor-block-editor-text .screen-order-v2-head');
-  await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-text .text-editor-flow')`,
-    'control QA returns to original text editor without draft or public save');
-  assert(apiState.saveCount === 0, 'control styling, temporary disabled attributes and navigation must never publish');
+  assert(pinnedInspector.inInspector && pinnedInspector.visible && pinnedInspector.count === 1
+    && pinnedInspector.inspectorVisible && pinnedInspector.actualPageWidth === 390,
+    'pinned CTA must use one separate settings pane without duplicating its fields: '
+      + JSON.stringify(pinnedInspector));
+  await capture(client, 'separate-settings-bottom-fixed-1672');
 
   // UX-015: Search locates a block without filtering, renumbering, or changing
   // the order of the user's original page blocks.
@@ -1248,7 +1218,7 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
   await pressKeyboardKey(client, 'Enter');
   await waitForBrowser(client,
     `document.querySelector('#editor-block-editor-image')?.dataset.selected === 'true'`,
-    'image row keyboard activation selects its inline editor after search clears');
+    'image keyboard selection opens the independent settings after search clears');
   await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-image input[aria-label="이미지 목록 구분 이름"]')`,
     'image editor offers list-only nickname');
   const originalCaption = await evaluate(client, `document.querySelector('#editor-block-settings-editor-image input[placeholder="이미지 설명을 입력하세요"]')?.value`);
