@@ -13,9 +13,11 @@ const browser = read('scripts/editor-reference-browser-check.mjs');
 
 // Every desktop size has a navigation-only scroller and a separate settings
 // scroller. Selecting a block never inserts inputs beneath its list row.
-assert.ok(shell.includes('grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr)')
+assert.ok(shell.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width)')
   && shell.includes('--editor-list-width: 276px;')
   && shell.includes('--editor-settings-width: 394px;')
+   && shell.includes('--editor-preview-grid-column: 2;')
+   && editor.includes('data-inspector-side="right"')
   && shell.includes("data-editor-density='wide']")
   && editor.includes('const [inspectorOpen, setInspectorOpen] = React.useState(false);')
   && editor.includes('data-inspector-open={inspectorOpen'),
