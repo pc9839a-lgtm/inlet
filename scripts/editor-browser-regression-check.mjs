@@ -948,6 +948,12 @@ async function collectDesktopMetrics(client) {
       left: rect(left),
       preview: rect(preview),
       frame: rect(frame),
+      previewContentCenterX: preview ? (() => {
+        const bounds = preview.getBoundingClientRect();
+        const style = getComputedStyle(preview);
+        return (bounds.left + parseFloat(style.paddingLeft)
+          + bounds.right - parseFloat(style.paddingRight)) / 2;
+      })() : null,
       composition: rect(document.querySelector('.editor-composition-panel')),
       inspector: rect(document.querySelector('.editor-properties-panel')),
       inlineDesktop: document.querySelector('.edit-layout')?.dataset.editorExperience === 'littly-blocks' && innerWidth >= 1280,
@@ -1083,8 +1089,8 @@ function assertDesktop(metrics) {
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
   assert(metrics.frame.left >= (metrics.inlineDesktop ? metrics.workPanel.right : metrics.inspector.right) + 12
-    && Math.abs(metrics.preview.right - metrics.frame.right - 28) <= 3,
-    `phone must keep a constant 28px right inset in the desktop preview: ${JSON.stringify(metrics.frame)}`);
+    && Math.abs((metrics.frame.left + metrics.frame.right) / 2 - metrics.previewContentCenterX) <= 3,
+    `phone must be centered in the available desktop preview stage: ${JSON.stringify({ frame: metrics.frame, preview: metrics.preview, stageCenter: metrics.previewContentCenterX })}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
