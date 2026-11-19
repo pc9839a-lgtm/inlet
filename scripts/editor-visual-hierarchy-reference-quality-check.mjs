@@ -15,20 +15,21 @@ const previewCss = read('src/screens/workspace/WorkspacePreviewPane.css');
 const shell = read('src/styles/editor-workspace.css');
 const reference = read('scripts/editor-reference-browser-check.mjs');
 
-assert(layout.includes('data-editor-layout="two-pane-inline"')
-  && layout.includes('data-editor-experience="littly-blocks"')
-  && layout.includes('inlineEditing={inlineNormalEditing}')
+assert(layout.includes('data-editor-layout="separate-workbench"')
+  && layout.includes('data-editor-experience="separate-settings"')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
   && layout.includes('<h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">')
   && layout.includes('editor-page-options-heading'),
-  'approved editor must show left block navigator and settings, with the live page on the right');
-assert(rows.includes('!listOnly && selectedId === block.id')
-  && rows.includes('<ScreenOrderSettings')
-  && rows.includes('renderBlockEditor={renderBlockEditor}')
-  && rows.includes('editor-inline-expanded')
-  && layout.includes("editorDensity !== 'wide' && ("),
-  'the actual selected block editor must expand within the list on desktop and remain single-instance');
+  'editor must keep the block navigator and settings on the left, with the live page to the right');
+assert(layout.includes('listOnly')
+  && layout.includes('inspectorOpen && !showStartEditing && !fixedSelected')
+  && layout.includes('inspectorOpen && fixedSelected')
+  && layout.includes('<ScreenOrderList {...screenOrderListProps} inspectorNavigation={inspectorNavigation} />')
+  && !layout.includes('inlineEditing={inlineNormalEditing}')
+  && !layout.includes('renderInlineEditor={renderFixedInlineEditor}')
+  && rows.includes('selectedId === block.id'),
+  'wide desktop must mount one selected real widget editor in its own settings scroller');
 assert(layoutCss.includes('.editor-composition-content')
   && layoutCss.includes('.editor-properties-content')
   && layoutCss.includes('overflow-y: auto;')
@@ -60,4 +61,4 @@ assert(reference.includes("referenceWidth")
   && reference.includes('longInspector')
   && reference.includes('widthOptions === 0'),
   'Chrome reference must cover desktop, narrow laptop and independent inspector');
-console.log('Littly-style inline editor and single real preview contracts passed');
+console.log('Independent editor settings and single real preview contracts passed');
