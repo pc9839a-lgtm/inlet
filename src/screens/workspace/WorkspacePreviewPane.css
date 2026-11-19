@@ -401,10 +401,10 @@ html body #root .canvas-editor-shell .preview-stage-width { font-size: 12px !imp
   }
 }
 
-/* Keep one stable 390px result in the right canvas. On wide screens,
-   center it in the available stage instead of leaving an oversized empty
-   corridor between the 560px workbench and the phone. Laptop keeps the
-   right edge clear of its compact Inspector; compact modes own their page. */
+/* Keep one 390px result in the right canvas. The stage occupies the
+   second grid column while settings are closed and the third when opened.
+   The open-state inset preserves the phone's x-position on normal desktops,
+   so selecting a block does not throw the live page across the viewport. */
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide']
 ) > .preview-workspace {
@@ -426,6 +426,21 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide']
 ) .preview-workspace .preview-sticky {
   margin-left: auto !important;
+  margin-right: auto !important;
+}
+/* A separate settings column is revealed only after an explicit editing
+   action. Keep the preview beside it, never beneath or on top of the editor. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true']
+) > .preview-workspace {
+  grid-column: 3 !important;
+  justify-content: flex-start !important;
+  padding-left: max(8px, calc(50vw - 729px)) !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true']
+) .preview-workspace .preview-sticky {
+  margin-left: 0 !important;
   margin-right: auto !important;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
