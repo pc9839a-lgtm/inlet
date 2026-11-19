@@ -21,7 +21,8 @@ export default function FormFieldsSection({
 }) {
   return (
     <section className="form-fields-section" aria-label="입력 항목">
-      <h3>입력 항목 <span>{questions.length}</span></h3>
+      <h3>받을 질문 <span>{questions.length}개</span></h3>
+      <FormQuestionQuickAdd onAdd={onAdd} />
       <FormQuestionList
         questions={questions}
         openQuestionId={openQuestionId}
@@ -39,7 +40,6 @@ export default function FormFieldsSection({
         onDragEnd={onDragEnd}
       />
       <FormQuestionEmptyState show={!questions.length} />
-      <FormQuestionQuickAdd onAdd={onAdd} />
     </section>
   );
 }
