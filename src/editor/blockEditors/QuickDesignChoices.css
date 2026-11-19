@@ -94,17 +94,17 @@ html body #root .canvas-editor-shell .editor-quick-design-lines {
   gap: 4px;
   width: 82%;
 }
-html body #root .canvas-editor-shell .editor-quick-design-lines i {
+html body #root .canvas-editor-shell .editor-quick-design-lines > span {
   display: block;
   height: 5px;
   border-radius: 2px;
   background: #b0bdcd;
 }
-html body #root .canvas-editor-shell .editor-quick-design-lines i:nth-child(2) {
+html body #root .canvas-editor-shell .editor-quick-design-lines > span:nth-child(2) {
   width: 73%;
   background: #ccd5e1;
 }
-html body #root .canvas-editor-shell .editor-quick-design-lines i:nth-child(3) {
+html body #root .canvas-editor-shell .editor-quick-design-lines > span:nth-child(3) {
   width: 92%;
   height: 3px;
   background: #dce3ec;
@@ -146,8 +146,8 @@ html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero
   margin: auto;
   text-align: center;
 }
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice'] .editor-quick-design-lines i,
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='center'] .editor-quick-design-lines i {
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice'] .editor-quick-design-lines > span,
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='center'] .editor-quick-design-lines > span {
   margin-inline: auto;
 }
 html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='photo'] {
@@ -159,7 +159,7 @@ html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero
 html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='photo'] .editor-quick-design-lines {
   margin-top: 12px;
 }
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='photo'] .editor-quick-design-lines i {
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='photo'] .editor-quick-design-lines > span {
   margin-inline: auto;
   background: #f8fafd;
 }
@@ -172,7 +172,7 @@ html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='link
 html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'] .editor-quick-design-lines {
   width: 98%;
 }
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'] .editor-quick-design-lines i {
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'] .editor-quick-design-lines > span {
   height: 11px;
   width: 100%;
   background: #e4ebf7;
@@ -185,10 +185,10 @@ html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='link
 html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'][data-look='carousel'] .editor-quick-design-lines {
   grid-template-columns: 1fr 1fr;
 }
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'][data-look='carousel'] .editor-quick-design-lines i:nth-child(3) {
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'][data-look='carousel'] .editor-quick-design-lines > span:nth-child(3) {
   display: none;
 }
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'][data-look='card'] .editor-quick-design-lines i {
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'][data-look='card'] .editor-quick-design-lines > span {
   background: #fff;
   border-color: #d8e0eb;
 }
@@ -212,7 +212,7 @@ html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='imag
   height: 100%;
   border-radius: 0;
 }
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form'] .editor-quick-design-lines i {
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form'] .editor-quick-design-lines > span {
   width: 100%;
   height: 11px;
   background: #fff;
@@ -224,7 +224,7 @@ html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form
   margin-top: 1px;
   background: #3d65b5;
 }
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form'][data-look='minimal'] .editor-quick-design-lines i {
+html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form'][data-look='minimal'] .editor-quick-design-lines > span {
   background: transparent;
   border-width: 0 0 1px;
   border-radius: 0;
