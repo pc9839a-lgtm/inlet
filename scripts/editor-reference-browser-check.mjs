@@ -571,6 +571,12 @@ export async function checkReferenceEditor({ client, evaluate, assert, waitForBr
       + JSON.stringify(unselected));
   // UX-020: page alignment has two distinct modes; switching modes is a
   // staged design change, and undo must preserve the real saved page.
+  await waitForBrowser(client, `document.querySelector('.page-design-presets-grid')?.querySelectorAll('.page-design-preset').length === 4
+    && !document.querySelector('.style-custom-settings')?.open`,
+    'four finished looks precede optional page design controls');
+  await clickPointer(client, '.style-custom-settings > summary');
+  await waitForBrowser(client, `document.querySelector('.style-custom-settings')?.open === true`,
+    'manual design settings open only when requested');
   await waitForBrowser(client, `!!document.querySelector('.style-panel-v17 .style-more-groups > .style-advanced-group')`, 'page theme design available');
   await clickPointer(client, '.style-panel-v17 .style-more-groups > .style-advanced-group:first-child > summary');
   await waitForBrowser(client, `!!document.querySelector('.style-panel-v17 button[aria-label="정렬: 블록별"]')`, 'page alignment offers block-by-block option');
