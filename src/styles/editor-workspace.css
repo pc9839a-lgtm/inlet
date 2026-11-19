@@ -1,38 +1,28 @@
-/* Editor-only grid: left block list + settings / right live page. */
+/* Editor geometry only; public page untouched. */
 html body #root .builder-shell.canvas-editor-shell {
   --editor-list-width: 276px;
   --editor-settings-width: 394px;
-  display: grid;
+  display:grid;
   grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr) !important;
   grid-template-rows: 64px minmax(0, 1fr);
   height: 100dvh !important;
-  max-height: 100dvh !important;
-  min-height: 0;
-  overflow: clip !important;
-  background: #f4f5f9;
+  max-height:100dvh!important; min-height:0;
+  overflow:clip!important; background:#f4f5f9;
 }
 html body #root .canvas-editor-shell > .left-workspace {
   display: contents !important;
 }
 html body #root .canvas-editor-shell #workspace-panel-edit {
-  height: 100%;
-  min-height: 0;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
+  height:100%; min-height:0; padding:0; margin:0; overflow:hidden;
 }
 html body #root .canvas-editor-shell .work-panel {
   grid-column: 1; grid-row: 2;
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  height: 100% !important;
-  margin: 0; padding: 0;
-  overflow: hidden !important;
-  border-right: 1px solid #e5e9f0;
-  background: #fff;
+  width:100%; max-width:none; min-height:0;
+  height:100%!important; margin:0; padding:0;
+  overflow:hidden!important;
+  border-right:1px solid #e5e9f0; background:#fff;
 }
-/* Laptop: keep left settings and right live page; reveal blocks through a drawer. */
+/* Laptop list drawer. */
 @media (min-width:900px) and (max-width:1279px) {
   html body #root .builder-shell.canvas-editor-shell {
     position:relative;
@@ -50,9 +40,7 @@ html body #root .canvas-editor-shell .work-panel {
     width:0!important;overflow:visible;
   }
 }
-/* The full page is the default. Opening settings reserves a stable 394px
-   inspector alongside the 276px list instead of expanding controls inside
-   a navigable 30+ block stack. Both scrollers remain independent. */
+/* Wide: 276px list, optional 394px settings, real 390px page. */
 html body #root .builder-shell.canvas-editor-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
 ) {
