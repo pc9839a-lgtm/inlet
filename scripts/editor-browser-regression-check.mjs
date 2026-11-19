@@ -1318,6 +1318,8 @@ async function run() {
     // One click now enters direct editing; no undiscoverable double click.
     const inlineTextarea = '.phone-frame #block-editor-text textarea[aria-label="제목 바로 수정"]';
     await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTextarea) + ')', 'preview inline title editor');
+    await waitForBrowser(client, 'document.activeElement === document.querySelector(' + JSON.stringify(inlineTextarea) + ')',
+      'single click must focus the actual editable title so the next keystroke works');
     await setInputValue(client, inlineTextarea, '모바일 화면에서 직접 바꾼 제목');
     await clickSelector(client, '.phone-frame #block-editor-text .editor-inline-text-actions button:last-child');
     await waitForBrowser(client, "document.querySelector('.phone-frame #block-editor-text h2')?.textContent === '모바일 화면에서 직접 바꾼 제목'", 'preview direct edit applied');
