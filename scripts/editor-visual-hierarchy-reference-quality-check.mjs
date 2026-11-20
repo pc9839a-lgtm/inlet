@@ -19,7 +19,7 @@ assert(layout.includes('data-editor-layout="separate-workbench"')
   && layout.includes('data-editor-experience="separate-settings"')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
-  && layout.includes('data-inspector-side="right"')
+  && layout.includes('data-inspector-side="left"')
   && layout.includes('<h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">')
   && layout.includes('editor-page-options-heading'),
   'editor must keep the block navigator and settings on the left, with the live page to the right');
@@ -55,7 +55,7 @@ assert(preview.includes('selectedBlockId={selectedBlockId}')
   && !preview.includes('PREVIEW_WIDTHS')
   && preview.includes("'--editor-preview-content-width': '390px'")
   && previewCss.includes('--editor-preview-frame-width')
-  && shell.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width)'),
+  && shell.includes('grid-template-columns:var(--editor-list-width) var(--editor-settings-width) minmax(0,1fr)'),
   'real page preview must be a single 390px result while retaining exact block selection');
 assert(reference.includes("referenceWidth")
   && reference.includes("'editor-visual-hierarchy-' + referenceWidth")
