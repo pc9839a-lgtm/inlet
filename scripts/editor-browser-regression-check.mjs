@@ -1071,7 +1071,7 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.pageSettings, metrics.innerWidth, 'desktop page settings entry');
-  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop right block settings panel');
+  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop left block settings panel');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
   assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (metrics.inspectorOpen ? 3 : 2),
@@ -1079,16 +1079,16 @@ function assertDesktop(metrics) {
   assertReferenceTracks(metrics, metrics.innerWidth);
   assert(metrics.workPanel.right <= metrics.preview.left + 3
     && metrics.frame.left >= metrics.workPanel.right + 8
-    && (!metrics.inspectorOpen || metrics.frame.right <= metrics.inspector.left - 8),
-    `block list → 390px page → right editor must never overlap: ${JSON.stringify(metrics)}`);
+    && (!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8),
+    `block list → left editor → 390px right page must never overlap: ${JSON.stringify(metrics)}`);
   assert(metrics.previewDirectChildren === 1 && metrics.previewFrameCount === 1,
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
   assert(metrics.frame.left >= metrics.workPanel.right + 8
     && metrics.frame.right <= metrics.preview.right + 3
-    && (!metrics.inspectorOpen || metrics.frame.right <= metrics.inspector.left - 8),
-    `single real page must remain between the navigator and the right editor: ${JSON.stringify({ frame: metrics.frame, inspector: metrics.inspector, preview: metrics.preview })}`);
+    && (!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8),
+    `single real page must remain to the right of the independent editor: ${JSON.stringify({ frame: metrics.frame, inspector: metrics.inspector, preview: metrics.preview })}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
@@ -1108,7 +1108,7 @@ function assertReferenceTracks(metrics, width) {
 }
 
 function assertNarrowDesktop(metrics, width) {
-  // A laptop has one page with an on-click right editor; at 200%
+  // A laptop has one page with an on-click left editor; at 200%
   // zoom, the same fine-pointer editor stacks into full-width sections.
   const stacked = width < 900;
   assert(metrics.path === '/app', `narrow desktop editor route changed: ${metrics.path}`);
@@ -1126,16 +1126,16 @@ function assertNarrowDesktop(metrics, width) {
   assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 40),
     `selected inspector headings must stay accessible: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
   assert(!metrics.cockpit, 'narrow desktop preview must not expose removed conversion cockpit');
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1,
-    `editor shell must use a single canvas track plus an on-demand overlay Inspector at ${width}px: ${metrics.shellGridColumns}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (stacked ? 1 : metrics.inspectorOpen ? 2 : 1),
+    `laptop editor must reserve a left settings track only when open at ${width}px: ${metrics.shellGridColumns}`);
   if (stacked) {
     assert(metrics.compactView === 'page' && metrics.frameContentWidth === 390
       && metrics.preview?.width >= Math.min(width, 390) - 3,
       `zoomed desktop must offer its real-page-first view without squashing the preview: ${JSON.stringify({compactView:metrics.compactView,preview:metrics.preview})}`);
   } else {
     assertReferenceTracks(metrics, width);
-    assert(!metrics.inspectorOpen || metrics.frame.right <= metrics.inspector.left - 8,
-      `narrow desktop selected editor must appear right of the 390px page at ${width}px`);
+    assert(!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8,
+      `narrow desktop selected editor must appear left of the 390px page at ${width}px`);
   }
   assert(Math.abs(metrics.frameContentWidth - 390) <= 1,
     `narrow desktop real page must retain 390px default: ${metrics.frameContentWidth}`);
@@ -1146,9 +1146,9 @@ function assertNarrowDesktop(metrics, width) {
       - (metrics.frame.left + metrics.frame.right) / 2) <= 6,
       `narrow desktop phone must be centered at ${width}px: ${JSON.stringify(metrics.frame)}`);
   } else {
-    assert((!metrics.inspectorOpen || metrics.frame.right <= metrics.inspector.left - 8)
-      && Math.abs(metrics.frame.left - Math.max(12, (width - 334 - 394) / 2)) <= 6,
-      `laptop phone must stay centered to the left of the right settings at ${width}px: ${JSON.stringify(metrics.frame)}`);
+    assert((!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8)
+      && Math.abs(metrics.frame.left - (334 + Math.max(12, (width - 334 - 394) / 2))) <= 6,
+      `laptop phone must stay to the right of the left settings at ${width}px: ${JSON.stringify(metrics.frame)}`);
   }
 }
 
@@ -3234,7 +3234,7 @@ async function run() {
         inspectorScroll: style?.overflowY,
         navigatorScroll: getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
         propertiesRight: rect(properties)?.right, propertiesLeft: rect(properties)?.left,
-        phoneRight: rect(phone)?.right, previewLeft: rect(preview)?.left,
+        phoneRight: rect(phone)?.right, phoneLeft: rect(phone)?.left, previewLeft: rect(preview)?.left,
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
@@ -3244,7 +3244,7 @@ async function run() {
       && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
       && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
-      && leftGeometry.phoneRight <= leftGeometry.propertiesLeft - 8
+      && leftGeometry.phoneLeft >= leftGeometry.propertiesRight + 8
       && leftGeometry.propertiesRight <= desktopViewport.width + 3
       && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 276)) <= 4,
       'selected properties must remain readable in their own panel without covering the real mobile canvas: '
