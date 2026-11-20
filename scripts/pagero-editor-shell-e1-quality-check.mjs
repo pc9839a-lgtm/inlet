@@ -337,7 +337,7 @@ assert(heroImageSection.includes('InspectorDisclosure label="이미지 배치·�
   && !previewPaneCss.includes('--editor-ui-space-4'),
   'disclosures must keep native semantics, owner-level token spacing and no canvas-style leakage');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
-assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width: 394px;'),
+assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width:394px;'),
   'editor workspace must size the separate settings column without restoring old abandoned components');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
@@ -395,11 +395,11 @@ assert(!headerSource.includes('panel-save-status operations-save-status')
 
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width) !important;')
+assert(css.includes('grid-template-columns:var(--editor-list-width) var(--editor-settings-width) minmax(0,1fr) !important;')
   && editPanelLayoutCss.includes('.editor-properties-panel')
-  && layout.includes('data-inspector-side="right"')
+  && layout.includes('data-inspector-side="left"')
   && editPanelLayoutCss.includes('.editor-properties-content')
-  && css.includes('overflow: hidden !important;'),
+  && css.includes('overflow:hidden!important;'),
   'the editor must keep block list and properties on the left and the mobile page on the right');
 assert(layout.includes("const showPageOptions = section === 'design' || section === 'page';")
   && layout.includes('{showPageOptions && (')
@@ -410,7 +410,7 @@ assert(layout.includes('editor-composition-heading')
   && layout.includes('listOnly')
   && layout.includes('editor-properties-content'),
   'composition rows must remain visible and real block editors belong to the selected settings panel');
-assert(css.includes('overflow: hidden !important;')
+assert(css.includes('overflow:hidden!important;')
   && editPanelLayoutCss.includes('.editor-composition-content')
   && editPanelLayoutCss.includes('.editor-properties-content')
   && editPanelLayoutCss.includes('overflow-y: auto;')
