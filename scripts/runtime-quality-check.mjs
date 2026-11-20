@@ -477,7 +477,7 @@ assert(editorExpandedShellCss.includes('.block-editor-advanced-settings:not([ope
 assert(scheduleEditor.includes("import { EditorTabs } from '../ui/index.js'") && scheduleEditor.includes('<EditorTabs'), 'ScheduleEditor must import and render EditorTabs inside its lazy chunk');
 assert(widgetStyleEditors.filter((source) => !source.includes('export default function TimerEditor')).every((source) =>
   source.includes('export default function HeroEditor')
-    ? source.includes('className="hero-editor-flow"')
+    ? source.includes('className="hero-editor-flow editor-task-flow"')
       && source.includes('<HeroBasicSection')
       && source.includes('<HeroImageSection')
       && source.includes('className="hero-editor-design"')
@@ -486,11 +486,11 @@ assert(widgetStyleEditors.filter((source) => !source.includes('export default fu
     : source.includes('export default function TextEditor')
       ? source.includes('className="text-editor-design"') && source.includes('<TextStylePanel') && !source.includes('<EditorTabs')
       : source.includes('export default function ImageEditor')
-      ? source.includes('className="image-editor-flow"') && source.includes('<ImageDisplayControls') && source.includes('className="image-editor-more"') && !source.includes('<EditorTabs')
+      ? source.includes('className="image-editor-flow editor-task-flow"') && source.includes('<ImageDisplayControls') && source.includes('className="image-editor-more"') && !source.includes('<EditorTabs')
       : source.includes('export default function CodeEditor')
         ? source.includes('<CodeEditorBox') && source.includes('className="code-editor-options"') && source.includes('<CodeStylePanel') && !source.includes('<EditorTabs')
         : source.includes('export default function FormEditor')
-          ? source.includes('className="form-editor-flow"') && source.includes('<FormDesignSection') && !source.includes('<EditorTabs')
+          ? source.includes('className="form-editor-flow editor-task-flow"') && source.includes('<FormDesignSection') && !source.includes('<EditorTabs')
           : source.includes('export default function DividerEditor')
             ? source.includes('layout-editor-direct-flow') && source.includes('label="선 모양"')
               && source.includes('label="위아래 간격"') && !source.includes('<EditorTabs')
@@ -503,14 +503,18 @@ assert(widgetStyleEditors.filter((source) => !source.includes('export default fu
                   && source.includes('className="topnav-editor-design"')
                   && source.includes('<TopNavStylePanel') && !source.includes('<EditorTabs')
                 : source.includes('export default function BottomBarEditor')
-                  ? source.includes('className="bottom-bar-editor-flow"')
+                  ? source.includes('className="bottom-bar-editor-flow editor-task-flow"')
                     && source.includes('<BottomBarBasicSection')
                     && source.includes('className="bottom-bar-editor-timer"')
                     && source.includes('<BottomBarTimerSection')
                     && source.includes('className="bottom-bar-editor-design"')
                     && source.includes('<BottomBarStylePanel')
                     && !source.includes('<EditorTabs')
-                  : source.includes("label: '스타일'")),
+                  : source.includes('export default function LinksEditor')
+                    ? source.includes('className="links-editor-v3 editor-task-flow"')
+                      && source.includes('<InspectorDisclosure label="세부 디자인" className="links-editor-design"')
+                      && source.includes('<LinksStylePanel') && !source.includes('<EditorTabs')
+                    : source.includes("label: '스타일'")),
   'registered editors must expose reachable style controls; bottom bar and top navigation use direct flows too');
 assert(widgetStylePanels.includes('function AlignmentControl') && !widgetStylePanels.includes('WidgetSurfaceControls') && !widgetStylePanels.includes('label="배경 직접 지정"') && !widgetStylePanels.includes('label="그림자 추가"') && !widgetStylePanels.includes('label="위아래 여백"') && !widgetStylePanels.includes('label="모서리"'), 'widget style panels must omit redundant shared surface controls');
 assert(!widgetStylePanels.includes('label="제목 굵게"') && !widgetStylePanels.includes('label="제목 밑줄"') && !widgetStylePanels.includes('<ToggleRow label="굵게"') && !widgetStylePanels.includes('<ToggleRow label="밑줄"'), 'hero and text style panels must omit emphasis controls duplicated by rich text editing');

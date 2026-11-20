@@ -340,42 +340,6 @@ html body #root .canvas-editor-shell .editor-block-switch-actions button:hover:n
   background: #edf0ff; color: #3649ce;
 }
 html body #root .canvas-editor-shell .editor-block-switch-actions button:disabled { opacity: .35; }
-/* A pair of real shortcuts, not duplicate editors or stateful tabs.
-   Design reveals the selected block's existing disclosure. */
-html body #root .canvas-editor-shell .editor-inspector-jump {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  margin-top: 10px;
-  padding: 3px;
-  border: 1px solid #e6eaf0;
-  border-radius: 9px;
-  background: #f5f7fa;
-}
-html body #root .canvas-editor-shell .editor-inspector-jump > button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 4px 8px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: #fff;
-  color: #40516c;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 650;
-  cursor: pointer;
-}
-html body #root .canvas-editor-shell .editor-inspector-jump > button:hover {
-  border-color: #c9d9f8;
-  color: #174ec9;
-  background: #edf3ff;
-}
-html body #root .canvas-editor-shell .editor-inspector-jump > button:focus-visible {
-  outline: 2px solid #2454ff;
-  outline-offset: 2px;
-}
 html body #root .canvas-editor-shell .screen-order-v2-settings {
   width: 100%; min-width: 0;
   height: auto !important; max-height: none !important;
@@ -459,14 +423,14 @@ html body #root .canvas-editor-shell :is(.editor-page-settings-button, .screen-o
   html body #root .canvas-editor-shell .editor-fixed-group-toggle > svg { transition: none; }
 }
 
-/* Left editing workspace: compact list followed by the persistent settings panel.
-   The real page preview remains to the right without changing block state. */
+/* Left block navigation and selected editor; right live page.
+   The original widget fields mount only after a block is explicitly chosen. */
 html body #root .canvas-editor-shell .editor-navigator-drawer-trigger { display: none; }
 html body #root .canvas-editor-shell .editor-properties-panel {
   position: fixed;
   z-index: 11;
   top: 64px;
-  left: var(--editor-list-width, 260px);
+  left: var(--editor-list-width, 276px);
   right: auto;
   display: flex;
   flex-direction: column;
@@ -476,6 +440,13 @@ html body #root .canvas-editor-shell .editor-properties-panel {
   border-right: 1px solid #e5e9f0;
   background: #fff;
   box-sizing: border-box;
+}
+/* Closed means absent, not a blank panel obscuring the live page.
+   The user-selected block stays in the page model for later reopening. */
+@media (min-width: 900px) {
+  html body #root .builder-shell.canvas-editor-shell:has(
+    .edit-layout[data-inspector-open='false']
+  ) .editor-properties-panel { display: none !important; }
 }
 html body #root .canvas-editor-shell .editor-properties-heading {
   display: flex;
@@ -567,7 +538,7 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
   html body #root .canvas-editor-shell .editor-navigator-drawer-trigger[aria-expanded='true'] {
     left: 260px;
   }
-  html body #root .canvas-editor-shell .editor-properties-panel { left: 0; pointer-events: auto; }
+  html body #root .canvas-editor-shell .editor-properties-panel { left: 0; right: auto; pointer-events: auto; }
 }
 @media (max-width: 899px) {
   html body #root .builder-shell.canvas-editor-shell .edit-layout {
@@ -618,114 +589,4 @@ html body #root .builder-shell.canvas-editor-shell .work-panel {
   ) {
     --editor-settings-width: 580px;
   }
-}
-
-
-/* ED-UX: Littly-inspired editing relationship, scoped to the authenticated
-   workspace. The block stack and its actual active editor share ONE left
-   working column; the real 390px page stays in the right canvas.
-   No duplicate widget instance, no extra saved block state. */
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
-  .edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-) {
-  --editor-list-width: 560px;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-composition-panel {
-  border-right: 1px solid #dce3ee !important;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-composition-heading {
-  padding: 18px 24px 16px !important;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-composition-content {
-  padding: 10px 20px 40px !important;
-  scroll-padding-top: 18px;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-composition-footer {
-  border-top: 1px solid #e7edf6;
-  padding: 10px 20px !important;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-composition-group-caption {
-  font-size: 13px;
-  margin-top: 20px;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-inline-expanded {
-  margin: 0 0 14px !important;
-  padding: 0 18px 22px !important;
-  background: #fff !important;
-  border: 1px solid #dce5f2 !important;
-  border-top: 0 !important;
-  border-radius: 0 0 10px 10px !important;
-  box-shadow: 0 9px 22px rgba(40, 62, 103, .035);
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-inline-expanded-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 46px;
-  border-bottom: 1px solid #edf0f6;
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 680;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-inline-expanded-heading button {
-  border: none;
-  background: transparent;
-  min-height: 36px;
-  padding: 0 8px;
-  color: #315dd4;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-inline-expanded-heading button:focus-visible {
-  outline: 2px solid #315dd4;
-  outline-offset: -2px;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-inline-expanded .screen-order-v2-settings-header {
-  padding: 13px 0 !important;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-inline-expanded .screen-order-v2-settings {
-  min-width: 0;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  background: transparent !important;
-}
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide']
-.editor-properties-panel {
-  z-index: 20;
-  left: 0;
-  width: 560px;
-  max-width: calc(100vw - 430px);
-}
-/* Hide the old Inspector for BOTH ordinary and pinned blocks; the original
-   selected widget editor is visible exactly once, beneath its own row.
-   Page options still own the full-left panel. */
-html body #root .builder-shell.canvas-editor-shell.edit-mode-shell
-.edit-layout[data-editor-experience='littly-blocks'][data-editor-density='wide'][data-inline-editing='true']
-> .editor-properties-panel {
-  display: none !important;
 }

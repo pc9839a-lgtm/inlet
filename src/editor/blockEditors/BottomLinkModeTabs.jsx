@@ -2,9 +2,9 @@ export default function BottomLinkModeTabs({ mode, onChange }) {
   return (
     <div className="bottom-link-modes" role="group" aria-label="이동 방식">
       {[
-        ['widget', '위젯'],
-        ['url', '링크'],
-        ['phone', '전화'],
+        ['widget', '페이지 안에서'],
+        ['url', '웹사이트'],
+        ['phone', '전화 걸기'],
       ].map(([key, text]) => (
         <button
           key={key}

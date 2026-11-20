@@ -47,7 +47,7 @@ assert.ok(renderer.includes("onSelectBlock?.(id, { focusField: 'submit' })")
   && renderer.includes('onSelectBlock?.(id, { imageClick, galleryIndex, focusField })'),
   'form preview heading and button must route by exact block id');
 assert.ok(screen.includes('focusPreviewFormField(id, interaction.focusField)')
-  && screen.includes(".form-editor-flow > .field-title input")
+  && screen.includes(".form-submit-task .field-title input")
   && screen.includes(".form-basic-grid .field-title input"),
   'direct edit targets existing title/submit fields without a duplicate save path');
 assert.ok(formCss.includes('.form .editor-preview-submit-edit'),

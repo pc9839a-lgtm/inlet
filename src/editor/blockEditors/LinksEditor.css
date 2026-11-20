@@ -229,3 +229,58 @@
   .links-editor-v3 .link-control-label-v3 { min-height: 0; }
   .links-editor-v3 .emoji-simple-row { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
+
+/* Task-first widget redesign: edit the target immediately, no nested tabs. */
+html body #root .canvas-editor-shell .links-editor-v3.editor-task-flow {
+  display: grid;
+  gap: 0;
+  color: #18253a;
+}
+html body #root .canvas-editor-shell .links-editor-v3 .editor-list-v2 {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+html body #root .canvas-editor-shell .links-editor-v3 .editor-list-item-v2 {
+  border-color: #dce4ef;
+  border-radius: 8px;
+  box-shadow: none;
+}
+html body #root .canvas-editor-shell .links-editor-v3 .editor-list-item-v2.is-open {
+  border-color: #9db8ff;
+  box-shadow: inset 3px 0 0 #2454ff;
+}
+html body #root .canvas-editor-shell .links-editor-v3 .editor-list-v2-detail-panel {
+  padding: 16px 13px;
+  border-color: #dce5f2;
+  border-radius: 8px;
+  box-shadow: none;
+}
+html body #root .canvas-editor-shell .links-editor-v3 .link-editor-panel-v3 > .editor-field-v2,
+html body #root .canvas-editor-shell .links-editor-v3 .target-control-v3-head,
+html body #root .canvas-editor-shell .links-editor-v3 .target-control-v3-body .field,
+html body #root .canvas-editor-shell .links-editor-v3 .link-visual-control-v3 {
+  grid-template-columns: minmax(0,1fr);
+  align-items: stretch;
+  gap: 7px;
+}
+html body #root .canvas-editor-shell .links-editor-v3 .editor-field-v2-label,
+html body #root .canvas-editor-shell .links-editor-v3 .target-title,
+html body #root .canvas-editor-shell .links-editor-v3 .link-control-label-v3,
+html body #root .canvas-editor-shell .links-editor-v3 .target-control-v3-body .field > span {
+  font-size: 13px;
+  font-weight: 620;
+  line-height: 1.4;
+  color: #344258;
+}
+html body #root .canvas-editor-shell .links-editor-v3 .editor-field-v2 input,
+html body #root .canvas-editor-shell .links-editor-v3 .target-control-v3-body :is(input,select) {
+  font-size: 15px;
+  font-weight: 450;
+  border-radius: 7px;
+  background: #fff;
+}
+html body #root .canvas-editor-shell .links-editor-v3 .links-editor-design {
+  width: 100%;
+  border-top: 0;
+}
