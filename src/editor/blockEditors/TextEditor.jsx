@@ -8,6 +8,12 @@ import './TextEditor.css';
 export default function TextEditor({ s, set, page, blockId }) {
   return (
     <div className="text-editor-flow editor-task-flow" data-editor-task="text">
+      <QuickDesignChoices
+        kind="text"
+        selected={s.layout || 'plain'}
+        choices={[{ value: 'plain', label: '깔끔하게' }, { value: 'card', label: '카드형' }, { value: 'notice', label: '포인트' }]}
+        onSelect={(layout) => set({ layout, align: layout === 'notice' ? 'center' : 'left', bgEnabled: false })}
+      />
       <h3 className="editor-task-inline-title">글 내용</h3>
       <RichField
         variant="v2"
@@ -23,12 +29,7 @@ export default function TextEditor({ s, set, page, blockId }) {
         value={s.body}
         onChange={(value) => set({ body: value })}
       />
-      <QuickDesignChoices
-        kind="text"
-        selected={s.layout || 'plain'}
-        choices={[{ value: 'plain', label: '깔끔하게' }, { value: 'card', label: '카드형' }, { value: 'notice', label: '포인트' }]}
-        onSelect={(layout) => set({ layout, align: layout === 'notice' ? 'center' : 'left', bgEnabled: false })}
-      />
+
       <InspectorDisclosure label="세부 디자인" className="text-editor-design" bodyClassName="text-editor-design-controls" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:text-design` : ''}>
         <TextStylePanel s={s} set={set} theme={page?.theme} />
         <WidgetSpacingControls s={s} set={set} />
