@@ -983,3 +983,71 @@ body .builder-shell .edit-layout .block-editor-v2 .bottom-bar-editor-flow .edito
     transition: none;
   }
 }
+
+/* Footer: common business fields stay editable; occasional settings are disclosures. */
+.block-editor-v2 .footer-editor-flow,
+.block-editor-v2 .footer-editor-primary,
+.block-editor-v2 .footer-editor-extra-controls {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+}
+
+.block-editor-v2 .footer-editor-flow {
+  gap: 18px;
+}
+
+.block-editor-v2 :is(.footer-editor-contact, .footer-editor-legal, .footer-editor-design) {
+  min-width: 0;
+  border-top: 1px solid var(--editor-v2-line, #eaecf0);
+}
+
+.block-editor-v2 :is(.footer-editor-contact, .footer-editor-legal, .footer-editor-design) > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  list-style: none;
+  cursor: pointer;
+  color: #344054;
+}
+
+.block-editor-v2 :is(.footer-editor-contact, .footer-editor-legal, .footer-editor-design) > summary::-webkit-details-marker {
+  display: none;
+}
+
+.block-editor-v2 :is(.footer-editor-contact, .footer-editor-legal, .footer-editor-design) > summary strong {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.block-editor-v2 :is(.footer-editor-contact, .footer-editor-legal, .footer-editor-design) > summary svg {
+  flex: 0 0 auto;
+  color: #667085;
+  transition: transform .16s ease;
+}
+
+.block-editor-v2 :is(.footer-editor-contact, .footer-editor-legal, .footer-editor-design)[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.block-editor-v2 :is(.footer-editor-contact, .footer-editor-legal, .footer-editor-design) > summary:focus-visible {
+  outline: 2px solid var(--editor-v2-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.block-editor-v2 .footer-editor-extra-controls {
+  padding: 6px 0 16px;
+}
+
+.block-editor-v2 :is(.footer-editor-contact, .footer-editor-legal, .footer-editor-design):not([open]) > .footer-editor-extra-controls {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block-editor-v2 :is(.footer-editor-contact, .footer-editor-legal, .footer-editor-design) > summary svg {
+    transition: none;
+  }
+}
