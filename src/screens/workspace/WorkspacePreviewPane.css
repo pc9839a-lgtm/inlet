@@ -401,17 +401,21 @@ html body #root .canvas-editor-shell .preview-stage-width { font-size: 12px !imp
   }
 }
 
-/* One real 390px phone stays centered in the available middle stage.
-   The empty right inspector opens only after a block click; its arrival does
-   not shift the phone. Code editors can grow without clipping the phone. */
+/* The 390px live page lives on the RIGHT. Keep its horizontal position
+   when a block opens on the left; the code editor may use extra width. */
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide']
 ) > .preview-workspace {
-  grid-column: 2 !important;
+  grid-column: 3 !important;
   grid-row: 2 !important;
   justify-content: flex-start !important;
   padding: 29px 0 32px !important;
   background: #e9eef6 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) > .preview-workspace {
+  grid-column: 2 !important;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide']
@@ -419,21 +423,35 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   margin-left: max(12px, calc((100vw - var(--editor-list-width, 276px) - var(--editor-settings-width, 394px) - var(--editor-preview-frame-width, 394px)) / 2)) !important;
   margin-right: 0 !important;
 }
-/* Laptop block navigator is a left drawer, while settings open on the right.
-   The 390px phone remains fully visible in the middle space. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) .preview-workspace .preview-sticky {
+  margin-left: max(12px, calc(var(--editor-settings-width, 394px) + (100vw - var(--editor-list-width, 276px) - var(--editor-settings-width, 394px) - var(--editor-preview-frame-width, 394px)) / 2)) !important;
+}
+/* Laptop: left block drawer and left settings; preview remains to the right. */
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop']
 ) > .preview-workspace {
-  grid-column: 1 !important;
+  grid-column: 2 !important;
   grid-row: 2 !important;
   justify-content: flex-start !important;
   padding: 20px 0 32px !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='false']
+) > .preview-workspace {
+  grid-column: 1 !important;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop']
 ) .preview-workspace .preview-sticky {
   margin-left: max(12px, calc((100vw - var(--editor-settings-width, 334px) - var(--editor-preview-frame-width, 394px)) / 2)) !important;
   margin-right: 0 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
+  .edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='false']
+) .preview-workspace .preview-sticky {
+  margin-left: max(12px, calc(var(--editor-settings-width, 334px) + (100vw - var(--editor-settings-width, 334px) - var(--editor-preview-frame-width, 394px)) / 2)) !important;
 }
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
   .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide']
