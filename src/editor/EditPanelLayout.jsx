@@ -59,7 +59,7 @@ function StartEditing({ blocks, onChooseBlock }) {
     <section className="editor-workflow-start" role="region" aria-label="콘텐츠 편집 시작">
       <div className="editor-workflow-start-graphic" aria-hidden="true"><FilePenLine size={23} /></div>
       <h2>수정할 블록을 선택하세요</h2>
-      <p>오른쪽 실제 페이지에서 수정할 부분을 누르거나 아래에서 선택하세요.</p>
+      <p>오른쪽 미리보기에서 바꾸고 싶은 부분을 누르거나 목록에서 선택하세요.</p>
       {candidates.length > 0 && (
         <div className="editor-workflow-start-choices">
           {candidates.map((block) => {
@@ -386,7 +386,7 @@ export function EditPanelLayout({
     );
   };
   return (
-    <div className="edit-layout" data-editor-layout="separate-workbench" data-editor-experience="separate-settings" data-inspector-side="right" data-inspector-kind={showPageOptions ? 'page' : fixedSelected ? 'fixed' : 'block'} data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
+    <div className="edit-layout" data-editor-layout="separate-workbench" data-editor-experience="separate-settings" data-inspector-side="left" data-inspector-kind={showPageOptions ? 'page' : fixedSelected ? 'fixed' : 'block'} data-editor-workflow="page-first" data-inspector-open={inspectorOpen ? 'true' : 'false'} data-selected-block-type={selectedEditorType} data-editor-density={editorDensity} data-compact-view={compactView}>
       <div className="editor-workflow-compact-switch" role="group" aria-label="편집 작업 영역 선택">
         <button type="button" aria-pressed={compactView === 'page'} onClick={() => setCompactView('page')}>실제 페이지</button>
         <button type="button" aria-pressed={compactView === 'blocks'} onClick={() => setCompactView('blocks')}>블록 목록</button>
@@ -432,7 +432,7 @@ export function EditPanelLayout({
               <h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">
                 {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
               </span></h2>
-              <p className="editor-composition-hint">블록을 선택하면 오른쪽에서 수정할 수 있어요</p>
+              <p className="editor-composition-hint">블록을 누르면 왼쪽에 디자인과 편집이 열려요</p>
             </div>
           </div>
           <AddBlockDock {...addBlockDockProps} compact />
@@ -494,14 +494,14 @@ export function EditPanelLayout({
           </button>
         </footer>
       </aside>
-      <aside className="editor-properties-panel" aria-label="선택 블록 오른쪽 편집기">
+      <aside className="editor-properties-panel" aria-label="선택 블록 왼쪽 편집기">
         <header className="editor-properties-heading">
           <div className="editor-properties-heading-copy">
             <span className="editor-panel-kicker">선택 항목 설정</span>
             <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '블록 편집'}</strong>
           </div>
           <button type="button" className="editor-workbench-close-inspector"
-            aria-label="오른쪽 편집기 닫기"
+            aria-label="왼쪽 편집기 닫기"
             onClick={returnToPage}>
             <ArrowLeft size={15} aria-hidden="true" /> 닫기
           </button>
