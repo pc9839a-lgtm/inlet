@@ -20,6 +20,16 @@ const inlineEdit = read('src/preview/EditorInlineTextField.jsx');
 const hero = read('src/editor/blockEditors/HeroEditor.jsx');
 const links = read('src/editor/blockEditors/LinksEditor.jsx');
 
+// 2026-11-20 owner acceptance gate: design 1/2/3 is the first task
+// for each visual block, with the real content editor directly underneath.
+assert(quickDesign.includes('디자인 {index + 1}')
+  && quickDesign.includes('aria-pressed={selected === choice.value}')
+  && text.indexOf('<QuickDesignChoices') < text.indexOf('label="제목"')
+  && hero.indexOf('<QuickDesignChoices') < hero.indexOf('<HeroBasicSection')
+  && image.indexOf('<QuickDesignChoices') < image.indexOf('<ImageBasicSection')
+  && form.indexOf('<QuickDesignChoices') < form.indexOf('<FormBasicSection')
+  && links.indexOf('<QuickDesignChoices') < links.indexOf('label="제목"'),
+  'all representative blocks must present numbered design choices before editing content');
 assert(text.indexOf('label="제목"') < text.indexOf('label="본문"')
   && text.indexOf('label="본문"') < text.indexOf('label="세부 디자인"'),
   'title and body precede design');
