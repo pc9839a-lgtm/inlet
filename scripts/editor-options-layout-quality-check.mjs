@@ -203,11 +203,11 @@ assert(editLayout.includes('data-editor-layout="separate-workbench"')
   && editLayout.includes('listOnly')
   && !editLayout.includes('inlineEditing={inlineNormalEditing}')
   && editLayout.includes('aria-controls="editor-composition-panel"')
-  && editLayout.includes('data-inspector-side="right"')
+  && editLayout.includes('data-inspector-side="left"')
   && editLayout.includes('editor-properties-panel')
   && editLayout.includes('inspectorOpen && fixedSelected')
   && editLayout.includes('inspectorOpen && !showStartEditing && !fixedSelected')
-  && editorWorkspaceCss.includes("grid-template-columns: var(--editor-list-width) minmax(0, 1fr) var(--editor-settings-width)")
+  && editorWorkspaceCss.includes("grid-template-columns:var(--editor-list-width) var(--editor-settings-width) minmax(0,1fr)")
   && editPanelLayoutCss.includes('.editor-properties-content'),
   'wide desktop must separate the composition list from one actual selected widget settings form');
 
