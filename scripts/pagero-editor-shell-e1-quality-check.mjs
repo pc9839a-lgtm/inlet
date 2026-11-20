@@ -399,7 +399,7 @@ assert(css.includes('grid-template-columns:var(--editor-list-width) var(--editor
   && editPanelLayoutCss.includes('.editor-properties-panel')
   && layout.includes('data-inspector-side="left"')
   && editPanelLayoutCss.includes('.editor-properties-content')
-  && css.includes('overflow:hidden!important;'),
+  && css.includes('overflow:hidden !important;'),
   'the editor must keep block list and properties on the left and the mobile page on the right');
 assert(layout.includes("const showPageOptions = section === 'design' || section === 'page';")
   && layout.includes('{showPageOptions && (')
@@ -410,7 +410,7 @@ assert(layout.includes('editor-composition-heading')
   && layout.includes('listOnly')
   && layout.includes('editor-properties-content'),
   'composition rows must remain visible and real block editors belong to the selected settings panel');
-assert(css.includes('overflow:hidden!important;')
+assert(css.includes('overflow:hidden !important;')
   && editPanelLayoutCss.includes('.editor-composition-content')
   && editPanelLayoutCss.includes('.editor-properties-content')
   && editPanelLayoutCss.includes('overflow-y: auto;')
