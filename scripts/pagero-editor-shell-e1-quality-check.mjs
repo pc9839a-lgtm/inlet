@@ -429,7 +429,7 @@ assert(addBlockDock.includes('const composingRef = useRef(false)')
   && addBlockDock.includes('onCompositionEndCapture={() => { composingRef.current = false; }}')
   && addBlockDock.includes("if (event.key === 'Escape') event.stopPropagation();"),
   'block-gallery Escape must not dismiss IME composition or bubble through its portal to the laptop drawer');
-assert(css.includes('grid-template-columns: minmax(0, 1fr) !important;')
+assert(css.includes('grid-template-columns:minmax(0,1fr) !important')
   && css.includes("data-editor-density='laptop']")
   && editPanelLayoutCss.includes('@media (max-width: 899px)')
   && previewPaneCss.includes("data-editor-workflow='page-first'"),
