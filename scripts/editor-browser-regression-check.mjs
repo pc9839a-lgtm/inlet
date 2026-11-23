@@ -661,28 +661,23 @@ async function setInputValue(client, selector, value) {
 }
 
 async function showBlockList(client) {
-  // On 900–1279px desktops the list is an off-canvas drawer; only the
-  // navigator trigger stays visible after selecting a block.
+  // The beginner editor uses ONE left pane; return from the selected editor
+  // before using the list. Compact keeps three explicit task choices.
   await evaluate(client, `(() => {
-    // The narrow editor has three distinct tasks, not a stacked list and
-    // inspector. Always open the explicit block list before clicking a row.
-    if (innerWidth < 900) {
-      const compact = document.querySelector('.edit-layout[data-editor-density="compact"]');
-      if (compact && compact.dataset.compactView !== 'blocks') {
-        const blocks = [...compact.querySelectorAll('.editor-workflow-compact-switch button')]
-          .find((button) => button.textContent.trim() === '블록 목록');
-        blocks?.click();
+    const layout = document.querySelector('.edit-layout');
+    if (!layout) return;
+    if (layout.dataset.editorDensity === 'compact') {
+      if (layout.dataset.compactView !== 'blocks') {
+        [...layout.querySelectorAll('.editor-workflow-compact-switch button')]
+          .find(button => button.textContent.trim() === '블록 목록')?.click();
       }
+    } else if (layout.dataset.inspectorOpen === 'true') {
+      layout.querySelector('.editor-workbench-close-inspector')?.click();
     }
-    const trigger = document.querySelector('.editor-navigator-drawer-trigger');
-    if (innerWidth >= 900 && innerWidth < 1280 && trigger?.getAttribute('aria-expanded') !== 'true') trigger.click();
   })()`);
-  await waitForBrowser(client, `(() => {
-    const panel = document.querySelector('.editor-composition-panel');
-    const rows = panel?.querySelector('.screen-order-v2-list-view');
-    return !!rows?.getClientRects().length
-      && (innerWidth < 900 || innerWidth >= 1280 || (panel.getBoundingClientRect().left >= -1 && getComputedStyle(panel).visibility === 'visible'));
-  })()`, 'composition list stays visible');
+  await waitForBrowser(client,
+    "!!document.querySelector('.editor-composition-panel .screen-order-v2-list-view')?.getClientRects().length",
+    'beginner block list visible');
 }
 
 async function openBlockSettings(client, blockId) {
@@ -700,6 +695,9 @@ async function revealWorkspaceNavigation(client, selector) {
 async function clickSelector(client, selector) {
   await revealWorkspaceNavigation(client, selector);
   if (/^#editor-block-(?!settings-)|^\.topnav-fixed-card|^\.fixed-add-dock|^\.add-toggle|^\.editor-page-settings-button/.test(selector)) await showBlockList(client);
+  if (selector.includes('editor-page-settings-button')) {
+    await evaluate(client, "document.querySelector('.editor-page-more:not([open]) > summary')?.click()");
+  }
   const clicked = await evaluate(client, `(() => {
     const element = document.querySelector(${JSON.stringify(selector)});
     if (!element || element.getClientRects().length === 0) return false;
@@ -937,7 +935,7 @@ async function collectDesktopMetrics(client) {
     const header = document.querySelector('.panel-header');
     const workPanel = document.querySelector('.work-panel');
     const topTabs = document.querySelector('.top-tabs');
-    const pageSettings = document.querySelector('.editor-page-settings-button');
+    const pageSettings = document.querySelector('.editor-page-more > summary');
     const cockpit = document.querySelector('.conversion-cockpit');
     return {
       path: location.pathname,
@@ -1005,7 +1003,7 @@ async function collectNarrowDesktopMetrics(client) {
       frame: rect(document.querySelector('.preview-workspace .phone-frame')),
       preview: rect(document.querySelector('.preview-workspace')),
       topTabs: rect(document.querySelector('.top-tabs')),
-      pageSettings: rect(document.querySelector('.editor-page-settings-button')),
+      pageSettings: rect(document.querySelector('.editor-page-more > summary')),
       cockpit: rect(document.querySelector('.conversion-cockpit')),
       shellGridColumns: getComputedStyle(document.querySelector('.builder-shell')).gridTemplateColumns,
       mobile: document.querySelector('.builder-shell')?.classList.contains('mobile-operations-shell') || false,
@@ -1071,16 +1069,16 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.pageSettings, metrics.innerWidth, 'desktop page settings entry');
-  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop left block settings panel');
+  if (metrics.inspectorOpen) assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop left block settings panel');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (metrics.inspectorOpen ? 3 : 2),
-    `desktop shell must expose settings only when requested: ${metrics.shellGridColumns}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 2,
+    `desktop shell must always have one working pane and one preview: ${metrics.shellGridColumns}`);
   assertReferenceTracks(metrics, metrics.innerWidth);
   assert(metrics.workPanel.right <= metrics.preview.left + 3
     && metrics.frame.left >= metrics.workPanel.right + 8
     && (!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8),
-    `block list → left editor → 390px right page must never overlap: ${JSON.stringify(metrics)}`);
+    `single left task → 390px right page must never overlap: ${JSON.stringify(metrics)}`);
   assert(metrics.previewDirectChildren === 1 && metrics.previewFrameCount === 1,
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
@@ -1093,18 +1091,18 @@ function assertDesktop(metrics) {
 }
 
 function assertReferenceTracks(metrics, width) {
-  const composition = metrics.composition?.width || 0;
-  const inspector = metrics.inspector?.width || 0;
-  const edit = metrics.workPanel?.width || 0;
-  const expectedList = width < 1280 ? 264 : 276;
-  assert(Math.abs(composition - expectedList) <= 3,
-    `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
-  const expectedInspector = !metrics.inspectorOpen ? 0 : width < 1280 ? 334
-    : (width >= 1500 && metrics.inspectorKind === 'block' && metrics.selectedEditorType === 'code' ? 580 : 394);
-  assert(Math.abs(inspector - expectedInspector) <= 3,
-    `independent selected settings width must match the open state at ${width}px: ${JSON.stringify({inspector,expectedInspector})}`);
-  assert(Math.abs(edit - (width < 1280 ? 0 : 276)) <= 3,
-    `collapsed laptop navigator must not consume the canvas: ${JSON.stringify({width,edit})}`);
+  const expected = width >= 1500 && metrics.inspectorOpen
+    && metrics.inspectorKind === 'block' && metrics.selectedEditorType === 'code'
+    ? 580 : Math.min(468, Math.max(402, 0.33 * width));
+  const taskWidth = metrics.workPanel?.width || 0;
+  assert(Math.abs(taskWidth - expected) <= 4,
+    `beginner task pane must be readable at ${width}px: ${JSON.stringify({taskWidth,expected})}`);
+  const listWidth = metrics.composition?.width || 0;
+  const settingsWidth = metrics.inspector?.width || 0;
+  assert(metrics.inspectorOpen
+      ? Math.abs(settingsWidth - taskWidth) <= 3 && listWidth < 1
+      : Math.abs(listWidth - taskWidth) <= 3 && settingsWidth < 1,
+    `only ONE left task must be visible at ${width}px: ${JSON.stringify({listWidth,settingsWidth})}`);
 }
 
 function assertNarrowDesktop(metrics, width) {
@@ -1121,13 +1119,13 @@ function assertNarrowDesktop(metrics, width) {
   assertInsideViewport(metrics.topTabs, width, 'narrow desktop main tabs');
   assertInsideViewport(metrics.inspector, width, 'narrow desktop properties inspector');
   assertInsideViewport(metrics.preview, width, 'narrow desktop preview workspace');
-  if (!stacked) assertInsideViewport(metrics.drawerTrigger, width, 'laptop block navigator trigger');
-  if (!stacked) assert(metrics.minIdentityWidth >= 60, `long Korean block names need space at ${width}px: ${metrics.minIdentityWidth}`);
+  // The laptop uses the same visible task pane as desktop, not a hidden drawer.
+  if (!stacked && !metrics.inspectorOpen) assert(metrics.minIdentityWidth >= 60, `long Korean block names need space at ${width}px: ${metrics.minIdentityWidth}`);
   assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 40),
     `selected inspector headings must stay accessible: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
   assert(!metrics.cockpit, 'narrow desktop preview must not expose removed conversion cockpit');
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (stacked ? 1 : metrics.inspectorOpen ? 2 : 1),
-    `laptop editor must reserve a left settings track only when open at ${width}px: ${metrics.shellGridColumns}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (stacked ? 1 : 2),
+    `laptop must keep one task column alongside its preview at ${width}px: ${metrics.shellGridColumns}`);
   if (stacked) {
     assert(metrics.compactView === 'page' && metrics.frameContentWidth === 390
       && metrics.preview?.width >= Math.min(width, 390) - 3,
@@ -1147,7 +1145,7 @@ function assertNarrowDesktop(metrics, width) {
       `narrow desktop phone must be centered at ${width}px: ${JSON.stringify(metrics.frame)}`);
   } else {
     assert((!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8)
-      && Math.abs(metrics.frame.left - (334 + Math.max(12, (width - 334 - 394) / 2))) <= 6,
+      && Math.abs(metrics.frame.left - (metrics.workPanel.width + (width - metrics.workPanel.width - 394) / 2)) <= 7,
       `laptop phone must stay to the right of the left settings at ${width}px: ${JSON.stringify(metrics.frame)}`);
   }
 }
@@ -1285,12 +1283,13 @@ async function run() {
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
     await waitForBrowser(client, `(() => {
       const shell = document.querySelector('.editor-properties-panel');
-      return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '블록 편집'
+      return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '블록 수정'
         && !shell.querySelector('.style-panel')
-        && (!!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')
-            || !!editor?.querySelector('.editor-workflow-start-choices button'))
+        && document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
+        && !!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')?.getClientRects().length
+        && !shell.getClientRects().length
         && document.querySelector('.phone-frame .landing-page')?.clientWidth === 390;
-    })()`, 'new editor starts in selected content or explicit block selection, with 390px page instead of global styling').catch(async (error) => {
+    })()`, 'beginner editor opens the visible block list beside one real 390px preview').catch(async (error) => {
       const actual = await evaluate(client, `(() => {
         const editor = document.querySelector('.editor-properties-panel');
         return {
