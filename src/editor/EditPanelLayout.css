@@ -8,10 +8,10 @@ body .builder-shell .edit-layout * { box-sizing: border-box; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout {
   --editor-ui-title-size: 21px;
   --editor-ui-section-size: 14px;
-  --editor-ui-label-size: 13px;
-  --editor-ui-value-size: 15px;
-  --editor-ui-row-size: 14px;
-  --editor-ui-helper-size: 12px;
+  --editor-ui-label-size: 15px;
+  --editor-ui-value-size: 17px;
+  --editor-ui-row-size: 16px;
+  --editor-ui-helper-size: 14px;
   --editor-ui-text: #17233d;
   --editor-ui-muted: #6e7990;
   --editor-ui-strong: 650;
@@ -21,7 +21,7 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout {
   --editor-ui-space-3: 12px;
   --editor-ui-space-4: 18px;
   --editor-ui-space-5: 28px;
-  --editor-ui-input-height: 42px;
+  --editor-ui-input-height: 48px;
   --editor-ui-compact-height: 36px;
   --editor-ui-touch-height: 44px;
   --editor-ui-control-radius: 8px;
@@ -78,7 +78,7 @@ html body #root .canvas-editor-shell .editor-panel-kicker {
 html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 {
   margin: 0;
   color: #141c32;
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 730;
   line-height: 1.25;
   letter-spacing: -.04em;
@@ -108,7 +108,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-heading .
   border-radius: 8px !important;
   background: #f7f8fa !important;
   color: #434c5b !important;
-  font-size: 13px !important;
+  font-size: 16px !important;
   font-weight: 650 !important;
   box-shadow: none !important;
 }
@@ -142,7 +142,7 @@ html body #root .canvas-editor-shell .editor-composition-search > input {
   background: transparent;
   outline-offset: 2px;
   font: inherit;
-  font-size: 13px;
+  font-size: 16px;
   color: #18233a;
 }
 html body #root .canvas-editor-shell .editor-composition-search > button {
@@ -196,7 +196,7 @@ html body #root .canvas-editor-shell .editor-fixed-group-toggle {
   padding: 0 2px;
   border: 0; border-radius: 6px;
   background: transparent; color: #68748a;
-  font: inherit; font-size: 12px; font-weight: 680;
+  font: inherit; font-size: 14px; font-weight: 680;
   text-align: left; cursor: pointer;
 }
 html body #root .canvas-editor-shell .editor-fixed-group-toggle:hover { color: #223050; }
@@ -233,7 +233,7 @@ html body #root .canvas-editor-shell .editor-composition-footer > .editor-page-s
   background: #fff;
   color: #424d63;
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -384,7 +384,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclo
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary {
   display: flex; align-items: center; gap: 7px;
   min-height: 44px; padding: 8px 0;
-  list-style: none; font-size: 13px; font-weight: 680;
+  list-style: none; font-size: 16px; font-weight: 680;
   background: transparent; cursor: pointer;
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary::-webkit-details-marker {
@@ -457,7 +457,7 @@ html body #root .canvas-editor-shell .editor-properties-heading {
   padding: 0 20px;
   border-bottom: 1px solid #e9edf2;
   color: #1d2738;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
 }
 html body #root .canvas-editor-shell .editor-properties-context {
