@@ -24,16 +24,7 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
 
   return (
     <div className="form-editor-flow editor-task-flow" data-editor-task="form">
-      <QuickDesignChoices
-        kind="form"
-        selected={s.style || 'card'}
-        choices={[{ value: 'card', label: '기본 카드' }, { value: 'soft', label: '부드럽게' }, { value: 'minimal', label: '미니멀' }]}
-        onSelect={(style) => set({
-          style, inputStyle: style === 'minimal' ? 'underline' : style === 'card' ? 'box' : 'round',
-          buttonStyle: style === 'soft' ? 'round' : 'solid',
-          spacing: style === 'minimal' ? 'compact' : 'normal',
-        })}
-      />
+
       <section className="editor-task-section form-title-task" aria-label="폼 제목과 설명">
         <div className="editor-task-heading"><h3>폼 제목과 설명</h3></div>
         <FormBasicSection s={s} set={set} />
@@ -62,6 +53,16 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
         <Field label="버튼 문구" value={s.submit} onChange={(value) => set({ submit: value })} />
       </section>
 
+      <QuickDesignChoices
+        kind="form"
+        selected={s.style || 'card'}
+        choices={[{ value: 'card', label: '기본 카드' }, { value: 'soft', label: '부드럽게' }, { value: 'minimal', label: '미니멀' }]}
+        onSelect={(style) => set({
+          style, inputStyle: style === 'minimal' ? 'underline' : style === 'card' ? 'box' : 'round',
+          buttonStyle: style === 'soft' ? 'round' : 'solid',
+          spacing: style === 'minimal' ? 'compact' : 'normal',
+        })}
+      />
       <section className="editor-task-section editor-task-secondary" aria-label="추가 폼 설정">
         <div className="editor-task-heading"><h3>추가 설정</h3></div>
       <InspectorDisclosure label="제출 안내와 개인정보" className="form-basic-detail form-outcome-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-outcome` : ''}>
