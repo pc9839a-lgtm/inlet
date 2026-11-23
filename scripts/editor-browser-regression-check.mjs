@@ -1645,7 +1645,14 @@ async function run() {
     await waitForBrowser(client, `document.querySelector('#workspace-tab-edit')?.getAttribute('aria-selected') === 'true'`, 'return to edit workspace');
     assert(await evaluate(client, `document.activeElement === document.querySelector('.workspace-editor-nav > summary')`), 'returning to edit must restore focus to its visible workspace menu trigger');
 
-    // Fixed regions use the same selection and eye visibility pattern as normal blocks.
+    // Fixed regions are folded on entry to keep the beginner list short.
+    // The user can open them explicitly; their existing eye/selection actions
+    // must remain fully accessible once the group is opened.
+    await showBlockList(client);
+    await evaluate(client, `[...document.querySelectorAll('.editor-fixed-group-toggle[aria-expanded="false"]')].forEach(button => button.click())`);
+    await waitForBrowser(client,
+      '[...document.querySelectorAll(".screen-order-fixed-blocks .fixed-block-head")].every(row => row.getBoundingClientRect().height >= 44)',
+      'optional fixed block groups expand into readable action rows');
     const fixedEyeSelector = '#editor-block-editor-topnav .screen-order-v2-visibility-button';
     const fixedRows = await evaluate(client, `(() => {
       const rows = [...document.querySelectorAll('.screen-order-fixed-blocks .fixed-composition-row')];
