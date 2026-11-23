@@ -189,9 +189,10 @@ assert(files.codeCss.includes('100dvh'), 'code dialog should use dynamic viewpor
 assert(files.workspaceShellCss.includes('@media (max-width: 1180px)'), 'workspace must reflow before narrow/zoomed desktop becomes two-column overflow');
 assert(files.mobileWorkspaceMode.includes("const COARSE_POINTER_QUERY = '(pointer: coarse)'"), 'mobile operations mode must distinguish coarse-pointer mobile from desktop browser zoom');
 assert(files.mobileWorkspaceMode.includes('widthMedia.matches && pointerMedia.matches'), 'mobile workspace must require both narrow width and coarse pointer');
-assert(files.editorWorkspaceCss.includes("data-editor-density='wide']")
-  && files.editorWorkspaceCss.includes("data-editor-density='laptop']"),
-  'zoomed desktop must preserve the full preview with a collapsible left inspector');
+assert(files.editorWorkspaceCss.includes('grid-template-columns: var(--editor-workspace-width) minmax(0, 1fr) !important;')
+  && files.editorWorkspaceCss.includes('max-width: 899px')
+  && files.editorWorkspaceCss.includes('--editor-workspace-width: clamp(402px, 33vw, 468px);'),
+  'zoomed desktop must preserve the full preview with one readable task pane and compact fallback');
 assert(files.editorSharedCss.includes('overflow') || files.editorWorkspaceCss.includes('overflow: hidden !important;'),
   'narrow editor overflow handling must remain explicitly owned');
 assert(files.editorWorkspaceCss.includes('.canvas-editor-shell'), 'zoom reflow must stay scoped to the desktop canvas editor');
