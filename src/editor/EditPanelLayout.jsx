@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Settings2, Layers3, FilePenLine, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ChevronDown, Settings2, Layers3, ArrowLeft } from 'lucide-react';
 import { BlockNavigatorSearch } from './editPanelParts/BlockNavigatorSearch.jsx';
 import './EditPanelLayout.css';
 import './EditorWorkflow.css';
@@ -10,7 +10,7 @@ import { ScreenOrderList } from './editPanelParts/ScreenOrderList.jsx';
 import { createFixedBlockDescriptors } from './editPanelParts/fixedBlockDescriptors.js';
 import { ScreenOrderSettings } from './editPanelParts/ScreenOrderSettings.jsx';
 import { createInspectorBlockNavigation } from './editPanelParts/inspectorBlockNavigationModel.js';
-import { createScreenOrderIdentities, isExplicitlyHidden } from './editPanelParts/screenOrderIdentityModel.js';
+import { isExplicitlyHidden } from './editPanelParts/screenOrderIdentityModel.js';
 
 const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'));
 
@@ -39,7 +39,6 @@ function FixedCompositionGroup({ groupId, title, keys, descriptors, selectedId, 
           onClick={() => setExpanded((value) => !value)}
         >
           <span className="editor-fixed-group-label">{title}</span>
-          <span className="editor-fixed-group-count">{entries.length}개</span>
           <ChevronDown size={14} aria-hidden="true" />
         </button>
       </h3>
@@ -51,28 +50,10 @@ function FixedCompositionGroup({ groupId, title, keys, descriptors, selectedId, 
 }
 
 
-function StartEditing({ blocks, onChooseBlock }) {
-  const visible = blocks.filter((block) => !isExplicitlyHidden(block));
-  const candidates = visible.length ? visible.slice(0, 5) : blocks.slice(0, 5);
-  const identities = createScreenOrderIdentities(blocks);
+function StartEditing() {
   return (
-    <section className="editor-workflow-start" role="region" aria-label="콘텐츠 편집 시작">
-      <div className="editor-workflow-start-graphic" aria-hidden="true"><FilePenLine size={23} /></div>
-      <h2>수정할 블록을 선택하세요</h2>
-      <p>오른쪽 미리보기에서 바꾸고 싶은 부분을 누르거나 목록에서 선택하세요.</p>
-      {candidates.length > 0 && (
-        <div className="editor-workflow-start-choices">
-          {candidates.map((block) => {
-            const identity = identities[blocks.findIndex((entry) => entry.id === block.id)];
-            const label = identity?.customLabel || identity?.contentTitle || identity?.detail || block.type;
-            return (
-              <button type="button" key={block.id} onClick={() => onChooseBlock(block.id)}>
-                <span>{label}</span><ArrowRight size={16} aria-hidden="true" />
-              </button>
-            );
-          })}
-        </div>
-      )}
+    <section className="editor-workflow-start" role="region" aria-label="편집 시작">
+      <h2>수정할 곳을 선택하세요</h2>
     </section>
   );
 }
@@ -428,11 +409,7 @@ export function EditPanelLayout({
         <header className="editor-composition-heading">
           <div className="editor-composition-title-row">
             <div className="editor-composition-title-copy">
-              <span className="editor-panel-kicker">페이지 구성</span>
-              <h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">
-                {screenOrderListProps.normalBlocks.length + fixedDescriptors.length}개 블록
-              </span></h2>
-              <p className="editor-composition-hint">블록을 누르면 왼쪽에 디자인과 편집이 열려요</p>
+              <h2 tabIndex={-1}>블록</h2>
             </div>
           </div>
           <AddBlockDock {...addBlockDockProps} compact />
@@ -456,10 +433,7 @@ export function EditPanelLayout({
               openId="" toggleBlockOpen={chooseFixed}
                />
           </FixedCompositionGroup>
-          <div className="editor-composition-group-caption">
-            <span>페이지 블록</span>
-            <span>{screenOrderListProps.normalBlocks.length}</span>
-          </div>
+          <div className="editor-composition-group-caption">페이지 블록</div>
           <ScreenOrderList
             {...screenOrderListProps}
             listOnly
@@ -497,8 +471,7 @@ export function EditPanelLayout({
       <aside className="editor-properties-panel" aria-label="선택 블록 왼쪽 편집기">
         <header className="editor-properties-heading">
           <div className="editor-properties-heading-copy">
-            <span className="editor-panel-kicker">선택 항목 설정</span>
-            <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '블록 편집'}</strong>
+            <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '내용 수정'}</strong>
           </div>
           <button type="button" className="editor-workbench-close-inspector"
             aria-label="왼쪽 편집기 닫기"
@@ -530,7 +503,7 @@ export function EditPanelLayout({
             </section>
           )}
           {showStartEditing && (
-             <StartEditing blocks={screenOrderListProps.normalBlocks} onChooseBlock={chooseBlock} />
+             <StartEditing />
            )}
            {!showPageOptions && inspectorOpen && fixedSelected && (
             <section className="editor-inspector-panel editor-inline-settings">
