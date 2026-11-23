@@ -451,20 +451,26 @@ export function EditPanelLayout({
           </FixedCompositionGroup>
         </div>
         <footer className="editor-composition-footer">
-          <button className="editor-page-settings-button" type="button"
-            aria-pressed={section === 'design'} aria-controls="editor-selection-panel"
-            onClick={() => openPageOptions('design')}
-            title={stylePanelProps?.hasPendingStyle ? '전체 디자인 · 미적용' : '전체 디자인'}>
-            <Layers3 size={17} aria-hidden="true" />
-            <span>전체 디자인</span>
-            {stylePanelProps?.hasPendingStyle && <span className="editor-settings-pending" aria-label="미적용 디자인 변경" />}
-          </button>
-          <button className="editor-page-settings-button" type="button"
-            aria-pressed={section === 'page'} aria-controls="editor-selection-panel"
-            onClick={() => openPageOptions('page')}>
-            <Settings2 size={17} aria-hidden="true" />
-            <span>페이지 설정</span>
-          </button>
+          <details className="editor-page-more">
+            <summary>
+              <Settings2 size={18} aria-hidden="true" />
+              페이지 전체 설정
+              {stylePanelProps?.hasPendingStyle && <span className="editor-settings-pending" aria-label="미적용 디자인 변경" />}
+              <ChevronDown size={17} aria-hidden="true" />
+            </summary>
+            <div className="editor-page-more-actions">
+              <button className="editor-page-settings-button" type="button"
+                aria-pressed={section === 'design'}
+                onClick={() => openPageOptions('design')}>
+                <Layers3 size={18} aria-hidden="true" /> 전체 디자인
+              </button>
+              <button className="editor-page-settings-button" type="button"
+                aria-pressed={section === 'page'}
+                onClick={() => openPageOptions('page')}>
+                <Settings2 size={18} aria-hidden="true" /> 페이지 설정
+              </button>
+            </div>
+          </details>
         </footer>
       </aside>
       <aside className="editor-properties-panel" aria-label="선택한 항목 편집">
