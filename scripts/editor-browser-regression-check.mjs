@@ -1603,6 +1603,8 @@ async function run() {
       'D04 editor must retain one 390px page without obsolete measurement or selection toolbars: ' + JSON.stringify(d04FixedWidth));
     assert(apiState.saveCount === 0, 'D04 preview setup must never publish a page');
 
+    await showBlockList(client);
+    await evaluate(client, "document.querySelector('.editor-page-more[open] > summary')?.click()");
     const editorNavigation = await evaluate(client, `(() => {
       const menu = document.querySelector('.editor-page-more');
       const entry = menu?.querySelector('summary');
