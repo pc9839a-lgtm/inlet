@@ -37,7 +37,7 @@ assert(baseCss.includes('*{box-sizing:border-box}'), 'Runtime width parity depen
 assert(workspacePreview.includes("import './WorkspacePreviewPane.css';"), 'WorkspacePreviewPane must load its component-owned preview CSS');
 assert(!workspacePreview.includes('PREVIEW_WIDTHS')
   && workspacePreview.includes("'--editor-preview-content-width': '390px'")
-  && workspacePreview.includes('모바일 390px')
+  && workspacePreview.includes("'--editor-preview-frame-width': '394px'")
   && workspacePreviewCss.includes('--editor-preview-frame-width')
   && workspacePreviewCss.includes('border: 2px solid #cbd5e1 !important')
   && workspacePreviewCss.includes('max-width: var(--editor-preview-content-width, 390px) !important'),
