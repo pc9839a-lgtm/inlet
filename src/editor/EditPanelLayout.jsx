@@ -17,7 +17,7 @@ const PageThemeStylePanel = React.lazy(() => import('../panels/StylePanel.jsx'))
 // Collapse only the navigator rows. Fixed blocks, their editor state and page
 // placement stay intact. A fresh fixed-block selection reveals its group.
 function FixedCompositionGroup({ groupId, title, keys, descriptors, selectedId, revealRequest, children }) {
-  const [expanded, setExpanded] = React.useState(true);
+  const [expanded, setExpanded] = React.useState(false);
   const entries = descriptors.filter((item) => keys.includes(item.key));
   React.useEffect(() => {
     if (entries.some((item) => item.block.id === selectedId)) setExpanded(true);
@@ -68,9 +68,9 @@ export function EditPanelLayout({
   const [section, setSection] = React.useState('order');
   const [fixedSearchReveal, setFixedSearchReveal] = React.useState(null);
   const [navigatorOpen, setNavigatorOpen] = React.useState(false);
-  // Major workflow change: the real page occupies the workspace on entry.
-  // The block list remains persistent; detailed settings are opened only
-  // by an explicit editing action and never by automatic first selection.
+  // Beginner flow: show a single task on the left. A selected block replaces
+  // the list instead of squeezing a second permanent settings column beside it.
+  // The real 390px preview always stays visible on desktop.
   const [inspectorOpen, setInspectorOpen] = React.useState(false);
   // The editor's usable width can be smaller than the CSS viewport (zoom,
   // embedded windows, resized desktop panes). Never decide its layout only
@@ -140,7 +140,7 @@ export function EditPanelLayout({
     };
   }, [editorDensity]);
 
-  // On laptop widths the composition is an overlay, not a modal. Dismiss it
+  // Legacy laptop drawer interaction remains for compact transitions. Dismiss it
   // when the user works in the canvas or inspector, without cancelling the
   // pointer event or altering the selected block or page draft.
   React.useEffect(() => {
@@ -316,21 +316,19 @@ export function EditPanelLayout({
     focusPageHeading();
   };
 
-  const returnToPage = (event) => {
+  const returnToBlocks = (event) => {
     // Pointer activation should not draw a keyboard focus ring on the
     // navigator heading. Keyboard activation must retain a visible target.
     const keyboardActivation = event?.detail === 0;
     setInspectorOpen(false);
     setNavigatorOpen(false);
-    if (editorDensity === 'compact') setCompactView('page');
+    if (editorDensity === 'compact') setCompactView('blocks');
     requestAnimationFrame(() => {
       const selector = editorDensity === 'compact'
-        ? '.editor-workflow-compact-switch button:first-child'
-        : editorDensity === 'laptop'
-          ? '.editor-navigator-drawer-trigger'
-          : keyboardActivation
-            ? '.editor-composition-heading h2'
-            : '.editor-composition-panel';
+        ? '.editor-workflow-compact-switch button:nth-child(2)'
+        : keyboardActivation
+          ? '.editor-composition-heading h2'
+          : '.editor-composition-panel';
       document.querySelector(selector)?.focus({ preventScroll: true });
     });
   };
@@ -414,13 +412,15 @@ export function EditPanelLayout({
           </div>
           <AddBlockDock {...addBlockDockProps} compact />
         </header>
-        <BlockNavigatorSearch
-          blocks={screenOrderListProps.normalBlocks}
-          fixedDescriptors={fixedDescriptors}
-          selectedId={selectedBlockId}
-          onSelect={chooseSearchResult}
-          onRevealSelected={revealFixedSearch}
-        />
+        {screenOrderListProps.normalBlocks.length + fixedDescriptors.length >= 8 && (
+          <BlockNavigatorSearch
+            blocks={screenOrderListProps.normalBlocks}
+            fixedDescriptors={fixedDescriptors}
+            selectedId={selectedBlockId}
+            onSelect={chooseSearchResult}
+            onRevealSelected={revealFixedSearch}
+          />
+        )}
         <div className="editor-composition-content" role="region" aria-label="블록 순서" tabIndex={0}>
           <FixedCompositionGroup
             groupId="top" title="상단 고정" keys={['topnav']}
@@ -433,8 +433,7 @@ export function EditPanelLayout({
               openId="" toggleBlockOpen={chooseFixed}
                />
           </FixedCompositionGroup>
-          <div className="editor-composition-group-caption">페이지 블록</div>
-          <ScreenOrderList
+           <ScreenOrderList
             {...screenOrderListProps}
             listOnly
             selectBlock={chooseBlock}
@@ -468,15 +467,15 @@ export function EditPanelLayout({
           </button>
         </footer>
       </aside>
-      <aside className="editor-properties-panel" aria-label="선택 블록 왼쪽 편집기">
+      <aside className="editor-properties-panel" aria-label="선택한 항목 편집">
         <header className="editor-properties-heading">
           <div className="editor-properties-heading-copy">
-            <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '내용 수정'}</strong>
+            <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '블록 수정'}</strong>
           </div>
           <button type="button" className="editor-workbench-close-inspector"
-            aria-label="왼쪽 편집기 닫기"
-            onClick={returnToPage}>
-            <ArrowLeft size={15} aria-hidden="true" /> 닫기
+            aria-label="블록 목록으로 돌아가기"
+            onClick={returnToBlocks}>
+            <ArrowLeft size={18} aria-hidden="true" /> 목록
           </button>
         </header>
         <div className="editor-properties-content" role="region" aria-label="선택 항목 편집" tabIndex={0}>
