@@ -98,7 +98,7 @@ export default function WorkspaceEditorScreen({
       const selector = field === 'title'
         ? '.form-basic-grid .field-title input'
         : field === 'submit'
-          ? '.form-editor-flow > .field-title input'
+          ? '.form-submit-task .field-title input'
           : '.form-basic-grid .editor-field-v2 textarea';
       const input = settings.querySelector(selector);
       if (!input || input.disabled) return;
@@ -237,13 +237,6 @@ export default function WorkspaceEditorScreen({
       if (finished) return;
       const settings = document.getElementById(`editor-block-settings-${id}`);
       if (!settings) return;
-      const tab = [...settings.querySelectorAll('.links-editor-v3 [role="tab"]')]
-        .find((button) => button.textContent.trim() === '링크 목록');
-      if (!tab) return;
-      if (tab.getAttribute('aria-selected') !== 'true') {
-        tab.click();
-        return;
-      }
       const row = settings.querySelectorAll('.links-editor-v3 .editor-list-v2-items > .editor-list-item-v2')[index];
       const trigger = row?.querySelector('.editor-list-item-v2-trigger');
       if (!trigger) return;
@@ -257,7 +250,7 @@ export default function WorkspaceEditorScreen({
       input.scrollIntoView({ block: 'nearest' });
       input.focus({ preventScroll: true });
     };
-    observer.observe(inspector, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-selected', 'aria-expanded'] });
+    observer.observe(inspector, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-expanded'] });
     timeoutId = window.setTimeout(cleanup, 5000);
     requestAnimationFrame(focusLink);
     pendingLinkFocusRef.current = cleanup;

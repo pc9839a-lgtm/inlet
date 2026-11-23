@@ -1,6 +1,7 @@
 import { InspectorDisclosure } from '../ui/InspectorDisclosure.jsx';
 import { ToggleRow } from '../ui/index.js';
 import ImageBasicSection from './ImageBasicSection.jsx';
+import QuickDesignChoices from './QuickDesignChoices.jsx';
 import ImageCaptionSection from './ImageCaptionSection.jsx';
 import ImageDisplayControls from './ImageDisplayControls.jsx';
 import ImageGalleryDisplaySection from './ImageGalleryDisplaySection.jsx';
@@ -13,7 +14,16 @@ export default function ImageEditor({ s, set, block, page, blockId }) {
   const gridGallery = s.mode === 'gallery' && s.galleryLayout === 'grid';
 
   return (
-    <div className="image-editor-flow">
+    <div className="image-editor-flow editor-task-flow" data-editor-task="image">
+      <section className="editor-task-section image-primary-task" aria-label="사진과 설명">
+      {!gridGallery && <QuickDesignChoices
+        kind="image"
+        selected={imageState.display}
+        choices={[{ value: 'original', label: '전체 사진' }, { value: 'fill', label: '꽉 채우기' }]}
+        onSelect={imageState.changeDisplay}
+        title="사진 배치"
+      />}
+        <div className="editor-task-heading"><h3>사진 변경</h3></div>
       <ImageBasicSection
         s={s}
         set={set}
@@ -24,6 +34,9 @@ export default function ImageEditor({ s, set, block, page, blockId }) {
         updateSingleImage={imageState.updateSingleImage}
       />
       <ImageCaptionSection s={s} set={set} />
+
+      </section>
+      <section className="editor-task-section editor-task-secondary" aria-label="사진 디자인">
       <InspectorDisclosure label="사진 맞춤과 디자인" className="image-editor-more" bodyClassName="image-editor-more-controls" persistKey={(blockId || block?.id) ? `${page?.id || 'draft'}:${blockId || block.id}:image-design` : ''}>
         {!gridGallery && <ImageDisplayControls
           display={imageState.display}
@@ -39,6 +52,7 @@ export default function ImageEditor({ s, set, block, page, blockId }) {
         <ImageGalleryDisplaySection s={s} set={set} />
         <WidgetSpacingControls s={s} set={set} padding={false} defaultMargin={12} />
       </InspectorDisclosure>
+      </section>
     </div>
   );
 }

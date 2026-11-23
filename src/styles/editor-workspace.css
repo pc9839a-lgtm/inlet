@@ -1,69 +1,64 @@
-/* Editor-only grid: left block list + settings / right live page. */
 html body #root .builder-shell.canvas-editor-shell {
-  --editor-list-width: 252px;
-  --editor-settings-width: 420px;
-  display: grid;
-  grid-template-columns: var(--editor-list-width) var(--editor-settings-width) minmax(0, 1fr) !important;
-  grid-template-rows: 64px minmax(0, 1fr);
-  height: 100dvh !important;
-  max-height: 100dvh !important;
-  min-height: 0;
-  overflow: clip !important;
-  background: #f4f5f9;
+--editor-list-width:276px;
+--editor-settings-width:394px;
+--editor-preview-grid-column:3;
+display:grid;
+grid-template-columns:var(--editor-list-width) var(--editor-settings-width) minmax(0,1fr) !important;
+grid-template-rows:64px minmax(0,1fr);
+height:100dvh !important;
+max-height:100dvh!important;min-height:0;
+overflow:clip!important;background:#f4f5f9
 }
 html body #root .canvas-editor-shell > .left-workspace {
-  display: contents !important;
+display:contents !important
 }
 html body #root .canvas-editor-shell #workspace-panel-edit {
-  height: 100%;
-  min-height: 0;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
+height:100%;min-height:0;padding:0;margin:0;overflow:hidden
 }
 html body #root .canvas-editor-shell .work-panel {
-  grid-column: 1; grid-row: 2;
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  height: 100% !important;
-  margin: 0; padding: 0;
-  overflow: hidden !important;
-  border-right: 1px solid #e5e9f0;
-  background: #fff;
+grid-column:1;grid-row:2;
+width:100%;max-width:none;min-height:0;
+height:100%!important;margin:0;padding:0;
+overflow:hidden !important;
+border-right:1px solid #e5e9f0;background:#fff
 }
-/* Laptop: keep left settings and right live page; reveal blocks through a drawer. */
 @media (min-width:900px) and (max-width:1279px) {
-  html body #root .builder-shell.canvas-editor-shell {
-    position:relative;
-    --editor-preview-grid-column:2;
-    --editor-settings-width:334px;
-    grid-template-columns:var(--editor-settings-width) minmax(0,1fr)!important;
-  }
-  html body #root .canvas-editor-shell .work-panel {
-    position:absolute;top:64px;left:0;width:0!important;
-    height:calc(100dvh - 64px)!important;overflow:visible!important;
-    border:0;z-index:28;pointer-events:none;
-  }
-  html body #root .canvas-editor-shell #workspace-panel-edit,
-  html body #root .canvas-editor-shell .edit-layout {
-    width:0!important;overflow:visible;
-  }
+html body #root .builder-shell.canvas-editor-shell {
+position:relative;
+--editor-preview-grid-column:2;
+--editor-settings-width:334px;
+grid-template-columns:var(--editor-settings-width) minmax(0,1fr)!important
 }
-/* Page-first workbench: the selected block never permanently consumes the
-   canvas width. A persistent list and a full real page are the default.
-   The existing three-area grid returns only while an editor is requested. */
-html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide']) {
-  grid-template-columns: var(--editor-list-width) minmax(0, 1fr) !important;
+html body #root .canvas-editor-shell .work-panel {
+position:absolute;top:64px;left:0;width:0!important;
+height:calc(100dvh - 64px)!important;overflow:visible!important;
+border:0;z-index:28;pointer-events:none
 }
-html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop']) {
-  grid-template-columns: minmax(0, 1fr) !important;
+html body #root .canvas-editor-shell #workspace-panel-edit,
+html body #root .canvas-editor-shell .edit-layout {
+width:0!important;overflow:visible
 }
-
-@media (max-width: 899px) {
-  body:has(.canvas-editor-shell),
-  #root:has(.canvas-editor-shell) {
-    height: auto !important;
-    overflow-y: auto !important;
-  }
+}
+html body #root .builder-shell.canvas-editor-shell:has(
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='false']
+) {
+grid-template-columns:var(--editor-list-width) minmax(0,1fr) !important
+}
+html body #root .builder-shell.canvas-editor-shell:has(
+.edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true']
+) {
+grid-template-columns:var(--editor-list-width) var(--editor-settings-width) minmax(0,1fr) !important
+}
+html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='true']) {
+grid-template-columns:var(--editor-settings-width) minmax(0,1fr) !important
+}
+html body #root .builder-shell.canvas-editor-shell:has(.edit-layout[data-editor-workflow='page-first'][data-editor-density='laptop'][data-inspector-open='false']) {
+grid-template-columns:minmax(0,1fr) !important
+}
+@media (max-width:899px) {
+body:has(.canvas-editor-shell),
+#root:has(.canvas-editor-shell) {
+height:auto !important;
+overflow-y:auto !important
+}
 }

@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react';
+import PageDesignPresets from './PageDesignPresets.jsx';
 import { ImageInput, Color } from '../editor/controls.jsx';
 import { NumberControl } from '../editor/ui/NumberControl.jsx';
 import { notify } from '../lib/uiFeedback.js';
@@ -151,6 +152,10 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
         </div>
       </div>
 
+      <PageDesignPresets theme={draftTheme} onPick={updateDraft} />
+      <details className="style-advanced-group style-custom-settings">
+        <summary><strong>색상·글꼴 직접 조정</strong><ChevronDown size={16} aria-hidden="true" /></summary>
+        <div className="style-advanced-body style-custom-settings-body">
       <section className="style-primary-group" aria-label="기본 디자인">
         <div className="style-panel-box style-primary-colors">
           <StyleColorLine label={T.buttonColor} value={draftTheme.accent} fallback="#2563EB" onChange={(next) => updateDraft({ accent: next })} />
@@ -238,6 +243,8 @@ export default function StylePanel({ page, updateTheme, stagedTheme = null, onPr
           </div>
         </details>
       </div>
+        </div>
+      </details>
     </div>
   );
 }

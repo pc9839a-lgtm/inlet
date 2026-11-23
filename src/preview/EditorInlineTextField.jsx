@@ -17,11 +17,27 @@ export function EditorInlineTextField({ as: Element = 'h2', blockId, field, html
   const enabled = canInlineEditTextMarkup(htmlValue) && typeof onCommit === 'function';
 
   useEffect(() => {
-    if (editing) textareaRef.current?.focus({ preventScroll: true });
-    else if (restoreFocusRef.current) {
+    if (editing) {
+      // A single pointer click also selects the block in the canvas. That
+      // selection may focus the right inspector after this component mounts.
+      // Restore keyboard focus once more after selection settles so typing
+      // edits the clicked text, never an unrelated Inspector field.
+      const focusDraft = () => textareaRef.current?.focus({ preventScroll: true });
+      focusDraft();
+      let secondFrame = 0;
+      const firstFrame = requestAnimationFrame(() => {
+        secondFrame = requestAnimationFrame(focusDraft);
+      });
+      return () => {
+        cancelAnimationFrame(firstFrame);
+        cancelAnimationFrame(secondFrame);
+      };
+    }
+    if (restoreFocusRef.current) {
       restoreFocusRef.current = false;
       viewRef.current?.focus({ preventScroll: true });
     }
+    return undefined;
   }, [editing]);
 
   const begin = () => {
@@ -56,8 +72,9 @@ export function EditorInlineTextField({ as: Element = 'h2', blockId, field, html
         ref={viewRef}
         className={enabled ? 'editor-inline-text-trigger' : undefined}
         tabIndex={enabled ? 0 : undefined}
-        aria-label={enabled ? label + ' · Enter 또는 더블클릭으로 바로 수정' : undefined}
-        title={enabled ? '더블클릭 또는 Enter로 수정' : undefined}
+        aria-label={enabled ? label + ' · 클릭 또는 Enter로 바로 수정' : undefined}
+        title={enabled ? '클릭 또는 Enter로 수정' : undefined}
+        onClick={enabled ? begin : undefined}
         onDoubleClick={enabled ? begin : undefined}
         onKeyDown={enabled ? (event) => {
           if (event.key === 'Enter' || event.key === 'F2') {

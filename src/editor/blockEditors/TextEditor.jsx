@@ -1,4 +1,5 @@
 import RichField from '../RichField.jsx';
+import QuickDesignChoices from './QuickDesignChoices.jsx';
 import { InspectorDisclosure } from '../ui/InspectorDisclosure.jsx';
 import { TextStylePanel } from './WidgetStylePanels.jsx';
 import { WidgetSpacingControls } from './WidgetSpacingControls.jsx';
@@ -6,7 +7,14 @@ import './TextEditor.css';
 
 export default function TextEditor({ s, set, page, blockId }) {
   return (
-    <div className="text-editor-flow">
+    <div className="text-editor-flow editor-task-flow" data-editor-task="text">
+      <QuickDesignChoices
+        kind="text"
+        selected={s.layout || 'plain'}
+        choices={[{ value: 'plain', label: '깔끔하게' }, { value: 'card', label: '카드형' }, { value: 'notice', label: '포인트' }]}
+        onSelect={(layout) => set({ layout, align: layout === 'notice' ? 'center' : 'left', bgEnabled: false })}
+      />
+      <h3 className="editor-task-inline-title">글 내용</h3>
       <RichField
         variant="v2"
         label="제목"
@@ -21,7 +29,8 @@ export default function TextEditor({ s, set, page, blockId }) {
         value={s.body}
         onChange={(value) => set({ body: value })}
       />
-      <InspectorDisclosure label="디자인 조정" className="text-editor-design" bodyClassName="text-editor-design-controls" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:text-design` : ''}>
+
+      <InspectorDisclosure label="세부 디자인" className="text-editor-design" bodyClassName="text-editor-design-controls" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:text-design` : ''}>
         <TextStylePanel s={s} set={set} theme={page?.theme} />
         <WidgetSpacingControls s={s} set={set} />
       </InspectorDisclosure>

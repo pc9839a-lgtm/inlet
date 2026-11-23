@@ -43,6 +43,7 @@ export default function CodeEditor({ s, set, blockId, codeDraftForBlock, onCodeD
 
   return (
     <>
+      <h3 className="editor-task-inline-title code-task-title">HTML 코드</h3>
       <CodeEditorBox draft={draft} onDraftChange={setDraft} onOpenModal={() => setModalOpen(true)} onApply={apply} codePending={codePending} codeDraftHint={codeDraftHint} />
       <EditorField label="목록 구분 이름">
         <input

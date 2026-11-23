@@ -198,15 +198,18 @@ await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsBody.jsx
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettingsHeader.jsx');
 await assertMissingFile('src/editor/editPanelParts/SelectedBlockSettings.css');
 
-assert(editLayout.includes('data-editor-layout="two-pane-inline"')
-  && editLayout.includes('data-editor-experience="littly-blocks"')
-  && editLayout.includes('inlineEditing={inlineNormalEditing}')
+assert(editLayout.includes('data-editor-layout="separate-workbench"')
+  && editLayout.includes('data-editor-experience="separate-settings"')
+  && editLayout.includes('listOnly')
+  && !editLayout.includes('inlineEditing={inlineNormalEditing}')
   && editLayout.includes('aria-controls="editor-composition-panel"')
+  && editLayout.includes('data-inspector-side="left"')
   && editLayout.includes('editor-properties-panel')
-  && editorWorkspaceCss.includes("grid-template-columns: var(--editor-list-width) minmax(0, 1fr)")
-  && editPanelLayoutCss.includes('.editor-inline-expanded')
+  && editLayout.includes('inspectorOpen && fixedSelected')
+  && editLayout.includes('inspectorOpen && !showStartEditing && !fixedSelected')
+  && editorWorkspaceCss.includes("grid-template-columns:var(--editor-list-width) var(--editor-settings-width) minmax(0,1fr)")
   && editPanelLayoutCss.includes('.editor-properties-content'),
-  'desktop must combine block rows and their inline editor; separate settings remain only for page/fixed/compact');
+  'wide desktop must separate the composition list from one actual selected widget settings form');
 
 console.log(JSON.stringify({
   ok: true,

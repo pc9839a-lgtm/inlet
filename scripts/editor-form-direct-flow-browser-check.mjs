@@ -29,7 +29,7 @@ export async function checkFormDirectFlow({ client, evaluate, assert, waitForBro
   await capture(client, 'desktop-form-direct-overview');
 
   await enterText('.form-basic-grid input', '상담 신청 · 변경 확인');
-  await enterText('.form-editor-flow > .field input', '상담 예약하기');
+  await enterText('.form-submit-task .field input', '상담 예약하기');
   await waitForBrowser(client, `(document.querySelector('.phone-frame #block-editor-form')?.innerText || '').includes('상담 신청 · 변경 확인') && document.querySelector('.phone-frame #block-editor-form button[type="submit"]')?.textContent.includes('상담 예약하기')`, 'form title and submit text update preview without tabs');
 
   // Most common form question is one click: existing picker remains for other types.

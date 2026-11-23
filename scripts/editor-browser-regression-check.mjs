@@ -956,9 +956,10 @@ async function collectDesktopMetrics(client) {
       })() : null,
       composition: rect(document.querySelector('.editor-composition-panel')),
       inspector: rect(document.querySelector('.editor-properties-panel')),
-      inlineDesktop: document.querySelector('.edit-layout')?.dataset.editorExperience === 'littly-blocks' && innerWidth >= 1280,
-      inlineActive: document.querySelector('.edit-layout')?.dataset.inlineEditing === 'true',
+      separateDesktop: document.querySelector('.edit-layout')?.dataset.editorExperience === 'separate-settings' && innerWidth >= 1280,
+      inspectorOpen: document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true',
       inspectorKind: document.querySelector('.edit-layout')?.dataset.inspectorKind,
+      selectedEditorType: document.querySelector('.edit-layout')?.dataset.selectedBlockType,
       previewDirectChildren: preview?.children?.length || 0,
       previewFrameCount: preview?.querySelectorAll('.phone-frame').length || 0,
       frameContentWidth: frame?.querySelector('.landing-page')?.clientWidth || 0,
@@ -995,6 +996,7 @@ async function collectNarrowDesktopMetrics(client) {
       drawerTrigger: rect(document.querySelector('.editor-navigator-drawer-trigger')),
       drawerOpen: document.querySelector('.editor-navigator-drawer-trigger')?.getAttribute('aria-expanded') === 'true',
       inspector: rect(document.querySelector('.editor-properties-panel')),
+      inspectorOpen: document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'true',
       frameContentWidth: document.querySelector('.preview-workspace .phone-frame .landing-page')?.clientWidth || 0,
       compactView: document.querySelector('.edit-layout')?.dataset.compactView,
       minIdentityWidth: Math.min(...[...document.querySelectorAll('.editor-composition-panel .screen-order-v2-identity-copy')].map(el => el.getBoundingClientRect().width)),
@@ -1069,28 +1071,24 @@ function assertDesktop(metrics) {
   assertInsideViewport(metrics.workPanel, metrics.innerWidth, 'desktop work panel');
   assertInsideViewport(metrics.topTabs, metrics.innerWidth, 'desktop main tabs');
   assertInsideViewport(metrics.pageSettings, metrics.innerWidth, 'desktop page settings entry');
-  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop left settings panel');
+  assertInsideViewport(metrics.inspector, metrics.innerWidth, 'desktop left block settings panel');
   assert(!metrics.cockpit, 'desktop preview must not expose the removed conversion cockpit');
   assert(metrics.workPanel?.right <= metrics.preview?.left + 3, `desktop editor and preview overlap: ${JSON.stringify({ left: metrics.left, preview: metrics.preview })}`);
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 2,
-    `desktop shell must preserve two workbench tracks (list and actual page): ${metrics.shellGridColumns}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (metrics.inspectorOpen ? 3 : 2),
+    `desktop shell must expose settings only when requested: ${metrics.shellGridColumns}`);
   assertReferenceTracks(metrics, metrics.innerWidth);
-  if (metrics.inlineDesktop) {
-    assert(metrics.workPanel.right <= metrics.frame.left - 12
-      && metrics.frame.right <= metrics.preview.right + 3,
-      `left inline block workbench must precede the right-hand page: ${JSON.stringify(metrics)}`);
-  } else {
-    assert(metrics.workPanel.right <= metrics.inspector.left + 3
-      && metrics.frame.left >= metrics.inspector.right - 3,
-      `left editing panels must precede the right-hand page: ${JSON.stringify({navigator:metrics.workPanel, inspector:metrics.inspector, page:metrics.preview})}`);
-  }
+  assert(metrics.workPanel.right <= metrics.preview.left + 3
+    && metrics.frame.left >= metrics.workPanel.right + 8
+    && (!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8),
+    `block list → left editor → 390px right page must never overlap: ${JSON.stringify(metrics)}`);
   assert(metrics.previewDirectChildren === 1 && metrics.previewFrameCount === 1,
     `preview must contain just one phone and no promotional sidecar: ${JSON.stringify({ children: metrics.previewDirectChildren, frames: metrics.previewFrameCount })}`);
   assert(metrics.frame?.width >= 390 && metrics.frame?.width <= 406 && Math.abs(metrics.frameContentWidth - 390) <= 1,
     `mobile preview content must be 390px: ${JSON.stringify({ frame: metrics.frame, content: metrics.frameContentWidth })}`);
-  assert(metrics.frame.left >= (metrics.inlineDesktop ? metrics.workPanel.right : metrics.inspector.right) + 12
-    && Math.abs((metrics.frame.left + metrics.frame.right) / 2 - metrics.previewContentCenterX) <= 3,
-    `phone must be centered in the available desktop preview stage: ${JSON.stringify({ frame: metrics.frame, preview: metrics.preview, stageCenter: metrics.previewContentCenterX })}`);
+  assert(metrics.frame.left >= metrics.workPanel.right + 8
+    && metrics.frame.right <= metrics.preview.right + 3
+    && (!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8),
+    `single real page must remain to the right of the independent editor: ${JSON.stringify({ frame: metrics.frame, inspector: metrics.inspector, preview: metrics.preview })}`);
   assert(metrics.heroTitleVisible, 'saved hero title is not visible in desktop preview');
 }
 
@@ -1098,18 +1096,19 @@ function assertReferenceTracks(metrics, width) {
   const composition = metrics.composition?.width || 0;
   const inspector = metrics.inspector?.width || 0;
   const edit = metrics.workPanel?.width || 0;
-  const expectedList = width < 1280 ? 264 : metrics.inlineDesktop ? 560 : 252;
+  const expectedList = width < 1280 ? 264 : 276;
   assert(Math.abs(composition - expectedList) <= 3,
     `block navigator must retain a usable column or drawer at ${width}px: ${JSON.stringify({composition,expectedList})}`);
-  assert(Math.abs(inspector - (width < 1280 ? 334 : metrics.inlineDesktop
-    ? metrics.inspectorKind === 'block' ? 0 : 560 : 420)) <= 3,
-    `left block properties must retain usable width at ${width}px: ${JSON.stringify({inspector})}`);
-  assert(Math.abs(edit - (width < 1280 ? 0 : metrics.inlineDesktop ? 560 : 252)) <= 3,
+  const expectedInspector = !metrics.inspectorOpen ? 0 : width < 1280 ? 334
+    : (width >= 1500 && metrics.inspectorKind === 'block' && metrics.selectedEditorType === 'code' ? 580 : 394);
+  assert(Math.abs(inspector - expectedInspector) <= 3,
+    `independent selected settings width must match the open state at ${width}px: ${JSON.stringify({inspector,expectedInspector})}`);
+  assert(Math.abs(edit - (width < 1280 ? 0 : 276)) <= 3,
     `collapsed laptop navigator must not consume the canvas: ${JSON.stringify({width,edit})}`);
 }
 
 function assertNarrowDesktop(metrics, width) {
-  // A laptop has left editing and a right live page; at 200%
+  // A laptop has one page with an on-click left editor; at 200%
   // zoom, the same fine-pointer editor stacks into full-width sections.
   const stacked = width < 900;
   assert(metrics.path === '/app', `narrow desktop editor route changed: ${metrics.path}`);
@@ -1127,16 +1126,16 @@ function assertNarrowDesktop(metrics, width) {
   assert(!metrics.duplicateInspectorNavigation && metrics.inspectorGroupLabelHeights.every(height => height <= 40),
     `selected inspector headings must stay accessible: ${JSON.stringify(metrics.inspectorGroupLabelHeights)}`);
   assert(!metrics.cockpit, 'narrow desktop preview must not expose removed conversion cockpit');
-  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === 1,
-    `editor shell must use a single canvas track plus an on-demand overlay Inspector at ${width}px: ${metrics.shellGridColumns}`);
+  assert(String(metrics.shellGridColumns || '').trim().split(/\s+/).length === (stacked ? 1 : metrics.inspectorOpen ? 2 : 1),
+    `laptop editor must reserve a left settings track only when open at ${width}px: ${metrics.shellGridColumns}`);
   if (stacked) {
     assert(metrics.compactView === 'page' && metrics.frameContentWidth === 390
       && metrics.preview?.width >= Math.min(width, 390) - 3,
       `zoomed desktop must offer its real-page-first view without squashing the preview: ${JSON.stringify({compactView:metrics.compactView,preview:metrics.preview})}`);
   } else {
     assertReferenceTracks(metrics, width);
-    assert(metrics.frame.left >= metrics.inspector.right - 2,
-      `narrow desktop settings must remain left of the page at ${width}px`);
+    assert(!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8,
+      `narrow desktop selected editor must appear left of the 390px page at ${width}px`);
   }
   assert(Math.abs(metrics.frameContentWidth - 390) <= 1,
     `narrow desktop real page must retain 390px default: ${metrics.frameContentWidth}`);
@@ -1147,9 +1146,9 @@ function assertNarrowDesktop(metrics, width) {
       - (metrics.frame.left + metrics.frame.right) / 2) <= 6,
       `narrow desktop phone must be centered at ${width}px: ${JSON.stringify(metrics.frame)}`);
   } else {
-    assert(metrics.frame.left >= metrics.inspector.right + 8
-      && Math.abs(metrics.preview.right - metrics.frame.right - 12) <= 3,
-      `laptop phone must keep a constant 12px right inset at ${width}px: ${JSON.stringify(metrics.frame)}`);
+    assert((!metrics.inspectorOpen || metrics.frame.left >= metrics.inspector.right + 8)
+      && Math.abs(metrics.frame.left - (334 + Math.max(12, (width - 334 - 394) / 2))) <= 6,
+      `laptop phone must stay to the right of the left settings at ${width}px: ${JSON.stringify(metrics.frame)}`);
   }
 }
 
@@ -1286,7 +1285,7 @@ async function run() {
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
     await waitForBrowser(client, `(() => {
       const shell = document.querySelector('.editor-properties-panel');
-      return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '내용 편집'
+      return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '블록 편집'
         && !shell.querySelector('.style-panel')
         && (!!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')
             || !!editor?.querySelector('.editor-workflow-start-choices button'))
@@ -1316,10 +1315,11 @@ async function run() {
     await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTitle) + ')', 'preview text quick-edit trigger');
     await clickSelector(client, inlineTitle);
     await waitForBrowser(client, "!!document.querySelector('#editor-block-settings-editor-text')", 'preview selected text inspector');
-    const doubleClicked = await evaluate(client, '(() => { const title = document.querySelector(' + JSON.stringify(inlineTitle) + '); if (!title) return false; title.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true, view: window })); return true; })()');
-    assert(doubleClicked, 'preview heading should support double click');
+    // One click now enters direct editing; no undiscoverable double click.
     const inlineTextarea = '.phone-frame #block-editor-text textarea[aria-label="제목 바로 수정"]';
     await waitForBrowser(client, '!!document.querySelector(' + JSON.stringify(inlineTextarea) + ')', 'preview inline title editor');
+    await waitForBrowser(client, 'document.activeElement === document.querySelector(' + JSON.stringify(inlineTextarea) + ')',
+      'single click must focus the actual editable title so the next keystroke works');
     await setInputValue(client, inlineTextarea, '모바일 화면에서 직접 바꾼 제목');
     await clickSelector(client, '.phone-frame #block-editor-text .editor-inline-text-actions button:last-child');
     await waitForBrowser(client, "document.querySelector('.phone-frame #block-editor-text h2')?.textContent === '모바일 화면에서 직접 바꾼 제목'", 'preview direct edit applied');
@@ -1905,71 +1905,61 @@ async function run() {
     assert(apiState.saveCount === 0, 'stage6 image editing must not publish');
     await capture(client, 'desktop-hero-background-stage6');
     assert(await evaluate(client, `document.querySelector(${JSON.stringify(heroEditorSelector)})?.value === '저장 전 히어로 제목'`), 'content must stay available alongside background-image settings');
-    // At wide desktop widths the real editor now lives directly under the
-    // selected row. It shares the block list scroll; it must not introduce a
-    // second nested Inspector or move the pinned page-options footer.
-    const inlineScroll = await evaluate(client, `(() => {
+    // The list and actual selected editor have separate native scroll regions.
+    const independentScroll = await evaluate(client, `(() => {
       const settings = document.querySelector('#editor-block-settings-editor-hero');
-      const selected = settings?.closest('.editor-inline-expanded');
-      const composition = document.querySelector('.editor-composition-panel');
+      const properties = document.querySelector('.editor-properties-content');
       const list = document.querySelector('.editor-composition-content');
+      const composition = document.querySelector('.editor-composition-panel');
       const workPanel = document.querySelector('.work-panel');
       const content = settings?.querySelector('.block-editor-v2');
       const order = list?.querySelector('.screen-order-v2-list-view');
-      const inspector = document.querySelector('.editor-properties-panel');
-      if (!settings || !selected || !composition || !list || !workPanel || !content || !order) return null;
-      const oldMinHeight = content.style.minHeight;
-      const oldOrderHeight = order.style.minHeight;
-      const oldScroll = list.scrollTop;
+      if (!settings || !properties || !list || !composition || !content || !order) return null;
+      const before = [content.style.minHeight, order.style.minHeight, list.scrollTop, properties.scrollTop];
       let result;
       try {
         content.style.minHeight = '1600px';
         order.style.minHeight = '1500px';
         list.scrollTop = 320;
-        workPanel.scrollTop = 320;
-        const footerBox = composition.querySelector('.editor-composition-footer')?.getBoundingClientRect();
-        const shellBox = composition.getBoundingClientRect();
+        const listPosition = list.scrollTop;
+        properties.scrollTop = 300;
+        const footer = composition.querySelector('.editor-composition-footer')?.getBoundingClientRect();
         result = {
-          regionRole: selected.getAttribute('role'),
-          regionLabel: selected.getAttribute('aria-label'),
-          tabIndex: selected.tabIndex,
-          navigatorRole: list.getAttribute('role'),
-          navigatorLabel: list.getAttribute('aria-label'),
-          navigatorTabIndex: list.tabIndex,
+          propertyRegion: properties.getAttribute('role'),
+          propertyLabel: properties.getAttribute('aria-label'),
+          listRegion: list.getAttribute('role'),
+          listLabel: list.getAttribute('aria-label'),
           listOverflow: getComputedStyle(list).overflowY,
-          compositionOverflow: getComputedStyle(composition).overflowY,
+          propertiesOverflow: getComputedStyle(properties).overflowY,
+          settingsOverflow: getComputedStyle(settings).overflowY,
           outerOverflow: getComputedStyle(workPanel).overflowY,
-          nestedSettingsOverflow: getComputedStyle(settings).overflowY,
-          inspectorHidden: getComputedStyle(inspector).display === 'none',
-          scrollHeight: list.scrollHeight,
-          clientHeight: list.clientHeight,
-          listScroll: list.scrollTop,
+          listScroll: list.scrollTop, propertiesScroll: properties.scrollTop,
+          isolated: list.scrollTop === listPosition,
+          singleEditor: document.querySelectorAll('#editor-block-settings-editor-hero').length === 1,
+          inInspector: properties.contains(settings),
+          footerPinned: Math.abs(footer.bottom - composition.getBoundingClientRect().bottom) <= 2,
           outerScroll: workPanel.scrollTop,
-          footerPinned: !!footerBox && Math.abs(footerBox.bottom - shellBox.bottom) <= 2,
         };
       } finally {
-        content.style.minHeight = oldMinHeight;
-        order.style.minHeight = oldOrderHeight;
-        list.scrollTop = oldScroll;
+        content.style.minHeight = before[0];
+        order.style.minHeight = before[1];
+        list.scrollTop = before[2];
+        properties.scrollTop = before[3];
       }
       return result;
     })()`);
-    assert(inlineScroll?.regionRole === 'region'
-      && inlineScroll.regionLabel?.includes('선택 항목 편집')
-      && inlineScroll.tabIndex === 0
-      && inlineScroll.navigatorRole === 'region'
-      && inlineScroll.navigatorLabel?.includes('블록 순서')
-      && inlineScroll.navigatorTabIndex === 0
-      && inlineScroll.listOverflow === 'auto'
-      && inlineScroll.compositionOverflow === 'hidden'
-      && inlineScroll.outerOverflow === 'hidden'
-      && inlineScroll.nestedSettingsOverflow === 'visible'
-      && inlineScroll.inspectorHidden
-      && inlineScroll.scrollHeight > inlineScroll.clientHeight
-      && inlineScroll.listScroll > 0
-      && inlineScroll.outerScroll === 0 && inlineScroll.footerPinned,
-      'desktop inline editor must scroll with its own row without shifting page actions: '
-        + JSON.stringify(inlineScroll));
+    assert(independentScroll?.propertyRegion === 'region'
+      && independentScroll.propertyLabel?.includes('선택 항목 편집')
+      && independentScroll.listRegion === 'region'
+      && independentScroll.listLabel?.includes('블록 순서')
+      && independentScroll.listOverflow === 'auto'
+      && independentScroll.propertiesOverflow === 'auto'
+      && independentScroll.settingsOverflow === 'visible'
+      && independentScroll.outerOverflow === 'hidden'
+      && independentScroll.listScroll > 0 && independentScroll.propertiesScroll > 0
+      && independentScroll.isolated && independentScroll.singleEditor
+      && independentScroll.inInspector && independentScroll.footerPinned && independentScroll.outerScroll === 0,
+      'list scrolling and selected settings scrolling must be independent: ' + JSON.stringify(independentScroll));
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
@@ -2011,21 +2001,44 @@ async function run() {
     assert(await evaluate(client,
       `document.querySelector(${JSON.stringify(heroAdvanced)})?.open === false`),
       'D02 advanced anchor must close without dropping its value');
-    // Pinned top-navigation uses the same inline editing relationship as
-    // normal widgets. Switching to it must not create a covering Inspector.
-    const inlineScrollBeforeSwitch = await evaluate(client, `(() => {
+    // Pinned top navigation uses the same separate editor as normal widgets.
+    const listScrollBeforeSwitch = await evaluate(client, `(() => {
       const scroller = document.querySelector('.editor-composition-content');
-      scroller.scrollTop = 240;
-      return scroller.scrollTop;
+      const list = scroller?.querySelector('.screen-order-v2-list');
+      const row = list?.querySelector('.screen-order-v2-slot');
+      const properties = document.querySelector('.editor-properties-content');
+      if (!list || !row || !properties) return null;
+      const clones = [];
+      const previousPropertiesScroll = properties.scrollTop;
+      try {
+        for (let index = 0; index < 18; index++) {
+          const clone = row.cloneNode(true);
+          clone.dataset.qaDeepBlock = String(index);
+          clone.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+          list.appendChild(clone);
+          clones.push(clone);
+        }
+        scroller.scrollTop = 240;
+        return {
+          scroll: scroller.scrollTop,
+          settingsStayed: properties.scrollTop === previousPropertiesScroll,
+          listOverflow: getComputedStyle(scroller).overflowY,
+        };
+      } finally {
+        clones.forEach(clone => clone.remove());
+        scroller.scrollTop = 0;
+      }
     })()`);
-    assert(inlineScrollBeforeSwitch > 100,
-      'inline workbench must scroll to deeper block properties without page movement');
+    assert(listScrollBeforeSwitch?.scroll > 100 && listScrollBeforeSwitch.settingsStayed
+      && listScrollBeforeSwitch.listOverflow === 'auto',
+      'a 25-block navigator must scroll without moving its independent settings: '
+        + JSON.stringify(listScrollBeforeSwitch));
     await clickSelector(client, '.topnav-fixed-card .fixed-composition-select');
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')
         && document.querySelector('#editor-block-editor-topnav')?.dataset.selected === 'true'
         && document.querySelector('#editor-block-editor-hero')?.dataset.selected === 'false'`,
-      'fixed top navigation selects its original inline editor');
+      'fixed top navigation selects its existing separate editor');
     const fixedSelection = await evaluate(client, `(() => {
       const selected = document.querySelector('#editor-block-editor-topnav');
       const body = document.querySelector('#editor-block-settings-editor-topnav');
@@ -2033,19 +2046,19 @@ async function run() {
         selectPressed: selected?.querySelector('.fixed-composition-select')?.getAttribute('aria-pressed'),
         duplicateEditButton: !!selected?.querySelector('.fixed-open-button'),
         rowEditors: document.querySelectorAll('.screen-order-fixed-blocks .fixed-block-editor').length,
-        inlineUnderFixed: !!body?.closest('.screen-order-fixed-blocks .editor-inline-expanded'),
+        insideInspector: !!body?.closest('.editor-properties-content'),
         onlyOne: document.querySelectorAll('#editor-block-settings-editor-topnav').length === 1,
-        inspectorHidden: getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none',
+        inspectorVisible: getComputedStyle(document.querySelector('.editor-properties-panel')).display !== 'none',
         editorVisible: !!body?.getClientRects().length,
         inspectorTitle: body?.closest('.screen-order-v2-settings-view')
           ?.querySelector('.screen-order-v2-settings-title h2')?.textContent,
       };
     })()`);
     assert(fixedSelection.selectPressed === 'true' && !fixedSelection.duplicateEditButton
-      && fixedSelection.rowEditors === 0 && fixedSelection.inlineUnderFixed
-      && fixedSelection.onlyOne && fixedSelection.inspectorHidden
+      && fixedSelection.rowEditors === 0 && fixedSelection.insideInspector
+      && fixedSelection.onlyOne && fixedSelection.inspectorVisible
       && fixedSelection.editorVisible && fixedSelection.inspectorTitle === '상단 메뉴',
-      'pinned top navigation must edit beneath its own row with no duplicate Inspector: '
+      'pinned top navigation must use one independent inspector without duplicates: '
         + JSON.stringify(fixedSelection));
     const fixedAdvancedState = await evaluate(client, `(() => {
       const details = document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings');
@@ -2220,32 +2233,30 @@ async function run() {
       `D03 hero row should identify its live title: ${JSON.stringify(heroRowIdentity)}`);
 
     const stageTwoSettings = await evaluate(client, `(() => {
-      const panel = document.querySelector('#editor-block-settings-editor-hero');
+      const settings = document.querySelector('#editor-block-settings-editor-hero');
       const list = document.querySelector('.screen-order-v2-list-view');
-      const heading = panel?.closest('.screen-order-v2-settings-view')
-        ?.querySelector('.screen-order-v2-settings-title h2');
+      const properties = document.querySelector('.editor-properties-panel');
+      const heading = settings?.closest('.screen-order-v2-settings-view')?.querySelector('.screen-order-v2-settings-title h2');
       return {
         listVisible: !!list?.getClientRects().length,
-        inlineBelowRow: !!panel?.closest('.screen-order-v2-list .editor-inline-expanded'),
+        inInspector: !!settings?.closest('.editor-properties-content'),
         activeEditors: document.querySelectorAll('#editor-block-settings-editor-hero').length,
         rowEditors: document.querySelectorAll('.screen-order-v2-slot .block-editor-v2').length,
-        title: heading?.textContent,
-        headingVisible: !!heading?.getClientRects().length,
-        panelWidth: panel?.getBoundingClientRect().width,
-        paneWidth: document.querySelector('.editor-composition-panel').getBoundingClientRect().width,
-        inspectorHidden: getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none',
+        title: heading?.textContent, headingVisible: !!heading?.getClientRects().length,
+        panelWidth: settings?.getBoundingClientRect().width,
+        inspectorWidth: properties?.getBoundingClientRect().width,
+        inspectorVisible: getComputedStyle(properties).display !== 'none',
         fixedVisible: !!document.querySelector('.screen-order-fixed-blocks')?.getClientRects().length,
-        addVisible: !!document.querySelector('.fixed-add-dock')?.getClientRects().length,
         helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
       };
     })()`);
-    assert(stageTwoSettings.listVisible && stageTwoSettings.inlineBelowRow
+    assert(stageTwoSettings.listVisible && stageTwoSettings.inInspector
       && stageTwoSettings.activeEditors === 1 && stageTwoSettings.rowEditors === 0
       && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.headingVisible
-      && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.paneWidth
-      && stageTwoSettings.inspectorHidden && stageTwoSettings.fixedVisible
-      && stageTwoSettings.addVisible && stageTwoSettings.helperCopyRemoved,
-      'stage 2 must edit its selected hero directly below the row with only one widget editor: '
+      && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.inspectorWidth
+      && stageTwoSettings.inspectorVisible && stageTwoSettings.fixedVisible
+      && stageTwoSettings.helperCopyRemoved,
+      'selected hero must edit in one separate settings pane without duplicating list controls: '
         + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
     await openBlockSettings(client, 'editor-hero');
@@ -2584,7 +2595,7 @@ async function run() {
     }
     await waitForBrowser(client, `(() => {
       const panel = document.querySelector('#editor-block-settings-editor-form');
-      return !!panel?.querySelector('.form-editor-flow > .form-basic-grid') && !!panel.querySelector('.form-design-detail > summary') && !panel.querySelector('[role="tablist"]');
+      return !!panel?.querySelector('.form-editor-flow .form-title-task .form-basic-grid') && !!panel.querySelector('.form-design-detail > summary') && !panel.querySelector('[role="tablist"]');
     })()`, 'D06 form direct flow exposes content and design');
     assert(apiState.saveCount === 0, 'D06 switching editor tabs must not auto-publish');
 
@@ -2675,7 +2686,27 @@ async function run() {
       && stageThreePageSettings.rows.length === 0 && stageThreePageSettings.collapsed
       && stageThreePageSettings.shareControlsHidden,
       'the entire-design inspector must not mix page settings into the same surface: ' + JSON.stringify(stageThreePageSettings));
-    // D07: design basics remain visible; advanced typography and effects are disclosures.
+    // A finished page look is one click. The existing staged theme prevents
+    // accidental publishing and reset restores the prior appearance exactly.
+    await waitForBrowser(client,
+      `document.querySelectorAll('.page-design-preset').length === 4
+        && !document.querySelector('.style-custom-settings')?.open`,
+      'four complete page looks shown before dense manual controls');
+    await clickSelector(client, '.page-design-preset:nth-child(2)');
+    await waitForBrowser(client,
+      `document.querySelector('.page-design-preset:nth-child(2)')?.getAttribute('aria-pressed') === 'true'
+        && document.querySelector('.style-primary-colors input[type="color"]')?.value === '#a64a33'
+        && document.querySelector('.style-apply-btn')?.disabled === false`,
+      'warm page look previews existing font and color model without applying it');
+    assert(apiState.saveCount === 0, 'a page look is a staged live preview, not an automatic server write');
+    await capture(client, 'page-design-quick-looks');
+    await clickSelector(client, '.style-reset-btn');
+    await waitForBrowser(client, `document.querySelector('.style-apply-btn')?.disabled === true`,
+      'one-click page look can be undone before applying');
+    await clickSelector(client, '.style-custom-settings > summary');
+    await waitForBrowser(client, `document.querySelector('.style-custom-settings')?.open === true`,
+      'manual page styling remains available on demand');
+    // D07: expert typography and effects are disclosures behind the simple looks.
     const designDirectFlow = await evaluate(client, `(() => {
       const panel = document.querySelector('.editor-page-options-stack .style-panel');
       const extra = [...panel.querySelectorAll('.style-more-groups > details')];
@@ -2724,6 +2755,9 @@ async function run() {
     await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
     await waitForBrowser(client, `!!document.querySelector('.style-panel') && !document.querySelector('.page-global-options-card')`,
       'reopen design without discarding staged theme color');
+    await clickSelector(client, '.style-custom-settings > summary');
+    await waitForBrowser(client, `document.querySelector('.style-custom-settings')?.open === true`,
+      'manual color controls reopen after page options');
     const accentHex = '.style-panel input[aria-label="버튼색 HEX"]';
     await typeInputValue(client, accentHex, '#abc');
     await focusSelector(client, '.style-background-group .style-segment button:first-child');
@@ -2812,8 +2846,10 @@ async function run() {
     await clickButtonByText(client, '.edit-animation-playback-options', '계속 반복');
     await clickSelector(client, '.edit-animation-card:not(.share-options-card) [role="switch"]');
     await clickSelector(client, '.editor-composition-footer .editor-page-settings-button:first-child');
-    await waitForBrowser(client, `!!document.querySelector('.style-panel input[type="color"]')`,
-      'unapplied style controls are accessible after page behavior changes');
+    await clickSelector(client, '.style-custom-settings > summary');
+    await waitForBrowser(client, `document.querySelector('.style-custom-settings')?.open === true
+      && !!document.querySelector('.style-panel input[type="color"]')`,
+      'unapplied expert styling remains accessible after page behavior changes');
     await setInputValue(client, '.style-panel input[type="color"]', updatedAccent);
     assert(apiState.saveCount === 0, 'page settings toggles and disclosures must never auto-publish');
 
@@ -3174,7 +3210,7 @@ async function run() {
 
       await clickSelector(client, '.editor-page-settings-button:nth-child(2)');
     await waitForBrowser(client, `!!document.querySelector('.page-global-options-card')`, 'narrow desktop page options');
-    // The left panel must not consume the 390px phone, and its selected
+    // The right panel must not consume the 390px phone, and its selected
     // controls must stay inside the inspector instead of clipping horizontally.
     const leftGeometry = await evaluate(client, `(() => {
       const rect = (el) => el?.getBoundingClientRect();
@@ -3197,18 +3233,20 @@ async function run() {
         editorScroll: getComputedStyle(document.querySelector('.work-panel')).overflowY,
         inspectorScroll: style?.overflowY,
         navigatorScroll: getComputedStyle(list.querySelector('.editor-composition-content')).overflowY,
-        propertiesRight: rect(properties)?.right, previewLeft: rect(preview)?.left,
+        propertiesRight: rect(properties)?.right, propertiesLeft: rect(properties)?.left,
+        phoneRight: rect(phone)?.right, phoneLeft: rect(phone)?.left, previewLeft: rect(preview)?.left,
       };
     })()`);
     assert(leftGeometry && !leftGeometry.listSpills && !leftGeometry.inspectorSpills
       && leftGeometry.inspectorInner >= 260
-      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 334 : 560)) <= 3
+      && Math.abs(leftGeometry.properties - (desktopViewport.width < 1280 ? 334 : 394)) <= 3
       && leftGeometry.phone >= 392 && leftGeometry.preview >= 500
       && leftGeometry.editorScroll === (desktopViewport.width < 1280 ? 'visible' : 'hidden')
       && leftGeometry.inspectorScroll === 'auto' && leftGeometry.navigatorScroll === 'auto'
       && parseFloat(leftGeometry.inspectorPadding) >= 16
-      && leftGeometry.propertiesRight <= (leftGeometry.previewLeft + leftGeometry.preview) - 390 + 2
-      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 560)) <= 4,
+      && leftGeometry.phoneLeft >= leftGeometry.propertiesRight + 8
+      && leftGeometry.propertiesRight <= desktopViewport.width + 3
+      && Math.abs(leftGeometry.list - (desktopViewport.width < 1280 ? 264 : 276)) <= 4,
       'selected properties must remain readable in their own panel without covering the real mobile canvas: '
         + JSON.stringify({ width: desktopViewport.width, leftGeometry }));
 
@@ -3754,51 +3792,53 @@ async function run() {
     assert(longMetrics.count >= 32 && longMetrics.previewCount >= 30 && longMetrics.selected
       && longMetrics.scrollTop > 0 && Math.abs(longMetrics.width - 390) <= 1 && longMetrics.overflow <= 3,
       'deep selection stays visible in one 390px phone without page horizontal overflow: ' + JSON.stringify(longMetrics));
-    // On a 36-block real page, the selected editor expands inside the deep
-    // row's one scrollable list. The sticky page-actions footer and live phone
-    // must not move when the user edits a long block.
+    // On a 36-block real page, editing a deep block keeps list and settings
+    // as independent scroll regions and never moves the live phone.
     const longScroll = await evaluate(longPageClient, `(() => {
       const list = document.querySelector('.editor-composition-content');
+      const properties = document.querySelector('.editor-properties-content');
       const composition = document.querySelector('.editor-composition-panel');
       const settings = document.querySelector('#editor-block-settings-editor-long-25 .block-editor-v2');
       const outer = document.querySelector('.work-panel');
-      if (!list || !composition || !settings || !outer) return null;
-      const previousMinHeight = settings.style.minHeight;
-      const listBefore = list.scrollTop;
+      if (!list || !properties || !composition || !settings || !outer) return null;
+      const oldHeight = settings.style.minHeight;
+      const oldList = list.scrollTop;
+      const oldProperties = properties.scrollTop;
       let metrics;
       try {
         settings.style.minHeight = '1200px';
-        list.scrollTop = Math.max(listBefore, 240);
+        list.scrollTop = Math.max(oldList, 240);
+        const beforeProperties = list.scrollTop;
+        properties.scrollTop = 250;
+        const footer = composition.querySelector('.editor-composition-footer');
         metrics = {
           navigatorOverflowY: getComputedStyle(list).overflowY,
+          inspectorOverflowY: getComputedStyle(properties).overflowY,
           blockSettingsOverflowY: getComputedStyle(settings).overflowY,
           workOverflowY: getComputedStyle(outer).overflowY,
           navigatorScrollTop: list.scrollTop,
-          inline: !!settings.closest('.editor-inline-expanded'),
+          inspectorScrollTop: properties.scrollTop,
+          independent: list.scrollTop === beforeProperties,
+          insideInspector: properties.contains(settings),
           duplicateCount: document.querySelectorAll('#editor-block-settings-editor-long-25').length,
-          inspectorHidden: getComputedStyle(document.querySelector('.editor-properties-panel')).display === 'none',
           outerTop: outer.scrollTop,
-          footerVisible: (() => {
-            const footer = composition.querySelector('.editor-composition-footer');
-            const rect = footer?.getBoundingClientRect();
-            const box = composition.getBoundingClientRect();
-            return !!rect && Math.abs(rect.bottom - box.bottom) <= 2;
-          })(),
+          footerVisible: Math.abs(footer.getBoundingClientRect().bottom - composition.getBoundingClientRect().bottom) <= 2,
         };
       } finally {
-        settings.style.minHeight = previousMinHeight;
-        list.scrollTop = listBefore;
+        settings.style.minHeight = oldHeight;
+        list.scrollTop = oldList;
+        properties.scrollTop = oldProperties;
       }
       return metrics;
     })()`);
     assert(longScroll?.navigatorOverflowY === 'auto'
+      && longScroll.inspectorOverflowY === 'auto'
       && longScroll.blockSettingsOverflowY === 'visible'
       && longScroll.workOverflowY === 'hidden'
-      && longScroll.navigatorScrollTop > 0
-      && longScroll.inline && longScroll.duplicateCount === 1
-      && longScroll.inspectorHidden && longScroll.footerVisible
-      && longScroll.outerTop === 0,
-      '36-block page must preserve one inline block scroller and pinned page actions: '
+      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop > 0
+      && longScroll.independent && longScroll.insideInspector && longScroll.duplicateCount === 1
+      && longScroll.footerVisible && longScroll.outerTop === 0,
+      '36-block page must keep a persistent navigator and independent selected editor: '
         + JSON.stringify(longScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-1672');
     await setViewport(longPageClient, 900, 780, false);
