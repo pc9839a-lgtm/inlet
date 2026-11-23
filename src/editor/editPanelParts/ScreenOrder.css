@@ -1024,7 +1024,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy { gap: 2px; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong {
   min-width: 0; color: #303744 !important;
-  font-size: 16px !important; line-height: 1.4 !important; font-weight: 600 !important;
+  font-size: 17px !important; line-height: 1.4 !important; font-weight: 600 !important;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
   white-space: normal; overflow: hidden; overflow-wrap: anywhere;
 }
@@ -1049,4 +1049,14 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
 }
 @media (prefers-reduced-motion: reduce) {
   html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item { transition: none; }
+}
+
+/* Beginner task rail: block names stay readable over legacy compact rules. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout .editor-composition-panel .screen-order-v2-identity-copy strong {
+  font-size: 17px !important;
+  line-height: 1.4 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout .editor-composition-panel .screen-order-v2-identity-detail {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
 }
