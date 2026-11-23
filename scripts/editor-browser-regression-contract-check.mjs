@@ -147,7 +147,13 @@ assert(browserSource.includes('stageThreePageSettings')
   && browserSource.includes('applying the staged design must retain page animation edits')
   && browserSource.includes('share position must persist through design apply and publish'),
   'stage 3 browser QA must preserve page settings disclosure, unified theme apply/reset and share persistence');
-assert(browserSource.includes("desktop editor and preview overlap") && browserSource.includes("desktop shell must expose settings only when requested") && browserSource.includes("laptop editor must reserve a left settings track only when open") && browserSource.includes("zoomed desktop must offer its real-page-first view") && browserSource.includes("desktop page settings entry"), 'desktop matrix must lock non-overlap, separate inspector, laptop drawer and page-settings entry bounds');
+assert(browserSource.includes("desktop editor and preview overlap")
+  && browserSource.includes("desktop shell must always have one working pane and one preview")
+  && browserSource.includes("laptop must keep one task column alongside its preview")
+  && browserSource.includes("zoomed desktop must offer its real-page-first view")
+  && browserSource.includes("desktop page settings entry")
+  && browserSource.includes("only ONE left task must be visible"),
+  'desktop matrix must lock a single task pane, nonoverlapping 390px page and narrow desktop fallback');
 assert(browserSource.includes("publicVerifyCount") && browserSource.includes("saveCount === 0"), 'browser QA must verify that editing stays local until explicit publish and then verifies the public page');
 assert(browserSource.includes("{ name: 'mobile-360', width: 360") && browserSource.includes("{ name: 'mobile-390', width: 390") && browserSource.includes("{ name: 'mobile-430', width: 430"), 'browser QA must cover 360, 390, and 430 pixel mobile widths');
 assert(browserSource.includes("const tabs = document.querySelector('.top-tabs')") && !browserSource.includes("const tabs = document.querySelector('.workspace-tabs')"), 'mobile editor metrics must use the current top-tabs DOM owner');
