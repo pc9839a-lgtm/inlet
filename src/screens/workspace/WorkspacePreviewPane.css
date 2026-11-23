@@ -272,7 +272,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading 
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading strong {
   min-width: 0; max-width: 114px; overflow: hidden;
   white-space: nowrap; text-overflow: ellipsis;
-  color: #485262; font-size: 12px; font-weight: 670;
+  color: #485262; font-size: 16px; font-weight: 650;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-heading small {
   color: #9ba3ae; font-size: 10px;
@@ -285,7 +285,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button {
   gap: 5px; min-height: 31px; padding: 5px 8px;
   border: 1px solid #e0e4eb; border-radius: 7px;
   background: #fff; color: #526073;
-  font: inherit; font-size: 11px; font-weight: 610; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools button:hover:not(:disabled) {
   border-color: #c8d0da; background: #f9fafb; color: #2d3747;
@@ -302,8 +302,42 @@ html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools .editor-
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools .editor-canvas-add-after:hover:not(:disabled) {
   background: #edf0f4; color: #303b4b;
 }
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-more {
+  position: relative;
+  flex: 0 0 auto;
+  align-self: center;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-more > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 37px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  color: #526073;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-more > summary::-webkit-details-marker { display: none; }
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-more > summary:focus-visible {
+  outline: 2px solid #4c64cd;
+  outline-offset: 2px;
+}
+html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-more:not([open]) > .editor-canvas-tools-secondary { display: none !important; }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary {
-  display: flex; align-items: center; gap: 2px; padding: 0;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #dce3ed;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 14px #17203915;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-canvas-tools-secondary button {
   min-width: 26px; min-height: 30px; padding: 4px; border-color: transparent; background: transparent;
