@@ -1767,9 +1767,9 @@ async function run() {
     await waitForBrowser(client, `!document.querySelector('.screen-order-v2-menu')`, 'Space-opened dropdown Escape close');
 
     const heroEditorSelector = '.screen-order-v2-settings textarea[placeholder="핵심 제목을 입력하세요"]';
-    if (!(await evaluate(client, `document.querySelector(${JSON.stringify(heroTitleSelector)})?.getAttribute('aria-pressed') === 'true'`))) {
-      await clickSelector(client, '#editor-block-editor-hero .screen-order-v2-head');
-    }
+    // Even if the hero stays selected, its editor is no longer visible while
+    // the block list task is open. Explicitly reopen the same original editor.
+    await openBlockSettings(client, 'editor-hero');
     await waitForBrowser(client, `!!document.querySelector(${JSON.stringify(heroEditorSelector)})`, 'focused hero settings textarea');
     await waitForBrowser(client, `!!document.querySelector('#editor-block-settings-editor-hero[data-block-settings-id="editor-hero"]')`, 'hero settings render separately from the list');
     const heroDirectFlow = await evaluate(client, `(() => {
