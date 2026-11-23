@@ -1604,26 +1604,25 @@ async function run() {
     assert(apiState.saveCount === 0, 'D04 preview setup must never publish a page');
 
     const editorNavigation = await evaluate(client, `(() => {
-      const entry = document.querySelector('.editor-page-settings-button');
-      const inspector = document.querySelector('.editor-inspector-panel');
-      return { count: document.querySelectorAll('.editor-page-settings-button').length,
+      const menu = document.querySelector('.editor-page-more');
+      const entry = menu?.querySelector('summary');
+      const items = [...(menu?.querySelectorAll('.editor-page-settings-button') || [])];
+      return { count: items.length,
         inComposition: !!entry?.closest('.editor-composition-panel'),
         redundantTabs: document.querySelectorAll('.edit-section-tabs').length,
-        target: entry?.getAttribute('aria-controls'),
+        collapsed: menu?.open === false,
         label: entry?.textContent.trim(),
         height: entry?.getBoundingClientRect().height,
-        inspectorHasEntry: !!inspector?.querySelector('.editor-page-settings-button') };
+        hiddenByDefault: items.every(item => !item.getClientRects().length),
+        actions: items.map(item => item.textContent.trim()) };
     })()`);
-    assert(editorNavigation.count === 2 && editorNavigation.inComposition && editorNavigation.redundantTabs === 0
-      && editorNavigation.target === 'editor-selection-panel' && editorNavigation.label === '전체 디자인'
-      && editorNavigation.height >= 40 && !editorNavigation.inspectorHasEntry,
-      'page design and page settings must be separate explicit entries, outside selected-item controls: ' + JSON.stringify(editorNavigation));
-    assert(await evaluate(client, `(() => {
-      const entries = [...document.querySelectorAll('.editor-composition-footer .editor-page-settings-button')];
-      return entries.length === 2 && entries[0].textContent.includes('전체 디자인')
-        && entries[1].textContent.includes('페이지 설정')
-        && entries.every(button => button.getAttribute('aria-controls') === 'editor-selection-panel');
-    })()`), 'the content-first navigator exposes two accessible destinations for design and page behavior');
+    assert(editorNavigation.count === 2 && editorNavigation.inComposition
+      && editorNavigation.redundantTabs === 0 && editorNavigation.collapsed
+      && editorNavigation.label.includes('페이지 전체 설정')
+      && editorNavigation.height >= 44 && editorNavigation.hiddenByDefault
+      && editorNavigation.actions[0].includes('전체 디자인')
+      && editorNavigation.actions[1].includes('페이지 설정'),
+      'global settings must live in one collapsed secondary menu instead of filling the first screen: ' + JSON.stringify(editorNavigation));
 
     // Inbox remains accessible through the top workspace menu,
     // and keyboard focus must recover after the workspace transition.
