@@ -155,6 +155,12 @@ const screenOrderList = await readFile('src/editor/editPanelParts/ScreenOrderLis
 const fixedItems = await readFile('src/editor/editPanelParts/GlobalFixedBlocks.jsx', 'utf8');
 const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderItem.jsx', 'utf8');
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
+const workflowCss = await readFile('src/editor/EditorWorkflow.css', 'utf8');
+const quickDesignSource = await readFile('src/editor/blockEditors/QuickDesignChoices.jsx', 'utf8');
+assert(quickDesignSource.includes('<details className="editor-quick-design">')
+  && quickDesignSource.includes('aria-pressed={selected === choice.value}')
+  && !quickDesignSource.includes('<details className="editor-quick-design" open'),
+  'design presets must be collapsed by default and retain accessible selected state');
 const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
 const stylePanelTypographyCss = await readFile('src/panels/StylePanel.css', 'utf8');
 const blockEditorShellCss = await readFile('src/styles/editor-expanded-shell.css', 'utf8');
@@ -225,7 +231,7 @@ assert(layout.includes('data-editor-layout="separate-workbench"')
   && layout.includes('inspectorOpen && !showStartEditing && !fixedSelected')
   && layout.includes('listOnly')
   && !layout.includes('renderInlineEditor={renderFixedInlineEditor}'),
-  'wide desktop must show one selected editor beside the navigation-only block list');
+  'list and one selected editor must retain their existing models without rendering duplicate editors');
 assert(!layout.includes("className={section === 'options' ? 'active' : ''}") && !layout.includes("className={section === 'order' ? 'active' : ''}"), 'edit section tabs must not reuse the global active class');
 assert(!screenOrderItem.includes('renderBlockEditor')
   && stackItems.includes('<ScreenOrderSettings')
@@ -240,20 +246,22 @@ assert(layout.includes('<AddBlockDock {...addBlockDockProps} compact />'), 'sect
 assert(layout.includes('<PageThemeStylePanel {...stylePanelProps} />'), 'page theme controls must remain available from page options');
 assert(!layout.includes('editor-structure-pane') && !layout.includes('className="editor-inspector-pane"'), 'three-pane editor DOM must not return');
 
-assert(css.includes('.canvas-editor-shell')
-  && css.includes("data-editor-density='wide']")
-  && layout.includes('data-editor-workflow="page-first"')
-  && layout.includes('data-inspector-open={inspectorOpen'),
-  'editor shell must preserve the on-demand inspector and page-first responsive geometry');
+assert(css.includes('grid-template-columns: var(--editor-workspace-width) minmax(0, 1fr) !important;')
+  && layout.includes('data-inspector-open={inspectorOpen')
+  && layout.includes('const returnToBlocks = (event) =>')
+  && layout.includes("setCompactView('blocks');")
+  && editPanelLayoutCss.includes("[data-inspector-open='true'] > .editor-composition-panel")
+  && editPanelLayoutCss.includes("[data-inspector-open='false'] > .editor-properties-panel"),
+  'beginner editor must show one left task, then swap list/edit while keeping one real preview');
 // UX-008/018/019/032: the existing owner styles consume one editor-only
 // typography/rhythm scale, not a late stylesheet of !important overrides.
 const typographyTokens = [
   '--editor-ui-title-size: 21px;',
   '--editor-ui-section-size: 14px;',
-  '--editor-ui-label-size: 13px;',
-  '--editor-ui-value-size: 15px;',
-  '--editor-ui-row-size: 14px;',
-  '--editor-ui-helper-size: 12px;',
+  '--editor-ui-label-size: 15px;',
+  '--editor-ui-value-size: 17px;',
+  '--editor-ui-row-size: 16px;',
+  '--editor-ui-helper-size: 14px;',
   '--editor-ui-space-1: 4px;',
   '--editor-ui-space-2: 8px;',
   '--editor-ui-space-3: 12px;',
@@ -261,8 +269,8 @@ const typographyTokens = [
 ];
 assert(editPanelLayoutCss.includes('--editor-ui-title-size: 21px;')
   && editPanelLayoutCss.includes('--editor-ui-section-size: 14px;')
-  && editPanelLayoutCss.includes('--editor-ui-label-size: 13px;')
-  && editPanelLayoutCss.includes('--editor-ui-row-size: 14px;')
+  && editPanelLayoutCss.includes('--editor-ui-label-size: 15px;')
+  && editPanelLayoutCss.includes('--editor-ui-row-size: 16px;')
   && editPanelLayoutCss.includes('--editor-ui-space-1: 4px;')
   && editPanelLayoutCss.includes('--editor-ui-space-4: 18px;')
   && sharedControlsCss.includes('font-size: var(--editor-ui-label-size, 13px)')
@@ -273,7 +281,7 @@ assert(editPanelLayoutCss.includes('--editor-ui-title-size: 21px;')
 // UX-032: control geometry and state affordances share editor-only tokens.
 // Keep native textarea expansion, existing aria semantics and 44px switch hits.
 const controlTokens = [
-  '--editor-ui-input-height: 42px;',
+  '--editor-ui-input-height: 48px;',
   '--editor-ui-compact-height: 36px;',
   '--editor-ui-touch-height: 44px;',
   '--editor-ui-control-radius: 8px;',
@@ -337,8 +345,10 @@ assert(heroImageSection.includes('InspectorDisclosure label="이미지 배치·�
   && !previewPaneCss.includes('--editor-ui-space-4'),
   'disclosures must keep native semantics, owner-level token spacing and no canvas-style leakage');
 assert(!css.includes('grid-template-columns: 280px minmax(520px, 1fr) 360px !important'), 'three-column production repair must stay removed');
-assert(!css.includes('editor-inspector-pane') && css.includes('--editor-settings-width:394px;'),
-  'editor workspace must size the separate settings column without restoring old abandoned components');
+assert(!css.includes('editor-inspector-pane')
+  && css.includes('--editor-workspace-width: clamp(402px, 33vw, 468px);')
+  && css.includes('--editor-settings-width: var(--editor-workspace-width);'),
+  'editor workspace must use one shared task column without an abandoned inspector');
 assert(!css.includes('screen-order-v2-settings'), 'workspace geometry must not own inline block editor presentation');
 assert(!css.includes('.fixed-block-card') && !css.includes('.edit-animation-card') && !css.includes('.fixed-block-editor') && !css.includes('.edit-animation-settings'), 'workspace geometry must not own fixed or animation cards');
 assert(!css.includes('.block-editor-v2-header') && !css.includes('.editor-field-v2') && !css.includes('.editor-section-v2-trigger') && !css.includes('.editor-segmented-v2') && !css.includes('.image-mode-toolbar'), 'workspace geometry must not own block editor internals');
@@ -395,12 +405,12 @@ assert(!headerSource.includes('panel-save-status operations-save-status')
 
 assert(leftPanel.includes("import './WorkspaceChrome.css';") && chromeCss.includes('grid-template-columns: repeat(4, minmax(0, 1fr)) !important') && chromeCss.includes('min-height: 46px !important') && chromeCss.includes('height: 36px !important'), 'WorkspaceChrome.css must own compact four-column workspace navigation');
 assert(chromeCss.includes('background: #f1f3f6 !important') && chromeCss.includes('color: var(--product-text) !important'), 'active workspace tab must use the compact light selected state from WorkspaceChrome.css');
-assert(css.includes('grid-template-columns:var(--editor-list-width) var(--editor-settings-width) minmax(0,1fr) !important;')
+assert(css.includes('grid-template-columns: var(--editor-workspace-width) minmax(0, 1fr) !important;')
   && editPanelLayoutCss.includes('.editor-properties-panel')
   && layout.includes('data-inspector-side="left"')
   && editPanelLayoutCss.includes('.editor-properties-content')
-  && css.includes('overflow:hidden !important;'),
-  'the editor must keep block list and properties on the left and the mobile page on the right');
+  && css.includes('overflow: hidden !important;'),
+  'the editor must show either list or editing on left and a full mobile preview on right');
 assert(layout.includes("const showPageOptions = section === 'design' || section === 'page';")
   && layout.includes('{showPageOptions && (')
   && layout.includes('<PageThemeStylePanel {...stylePanelProps} />'),
@@ -410,12 +420,12 @@ assert(layout.includes('editor-composition-heading')
   && layout.includes('listOnly')
   && layout.includes('editor-properties-content'),
   'composition rows must remain visible and real block editors belong to the selected settings panel');
-assert(css.includes('overflow:hidden !important;')
+assert(css.includes('overflow: hidden !important;')
   && editPanelLayoutCss.includes('.editor-composition-content')
   && editPanelLayoutCss.includes('.editor-properties-content')
   && editPanelLayoutCss.includes('overflow-y: auto;')
   && !editPanelLayoutCss.includes('overflow-y: auto !important;\n  overflow-x: hidden !important;\n  overscroll-behavior-y: contain;'),
-  'navigator and property editor must have independent, nonnested scroll regions');
+  'visible list and selected editor must have a single independent scroll region each');
 assert(previewPaneCss.includes('--editor-preview-frame-width') && previewPaneCss.includes('--landing-runtime-width: 390px;')
   && previewPaneCss.includes('justify-content: center !important;'), 'real preview must preserve a single 390px viewport');
 assert(addDockCss.includes('.editor-gallery-backdrop')
@@ -429,15 +439,17 @@ assert(addBlockDock.includes('const composingRef = useRef(false)')
   && addBlockDock.includes('onCompositionEndCapture={() => { composingRef.current = false; }}')
   && addBlockDock.includes("if (event.key === 'Escape') event.stopPropagation();"),
   'block-gallery Escape must not dismiss IME composition or bubble through its portal to the laptop drawer');
-assert(css.includes('grid-template-columns:minmax(0,1fr) !important')
-  && css.includes("data-editor-density='laptop']")
+assert(workflowCss.includes("data-editor-density='compact'")
+  && workflowCss.includes('grid-template-columns: minmax(0, 1fr) !important;')
   && editPanelLayoutCss.includes('@media (max-width: 899px)')
-  && previewPaneCss.includes("data-editor-workflow='page-first'"),
-  'zoomed desktop must keep its full preview available with settings opened on demand');
-assert(layout.includes('className="editor-page-settings-button"')
-  && layout.includes('aria-controls="editor-selection-panel"')
+  && previewPaneCss.includes("data-editor-density='compact'")
+  && previewPaneCss.includes('grid-column: 2 !important;'),
+  'zoomed desktop must switch tasks without shrinking the real 390px page');
+assert(layout.includes('className="editor-page-more"')
+  && layout.includes("onClick={() => openPageOptions('design')}")
+  && layout.includes("onClick={() => openPageOptions('page')}")
   && !layout.includes('edit-section-tabs') && !editPanelLayoutCss.includes('edit-section-tabs'),
-  'page settings must use one composition entry without a second inspector tab bar');
+  'page-wide settings must be one optional secondary menu, not a persistent second tab bar');
 assert(codeEditor.includes('import { EditorField }')
   && codeEditor.includes('<EditorField label="목록 구분 이름">')
   && codeEditor.includes('aria-label="구분 이름"')
@@ -470,11 +482,12 @@ assert(disclosure.includes('<details') && disclosure.includes('<summary onClick=
   && formEditor.includes('label="중복 접수와 외부 연동"')
   && editPanelLayoutCss.includes('.screen-order-v2-settings .inspector-disclosure'),
   'inline editing must preserve original widget disclosures without duplicate top headings');
-assert(editPanelLayoutCss.includes('.editor-composition-footer > .editor-page-settings-button')
-  && editPanelLayoutCss.includes('min-height: 43px')
+assert(workflowCss.includes('.editor-page-more > summary')
+  && workflowCss.includes('.editor-page-more-actions > .editor-page-settings-button')
+  && layout.includes('screenOrderListProps.normalBlocks.length + fixedDescriptors.length >= 8')
   && layout.includes('<BlockNavigatorSearch')
   && layout.includes('onSelect={chooseSearchResult}'),
-  'page settings and the persistent block search must remain accessible');
+  'page settings and long-list search must remain available without visual clutter');
 assert(blockSearch.includes("event.key === 'Escape' && query.trim()")
   && blockSearch.includes('event.stopPropagation()')
   && blockSearch.includes('navigate(activeIndex)')
@@ -578,7 +591,7 @@ console.log(JSON.stringify({
   ok: true,
   checks: 23,
   scope: 'pagero-editor-canvas-and-inspector',
-  shell: ['left-composition', 'center-live-page-preview', 'right-settings'],
+  shell: ['left-list-or-selected-task', 'right-live-390px-preview'],
   separateStyleTab: false,
   legacyStyleRouteNormalized: true,
 }, null, 2));
