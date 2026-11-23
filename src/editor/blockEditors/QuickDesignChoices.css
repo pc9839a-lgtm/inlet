@@ -1,10 +1,42 @@
 /* One-click design choices for the authenticated PageRo inspector only. */
 html body #root .canvas-editor-shell .editor-quick-design {
-  display: grid;
-  gap: 11px;
+  display: block;
   min-width: 0;
-  margin: 5px 0 2px;
+  margin: 18px 0 2px;
+  border-top: 1px solid #e6eaf0;
 }
+html body #root .canvas-editor-shell .editor-quick-design > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  cursor: pointer;
+  list-style: none;
+  color: #202b3e;
+  font-size: 16px;
+  font-weight: 650;
+}
+html body #root .canvas-editor-shell .editor-quick-design > summary::-webkit-details-marker { display: none; }
+html body #root .canvas-editor-shell .editor-quick-design > summary::after {
+  content: '⌄';
+  color: #63728a;
+  font-size: 20px;
+  line-height: 1;
+}
+html body #root .canvas-editor-shell .editor-quick-design[open] > summary::after { transform: rotate(180deg); }
+html body #root .canvas-editor-shell .editor-quick-design > summary:focus-visible {
+  outline: 2px solid #2454ff;
+  outline-offset: 2px;
+}
+html body #root .canvas-editor-shell .editor-quick-design-current {
+  margin-left: auto;
+  color: #58677e;
+  font-size: 14px;
+  font-weight: 500;
+}
+html body #root .canvas-editor-shell .editor-quick-design:not([open]) > .editor-quick-design-options { display: none; }
+html body #root .canvas-editor-shell .editor-quick-design[open] > .editor-quick-design-options { margin: 10px 0 16px; }
 html body #root .canvas-editor-shell .editor-quick-design-heading {
   display: flex;
   align-items: baseline;
