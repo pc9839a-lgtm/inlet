@@ -477,9 +477,9 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .ed
   gap: 9px !important;
   width: 100% !important;
   min-width: 0 !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  padding: 0 12px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 0 18px !important;
   border: 1px solid #1759ee !important;
   border-radius: 8px !important;
   background: #1759ee !important;
@@ -488,8 +488,8 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .ed
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle strong {
   display: inline !important;
-  font-size: 14px !important;
-  line-height: 1.2 !important;
+  font-size: 17px !important;
+  line-height: 1.3 !important;
   font-weight: 700 !important;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .editor-composition-heading .add-dock-compact .add-toggle:is(:hover,:focus-visible),
