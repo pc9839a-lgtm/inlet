@@ -113,6 +113,20 @@ export async function checkReferenceEditor({
     'text and body must appear before optional design cards: ' + JSON.stringify(textTask));
   await capture(client, 'beginner-text-content-before-design-1672');
 
+  // A preview-side form button shortcut must focus the matching original
+  // submit text field, never submit or create a second editing state.
+  await showList();
+  await clickPointer(client, '#editor-block-editor-form .screen-order-v2-head');
+  await waitForBrowser(client,
+    '!!document.querySelector(".phone-frame #block-editor-form .editor-preview-submit-edit")',
+    'selected form exposes one preview-side submit-copy shortcut');
+  await clickPointer(client, '.phone-frame #block-editor-form .editor-preview-submit-edit');
+  await waitForBrowser(client,
+    'document.activeElement === document.querySelector("#editor-block-settings-editor-form .form-submit-task .field-title input")',
+    'form submit-copy shortcut focuses exact existing field');
+  assert(apiState.saveCount === 0,
+    'preview form shortcut changes focus only, never submits a lead or publishes');
+
   // Page-wide controls still exist, but do not fill the default list screen.
   await showList();
   await clickPointer(client, '.editor-page-more > summary');
