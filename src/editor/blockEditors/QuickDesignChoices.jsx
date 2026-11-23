@@ -5,12 +5,13 @@ import './QuickDesignChoices.css';
 export default function QuickDesignChoices({
   kind, selected, choices, onSelect, title = '추천 디자인',
 }) {
+  const currentLabel = choices.find((choice) => choice.value === selected)?.label || '선택';
   return (
-    <section className="editor-quick-design" aria-label={title}>
-      <div className="editor-quick-design-heading">
-        <strong>{title}</strong>
-        <span>누르면 미리보기에 바로 반영돼요</span>
-      </div>
+    <details className="editor-quick-design">
+      <summary>
+        <strong>{title === '추천 디자인' ? '디자인 변경' : title}</strong>
+        <span className="editor-quick-design-current">{currentLabel}</span>
+      </summary>
       <div className="editor-quick-design-options" role="group" aria-label={title}>
         {choices.map((choice, index) => (
           <button
@@ -39,6 +40,6 @@ export default function QuickDesignChoices({
           </button>
         ))}
       </div>
-    </section>
+    </details>
   );
 }
