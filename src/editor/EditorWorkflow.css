@@ -143,6 +143,9 @@ html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-page-
   outline: 2px solid var(--editor-ux-accent);
   outline-offset: 2px;
 }
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-page-more:not([open]) > .editor-page-more-actions {
+  display: none !important;
+}
 html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .editor-page-more-actions {
   display: grid;
   gap: 4px;
