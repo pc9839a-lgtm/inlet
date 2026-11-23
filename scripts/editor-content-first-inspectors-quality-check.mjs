@@ -20,16 +20,19 @@ const inlineEdit = read('src/preview/EditorInlineTextField.jsx');
 const hero = read('src/editor/blockEditors/HeroEditor.jsx');
 const links = read('src/editor/blockEditors/LinksEditor.jsx');
 
-// 2026-11-20 owner acceptance gate: design 1/2/3 is the first task
-// for each visual block, with the real content editor directly underneath.
+// 2026-11-23 explicit owner rejection supersedes design-first gate:
+// beginners must edit familiar text/photo/form fields FIRST, with design
+// alternatives folded and accessible below the task.
 assert(quickDesign.includes('디자인 {index + 1}')
   && quickDesign.includes('aria-pressed={selected === choice.value}')
-  && text.indexOf('<QuickDesignChoices') < text.indexOf('label="제목"')
-  && hero.indexOf('<QuickDesignChoices') < hero.indexOf('<HeroBasicSection')
-  && image.indexOf('<QuickDesignChoices') < image.indexOf('<ImageBasicSection')
-  && form.indexOf('<QuickDesignChoices') < form.indexOf('<FormBasicSection')
-  && links.indexOf('<QuickDesignChoices') < links.indexOf('label="제목"'),
-  'all representative blocks must present numbered design choices before editing content');
+  && quickDesign.includes('<details className="editor-quick-design">')
+  && !quickDesign.includes('<details className="editor-quick-design" open')
+  && text.indexOf('<QuickDesignChoices') > text.indexOf('label="본문"')
+  && hero.indexOf('<QuickDesignChoices') > hero.indexOf('<HeroBasicSection')
+  && image.indexOf('<QuickDesignChoices') > image.indexOf('<ImageBasicSection')
+  && form.indexOf('<QuickDesignChoices') > form.indexOf('<FormBasicSection')
+  && links.indexOf('<QuickDesignChoices') > links.indexOf('label="제목"'),
+  'content editing must lead and optional design choices remain keyboard accessible but collapsed');
 assert(text.indexOf('label="제목"') < text.indexOf('label="본문"')
   && text.indexOf('label="본문"') < text.indexOf('label="세부 디자인"'),
   'title and body precede design');
@@ -78,7 +81,7 @@ assert(!inspector.includes('editor-inspector-jump')
   && inspector.includes('{renderBlockEditor(block)}')
   && form.includes('className="editor-task-section form-questions-task"')
   && form.includes('className="editor-task-section form-submit-task"')
-  && browser.includes('design is reachable directly without a duplicate shortcut rail'),
+  && browser.includes('text and body must appear before optional design cards'),
   'content-first workbench must not include fake content/design tabs that merely scroll to another accordion');
 assert(disclosure.includes('expandedByBlock = new Map()')
   && disclosure.includes('expandedByBlock.has(persistKey)')
@@ -89,9 +92,11 @@ assert(disclosure.includes('expandedByBlock = new Map()')
   && image.includes('persistKey={(blockId || block?.id) ?')
   && form.includes('form-behavior'),
   'native disclosure must preserve only per-page/per-block UI expansion across lazy editor remounts');
-assert(browser.includes('inspector-content-first-') && browser.includes('firstView.secondaryClosed')
-  && browser.includes('optionalText.spacingVisible') && browser.includes('optionalText.colorVisible'),
-  'real Chrome verifies first-view design and hidden style controls reopening');
+assert(browser.includes('beginner-text-content-before-design-1672')
+  && browser.includes('textTask.folded')
+  && browser.includes('contentBeforeDesign')
+  && browser.includes('beginner-compact-edit-673'),
+  'Chrome verifies text first, optional design folded and compact edit task reachable');
 assert(pagePresets.includes('function matchesLook')
   && pagePresets.includes("onPick({")
   && pagePresets.includes("bgMode: 'solid'")
@@ -107,7 +112,7 @@ assert(quickDesign.includes('aria-pressed={selected === choice.value}')
   && form.includes('<QuickDesignChoices') && hero.includes('<QuickDesignChoices')
   && links.includes('<QuickDesignChoices')
   && !quickDesign.includes('updatePage('),
-  'all representative widget designs must expose one-click real model choices before expert settings');
+  'representative widget design selections must keep the same real model callbacks behind optional disclosure');
 assert(inlineEdit.includes('onClick={enabled ? begin : undefined}')
   && inlineEdit.includes('onCompositionEnd')
   && inlineEdit.includes('htmlValue !== originalRef.current')
