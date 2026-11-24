@@ -100,17 +100,19 @@ export async function checkReferenceEditor({
   const textTask = await evaluate(client, '(() => {'
     + ' const panel=document.querySelector("#editor-block-settings-editor-text");'
     + ' const flow=panel?.querySelector("[data-editor-task=text]");'
-    + ' const design=flow?.querySelector(".editor-quick-design");'
+    + ' const design=flow?.querySelector(".text-editor-design");'
+    + ' const choices=design?.querySelector(".editor-quick-design-options");'
     + ' const children=[...(flow?.children||[])];'
     + ' return { title:!!panel?.querySelector("[placeholder=\\"제목을 입력하세요\\"]"),'
     + ' body:!!panel?.querySelector("[placeholder=\\"본문 내용을 입력하세요\\"]"),'
-    + ' folded:design?.open===false, designIndex:children.indexOf(design),'
+    + ' folded:design?.open===false && !choices?.getClientRects().length,'
+    + ' oneDesignDisclosure:flow?.querySelectorAll(".editor-quick-design").length===1,'
     + ' contentBeforeDesign:children.indexOf(design)>=2,'
     + ' inputFont:parseFloat(getComputedStyle(panel.querySelector("textarea")).fontSize) };'
     + '})()');
   assert(textTask?.title && textTask.body && textTask.folded
-    && textTask.contentBeforeDesign && textTask.inputFont >= 16,
-    'text and body must appear before optional design cards: ' + JSON.stringify(textTask));
+    && textTask.oneDesignDisclosure && textTask.contentBeforeDesign && textTask.inputFont >= 16,
+    'text and body must appear before one collapsed design section: ' + JSON.stringify(textTask));
   await capture(client, 'beginner-text-content-before-design-1672');
 
   // A preview-side form button shortcut must focus the matching original
