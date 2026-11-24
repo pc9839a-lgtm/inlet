@@ -24,13 +24,13 @@ export default function TextEditor({ s, set, page, blockId }) {
         onChange={(value) => set({ body: value })}
       />
 
-      <QuickDesignChoices
+      <InspectorDisclosure label="디자인" className="text-editor-design" bodyClassName="text-editor-design-controls" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:text-design` : ''}>
+<QuickDesignChoices
         kind="text"
         selected={s.layout || 'plain'}
         choices={[{ value: 'plain', label: '깔끔하게' }, { value: 'card', label: '카드형' }, { value: 'notice', label: '포인트' }]}
         onSelect={(layout) => set({ layout, align: layout === 'notice' ? 'center' : 'left', bgEnabled: false })}
       />
-      <InspectorDisclosure label="세부 디자인" className="text-editor-design" bodyClassName="text-editor-design-controls" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:text-design` : ''}>
         <TextStylePanel s={s} set={set} theme={page?.theme} />
         <WidgetSpacingControls s={s} set={set} />
       </InspectorDisclosure>
