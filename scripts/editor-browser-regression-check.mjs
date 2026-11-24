@@ -583,7 +583,7 @@ async function waitForBrowser(client, expression, label, timeoutMs = 18000) {
           switchVisible: !!switchEl?.getClientRects().length,
           activeTag: active?.tagName, activeRole: active?.getAttribute('role'),
           activeLabel: active?.getAttribute('aria-label'), activeValue: active?.value,
-          pageSection: document.querySelector('.editor-properties-heading-copy strong')?.textContent,
+          pageSection: document.querySelector('.editor-page-options-heading h2, .screen-order-v2-settings-title h2')?.textContent,
         };
       })()`);
       diagnostic = ' | state=' + JSON.stringify(snapshot);
@@ -1283,7 +1283,8 @@ async function run() {
     assert(apiState.pageLoadCount >= 1, 'selected page was not loaded from the page API');
     await waitForBrowser(client, `(() => {
       const shell = document.querySelector('.editor-properties-panel');
-      return shell?.querySelector('.editor-properties-heading-copy strong')?.textContent === '블록 수정'
+      return !!shell?.querySelector('.editor-workbench-close-inspector')
+        && !shell.querySelector('.editor-properties-heading-copy')
         && !shell.querySelector('.style-panel')
         && document.querySelector('.edit-layout')?.dataset.inspectorOpen === 'false'
         && !!document.querySelector('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')?.getClientRects().length
@@ -1293,7 +1294,7 @@ async function run() {
       const actual = await evaluate(client, `(() => {
         const editor = document.querySelector('.editor-properties-panel');
         return {
-          panelTitle: editor?.querySelector('.editor-properties-heading-copy strong')?.textContent,
+          panelTitle: editor?.querySelector('.editor-properties-heading')?.textContent?.trim(),
           hasStyle: !!editor?.querySelector('.style-panel'),
           hasStart: !!editor?.querySelector('.editor-workflow-start'),
           selected: [...document.querySelectorAll('.editor-composition-panel .screen-order-v2-item[data-selected="true"]')].map(e => e.id),
