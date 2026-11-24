@@ -2259,18 +2259,18 @@ async function run() {
         helperCopyRemoved: !document.querySelector('.edit-workflow-hint'),
       };
     })()`);
-    assert(stageTwoSettings.listVisible && stageTwoSettings.inInspector
+    assert(!stageTwoSettings.listVisible && stageTwoSettings.inInspector
       && stageTwoSettings.activeEditors === 1 && stageTwoSettings.rowEditors === 0
       && stageTwoSettings.title === updatedHeroTitle && stageTwoSettings.headingVisible
       && stageTwoSettings.panelWidth > 0 && stageTwoSettings.panelWidth <= stageTwoSettings.inspectorWidth
-      && stageTwoSettings.inspectorVisible && stageTwoSettings.fixedVisible
+      && stageTwoSettings.inspectorVisible && !stageTwoSettings.fixedVisible
       && stageTwoSettings.helperCopyRemoved,
       'selected hero must edit in one separate settings pane without duplicating list controls: '
         + JSON.stringify(stageTwoSettings));
     const orderBeforeBack = await normalBlockOrder(client);
-    await openBlockSettings(client, 'editor-hero');
+    await showBlockList(client);
     await focusSelector(client, '#editor-block-editor-hero .screen-order-v2-title-wrap');
-    assert(await evaluate(client, `!!document.querySelector('#editor-block-settings-editor-hero') && document.querySelector('.editor-composition-panel').getClientRects().length > 0`), 'list and selected settings must stay visible together');
+    assert(await evaluate(client, `!document.querySelector('#editor-block-settings-editor-hero') && document.querySelector('.editor-composition-panel').getClientRects().length > 0`), 'list replaces selected settings without losing block order');
     assert(JSON.stringify(await normalBlockOrder(client)) === JSON.stringify(orderBeforeBack), 'settings navigation must preserve block order');
 
     const stageOneList = await evaluate(client, `(() => {
