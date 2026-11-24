@@ -475,13 +475,10 @@ export function EditPanelLayout({
       </aside>
       <aside className="editor-properties-panel" aria-label="선택한 항목 편집">
         <header className="editor-properties-heading">
-          <div className="editor-properties-heading-copy">
-            <strong>{section === 'design' ? '전체 디자인' : section === 'page' ? '페이지 설정' : '블록 수정'}</strong>
-          </div>
           <button type="button" className="editor-workbench-close-inspector"
             aria-label="블록 목록으로 돌아가기"
             onClick={returnToBlocks}>
-            <ArrowLeft size={18} aria-hidden="true" /> 목록
+            <ArrowLeft size={18} aria-hidden="true" /> 블록 목록
           </button>
         </header>
         <div className="editor-properties-content" role="region" aria-label="선택 항목 편집" tabIndex={0}>
