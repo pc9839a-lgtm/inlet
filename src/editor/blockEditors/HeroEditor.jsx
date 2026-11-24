@@ -18,19 +18,20 @@ export default function HeroEditor({ s, set, Range, RichField, page, blockId }) 
       </section>
 
       <InspectorDisclosure label="디자인" className="hero-editor-design" bodyClassName="hero-editor-design-controls"
-<QuickDesignChoices
-        kind="hero"
-        selected={s.imageMode === 'background' ? 'photo' : (s.align === 'center' ? 'center' : 'top')}
-        choices={[
-          { value: 'top', label: '정돈된 기본' },
-          { value: 'center', label: '중앙 강조' },
-          ...(s.image ? [{ value: 'photo', label: '사진 배경' }] : []),
-        ]}
-        onSelect={(look) => set(look === 'photo'
-          ? { imageMode: 'background', imageFit: 'cover', align: 'center', overlay: true, overlayOpacity: 42, titleSize: 'large' }
-          : { imageMode: 'top', imageFit: 'contain', align: look === 'center' ? 'center' : 'left', titleSize: 'large' })}
-      />
         persistKey={stateKey ? `${stateKey}:hero-design` : ''}>
+        <QuickDesignChoices
+          kind="hero"
+          selected={s.imageMode === 'background' ? 'photo' : (s.align === 'center' ? 'center' : 'top')}
+          choices={[
+            { value: 'top', label: '정돈된 기본' },
+            { value: 'center', label: '중앙 강조' },
+            ...(s.image ? [{ value: 'photo', label: '사진 배경' }] : []),
+          ]}
+          onSelect={(look) => set(look === 'photo'
+            ? { imageMode: 'background', imageFit: 'cover', align: 'center', overlay: true, overlayOpacity: 42, titleSize: 'large' }
+            : { imageMode: 'top', imageFit: 'contain', align: look === 'center' ? 'center' : 'left', titleSize: 'large' })}
+      />
+
         <HeroStylePanel s={s} set={set} theme={page?.theme} />
       </InspectorDisclosure>
     </div>
