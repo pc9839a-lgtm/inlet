@@ -23,34 +23,34 @@ const links = read('src/editor/blockEditors/LinksEditor.jsx');
 // 2026-11-23 explicit owner rejection supersedes design-first gate:
 // beginners must edit familiar text/photo/form fields FIRST, with design
 // alternatives folded and accessible below the task.
-assert(quickDesign.includes('디자인 {index + 1}')
+assert(quickDesign.includes('모양 ${index + 1}')
   && quickDesign.includes('aria-pressed={selected === choice.value}')
-  && quickDesign.includes('<details className="editor-quick-design">')
-  && !quickDesign.includes('<details className="editor-quick-design" open')
+  && quickDesign.includes('<div className="editor-quick-design" role="group" aria-label={title}>')
+  && !quickDesign.includes('<details')
   && text.indexOf('<QuickDesignChoices') > text.indexOf('label="본문"')
   && hero.indexOf('<QuickDesignChoices') > hero.indexOf('<HeroBasicSection')
   && image.indexOf('<QuickDesignChoices') > image.indexOf('<ImageBasicSection')
   && form.indexOf('<QuickDesignChoices') > form.indexOf('<FormBasicSection')
   && links.indexOf('<QuickDesignChoices') > links.indexOf('label="제목"'),
-  'content editing must lead and optional design choices remain keyboard accessible but collapsed');
+  'content editing must lead and the one design disclosure stays collapsed and its choices remain keyboard accessible');
 assert(text.indexOf('label="제목"') < text.indexOf('label="본문"')
-  && text.indexOf('label="본문"') < text.indexOf('label="세부 디자인"'),
+  && text.indexOf('label="본문"') < text.indexOf('label="디자인"'),
   'title and body precede design');
 assert(text.includes('<WidgetSpacingControls s={s} set={set} />')
   && text.indexOf('<WidgetSpacingControls') < text.indexOf('</InspectorDisclosure>'),
   'text spacing lives in one optional design disclosure');
 assert(!text.includes('defaultOpen'), 'text visual design must not monopolize first view');
-assert(image.indexOf('<ImageBasicSection') < image.indexOf('label="사진 맞춤과 디자인"')
-  && image.indexOf('<ImageCaptionSection') < image.indexOf('label="사진 맞춤과 디자인"'),
+assert(image.indexOf('<ImageBasicSection') < image.indexOf('label="사진 꾸미기"')
+  && image.indexOf('<ImageCaptionSection') < image.indexOf('label="사진 꾸미기"'),
   'image replacement and caption precede appearance');
-assert(image.indexOf('<ImageDisplayControls') > image.indexOf('label="사진 맞춤과 디자인"')
+assert(image.indexOf('<ImageDisplayControls') > image.indexOf('label="사진 꾸미기"')
   && image.indexOf('<WidgetSpacingControls') < image.indexOf('</InspectorDisclosure>'),
   'image crop, fit and spacing remain functional but initially collapsed');
-assert(form.indexOf('<FormFieldsSection') < form.indexOf('label="세부 디자인"')
-  && form.indexOf('<Field label="버튼 문구"') < form.indexOf('label="세부 디자인"'),
+assert(form.indexOf('<FormFieldsSection') < form.indexOf('label="디자인"')
+  && form.indexOf('<Field label="버튼 문구"') < form.indexOf('label="디자인"'),
   'form title, questions and submit text are primary');
 const outcomeStart = form.indexOf('label="제출 안내와 개인정보"');
-const designStart = form.indexOf('label="세부 디자인"');
+const designStart = form.indexOf('label="디자인"');
 const advancedStart = form.indexOf('label="중복 접수와 외부 연동"');
 assert(outcomeStart > form.indexOf('<Field label="버튼 문구"')
   && outcomeStart < designStart && designStart < advancedStart
@@ -81,7 +81,7 @@ assert(!inspector.includes('editor-inspector-jump')
   && inspector.includes('{renderBlockEditor(block)}')
   && form.includes('className="editor-task-section form-questions-task"')
   && form.includes('className="editor-task-section form-submit-task"')
-  && browser.includes('text and body must appear before optional design cards'),
+  && browser.includes('text and body must appear before one collapsed design section'),
   'content-first workbench must not include fake content/design tabs that merely scroll to another accordion');
 assert(disclosure.includes('expandedByBlock = new Map()')
   && disclosure.includes('expandedByBlock.has(persistKey)')
@@ -111,7 +111,9 @@ assert(quickDesign.includes('aria-pressed={selected === choice.value}')
   && text.includes('<QuickDesignChoices') && image.includes('<QuickDesignChoices')
   && form.includes('<QuickDesignChoices') && hero.includes('<QuickDesignChoices')
   && links.includes('<QuickDesignChoices')
-  && !quickDesign.includes('updatePage('),
+  && !quickDesign.includes('updatePage(')
+  && !quickDesign.includes('editor-quick-design-sample')
+  && !quickDesign.includes('editor-quick-design-index'),
   'representative widget design selections must keep the same real model callbacks behind optional disclosure');
 assert(inlineEdit.includes('onClick={enabled ? begin : undefined}')
   && inlineEdit.includes('onCompositionEnd')
