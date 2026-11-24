@@ -457,11 +457,11 @@ html body #root .builder-shell.canvas-editor-shell .editor-navigator-drawer-trig
 html body #root .canvas-editor-shell .editor-properties-heading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  justify-content: flex-start;
+  gap: 0;
   flex: 0 0 auto;
-  min-height: 76px;
-  padding: 14px 26px;
+  min-height: 58px;
+  padding: 8px 22px;
   border-bottom: 1px solid #e9edf2;
   color: #17243a;
   font-size: 19px;
