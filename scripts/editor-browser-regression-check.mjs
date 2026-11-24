@@ -1942,6 +1942,7 @@ async function run() {
           settingsOverflow: getComputedStyle(settings).overflowY,
           outerOverflow: getComputedStyle(workPanel).overflowY,
           listScroll: list.scrollTop, propertiesScroll: properties.scrollTop,
+          listHidden: composition.getClientRects().length === 0,
           isolated: list.scrollTop === listPosition,
           singleEditor: document.querySelectorAll('#editor-block-settings-editor-hero').length === 1,
           inInspector: properties.contains(settings),
@@ -1964,10 +1965,10 @@ async function run() {
       && independentScroll.propertiesOverflow === 'auto'
       && independentScroll.settingsOverflow === 'visible'
       && independentScroll.outerOverflow === 'hidden'
-      && independentScroll.listScroll > 0 && independentScroll.propertiesScroll > 0
+      && independentScroll.listHidden && independentScroll.propertiesScroll > 0
       && independentScroll.isolated && independentScroll.singleEditor
       && independentScroll.inInspector && independentScroll.footerPinned && independentScroll.outerScroll === 0,
-      'list scrolling and selected settings scrolling must be independent: ' + JSON.stringify(independentScroll));
+      'single selected task must scroll while the list is hidden without nesting widget scrollers: ' + JSON.stringify(independentScroll));
 
     // D02: the anchor moves to a native, collapsed advanced disclosure; the
     // existing anchorId must remain editable and drive the live preview anchor.
