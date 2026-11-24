@@ -157,10 +157,11 @@ const screenOrderItem = await readFile('src/editor/editPanelParts/ScreenOrderIte
 const css = await readFile('src/styles/editor-workspace.css', 'utf8');
 const workflowCss = await readFile('src/editor/EditorWorkflow.css', 'utf8');
 const quickDesignSource = await readFile('src/editor/blockEditors/QuickDesignChoices.jsx', 'utf8');
-assert(quickDesignSource.includes('<details className="editor-quick-design">')
+assert(quickDesignSource.includes('<div className="editor-quick-design" role="group" aria-label={title}>')
   && quickDesignSource.includes('aria-pressed={selected === choice.value}')
-  && !quickDesignSource.includes('<details className="editor-quick-design" open'),
-  'design presets must be collapsed by default and retain accessible selected state');
+  && quickDesignSource.includes('onClick={() => onSelect(choice.value)}')
+  && !quickDesignSource.includes('<details'),
+  'one small design choice row must live inside the block disclosure without a nested accordion');
 const editPanelLayoutCss = await readFile('src/editor/EditPanelLayout.css', 'utf8');
 const stylePanelTypographyCss = await readFile('src/panels/StylePanel.css', 'utf8');
 const blockEditorShellCss = await readFile('src/styles/editor-expanded-shell.css', 'utf8');
