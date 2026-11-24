@@ -138,7 +138,7 @@ assert(browserSource.includes('selected settings heading must remain visible')
   && browserSource.includes('beforeD05'),
   'selected settings must keep their heading and focus reachable on narrow desktop');
 assert(browserSource.includes('stageTwoSettings')
-  && browserSource.includes('list and selected settings must stay visible together')
+  && browserSource.includes('list replaces selected settings without losing block order')
   && browserSource.includes('unapplied code draft survives list navigation')
   && browserSource.includes('preview reselects the previous block after page options'),
   'stage 2 browser QA must preserve settings navigation, keyboard focus, staged code and preview selection');
