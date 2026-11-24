@@ -15,7 +15,6 @@ export default function LinksEditor({ s, set, page, TargetControl }) {
     <div className="links-editor-v3 editor-task-flow" data-editor-task="links">
 
       <section className="editor-task-section" aria-label="링크 블록 제목">
-        <div className="editor-task-heading"><h3>목록 제목</h3></div>
         <EditorField label="제목">
           <input value={s.title || ''} onChange={(event) => set({ title: event.target.value })} />
         </EditorField>
@@ -36,14 +35,15 @@ export default function LinksEditor({ s, set, page, TargetControl }) {
         />
       </section>
 
-      <QuickDesignChoices
+
+      <section className="editor-task-section editor-task-secondary" aria-label="링크 디자인">
+        <InspectorDisclosure label="디자인" className="links-editor-design">
+<QuickDesignChoices
         kind="links"
         selected={s.layout || 'list'}
         choices={[{ value: 'list', label: '심플 목록' }, { value: 'card', label: '카드 버튼' }, { value: 'carousel', label: '슬라이드' }]}
         onSelect={(layout) => set({ layout })}
       />
-      <section className="editor-task-section editor-task-secondary" aria-label="링크 디자인">
-        <InspectorDisclosure label="세부 디자인" className="links-editor-design">
           <LinksStylePanel s={s} set={set} />
         </InspectorDisclosure>
       </section>
