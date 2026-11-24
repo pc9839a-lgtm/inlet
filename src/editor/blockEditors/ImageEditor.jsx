@@ -17,7 +17,6 @@ export default function ImageEditor({ s, set, block, page, blockId }) {
     <div className="image-editor-flow editor-task-flow" data-editor-task="image">
       <section className="editor-task-section image-primary-task" aria-label="사진과 설명">
 
-        <div className="editor-task-heading"><h3>사진 변경</h3></div>
       <ImageBasicSection
         s={s}
         set={set}
@@ -29,16 +28,17 @@ export default function ImageEditor({ s, set, block, page, blockId }) {
       />
       <ImageCaptionSection s={s} set={set} />
 
-      {!gridGallery && <QuickDesignChoices
+
+      </section>
+      <section className="editor-task-section editor-task-secondary" aria-label="사진 디자인">
+      <InspectorDisclosure label="사진 꾸미기" className="image-editor-more" bodyClassName="image-editor-more-controls" persistKey={(blockId || block?.id) ? `${page?.id || 'draft'}:${blockId || block.id}:image-design` : ''}>
+{!gridGallery && <QuickDesignChoices
         kind="image"
         selected={imageState.display}
         choices={[{ value: 'original', label: '전체 사진' }, { value: 'fill', label: '꽉 채우기' }]}
         onSelect={imageState.changeDisplay}
         title="사진 배치"
       />}
-      </section>
-      <section className="editor-task-section editor-task-secondary" aria-label="사진 디자인">
-      <InspectorDisclosure label="사진 맞춤과 디자인" className="image-editor-more" bodyClassName="image-editor-more-controls" persistKey={(blockId || block?.id) ? `${page?.id || 'draft'}:${blockId || block.id}:image-design` : ''}>
         {!gridGallery && <ImageDisplayControls
           display={imageState.display}
           s={s}
