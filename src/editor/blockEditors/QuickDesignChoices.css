@@ -1,300 +1,36 @@
-/* One-click design choices for the authenticated PageRo inspector only. */
+/* Single unobtrusive style selector inside the existing block disclosure.
+   No nested cards, preview thumbnails, or duplicate accordion. */
 html body #root .canvas-editor-shell .editor-quick-design {
-  display: grid;
-  gap: 11px;
   min-width: 0;
-  margin: 5px 0 2px;
-}
-html body #root .canvas-editor-shell .editor-quick-design-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 3px 8px;
-}
-html body #root .canvas-editor-shell .editor-quick-design-heading strong {
-  color: #202b3e;
-  font-size: 14px;
-  font-weight: 720;
-  letter-spacing: -.02em;
-}
-html body #root .canvas-editor-shell .editor-quick-design-heading > span {
-  color: #7a879a;
-  font-size: 11px;
-  line-height: 1.4;
+  margin: 4px 0 14px;
 }
 html body #root .canvas-editor-shell .editor-quick-design-options {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 9px;
-  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 html body #root .canvas-editor-shell .editor-quick-design-option {
-  display: grid;
-  grid-template-rows: 83px auto auto;
-  gap: 4px;
-  min-width: 0;
-  min-height: 120px;
-  padding: 5px 5px 8px;
-  border: 1px solid #dce3ed;
-  border-radius: 10px;
-  color: #556379;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #dce3ec;
+  border-radius: 8px;
   background: #fff;
-  box-shadow: none;
-  cursor: pointer;
+  color: #34445b;
   font: inherit;
+  font-size: 15px;
+  font-weight: 600;
   text-align: center;
-  transition: border-color .15s ease, background-color .15s ease;
+  cursor: pointer;
 }
 html body #root .canvas-editor-shell .editor-quick-design-option:hover {
-  border-color: #839ed5;
-  background: #f8faff;
+  background: #f4f6fa;
 }
 html body #root .canvas-editor-shell .editor-quick-design-option[aria-pressed='true'] {
-  border-color: #3768e8;
-  background: #f0f5ff;
-  color: #1748c0;
-  box-shadow: inset 0 0 0 1px #3768e8;
+  border-color: #2755ca;
+  background: #edf3ff;
+  color: #1643a7;
 }
 html body #root .canvas-editor-shell .editor-quick-design-option:focus-visible {
-  outline: 3px solid #a7c1ff;
+  outline: 2px solid #2454ff;
   outline-offset: 2px;
-}
-html body #root .canvas-editor-shell .editor-quick-design-index {
-  display: block;
-  font-size: 11px;
-  font-weight: 750;
-  line-height: 1.25;
-  color: #3e64b8;
-}
-html body #root .canvas-editor-shell .editor-quick-design-option[aria-pressed='true'] .editor-quick-design-index {
-  color: #1748c0;
-}
-html body #root .canvas-editor-shell .editor-quick-design-label {
-  min-width: 0;
-  color: inherit;
-  font-size: 12px;
-  font-weight: 690;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample {
-  position: relative;
-  display: grid;
-  align-content: start;
-  gap: 8px;
-  min-width: 0;
-  width: 100%;
-  height: 83px;
-  padding: 11px 9px;
-  overflow: hidden;
-  border: 1px solid #e8edf3;
-  border-radius: 6px;
-  background: #fff;
-}
-html body #root .canvas-editor-shell .editor-quick-design-art {
-  display: block;
-  width: 100%;
-  height: 22px;
-  border-radius: 3px;
-  background: linear-gradient(135deg,#cdddeb,#779ac8);
-}
-html body #root .canvas-editor-shell .editor-quick-design-lines {
-  display: grid;
-  gap: 4px;
-  width: 82%;
-}
-html body #root .canvas-editor-shell .editor-quick-design-lines > span {
-  display: block;
-  height: 5px;
-  border-radius: 2px;
-  background: #b0bdcd;
-}
-html body #root .canvas-editor-shell .editor-quick-design-lines > span:nth-child(2) {
-  width: 73%;
-  background: #ccd5e1;
-}
-html body #root .canvas-editor-shell .editor-quick-design-lines > span:nth-child(3) {
-  width: 92%;
-  height: 3px;
-  background: #dce3ec;
-}
-html body #root .canvas-editor-shell .editor-quick-design-button {
-  display: block;
-  width: 52%;
-  height: 9px;
-  border-radius: 3px;
-  background: #5d7bc9;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'] .editor-quick-design-art,
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'] .editor-quick-design-art,
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form'] .editor-quick-design-art {
-  display: none;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'] {
-  justify-content: center;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'] .editor-quick-design-lines {
-  width: 100%;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'] .editor-quick-design-button {
-  display: none;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-look='card'],
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-look='soft'] {
-  background: #f3f6fc;
-  border-color: #dde6f4;
-  padding: 15px 12px;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice'],
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form'][data-look='minimal'] {
-  background: #f8f1e9;
-  border-color: #ead5bf;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice'] .editor-quick-design-lines,
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='center'] .editor-quick-design-lines {
-  margin: auto;
-  text-align: center;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice'] .editor-quick-design-lines > span,
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='center'] .editor-quick-design-lines > span {
-  margin-inline: auto;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='photo'] {
-  background: linear-gradient(145deg,#203450,#55718f);
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='photo'] .editor-quick-design-art {
-  display: none;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='photo'] .editor-quick-design-lines {
-  margin-top: 12px;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='photo'] .editor-quick-design-lines > span {
-  margin-inline: auto;
-  background: #f8fafd;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='hero'][data-look='photo'] .editor-quick-design-button {
-  display: none;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'] {
-  gap: 5px;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'] .editor-quick-design-lines {
-  width: 98%;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'] .editor-quick-design-lines > span {
-  height: 11px;
-  width: 100%;
-  background: #e4ebf7;
-  border: 1px solid #adc4eb;
-  border-radius: 3px;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'] .editor-quick-design-button {
-  display: none;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'][data-look='carousel'] .editor-quick-design-lines {
-  grid-template-columns: 1fr 1fr;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'][data-look='carousel'] .editor-quick-design-lines > span:nth-child(3) {
-  display: none;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='links'][data-look='card'] .editor-quick-design-lines > span {
-  background: #fff;
-  border-color: #d8e0eb;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='image'] .editor-quick-design-art {
-  height: 60px;
-  background: linear-gradient(152deg,#a8d7de 8%,#dbeaba 48%,#739ea3 49%,#476c83 90%);
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='image'] .editor-quick-design-lines,
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='image'] .editor-quick-design-button {
-  display: none;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='image'][data-look='original'] .editor-quick-design-art {
-  height: 48px;
-  width: 78%;
-  margin: 7px auto;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='image'][data-look='fill'] {
-  padding: 0;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='image'][data-look='fill'] .editor-quick-design-art {
-  height: 100%;
-  border-radius: 0;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form'] .editor-quick-design-lines > span {
-  width: 100%;
-  height: 11px;
-  background: #fff;
-  border: 1px solid #cbd6e7;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form'] .editor-quick-design-button {
-  width: 95%;
-  height: 8px;
-  margin-top: 1px;
-  background: #3d65b5;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='form'][data-look='minimal'] .editor-quick-design-lines > span {
-  background: transparent;
-  border-width: 0 0 1px;
-  border-radius: 0;
-}
-@media (prefers-reduced-motion: reduce) {
-  html body #root .canvas-editor-shell .editor-quick-design-option {
-    transition: none;
-  }
-}
-
-
-/* Strong thumbnail silhouettes: show the actual title/body rhythm even when
-   inherited editor rules suppress tiny decorative descendants. */
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'] {
-  background-image:
-    linear-gradient(#53657e,#53657e),
-    linear-gradient(#aab8cb,#aab8cb),
-    linear-gradient(#cfd8e6,#cfd8e6);
-  background-size: 64% 8px, 85% 4px, 73% 4px;
-  background-position: 12px 21px,12px 40px,12px 49px;
-  background-repeat: no-repeat;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice'] {
-  background-image:
-    linear-gradient(#876f59,#876f59),
-    linear-gradient(#c6ac8b,#c6ac8b),
-    linear-gradient(#ddc8b0,#ddc8b0);
-  background-position: center 22px,center 41px,center 50px;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='card'] {
-  background-position: 15px 23px,15px 42px,15px 51px;
-}
-
-/* The notice variant must depict emphasized typography, not an opaque
-   brown tile. Render independent text strokes above all inherited block CSS. */
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice'] {
-  position: relative;
-  background: #fbf2e9 !important;
-  border-left: 3px solid #aa735b;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice']::before {
-  content: '';
-  position: absolute;
-  display: block;
-  top: 18px;
-  left: 24%;
-  width: 52%;
-  height: 7px;
-  border-radius: 2px;
-  background: #7b5345;
-}
-html body #root .canvas-editor-shell .editor-quick-design-sample[data-kind='text'][data-look='notice']::after {
-  content: '';
-  position: absolute;
-  display: block;
-  top: 38px;
-  left: 17%;
-  width: 66%;
-  height: 4px;
-  border-radius: 2px;
-  background: #bb9c85;
-  box-shadow: 0 10px 0 #dfc9b9;
 }

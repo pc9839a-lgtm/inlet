@@ -60,7 +60,6 @@ export function WorkspacePreviewPane({
             <span className="preview-stage-signal" aria-hidden="true" />
             <strong>실제 페이지</strong>
           </div>
-          <span className="preview-stage-width">모바일 390px</span>
         </div>
         <div className="editor-preview-frame-wrap">
           {showCanvasTools && (
@@ -69,7 +68,6 @@ export function WorkspacePreviewPane({
               <div className="editor-canvas-tools-heading">
                 <span>선택한 블록</span>
                 <strong title={selectedTitle}>{selectedTitle}</strong>
-                <small>{selectedType}</small>
               </div>
               <div className="editor-canvas-tools-primary">
                 <button type="button" onClick={canvasActions.onEdit} aria-label="선택한 블록 내용 편집">
@@ -80,14 +78,17 @@ export function WorkspacePreviewPane({
                   <Plus size={16} aria-hidden="true" />아래에 추가
                 </button>
               </div>
-              <div className="editor-canvas-tools-secondary">
-                <button type="button" disabled={!canvasActions.canMoveUp} title="블록 위로 이동"
-                  aria-label="선택한 블록 위로 이동" onClick={canvasActions.onMoveUp}><ArrowUp size={16} aria-hidden="true" /></button>
-                <button type="button" disabled={!canvasActions.canMoveDown} title="블록 아래로 이동"
-                  aria-label="선택한 블록 아래로 이동" onClick={canvasActions.onMoveDown}><ArrowDown size={16} aria-hidden="true" /></button>
-                <button type="button" disabled={!canvasActions.canDuplicate} title="블록 복제"
-                  aria-label="선택한 블록 복제" onClick={canvasActions.onDuplicate}><Copy size={16} aria-hidden="true" /></button>
-              </div>
+              <details className="editor-canvas-tools-more">
+                <summary>더보기</summary>
+                <div className="editor-canvas-tools-secondary">
+                  <button type="button" disabled={!canvasActions.canMoveUp} title="블록 위로 이동"
+                    aria-label="선택한 블록 위로 이동" onClick={canvasActions.onMoveUp}><ArrowUp size={16} aria-hidden="true" /></button>
+                  <button type="button" disabled={!canvasActions.canMoveDown} title="블록 아래로 이동"
+                    aria-label="선택한 블록 아래로 이동" onClick={canvasActions.onMoveDown}><ArrowDown size={16} aria-hidden="true" /></button>
+                  <button type="button" disabled={!canvasActions.canDuplicate} title="블록 복제"
+                    aria-label="선택한 블록 복제" onClick={canvasActions.onDuplicate}><Copy size={16} aria-hidden="true" /></button>
+                </div>
+              </details>
             </aside>
           )}
           <div className="phone-frame" ref={frameRef}>

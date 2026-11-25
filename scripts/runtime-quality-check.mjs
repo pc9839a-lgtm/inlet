@@ -512,7 +512,7 @@ assert(widgetStyleEditors.filter((source) => !source.includes('export default fu
                     && !source.includes('<EditorTabs')
                   : source.includes('export default function LinksEditor')
                     ? source.includes('className="links-editor-v3 editor-task-flow"')
-                      && source.includes('<InspectorDisclosure label="세부 디자인" className="links-editor-design"')
+                      && source.includes('<InspectorDisclosure label="디자인" className="links-editor-design"')
                       && source.includes('<LinksStylePanel') && !source.includes('<EditorTabs')
                     : source.includes("label: '스타일'")),
   'registered editors must expose reachable style controls; bottom bar and top navigation use direct flows too');

@@ -1024,12 +1024,12 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy { gap: 2px; }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-copy strong {
   min-width: 0; color: #303744 !important;
-  font-size: 13px !important; line-height: 1.35 !important; font-weight: 660 !important;
+  font-size: 17px !important; line-height: 1.4 !important; font-weight: 600 !important;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
   white-space: normal; overflow: hidden; overflow-wrap: anywhere;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-identity-detail {
-  color: #939ca8 !important; font-size: 11px !important; line-height: 1.3;
+  color: #667287 !important; font-size: 13px !important; line-height: 1.4;
   overflow: hidden; text-overflow: ellipsis;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .screen-order-v2-item[data-selected='true'] .screen-order-v2-type-icon:not(.has-thumbnail) {
@@ -1049,4 +1049,14 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-panel .sc
 }
 @media (prefers-reduced-motion: reduce) {
   html body #root .builder-shell.canvas-editor-shell .edit-layout .screen-order-v2-item { transition: none; }
+}
+
+/* Beginner task rail: block names stay readable over legacy compact rules. */
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout .editor-composition-panel .screen-order-v2-identity-copy strong {
+  font-size: 17px !important;
+  line-height: 1.4 !important;
+}
+html body #root .builder-shell.canvas-editor-shell.edit-mode-shell .edit-layout .editor-composition-panel .screen-order-v2-identity-detail {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
 }

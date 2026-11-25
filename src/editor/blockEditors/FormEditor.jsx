@@ -24,18 +24,8 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
 
   return (
     <div className="form-editor-flow editor-task-flow" data-editor-task="form">
-      <QuickDesignChoices
-        kind="form"
-        selected={s.style || 'card'}
-        choices={[{ value: 'card', label: '기본 카드' }, { value: 'soft', label: '부드럽게' }, { value: 'minimal', label: '미니멀' }]}
-        onSelect={(style) => set({
-          style, inputStyle: style === 'minimal' ? 'underline' : style === 'card' ? 'box' : 'round',
-          buttonStyle: style === 'soft' ? 'round' : 'solid',
-          spacing: style === 'minimal' ? 'compact' : 'normal',
-        })}
-      />
+
       <section className="editor-task-section form-title-task" aria-label="폼 제목과 설명">
-        <div className="editor-task-heading"><h3>폼 제목과 설명</h3></div>
         <FormBasicSection s={s} set={set} />
       </section>
       <section className="editor-task-section form-questions-task" aria-label="받을 질문">
@@ -62,15 +52,25 @@ export default function FormEditor({ s, set, page, blockId, generateStandaloneFo
         <Field label="버튼 문구" value={s.submit} onChange={(value) => set({ submit: value })} />
       </section>
 
+
       <section className="editor-task-section editor-task-secondary" aria-label="추가 폼 설정">
-        <div className="editor-task-heading"><h3>추가 설정</h3></div>
       <InspectorDisclosure label="제출 안내와 개인정보" className="form-basic-detail form-outcome-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-outcome` : ''}>
         <div className="form-editor-settings">
           <FormSuccessSettings s={s} set={set} direct />
           <FormPrivacySettings s={s} set={set} direct />
         </div>
       </InspectorDisclosure>
-      <InspectorDisclosure label="세부 디자인" className="form-basic-detail form-design-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-design` : ''}>
+      <InspectorDisclosure label="디자인" className="form-basic-detail form-design-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-design` : ''}>
+<QuickDesignChoices
+        kind="form"
+        selected={s.style || 'card'}
+        choices={[{ value: 'card', label: '기본 카드' }, { value: 'soft', label: '부드럽게' }, { value: 'minimal', label: '미니멀' }]}
+        onSelect={(style) => set({
+          style, inputStyle: style === 'minimal' ? 'underline' : style === 'card' ? 'box' : 'round',
+          buttonStyle: style === 'soft' ? 'round' : 'solid',
+          spacing: style === 'minimal' ? 'compact' : 'normal',
+        })}
+      />
         <FormDesignSection s={s} set={set} direct />
       </InspectorDisclosure>
       <InspectorDisclosure label="중복 접수와 외부 연동" className="form-behavior-detail" persistKey={blockId ? `${page?.id || 'draft'}:${blockId}:form-behavior` : ''}>

@@ -11,8 +11,8 @@ html body #root .canvas-editor-shell .editor-task-section {
   align-content: start;
   gap: 14px;
   min-width: 0;
-  padding: 22px 0 24px;
-  border-bottom: 1px solid #e6eaf0;
+  padding: 14px 0 18px;
+  border-bottom: 1px solid #eef1f5;
   background: transparent;
 }
 html body #root .canvas-editor-shell .editor-task-section:first-child {
@@ -33,7 +33,7 @@ html body #root .canvas-editor-shell .editor-task-heading {
 html body #root .canvas-editor-shell .editor-task-heading h3 {
   margin: 0;
   color: #18253a;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 720;
   letter-spacing: -.018em;
   line-height: 1.4;
@@ -48,12 +48,12 @@ html body #root .canvas-editor-shell .editor-task-section > :is(.editor-field-v2
 }
 html body #root .canvas-editor-shell .editor-task-section :is(.editor-field-v2-label strong,.field > span) {
   color: #38465d;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 620;
 }
 html body #root .canvas-editor-shell .editor-task-section :is(input:not([type='checkbox']),textarea,select) {
   min-width: 0;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.5;
 }
 html body #root .canvas-editor-shell .editor-task-section :is(input,textarea,select):focus-visible {
@@ -69,7 +69,7 @@ html body #root .canvas-editor-shell .editor-task-secondary > .inspector-disclos
 }
 html body #root .canvas-editor-shell .editor-task-flow .inspector-disclosure > summary {
   min-height: 48px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 650;
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings-header {
@@ -78,11 +78,11 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-header {
   border-bottom: 1px solid #e6eaf0 !important;
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings-view .editor-inspector-section-label {
-  font-size: 12px;
+  font-size: 14px;
   color: #60738e;
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings-view .editor-inspector-selected-copy > h2 {
-  font-size: 16px !important;
+  font-size: 19px !important;
   font-weight: 720 !important;
   letter-spacing: -.016em;
 }
@@ -97,7 +97,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings-view .editor-insp
 html body #root .canvas-editor-shell .editor-task-inline-title {
   margin: 0 0 14px;
   color: #18253a;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 720;
   line-height: 1.4;
   letter-spacing: -.018em;

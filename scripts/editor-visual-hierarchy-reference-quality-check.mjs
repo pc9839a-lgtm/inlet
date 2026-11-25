@@ -20,9 +20,10 @@ assert(layout.includes('data-editor-layout="separate-workbench"')
   && layout.includes('className="editor-composition-panel"')
   && layout.includes('className="editor-properties-panel"')
   && layout.includes('data-inspector-side="left"')
-  && layout.includes('<h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">')
+  && layout.includes('<h2 tabIndex={-1}>블록</h2>')
+  && layout.includes('const returnToBlocks = (event) =>')
   && layout.includes('editor-page-options-heading'),
-  'editor must keep the block navigator and settings on the left, with the live page to the right');
+  'editor must show one readable task on the left and the real page on the right');
 assert(layout.includes('listOnly')
   && layout.includes('inspectorOpen && !showStartEditing && !fixedSelected')
   && layout.includes('inspectorOpen && fixedSelected')
@@ -42,7 +43,7 @@ assert(rowCss.includes('min-height: 55px !important;')
 assert(toggle.includes('<strong>블록 추가</strong>')
   && toggle.includes('aria-expanded={open}')
   && dockCss.includes('background: #1759ee !important;')
-  && dockCss.includes('height: 44px !important;')
+  && dockCss.includes('height: 52px !important;')
   && layout.includes('<AddBlockDock {...addBlockDockProps} compact />'),
   'accessible block creation must be a full-width action in the navigator');
 assert(dock.includes('role="dialog" aria-modal="true"')
@@ -55,11 +56,12 @@ assert(preview.includes('selectedBlockId={selectedBlockId}')
   && !preview.includes('PREVIEW_WIDTHS')
   && preview.includes("'--editor-preview-content-width': '390px'")
   && previewCss.includes('--editor-preview-frame-width')
-  && shell.includes('grid-template-columns:var(--editor-list-width) var(--editor-settings-width) minmax(0,1fr)'),
-  'real page preview must be a single 390px result while retaining exact block selection');
-assert(reference.includes("referenceWidth")
-  && reference.includes("'editor-visual-hierarchy-' + referenceWidth")
-  && reference.includes('longInspector')
-  && reference.includes('widthOptions === 0'),
-  'Chrome reference must cover desktop, narrow laptop and independent inspector');
+  && shell.includes('grid-template-columns: var(--editor-workspace-width) minmax(0, 1fr) !important;'),
+  'real page preview must be a single 390px result beside the task editor');
+assert(reference.includes('verifyDesktop')
+  && reference.includes('beginner-block-list-1672')
+  && reference.includes('beginner-edit-')
+  && reference.includes('beginner-compact-page-673')
+  && reference.includes('initialPhoneX'),
+  'Chrome reference must compare list/edit tasks across desktop, laptop and zoom while preserving phone position');
 console.log('Independent editor settings and single real preview contracts passed');

@@ -8,10 +8,10 @@ body .builder-shell .edit-layout * { box-sizing: border-box; }
 html body #root .builder-shell.canvas-editor-shell .edit-layout {
   --editor-ui-title-size: 21px;
   --editor-ui-section-size: 14px;
-  --editor-ui-label-size: 13px;
-  --editor-ui-value-size: 15px;
-  --editor-ui-row-size: 14px;
-  --editor-ui-helper-size: 12px;
+  --editor-ui-label-size: 15px;
+  --editor-ui-value-size: 17px;
+  --editor-ui-row-size: 16px;
+  --editor-ui-helper-size: 14px;
   --editor-ui-text: #17233d;
   --editor-ui-muted: #6e7990;
   --editor-ui-strong: 650;
@@ -21,7 +21,7 @@ html body #root .builder-shell.canvas-editor-shell .edit-layout {
   --editor-ui-space-3: 12px;
   --editor-ui-space-4: 18px;
   --editor-ui-space-5: 28px;
-  --editor-ui-input-height: 42px;
+  --editor-ui-input-height: 48px;
   --editor-ui-compact-height: 36px;
   --editor-ui-touch-height: 44px;
   --editor-ui-control-radius: 8px;
@@ -78,7 +78,7 @@ html body #root .canvas-editor-shell .editor-panel-kicker {
 html body #root .builder-shell.canvas-editor-shell .editor-composition-heading h2 {
   margin: 0;
   color: #141c32;
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 730;
   line-height: 1.25;
   letter-spacing: -.04em;
@@ -108,7 +108,7 @@ html body #root .builder-shell.canvas-editor-shell .editor-composition-heading .
   border-radius: 8px !important;
   background: #f7f8fa !important;
   color: #434c5b !important;
-  font-size: 13px !important;
+  font-size: 16px !important;
   font-weight: 650 !important;
   box-shadow: none !important;
 }
@@ -142,7 +142,7 @@ html body #root .canvas-editor-shell .editor-composition-search > input {
   background: transparent;
   outline-offset: 2px;
   font: inherit;
-  font-size: 13px;
+  font-size: 16px;
   color: #18233a;
 }
 html body #root .canvas-editor-shell .editor-composition-search > button {
@@ -196,7 +196,7 @@ html body #root .canvas-editor-shell .editor-fixed-group-toggle {
   padding: 0 2px;
   border: 0; border-radius: 6px;
   background: transparent; color: #68748a;
-  font: inherit; font-size: 12px; font-weight: 680;
+  font: inherit; font-size: 14px; font-weight: 680;
   text-align: left; cursor: pointer;
 }
 html body #root .canvas-editor-shell .editor-fixed-group-toggle:hover { color: #223050; }
@@ -233,7 +233,7 @@ html body #root .canvas-editor-shell .editor-composition-footer > .editor-page-s
   background: #fff;
   color: #424d63;
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -384,7 +384,7 @@ html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclo
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary {
   display: flex; align-items: center; gap: 7px;
   min-height: 44px; padding: 8px 0;
-  list-style: none; font-size: 13px; font-weight: 680;
+  list-style: none; font-size: 16px; font-weight: 680;
   background: transparent; cursor: pointer;
 }
 html body #root .canvas-editor-shell .screen-order-v2-settings .inspector-disclosure > summary::-webkit-details-marker {
@@ -423,67 +423,70 @@ html body #root .canvas-editor-shell :is(.editor-page-settings-button, .screen-o
   html body #root .canvas-editor-shell .editor-fixed-group-toggle > svg { transition: none; }
 }
 
-/* Left block navigation and selected editor; right live page.
-   The original widget fields mount only after a block is explicitly chosen. */
-html body #root .canvas-editor-shell .editor-navigator-drawer-trigger { display: none; }
-html body #root .canvas-editor-shell .editor-properties-panel {
-  position: fixed;
-  z-index: 11;
-  top: 64px;
-  left: var(--editor-list-width, 276px);
-  right: auto;
-  display: flex;
-  flex-direction: column;
-  width: var(--editor-settings-width, 350px);
-  height: calc(100dvh - 64px);
-  min-width: 0;
-  border-right: 1px solid #e5e9f0;
-  background: #fff;
-  box-sizing: border-box;
+/* Beginner workspace: the list and inspector occupy ONE shared left slot.
+   They never compete for width or ask beginners to parse three columns. */
+html body #root .builder-shell.canvas-editor-shell .editor-navigator-drawer-trigger {
+  display: none !important;
 }
-/* Closed means absent, not a blank panel obscuring the live page.
-   The user-selected block stays in the page model for later reopening. */
 @media (min-width: 900px) {
-  html body #root .builder-shell.canvas-editor-shell:has(
-    .edit-layout[data-inspector-open='false']
-  ) .editor-properties-panel { display: none !important; }
+  html body #root .builder-shell.canvas-editor-shell .edit-layout:not([data-editor-density='compact']) > .editor-composition-panel,
+  html body #root .builder-shell.canvas-editor-shell .edit-layout:not([data-editor-density='compact']) > .editor-properties-panel {
+    position: relative;
+    inset: auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+    background: #fff;
+    border-right: 0;
+    box-shadow: none;
+    transform: none;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  html body #root .builder-shell.canvas-editor-shell .edit-layout:not([data-editor-density='compact'])[data-inspector-open='true'] > .editor-composition-panel {
+    display: none !important;
+  }
+  html body #root .builder-shell.canvas-editor-shell .edit-layout:not([data-editor-density='compact'])[data-inspector-open='false'] > .editor-properties-panel {
+    display: none !important;
+  }
 }
 html body #root .canvas-editor-shell .editor-properties-heading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 0;
   flex: 0 0 auto;
-  min-height: 64px;
-  padding: 0 20px;
+  min-height: 58px;
+  padding: 8px 22px;
   border-bottom: 1px solid #e9edf2;
-  color: #1d2738;
-  font-size: 16px;
+  color: #17243a;
+  font-size: 19px;
   font-weight: 700;
-}
-html body #root .canvas-editor-shell .editor-properties-context {
-  color: #8a95a6;
-  font-size: 12px;
-  font-weight: 500;
 }
 html body #root .canvas-editor-shell .editor-properties-content {
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 10px 20px 32px;
+  padding: 20px 26px 48px;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
-  scroll-padding-top: 12px;
+  scroll-padding-top: 16px;
 }
 html body #root .canvas-editor-shell .editor-properties-content:focus-visible {
-  outline: 2px solid #2356ed;
+  outline: 2px solid #2454ff;
   outline-offset: -2px;
 }
 html body #root .builder-shell.canvas-editor-shell .editor-properties-content .editor-inspector-panel.editor-inline-settings {
-  padding: 0 !important;
   margin: 0 !important;
+  padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
+  box-shadow: none !important;
 }
 html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2-card {
   padding: 0 !important;
@@ -493,52 +496,13 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
   box-shadow: none !important;
 }
 html body #root .canvas-editor-shell .editor-properties-content .editor-page-options-heading {
-  padding-top: 6px;
+  padding-top: 5px;
 }
 html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2-settings-header {
-  padding-top: 6px !important;
+  padding-top: 4px !important;
 }
-/* The only collapsed element on laptop widths is the navigator. */
-@media (min-width: 900px) and (max-width: 1279px) {
-  html body #root .canvas-editor-shell .editor-navigator-drawer-trigger {
-    position: fixed;
-    display: block;
-    z-index: 35;
-    top: 76px;
-    left: 12px;
-    min-width: 58px;
-    min-height: 36px;
-    padding: 0 12px;
-    border: 1px solid #dce3ee;
-    border-radius: 8px;
-    background: #fff;
-    color: #21314b;
-    font-size: 13px;
-    cursor: pointer;
-    pointer-events: auto;
-  }
-  html body #root .canvas-editor-shell .editor-composition-panel {
-    position: fixed;
-    z-index: 34;
-    top: 64px;
-    left: 0;
-    width: 252px !important;
-    height: calc(100dvh - 64px) !important;
-    transform: translateX(-105%);
-    visibility: hidden;
-    transition: transform .16s ease;
-    box-shadow: 8px 0 22px #192a4b14;
-    pointer-events: none;
-  }
-  html body #root .canvas-editor-shell .editor-composition-panel[data-drawer-open='true'] {
-    transform: translateX(0);
-    visibility: visible;
-    pointer-events: auto;
-  }
-  html body #root .canvas-editor-shell .editor-navigator-drawer-trigger[aria-expanded='true'] {
-    left: 260px;
-  }
-  html body #root .canvas-editor-shell .editor-properties-panel { left: 0; right: auto; pointer-events: auto; }
+html body #root .builder-shell.canvas-editor-shell .work-panel {
+  padding: 0 !important;
 }
 @media (max-width: 899px) {
   html body #root .builder-shell.canvas-editor-shell .edit-layout {
@@ -547,46 +511,10 @@ html body #root .canvas-editor-shell .editor-properties-content .screen-order-v2
     height: auto;
     min-height: 0;
   }
-  html body #root .builder-shell.canvas-editor-shell .editor-composition-panel {
-    flex: 0 0 auto;
-    height: min(50dvh, 550px) !important;
-    min-height: 300px;
-    max-height: none;
-  }
-  html body #root .builder-shell.canvas-editor-shell .editor-composition-content {
-    overflow-y: auto !important;
-  }
   html body #root .canvas-editor-shell .editor-properties-panel {
     position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
+    inset: auto;
     width: 100%;
-    height: auto;
-    min-height: 420px;
-    border-right: 0;
-    border-top: 1px solid #e5e9f0;
-  }
-  html body #root .canvas-editor-shell .editor-properties-content { overflow: visible; }
-}
-@media (prefers-reduced-motion: reduce) {
-  html body #root .canvas-editor-shell .editor-composition-panel { transition: none; }
-}
-
-
-/* The editor grid already allocates its list column. Shared preview-workspace
-   padding must not subtract 36px from the navigator's usable width. */
-html body #root .builder-shell.canvas-editor-shell .work-panel {
-  padding: 0 !important;
-}
-
-/* Use otherwise idle desktop width for the original code textarea. The
-   existing 390px canvas stays beside the Inspector, unscaled and connected
-   to the same block draft. No extra editor state or code interpretation. */
-@media (min-width: 1500px) {
-  html body #root .builder-shell.canvas-editor-shell.edit-mode-shell:has(
-    .edit-layout[data-editor-workflow='page-first'][data-editor-density='wide'][data-inspector-open='true'][data-selected-block-type='code']
-  ) {
-    --editor-settings-width: 580px;
+    min-height: 0;
   }
 }

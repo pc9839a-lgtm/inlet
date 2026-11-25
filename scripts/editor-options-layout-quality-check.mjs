@@ -106,9 +106,10 @@ assert(normalBlockSelection.includes('setOpenId(blockId);')
   'selecting the same block must retain its settings; page settings must clear selection explicitly');
 assert(editLayout.includes('editor-page-settings-button')
   && !editLayout.includes('edit-section-tabs')
-  && editLayout.includes('블록 편집')
+  && editLayout.includes('<h2 tabIndex={-1}>블록</h2>')
   && editLayout.includes('listOnly')
-  && editLayout.includes('selectBlock={chooseBlock}'),
+  && editLayout.includes('selectBlock={chooseBlock}')
+  && editLayout.includes('editor-page-more'),
   'ordered stack must retain accessible selection and one add entry');
 assert(editLayout.includes('페이지 설정')
   && editLayout.includes('<PageGlobalOptions')
@@ -116,10 +117,10 @@ assert(editLayout.includes('페이지 설정')
   && editLayout.includes('<PageThemeStylePanel {...stylePanelProps} />'),
   'the page design inspector must reuse the existing theme and page settings models');
 assert(!pageOptions.includes('PageGlobalOptionsHeader') && pageOptions.includes('aria-label="페이지 동작"'), 'page behavior must have an accessible group label without repeating a visible settings heading');
-assert(editLayout.includes('<h2 tabIndex={-1}>블록 편집 <span className="editor-composition-total">')
-  && editLayout.includes('editor-composition-total')
+assert(editLayout.includes('<h2 tabIndex={-1}>블록</h2>')
+  && !editLayout.includes('editor-composition-total')
   && !screenOrderList.includes('ScreenOrderListHeader'),
-  'block stack must have one identifiable title and count');
+  'block stack must keep one simple visible heading without redundant count');
 assert(mobileScreenOrderCss.includes('grid-template-columns: 44px minmax(0,1fr) 44px 44px'), 'mobile screen order must reserve full touch columns without horizontal overflow');
 assert(/\.screen-order-v2-drag\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile drag handle must expose a 44px touch target');
 assert(/\.screen-order-v2-visibility-button,[\s\S]*?\.screen-order-v2-action\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s.test(mobileScreenOrderCss), 'mobile visibility and action controls must expose 44px touch targets');
@@ -207,9 +208,10 @@ assert(editLayout.includes('data-editor-layout="separate-workbench"')
   && editLayout.includes('editor-properties-panel')
   && editLayout.includes('inspectorOpen && fixedSelected')
   && editLayout.includes('inspectorOpen && !showStartEditing && !fixedSelected')
-  && editorWorkspaceCss.includes("grid-template-columns:var(--editor-list-width) var(--editor-settings-width) minmax(0,1fr)")
+  && editorWorkspaceCss.includes('grid-template-columns: var(--editor-workspace-width) minmax(0, 1fr) !important;')
+  && editPanelLayoutCss.includes("[data-inspector-open='true'] > .editor-composition-panel")
   && editPanelLayoutCss.includes('.editor-properties-content'),
-  'wide desktop must separate the composition list from one actual selected widget settings form');
+  'beginner desktop must swap composition and one existing editor within the same left task pane');
 
 console.log(JSON.stringify({
   ok: true,
