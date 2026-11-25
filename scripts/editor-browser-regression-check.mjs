@@ -2011,6 +2011,7 @@ async function run() {
       `document.querySelector(${JSON.stringify(heroAdvanced)})?.open === false`),
       'D02 advanced anchor must close without dropping its value');
     // Pinned top navigation uses the same separate editor as normal widgets.
+    await showBlockList(client);
     const listScrollBeforeSwitch = await evaluate(client, `(() => {
       const scroller = document.querySelector('.editor-composition-content');
       const list = scroller?.querySelector('.screen-order-v2-list');
@@ -2042,6 +2043,7 @@ async function run() {
       && listScrollBeforeSwitch.listOverflow === 'auto',
       'a 25-block navigator must scroll without moving its independent settings: '
         + JSON.stringify(listScrollBeforeSwitch));
+    await evaluate(client, "document.querySelector('[data-fixed-group=top] .editor-fixed-group-toggle[aria-expanded=false]')?.click()");
     await clickSelector(client, '.topnav-fixed-card .fixed-composition-select');
     await waitForBrowser(client,
       `!!document.querySelector('#editor-block-settings-editor-topnav .block-editor-advanced-settings')
@@ -3844,10 +3846,10 @@ async function run() {
       && longScroll.inspectorOverflowY === 'auto'
       && longScroll.blockSettingsOverflowY === 'visible'
       && longScroll.workOverflowY === 'hidden'
-      && longScroll.navigatorScrollTop > 0 && longScroll.inspectorScrollTop > 0
+      && longScroll.navigatorScrollTop === 0 && longScroll.inspectorScrollTop > 0
       && longScroll.independent && longScroll.insideInspector && longScroll.duplicateCount === 1
       && longScroll.footerVisible && longScroll.outerTop === 0,
-      '36-block page must keep a persistent navigator and independent selected editor: '
+      '36-block page must keep one visible task pane and independent selected editor: '
         + JSON.stringify(longScroll));
     await capture(longPageClient, 'editor-vnext-36-blocks-1672');
     await setViewport(longPageClient, 900, 780, false);
@@ -3858,9 +3860,9 @@ async function run() {
     const narrow = await evaluate(longPageClient, '(() => {'
       + ' const frame = document.querySelector(".phone-frame .landing-page");'
       + ' return { width: frame?.clientWidth, overflow: document.documentElement.scrollWidth - innerWidth,'
-      + ' selected: !!document.querySelector("#editor-block-settings-editor-long-25") }; })()');
+      + ' selected: !!document.querySelector("#editor-block-editor-long-25[data-selected=true]") }; })()');
     assert(Math.abs(narrow.width - 390) <= 1 && narrow.overflow <= 3 && narrow.selected,
-      '900px long page preserves 390px preview and inspector: ' + JSON.stringify(narrow));
+      '900px long page preserves 390px preview and selected block identity: ' + JSON.stringify(narrow));
     const narrowScroll = await evaluate(longPageClient, `(() => {
       const list = document.querySelector('.editor-composition-content');
       const inspector = document.querySelector('.editor-properties-content');
